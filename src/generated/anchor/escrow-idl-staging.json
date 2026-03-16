@@ -1,10 +1,10 @@
 {
   "address": "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei",
   "metadata": {
-    "name": "escrow",
-    "version": "0.1.0",
+    "name": "Easy Escrow AI",
+    "version": "1.1.0",
     "spec": "0.1.0",
-    "description": "Atomic Swap Program for NFT/cNFT trading on Solana"
+    "description": "Programmable Escrow Program on Solana"
   },
   "instructions": [
     {
@@ -318,82 +318,6 @@
       ]
     },
     {
-      "name": "approve_datasales_data",
-      "docs": [
-        "Approve data quality after DataSales verification",
-        "",
-        "Backend-only instruction called after DataSales verifies data.",
-        "Updates status to Approved, enabling settlement."
-      ],
-      "discriminator": [
-        175,
-        36,
-        180,
-        140,
-        18,
-        93,
-        207,
-        40
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "docs": [
-            "Backend authority"
-          ],
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "datasales_escrow",
-          "docs": [
-            "DataSales escrow state PDA"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "agreement_id",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        }
-      ]
-    },
-    {
       "name": "atomic_swap_with_fee",
       "docs": [
         "Execute an atomic swap with platform fee collection",
@@ -656,131 +580,6 @@
       ]
     },
     {
-      "name": "cancel_datasales_escrow",
-      "docs": [
-        "Cancel DataSales escrow",
-        "",
-        "Cancels the agreement and refunds buyer if they deposited.",
-        "Called on timeout or manual cancellation."
-      ],
-      "discriminator": [
-        81,
-        46,
-        219,
-        42,
-        12,
-        82,
-        107,
-        14
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "docs": [
-            "Authority triggering cancellation (backend or seller before buyer deposits)"
-          ],
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "buyer",
-          "docs": [
-            "Buyer wallet (receives refund if deposited)"
-          ],
-          "writable": true
-        },
-        {
-          "name": "datasales_escrow",
-          "docs": [
-            "DataSales escrow state PDA"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
-          "docs": [
-            "SOL vault PDA"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "docs": [
-            "System program for SOL transfers"
-          ],
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "agreement_id",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        }
-      ]
-    },
-    {
       "name": "cancel_if_expired",
       "docs": [
         "Cancel expired escrow and return assets to original owners",
@@ -894,6 +693,130 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "cancel_institution_escrow",
+      "docs": [
+        "Cancel institution escrow and refund USDC to payer",
+        "",
+        "Settlement authority can cancel at any time.",
+        "Payer can cancel only after expiry.",
+        "Refunds all USDC from vault to payer, closes vault.",
+        "",
+        "# Arguments",
+        "* `ctx` - Context with caller, escrow state, vault, and payer token accounts",
+        "* `escrow_id` - The escrow identifier to cancel"
+      ],
+      "discriminator": [
+        189,
+        128,
+        208,
+        102,
+        121,
+        2,
+        62,
+        7
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Caller cancelling the escrow",
+            "Must be settlement_authority OR (payer AND expired)"
+          ],
+          "signer": true
+        },
+        {
+          "name": "escrow_state",
+          "docs": [
+            "Institution escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  115,
+                  116,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault",
+          "docs": [
+            "SPL token vault PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  115,
+                  116,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer_token_account",
+          "docs": [
+            "Payer's USDC token account (receives refund)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "rent_receiver",
+          "docs": [
+            "Receiver of rent from closed vault account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "escrow_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "cancel_offer_escrow",
@@ -1078,88 +1001,6 @@
         {
           "name": "party",
           "type": "u8"
-        }
-      ]
-    },
-    {
-      "name": "close_datasales_escrow",
-      "docs": [
-        "Close DataSales escrow account",
-        "",
-        "Closes the escrow PDA after settlement/cancellation to reclaim rent."
-      ],
-      "discriminator": [
-        182,
-        107,
-        135,
-        112,
-        105,
-        37,
-        83,
-        252
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "docs": [
-            "Authority (receives rent refund)"
-          ],
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "datasales_escrow",
-          "docs": [
-            "DataSales escrow state PDA to close"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "docs": [
-            "System program"
-          ],
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "agreement_id",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
         }
       ]
     },
@@ -1380,235 +1221,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "confirm_datasales_seller_deposit",
-      "docs": [
-        "Confirm seller has uploaded data to S3",
-        "",
-        "Backend-only instruction called after seller uploads data.",
-        "Updates status to DataLocked (or BothLocked if buyer already paid)."
-      ],
-      "discriminator": [
-        236,
-        111,
-        129,
-        17,
-        129,
-        159,
-        128,
-        188
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "docs": [
-            "Backend authority"
-          ],
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "datasales_escrow",
-          "docs": [
-            "DataSales escrow state PDA"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "agreement_id",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "create_datasales_escrow",
-      "docs": [
-        "Create a DataSales escrow for data buy/sell agreement",
-        "",
-        "Called by backend after DataSales creates an agreement.",
-        "Initializes the escrow state PDA and SOL vault."
-      ],
-      "discriminator": [
-        210,
-        227,
-        145,
-        243,
-        137,
-        57,
-        12,
-        246
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "docs": [
-            "Backend authority creating the escrow (signer, pays for account creation)"
-          ],
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "seller",
-          "docs": [
-            "Seller wallet address"
-          ]
-        },
-        {
-          "name": "buyer",
-          "docs": [
-            "Buyer wallet address (optional for open listings)"
-          ],
-          "optional": true
-        },
-        {
-          "name": "fee_collector",
-          "docs": [
-            "Platform fee collector wallet (treasury)"
-          ]
-        },
-        {
-          "name": "datasales_escrow",
-          "docs": [
-            "DataSales escrow state PDA"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
-          "docs": [
-            "SOL vault PDA - will hold buyer's SOL"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "docs": [
-            "System program for account creation"
-          ],
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "agreement_id",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "price_lamports",
-          "type": "u64"
-        },
-        {
-          "name": "platform_fee_lamports",
-          "type": "u64"
-        },
-        {
-          "name": "deposit_window_end",
-          "type": "i64"
-        },
-        {
-          "name": "access_duration_seconds",
-          "type": "i64"
-        }
-      ]
     },
     {
       "name": "create_offer_escrow",
@@ -1853,36 +1465,47 @@
       "args": []
     },
     {
-      "name": "deposit_datasales_sol",
+      "name": "deposit_institution_escrow",
       "docs": [
-        "Buyer deposits SOL to DataSales escrow vault",
+        "Deposit USDC into an institution escrow vault",
         "",
-        "Buyer deposits the price + platform fee to the vault PDA.",
-        "Updates status to SolLocked (or BothLocked if seller already deposited)."
+        "Payer deposits USDC (amount + platform_fee) to the token vault.",
+        "Updates escrow status from Created to Funded.",
+        "",
+        "# Arguments",
+        "* `ctx` - Context with payer, token accounts, and escrow state",
+        "* `escrow_id` - The escrow identifier to deposit into"
       ],
       "discriminator": [
-        178,
-        101,
-        154,
-        94,
-        210,
-        152,
-        112,
-        98
+        139,
+        172,
+        160,
+        239,
+        86,
+        183,
+        0,
+        54
       ],
       "accounts": [
         {
-          "name": "buyer",
+          "name": "payer",
           "docs": [
-            "Buyer depositing SOL"
+            "Payer depositing USDC (must match escrow_state.payer)"
           ],
           "writable": true,
           "signer": true
         },
         {
-          "name": "datasales_escrow",
+          "name": "payer_token_account",
           "docs": [
-            "DataSales escrow state PDA"
+            "Payer's USDC token account (source of deposit)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "escrow_state",
+          "docs": [
+            "Institution escrow state PDA"
           ],
           "writable": true,
           "pda": {
@@ -1890,15 +1513,10 @@
               {
                 "kind": "const",
                 "value": [
-                  100,
-                  97,
+                  105,
+                  110,
+                  115,
                   116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
                   95,
                   101,
                   115,
@@ -1910,15 +1528,15 @@
               },
               {
                 "kind": "arg",
-                "path": "agreement_id"
+                "path": "escrow_id"
               }
             ]
           }
         },
         {
-          "name": "sol_vault",
+          "name": "token_vault",
           "docs": [
-            "SOL vault PDA"
+            "SPL token vault PDA"
           ],
           "writable": true,
           "pda": {
@@ -1926,15 +1544,10 @@
               {
                 "kind": "const",
                 "value": [
-                  100,
-                  97,
+                  105,
+                  110,
+                  115,
                   116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
                   95,
                   118,
                   97,
@@ -1945,22 +1558,19 @@
               },
               {
                 "kind": "arg",
-                "path": "agreement_id"
+                "path": "escrow_id"
               }
             ]
           }
         },
         {
-          "name": "system_program",
-          "docs": [
-            "System program for SOL transfer"
-          ],
-          "address": "11111111111111111111111111111111"
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": [
         {
-          "name": "agreement_id",
+          "name": "escrow_id",
           "type": {
             "array": [
               "u8",
@@ -2723,6 +2333,187 @@
       ]
     },
     {
+      "name": "init_institution_escrow",
+      "docs": [
+        "Initialize a new institution escrow for cross-border USDC payments",
+        "",
+        "Creates the escrow state PDA and an SPL token vault to hold USDC deposits.",
+        "The vault is controlled by the escrow state PDA (PDA-signed transfers).",
+        "",
+        "# Arguments",
+        "* `ctx` - Context with authority, payer/recipient wallets, and escrow accounts",
+        "* `escrow_id` - Unique 32-byte escrow identifier (UUID bytes from backend)",
+        "* `amount` - USDC amount in micro-USDC (6 decimals)",
+        "* `platform_fee` - Platform fee in micro-USDC",
+        "* `condition_type` - Release condition type (AdminRelease, TimeLock, ComplianceCheck)",
+        "* `corridor` - Corridor code padded to 8 bytes (e.g. \"SG-CH\")",
+        "* `expiry_timestamp` - Unix timestamp when escrow expires"
+      ],
+      "discriminator": [
+        119,
+        80,
+        107,
+        207,
+        251,
+        191,
+        98,
+        190
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Authority creating the escrow (signer, pays for account creation)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "payer_wallet",
+          "docs": [
+            "Payer wallet (depositor of USDC)"
+          ]
+        },
+        {
+          "name": "recipient_wallet",
+          "docs": [
+            "Recipient wallet (receives USDC on release)"
+          ]
+        },
+        {
+          "name": "escrow_state",
+          "docs": [
+            "Institution escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  115,
+                  116,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault",
+          "docs": [
+            "SPL token vault PDA - holds USDC deposits, controlled by escrow_state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  115,
+                  116,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "docs": [
+            "USDC SPL token mint"
+          ]
+        },
+        {
+          "name": "fee_collector",
+          "docs": [
+            "Fee collector wallet"
+          ]
+        },
+        {
+          "name": "settlement_authority",
+          "docs": [
+            "Settlement authority (can release funds)"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "escrow_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "platform_fee",
+          "type": "u64"
+        },
+        {
+          "name": "condition_type",
+          "type": {
+            "defined": {
+              "name": "InstitutionConditionType"
+            }
+          }
+        },
+        {
+          "name": "corridor",
+          "type": {
+            "array": [
+              "u8",
+              8
+            ]
+          }
+        },
+        {
+          "name": "expiry_timestamp",
+          "type": "i64"
+        }
+      ]
+    },
+    {
       "name": "init_two_phase_sol_vault",
       "docs": [
         "Initialize a two-phase SOL vault PDA",
@@ -2982,6 +2773,135 @@
       ]
     },
     {
+      "name": "release_institution_escrow",
+      "docs": [
+        "Release USDC from institution escrow to recipient",
+        "",
+        "Settlement authority releases USDC: amount to recipient, fee to fee collector.",
+        "Closes the token vault to recover rent. Updates status to Released.",
+        "",
+        "# Arguments",
+        "* `ctx` - Context with authority, escrow state, vault, and recipient accounts",
+        "* `escrow_id` - The escrow identifier to release"
+      ],
+      "discriminator": [
+        66,
+        189,
+        117,
+        117,
+        21,
+        246,
+        18,
+        253
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Settlement authority releasing funds (must match escrow_state.settlement_authority)"
+          ],
+          "signer": true
+        },
+        {
+          "name": "escrow_state",
+          "docs": [
+            "Institution escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  115,
+                  116,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault",
+          "docs": [
+            "SPL token vault PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  115,
+                  116,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient_token_account",
+          "docs": [
+            "Recipient's USDC token account (receives escrow amount)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "fee_collector_token_account",
+          "docs": [
+            "Fee collector's USDC token account (receives platform fee)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "rent_receiver",
+          "docs": [
+            "Authority to receive rent from closed vault account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "escrow_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "settle",
       "docs": [
         "Settle the escrow and distribute assets",
@@ -3196,140 +3116,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "settle_datasales_escrow",
-      "docs": [
-        "Settle DataSales escrow - release SOL to seller",
-        "",
-        "Executes settlement after data is approved:",
-        "- Platform fee → fee collector (treasury)",
-        "- Price → seller wallet",
-        "- Sets access expiry timestamp"
-      ],
-      "discriminator": [
-        62,
-        222,
-        138,
-        214,
-        175,
-        27,
-        157,
-        160
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "docs": [
-            "Backend authority triggering settlement"
-          ],
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "seller",
-          "docs": [
-            "Seller wallet (receives payment)"
-          ],
-          "writable": true
-        },
-        {
-          "name": "datasales_escrow",
-          "docs": [
-            "DataSales escrow state PDA"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
-          "docs": [
-            "SOL vault PDA"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  116,
-                  97,
-                  115,
-                  97,
-                  108,
-                  101,
-                  115,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "agreement_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "fee_collector",
-          "docs": [
-            "Platform fee collector wallet"
-          ],
-          "writable": true
-        },
-        {
-          "name": "system_program",
-          "docs": [
-            "System program for SOL transfers"
-          ],
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "agreement_id",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        }
-      ]
     },
     {
       "name": "settle_two_phase_with_close",
@@ -3594,19 +3380,6 @@
   ],
   "accounts": [
     {
-      "name": "DataSalesEscrow",
-      "discriminator": [
-        125,
-        146,
-        48,
-        118,
-        179,
-        139,
-        126,
-        111
-      ]
-    },
-    {
       "name": "EscrowState",
       "discriminator": [
         19,
@@ -3617,6 +3390,19 @@
         130,
         229,
         108
+      ]
+    },
+    {
+      "name": "InstitutionEscrow",
+      "discriminator": [
+        58,
+        64,
+        121,
+        136,
+        7,
+        159,
+        59,
+        118
       ]
     },
     {
@@ -3649,243 +3435,158 @@
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidAmount",
-      "msg": "Invalid amount provided"
+      "name": "Unauthorized",
+      "msg": "Unauthorized: Only platform authority can execute swaps"
     },
     {
       "code": 6001,
-      "name": "InvalidExpiry",
-      "msg": "Invalid expiry timestamp"
+      "name": "InvalidFee",
+      "msg": "Invalid fee: Platform fee must be greater than zero"
     },
     {
       "code": 6002,
-      "name": "InvalidStatus",
-      "msg": "Invalid escrow status for this operation"
+      "name": "FeeTooHigh",
+      "msg": "Invalid fee: Fee exceeds maximum allowed"
     },
     {
       "code": 6003,
-      "name": "AlreadyDeposited",
-      "msg": "Assets already deposited"
+      "name": "MakerAssetOwnershipFailed",
+      "msg": "Invalid asset: Maker does not own the specified asset"
     },
     {
       "code": 6004,
-      "name": "Unauthorized",
-      "msg": "Unauthorized to perform this action"
+      "name": "TakerAssetOwnershipFailed",
+      "msg": "Invalid asset: Taker does not own the specified asset"
     },
     {
       "code": 6005,
-      "name": "UnauthorizedAdmin",
-      "msg": "Only authorized admin can initialize escrows"
+      "name": "InsufficientMakerBalance",
+      "msg": "Insufficient balance: Maker has insufficient balance"
     },
     {
       "code": 6006,
-      "name": "InvalidNftMint",
-      "msg": "Invalid NFT mint address"
+      "name": "InsufficientTakerBalance",
+      "msg": "Insufficient balance: Taker has insufficient balance"
     },
     {
       "code": 6007,
-      "name": "DepositNotComplete",
-      "msg": "Deposits not complete"
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account: Token account does not match expected mint"
     },
     {
       "code": 6008,
-      "name": "Expired",
-      "msg": "Escrow has expired"
+      "name": "InvalidMerkleProof",
+      "msg": "Invalid merkle proof: cNFT ownership verification failed"
     },
     {
       "code": 6009,
-      "name": "NotExpired",
-      "msg": "Escrow has not expired yet"
+      "name": "TooManyAssets",
+      "msg": "Too many assets: Maximum number of assets per side exceeded"
     },
     {
       "code": 6010,
-      "name": "InvalidFeeBps",
-      "msg": "Invalid fee basis points (must be <= 10000)"
+      "name": "InvalidSwapId",
+      "msg": "Invalid swap ID: Swap ID exceeds maximum length"
     },
     {
       "code": 6011,
-      "name": "CalculationOverflow",
-      "msg": "Calculation overflow"
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow: Fee calculation overflowed"
     },
     {
       "code": 6012,
-      "name": "InvalidSwapType",
-      "msg": "Invalid swap type for this operation"
+      "name": "ProgramPaused",
+      "msg": "Program is paused: All operations are temporarily disabled"
     },
     {
       "code": 6013,
-      "name": "SolAmountTooLow",
-      "msg": "SOL amount below minimum: 0.01 SOL (BETA limit)"
+      "name": "AlreadyPaused",
+      "msg": "Program is already paused"
     },
     {
       "code": 6014,
-      "name": "SolAmountTooHigh",
-      "msg": "SOL amount exceeds maximum: 15 SOL (BETA limit)"
+      "name": "NotPaused",
+      "msg": "Program is not paused"
     },
     {
       "code": 6015,
-      "name": "InsufficientFunds",
-      "msg": "Insufficient funds in escrow account after accounting for rent exemption"
+      "name": "WithdrawalTooFrequent",
+      "msg": "Withdrawal too frequent: Must wait 7 days between withdrawals"
     },
     {
       "code": 6016,
-      "name": "InvalidSwapParameters",
-      "msg": "Invalid parameter combination for swap type"
+      "name": "InsufficientTreasuryBalance",
+      "msg": "Insufficient treasury balance: Not enough funds to withdraw"
     },
     {
       "code": 6017,
-      "name": "InsufficientFeeCollectorRent",
-      "msg": "Fee collector account would not be rent-exempt after receiving fee"
+      "name": "UnauthorizedWithdrawalDestination",
+      "msg": "Unauthorized withdrawal destination: Treasury can only withdraw to authorized wallet"
     },
     {
       "code": 6018,
-      "name": "InsufficientSellerRent",
-      "msg": "Seller account would not be rent-exempt after receiving payment"
+      "name": "InvalidCnftProof",
+      "msg": "Invalid cNFT proof: Merkle proof validation failed"
     },
     {
       "code": 6019,
-      "name": "InsufficientEscrowRent",
-      "msg": "Escrow account would not be rent-exempt after transfers"
+      "name": "MissingBubblegumProgram",
+      "msg": "Missing required account: Bubblegum program"
     },
     {
       "code": 6020,
-      "name": "InvalidEscrowAccount",
-      "msg": "Invalid escrow account provided (PDA mismatch)"
+      "name": "MissingMerkleTree",
+      "msg": "Missing required account: Merkle tree"
     },
     {
       "code": 6021,
-      "name": "ExecutableAccountNotAllowed",
-      "msg": "Executable accounts (programs) cannot send or receive lamports"
+      "name": "StaleProof",
+      "msg": "Stale proof: Merkle root has changed since proof generation"
     },
     {
       "code": 6022,
-      "name": "AmountTooLow",
-      "msg": "Amount below minimum: $1.00 (BETA limit)"
+      "name": "ConflictingAssetFlags",
+      "msg": "Invalid asset flags: Cannot send both standard NFT and compressed NFT"
     },
     {
       "code": 6023,
-      "name": "AmountTooHigh",
-      "msg": "Amount exceeds maximum: $3,000.00 (BETA limit)"
+      "name": "UnauthorizedZeroFeeSwap",
+      "msg": "Unauthorized: Zero-fee swaps require authorized app signature"
     },
     {
       "code": 6024,
-      "name": "OfferAmountTooLow",
-      "msg": "Offer amount below minimum (0.01 SOL)"
+      "name": "MissingCoreAsset",
+      "msg": "Missing required account: Core NFT asset"
     },
     {
       "code": 6025,
-      "name": "OfferAmountTooHigh",
-      "msg": "Offer amount exceeds maximum (10,000 SOL)"
+      "name": "MissingMplCoreProgram",
+      "msg": "Missing required account: mpl-core program"
     },
     {
       "code": 6026,
-      "name": "OfferDurationTooShort",
-      "msg": "Offer duration too short (minimum 1 hour)"
+      "name": "InvalidMplCoreProgram",
+      "msg": "Invalid mpl-core program: Program ID does not match expected"
     },
     {
       "code": 6027,
-      "name": "OfferDurationTooLong",
-      "msg": "Offer duration too long (maximum 30 days)"
+      "name": "InvalidAmount",
+      "msg": "Invalid amount: Amount must be greater than zero"
     },
     {
       "code": 6028,
-      "name": "BidderCannotBeOwner",
-      "msg": "Bidder cannot be the same as owner"
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds: Vault does not have enough balance"
     },
     {
       "code": 6029,
-      "name": "InvalidBidder",
-      "msg": "Invalid bidder address"
+      "name": "VaultNotInitialized",
+      "msg": "Vault not initialized: Cannot deposit to non-existent vault PDA"
     },
     {
       "code": 6030,
-      "name": "InvalidFeeCollector",
-      "msg": "Fee collector does not match the one stored at offer creation"
-    },
-    {
-      "code": 6031,
-      "name": "InvalidOfferStatus",
-      "msg": "Invalid offer status for this operation"
-    },
-    {
-      "code": 6032,
-      "name": "OfferExpired",
-      "msg": "Offer has expired"
-    },
-    {
-      "code": 6033,
-      "name": "OfferNotExpired",
-      "msg": "Offer has not expired yet"
-    },
-    {
-      "code": 6034,
-      "name": "OfferStillActive",
-      "msg": "Offer is still active - cannot close"
-    },
-    {
-      "code": 6035,
-      "name": "DataSalesPriceTooLow",
-      "msg": "DataSales price below minimum (0.01 SOL)"
-    },
-    {
-      "code": 6036,
-      "name": "DataSalesPriceTooHigh",
-      "msg": "DataSales price exceeds maximum (100,000 SOL)"
-    },
-    {
-      "code": 6037,
-      "name": "DataSalesDepositWindowTooShort",
-      "msg": "DataSales deposit window too short (minimum 1 hour)"
-    },
-    {
-      "code": 6038,
-      "name": "DataSalesDepositWindowTooLong",
-      "msg": "DataSales deposit window too long (maximum 30 days)"
-    },
-    {
-      "code": 6039,
-      "name": "DataSalesAccessDurationTooShort",
-      "msg": "DataSales access duration too short (minimum 1 hour)"
-    },
-    {
-      "code": 6040,
-      "name": "DataSalesAccessDurationTooLong",
-      "msg": "DataSales access duration too long (maximum 365 days)"
-    },
-    {
-      "code": 6041,
-      "name": "DataSalesDepositWindowExpired",
-      "msg": "DataSales deposit window has expired"
-    },
-    {
-      "code": 6042,
-      "name": "InvalidDataSalesStatus",
-      "msg": "Invalid DataSales status for this operation"
-    },
-    {
-      "code": 6043,
-      "name": "DataSalesNotResolved",
-      "msg": "DataSales escrow not in resolved state (settled, cancelled, or expired)"
-    },
-    {
-      "code": 6044,
-      "name": "DataNotApproved",
-      "msg": "Data has not been approved yet"
-    },
-    {
-      "code": 6045,
-      "name": "InvalidSeller",
-      "msg": "Invalid seller address"
-    },
-    {
-      "code": 6046,
-      "name": "InvalidBuyer",
-      "msg": "Invalid buyer address"
-    },
-    {
-      "code": 6047,
-      "name": "UnauthorizedBuyer",
-      "msg": "Unauthorized buyer for this DataSales agreement"
+      "name": "UnauthorizedTwoPhase",
+      "msg": "Unauthorized caller: Only backend authority can call this instruction"
     }
   ],
   "types": [
@@ -3961,191 +3662,6 @@
                 ]
               }
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "DataSalesEscrow",
-      "docs": [
-        "DataSales Escrow PDA account for data buy/sell agreements",
-        "",
-        "Seeds: [\"datasales_escrow\", agreement_id]",
-        "This PDA tracks the state of a DataSales agreement, with a separate vault holding SOL.",
-        "",
-        "Flow:",
-        "1. Agreement created (PENDING_DEPOSITS)",
-        "2. Seller uploads data to S3 → DATA_LOCKED",
-        "3. Buyer deposits SOL → SOL_LOCKED",
-        "4. Both complete → BOTH_LOCKED",
-        "5. DataSales verifies → APPROVED",
-        "6. Settlement executed → SETTLED",
-        "7. Access expires → EXPIRED → ARCHIVED"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "agreement_id",
-            "docs": [
-              "Unique agreement identifier (UUID bytes, matches database agreement_id)"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "seller",
-            "docs": [
-              "Seller wallet address (data provider)"
-            ],
-            "type": "pubkey"
-          },
-          {
-            "name": "buyer",
-            "docs": [
-              "Buyer wallet address (None for open listings)"
-            ],
-            "type": {
-              "option": "pubkey"
-            }
-          },
-          {
-            "name": "price_lamports",
-            "docs": [
-              "Price in lamports (what seller receives)"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "platform_fee_lamports",
-            "docs": [
-              "Platform fee in lamports (sent to treasury)"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "fee_collector",
-            "docs": [
-              "Fee collector wallet address (treasury PDA or designated address)"
-            ],
-            "type": "pubkey"
-          },
-          {
-            "name": "deposit_window_end",
-            "docs": [
-              "Deposit window end timestamp (Unix timestamp)",
-              "Both parties must deposit before this time"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "access_duration_seconds",
-            "docs": [
-              "Access duration in seconds after settlement"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "seller_deposited",
-            "docs": [
-              "Whether seller has confirmed data upload"
-            ],
-            "type": "bool"
-          },
-          {
-            "name": "buyer_deposited",
-            "docs": [
-              "Whether buyer has deposited SOL"
-            ],
-            "type": "bool"
-          },
-          {
-            "name": "data_approved",
-            "docs": [
-              "Whether DataSales has approved the data"
-            ],
-            "type": "bool"
-          },
-          {
-            "name": "status",
-            "docs": [
-              "Agreement status"
-            ],
-            "type": {
-              "defined": {
-                "name": "DataSalesStatus"
-              }
-            }
-          },
-          {
-            "name": "created_at",
-            "docs": [
-              "Timestamp when agreement was created"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "settled_at",
-            "docs": [
-              "Timestamp when settlement was executed"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "access_expires_at",
-            "docs": [
-              "Timestamp when access expires (set at settlement)"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "bump",
-            "docs": [
-              "PDA bump seed"
-            ],
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "DataSalesStatus",
-      "docs": [
-        "DataSales agreement status enum matching the Prisma DataSalesStatus"
-      ],
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "PendingDeposits"
-          },
-          {
-            "name": "DataLocked"
-          },
-          {
-            "name": "SolLocked"
-          },
-          {
-            "name": "BothLocked"
-          },
-          {
-            "name": "Approved"
-          },
-          {
-            "name": "Settled"
-          },
-          {
-            "name": "Expired"
-          },
-          {
-            "name": "Cancelled"
-          },
-          {
-            "name": "Archived"
           }
         ]
       }
@@ -4291,6 +3807,189 @@
           },
           {
             "name": "Seller"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InstitutionConditionType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AdminRelease"
+          },
+          {
+            "name": "TimeLock"
+          },
+          {
+            "name": "ComplianceCheck"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InstitutionEscrow",
+      "docs": [
+        "Institution Escrow PDA account for cross-border USDC escrow payments",
+        "",
+        "Seeds: [\"inst_escrow\", escrow_id[32]]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "escrow_id",
+            "docs": [
+              "Unique escrow identifier (UUID bytes from backend)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "payer",
+            "docs": [
+              "Payer wallet (depositor of USDC)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "docs": [
+              "Recipient wallet (receives USDC on release)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "docs": [
+              "USDC SPL token mint"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "docs": [
+              "USDC amount (in micro-USDC, 6 decimals)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "platform_fee",
+            "docs": [
+              "Platform fee (in micro-USDC)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "fee_collector",
+            "docs": [
+              "Fee collector wallet"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "condition_type",
+            "docs": [
+              "Release condition type"
+            ],
+            "type": {
+              "defined": {
+                "name": "InstitutionConditionType"
+              }
+            }
+          },
+          {
+            "name": "corridor",
+            "docs": [
+              "Corridor code (e.g. \"SG-CH\" padded to 8 bytes)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "docs": [
+              "Current escrow status"
+            ],
+            "type": {
+              "defined": {
+                "name": "InstitutionEscrowOnChainStatus"
+              }
+            }
+          },
+          {
+            "name": "settlement_authority",
+            "docs": [
+              "Settlement authority pubkey (can release funds)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "expiry_timestamp",
+            "docs": [
+              "Expiry timestamp (Unix)"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "Creation timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "resolved_at",
+            "docs": [
+              "Resolution timestamp (0 if unresolved)"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "docs": [
+              "Token vault PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InstitutionEscrowOnChainStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Created"
+          },
+          {
+            "name": "Funded"
+          },
+          {
+            "name": "Released"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Expired"
           }
         ]
       }

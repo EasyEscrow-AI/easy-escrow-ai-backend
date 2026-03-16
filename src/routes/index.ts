@@ -16,7 +16,13 @@ import testRoutes from './test.routes';
 import testExecuteRoutes from './test-execute.routes';
 import authorizedAppsRoutes from './admin/authorized-apps.routes';
 import noncePoolAdminRoutes from './admin/nonce-pool.routes';
+import institutionEscrowAdminRoutes from './admin/institution-escrow-admin.routes';
 import assetsRoutes from './assets.routes';
+import institutionAuthRoutes from './institution-auth.routes';
+import institutionSettingsRoutes from './institution-settings.routes';
+import institutionFilesRoutes from './institution-files.routes';
+import institutionEscrowRoutes from './institution-escrow.routes';
+import aiAnalysisRoutes from './ai-analysis.routes';
 
 export {
   expiryCancellationRoutes,
@@ -30,5 +36,11 @@ export {
   testExecuteRoutes,
   authorizedAppsRoutes,
   noncePoolAdminRoutes,
+  institutionEscrowAdminRoutes,
   assetsRoutes,
+  institutionAuthRoutes,
+  institutionSettingsRoutes,
+  institutionFilesRoutes,
+  institutionEscrowRoutes,
+  aiAnalysisRoutes,
 };

@@ -88,6 +88,56 @@ export type CnftOffer = $Result.DefaultSelection<Prisma.$CnftOfferPayload>
  * 
  */
 export type TwoPhaseSwap = $Result.DefaultSelection<Prisma.$TwoPhaseSwapPayload>
+/**
+ * Model InstitutionClient
+ * 
+ */
+export type InstitutionClient = $Result.DefaultSelection<Prisma.$InstitutionClientPayload>
+/**
+ * Model InstitutionRefreshToken
+ * 
+ */
+export type InstitutionRefreshToken = $Result.DefaultSelection<Prisma.$InstitutionRefreshTokenPayload>
+/**
+ * Model InstitutionClientSettings
+ * 
+ */
+export type InstitutionClientSettings = $Result.DefaultSelection<Prisma.$InstitutionClientSettingsPayload>
+/**
+ * Model InstitutionApiKey
+ * 
+ */
+export type InstitutionApiKey = $Result.DefaultSelection<Prisma.$InstitutionApiKeyPayload>
+/**
+ * Model InstitutionEscrow
+ * 
+ */
+export type InstitutionEscrow = $Result.DefaultSelection<Prisma.$InstitutionEscrowPayload>
+/**
+ * Model InstitutionDeposit
+ * 
+ */
+export type InstitutionDeposit = $Result.DefaultSelection<Prisma.$InstitutionDepositPayload>
+/**
+ * Model InstitutionAuditLog
+ * 
+ */
+export type InstitutionAuditLog = $Result.DefaultSelection<Prisma.$InstitutionAuditLogPayload>
+/**
+ * Model InstitutionAiAnalysis
+ * 
+ */
+export type InstitutionAiAnalysis = $Result.DefaultSelection<Prisma.$InstitutionAiAnalysisPayload>
+/**
+ * Model InstitutionCorridor
+ * 
+ */
+export type InstitutionCorridor = $Result.DefaultSelection<Prisma.$InstitutionCorridorPayload>
+/**
+ * Model InstitutionFile
+ * 
+ */
+export type InstitutionFile = $Result.DefaultSelection<Prisma.$InstitutionFilePayload>
 
 /**
  * Enums
@@ -237,6 +287,68 @@ export const TwoPhaseSwapStatus: {
 
 export type TwoPhaseSwapStatus = (typeof TwoPhaseSwapStatus)[keyof typeof TwoPhaseSwapStatus]
 
+
+export const InstitutionEscrowStatus: {
+  CREATED: 'CREATED',
+  FUNDED: 'FUNDED',
+  COMPLIANCE_HOLD: 'COMPLIANCE_HOLD',
+  RELEASING: 'RELEASING',
+  RELEASED: 'RELEASED',
+  CANCELLING: 'CANCELLING',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED',
+  FAILED: 'FAILED'
+};
+
+export type InstitutionEscrowStatus = (typeof InstitutionEscrowStatus)[keyof typeof InstitutionEscrowStatus]
+
+
+export const InstitutionConditionType: {
+  ADMIN_RELEASE: 'ADMIN_RELEASE',
+  TIME_LOCK: 'TIME_LOCK',
+  COMPLIANCE_CHECK: 'COMPLIANCE_CHECK'
+};
+
+export type InstitutionConditionType = (typeof InstitutionConditionType)[keyof typeof InstitutionConditionType]
+
+
+export const ClientTier: {
+  STANDARD: 'STANDARD',
+  PREMIUM: 'PREMIUM',
+  ENTERPRISE: 'ENTERPRISE'
+};
+
+export type ClientTier = (typeof ClientTier)[keyof typeof ClientTier]
+
+
+export const ClientStatus: {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION'
+};
+
+export type ClientStatus = (typeof ClientStatus)[keyof typeof ClientStatus]
+
+
+export const DocumentType: {
+  INVOICE: 'INVOICE',
+  CONTRACT: 'CONTRACT',
+  SHIPPING_DOC: 'SHIPPING_DOC',
+  LETTER_OF_CREDIT: 'LETTER_OF_CREDIT',
+  OTHER: 'OTHER'
+};
+
+export type DocumentType = (typeof DocumentType)[keyof typeof DocumentType]
+
+
+export const CorridorStatus: {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  DEPRECATED: 'DEPRECATED'
+};
+
+export type CorridorStatus = (typeof CorridorStatus)[keyof typeof CorridorStatus]
+
 }
 
 export type AgreementStatus = $Enums.AgreementStatus
@@ -290,6 +402,30 @@ export const OfferEscrowStatus: typeof $Enums.OfferEscrowStatus
 export type TwoPhaseSwapStatus = $Enums.TwoPhaseSwapStatus
 
 export const TwoPhaseSwapStatus: typeof $Enums.TwoPhaseSwapStatus
+
+export type InstitutionEscrowStatus = $Enums.InstitutionEscrowStatus
+
+export const InstitutionEscrowStatus: typeof $Enums.InstitutionEscrowStatus
+
+export type InstitutionConditionType = $Enums.InstitutionConditionType
+
+export const InstitutionConditionType: typeof $Enums.InstitutionConditionType
+
+export type ClientTier = $Enums.ClientTier
+
+export const ClientTier: typeof $Enums.ClientTier
+
+export type ClientStatus = $Enums.ClientStatus
+
+export const ClientStatus: typeof $Enums.ClientStatus
+
+export type DocumentType = $Enums.DocumentType
+
+export const DocumentType: typeof $Enums.DocumentType
+
+export type CorridorStatus = $Enums.CorridorStatus
+
+export const CorridorStatus: typeof $Enums.CorridorStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -558,6 +694,106 @@ export class PrismaClient<
     * ```
     */
   get twoPhaseSwap(): Prisma.TwoPhaseSwapDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionClient`: Exposes CRUD operations for the **InstitutionClient** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionClients
+    * const institutionClients = await prisma.institutionClient.findMany()
+    * ```
+    */
+  get institutionClient(): Prisma.InstitutionClientDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionRefreshToken`: Exposes CRUD operations for the **InstitutionRefreshToken** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionRefreshTokens
+    * const institutionRefreshTokens = await prisma.institutionRefreshToken.findMany()
+    * ```
+    */
+  get institutionRefreshToken(): Prisma.InstitutionRefreshTokenDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionClientSettings`: Exposes CRUD operations for the **InstitutionClientSettings** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionClientSettings
+    * const institutionClientSettings = await prisma.institutionClientSettings.findMany()
+    * ```
+    */
+  get institutionClientSettings(): Prisma.InstitutionClientSettingsDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionApiKey`: Exposes CRUD operations for the **InstitutionApiKey** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionApiKeys
+    * const institutionApiKeys = await prisma.institutionApiKey.findMany()
+    * ```
+    */
+  get institutionApiKey(): Prisma.InstitutionApiKeyDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionEscrow`: Exposes CRUD operations for the **InstitutionEscrow** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionEscrows
+    * const institutionEscrows = await prisma.institutionEscrow.findMany()
+    * ```
+    */
+  get institutionEscrow(): Prisma.InstitutionEscrowDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionDeposit`: Exposes CRUD operations for the **InstitutionDeposit** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionDeposits
+    * const institutionDeposits = await prisma.institutionDeposit.findMany()
+    * ```
+    */
+  get institutionDeposit(): Prisma.InstitutionDepositDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionAuditLog`: Exposes CRUD operations for the **InstitutionAuditLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionAuditLogs
+    * const institutionAuditLogs = await prisma.institutionAuditLog.findMany()
+    * ```
+    */
+  get institutionAuditLog(): Prisma.InstitutionAuditLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionAiAnalysis`: Exposes CRUD operations for the **InstitutionAiAnalysis** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionAiAnalyses
+    * const institutionAiAnalyses = await prisma.institutionAiAnalysis.findMany()
+    * ```
+    */
+  get institutionAiAnalysis(): Prisma.InstitutionAiAnalysisDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionCorridor`: Exposes CRUD operations for the **InstitutionCorridor** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionCorridors
+    * const institutionCorridors = await prisma.institutionCorridor.findMany()
+    * ```
+    */
+  get institutionCorridor(): Prisma.InstitutionCorridorDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionFile`: Exposes CRUD operations for the **InstitutionFile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionFiles
+    * const institutionFiles = await prisma.institutionFile.findMany()
+    * ```
+    */
+  get institutionFile(): Prisma.InstitutionFileDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1012,7 +1248,17 @@ export namespace Prisma {
     AuthorizedApp: 'AuthorizedApp',
     ZeroFeeSwapLog: 'ZeroFeeSwapLog',
     CnftOffer: 'CnftOffer',
-    TwoPhaseSwap: 'TwoPhaseSwap'
+    TwoPhaseSwap: 'TwoPhaseSwap',
+    InstitutionClient: 'InstitutionClient',
+    InstitutionRefreshToken: 'InstitutionRefreshToken',
+    InstitutionClientSettings: 'InstitutionClientSettings',
+    InstitutionApiKey: 'InstitutionApiKey',
+    InstitutionEscrow: 'InstitutionEscrow',
+    InstitutionDeposit: 'InstitutionDeposit',
+    InstitutionAuditLog: 'InstitutionAuditLog',
+    InstitutionAiAnalysis: 'InstitutionAiAnalysis',
+    InstitutionCorridor: 'InstitutionCorridor',
+    InstitutionFile: 'InstitutionFile'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1031,7 +1277,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionFile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2145,6 +2391,746 @@ export namespace Prisma {
           }
         }
       }
+      InstitutionClient: {
+        payload: Prisma.$InstitutionClientPayload<ExtArgs>
+        fields: Prisma.InstitutionClientFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionClientFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionClientFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionClientFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionClientFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionClientFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionClientCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionClientCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionClientCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionClientDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>
+          }
+          update: {
+            args: Prisma.InstitutionClientUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionClientDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionClientUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionClientUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionClientUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionClientAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionClient>
+          }
+          groupBy: {
+            args: Prisma.InstitutionClientGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionClientGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionClientCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionClientCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionRefreshToken: {
+        payload: Prisma.$InstitutionRefreshTokenPayload<ExtArgs>
+        fields: Prisma.InstitutionRefreshTokenFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionRefreshTokenFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionRefreshTokenFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionRefreshTokenFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionRefreshTokenFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionRefreshTokenFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionRefreshTokenCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionRefreshTokenCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionRefreshTokenCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionRefreshTokenDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>
+          }
+          update: {
+            args: Prisma.InstitutionRefreshTokenUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionRefreshTokenDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionRefreshTokenUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionRefreshTokenUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionRefreshTokenUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionRefreshTokenPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionRefreshTokenAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionRefreshToken>
+          }
+          groupBy: {
+            args: Prisma.InstitutionRefreshTokenGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionRefreshTokenGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionRefreshTokenCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionRefreshTokenCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionClientSettings: {
+        payload: Prisma.$InstitutionClientSettingsPayload<ExtArgs>
+        fields: Prisma.InstitutionClientSettingsFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionClientSettingsFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionClientSettingsFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionClientSettingsFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionClientSettingsFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionClientSettingsFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionClientSettingsCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionClientSettingsCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionClientSettingsCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionClientSettingsDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>
+          }
+          update: {
+            args: Prisma.InstitutionClientSettingsUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionClientSettingsDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionClientSettingsUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionClientSettingsUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionClientSettingsUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionClientSettingsPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionClientSettingsAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionClientSettings>
+          }
+          groupBy: {
+            args: Prisma.InstitutionClientSettingsGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionClientSettingsGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionClientSettingsCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionClientSettingsCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionApiKey: {
+        payload: Prisma.$InstitutionApiKeyPayload<ExtArgs>
+        fields: Prisma.InstitutionApiKeyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionApiKeyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionApiKeyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionApiKeyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionApiKeyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionApiKeyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionApiKeyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionApiKeyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionApiKeyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionApiKeyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>
+          }
+          update: {
+            args: Prisma.InstitutionApiKeyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionApiKeyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionApiKeyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionApiKeyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionApiKeyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApiKeyPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionApiKeyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionApiKey>
+          }
+          groupBy: {
+            args: Prisma.InstitutionApiKeyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionApiKeyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionApiKeyCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionApiKeyCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionEscrow: {
+        payload: Prisma.$InstitutionEscrowPayload<ExtArgs>
+        fields: Prisma.InstitutionEscrowFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionEscrowFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionEscrowFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionEscrowFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionEscrowFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionEscrowFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionEscrowCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionEscrowCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionEscrowCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionEscrowDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>
+          }
+          update: {
+            args: Prisma.InstitutionEscrowUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionEscrowDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionEscrowUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionEscrowUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionEscrowUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionEscrowPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionEscrowAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionEscrow>
+          }
+          groupBy: {
+            args: Prisma.InstitutionEscrowGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionEscrowGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionEscrowCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionEscrowCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionDeposit: {
+        payload: Prisma.$InstitutionDepositPayload<ExtArgs>
+        fields: Prisma.InstitutionDepositFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionDepositFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionDepositFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionDepositFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionDepositFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionDepositFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionDepositCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionDepositCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionDepositCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionDepositDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>
+          }
+          update: {
+            args: Prisma.InstitutionDepositUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionDepositDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionDepositUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionDepositUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionDepositUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionDepositPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionDepositAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionDeposit>
+          }
+          groupBy: {
+            args: Prisma.InstitutionDepositGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionDepositGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionDepositCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionDepositCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionAuditLog: {
+        payload: Prisma.$InstitutionAuditLogPayload<ExtArgs>
+        fields: Prisma.InstitutionAuditLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionAuditLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionAuditLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionAuditLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionAuditLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionAuditLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionAuditLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionAuditLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionAuditLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionAuditLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>
+          }
+          update: {
+            args: Prisma.InstitutionAuditLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionAuditLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionAuditLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionAuditLogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionAuditLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAuditLogPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionAuditLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionAuditLog>
+          }
+          groupBy: {
+            args: Prisma.InstitutionAuditLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionAuditLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionAuditLogCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionAuditLogCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionAiAnalysis: {
+        payload: Prisma.$InstitutionAiAnalysisPayload<ExtArgs>
+        fields: Prisma.InstitutionAiAnalysisFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionAiAnalysisFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionAiAnalysisFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionAiAnalysisFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionAiAnalysisFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionAiAnalysisFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionAiAnalysisCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionAiAnalysisCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionAiAnalysisCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionAiAnalysisDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>
+          }
+          update: {
+            args: Prisma.InstitutionAiAnalysisUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionAiAnalysisDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionAiAnalysisUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionAiAnalysisUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionAiAnalysisUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAiAnalysisPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionAiAnalysisAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionAiAnalysis>
+          }
+          groupBy: {
+            args: Prisma.InstitutionAiAnalysisGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionAiAnalysisGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionAiAnalysisCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionAiAnalysisCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionCorridor: {
+        payload: Prisma.$InstitutionCorridorPayload<ExtArgs>
+        fields: Prisma.InstitutionCorridorFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionCorridorFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionCorridorFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionCorridorFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionCorridorFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionCorridorFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionCorridorCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionCorridorCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionCorridorCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionCorridorDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>
+          }
+          update: {
+            args: Prisma.InstitutionCorridorUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionCorridorDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionCorridorUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionCorridorUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionCorridorUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionCorridorPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionCorridorAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionCorridor>
+          }
+          groupBy: {
+            args: Prisma.InstitutionCorridorGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionCorridorGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionCorridorCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionCorridorCountAggregateOutputType> | number
+          }
+        }
+      }
+      InstitutionFile: {
+        payload: Prisma.$InstitutionFilePayload<ExtArgs>
+        fields: Prisma.InstitutionFileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionFileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionFileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionFileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionFileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionFileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionFileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionFileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionFileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionFileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>
+          }
+          update: {
+            args: Prisma.InstitutionFileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionFileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionFileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionFileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionFileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionFilePayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionFileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionFile>
+          }
+          groupBy: {
+            args: Prisma.InstitutionFileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionFileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionFileCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionFileCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2256,6 +3242,16 @@ export namespace Prisma {
     zeroFeeSwapLog?: ZeroFeeSwapLogOmit
     cnftOffer?: CnftOfferOmit
     twoPhaseSwap?: TwoPhaseSwapOmit
+    institutionClient?: InstitutionClientOmit
+    institutionRefreshToken?: InstitutionRefreshTokenOmit
+    institutionClientSettings?: InstitutionClientSettingsOmit
+    institutionApiKey?: InstitutionApiKeyOmit
+    institutionEscrow?: InstitutionEscrowOmit
+    institutionDeposit?: InstitutionDepositOmit
+    institutionAuditLog?: InstitutionAuditLogOmit
+    institutionAiAnalysis?: InstitutionAiAnalysisOmit
+    institutionCorridor?: InstitutionCorridorOmit
+    institutionFile?: InstitutionFileOmit
   }
 
   /* Types for Logging */
@@ -2568,6 +3564,131 @@ export namespace Prisma {
    */
   export type CnftOfferCountOutputTypeCountChildOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CnftOfferWhereInput
+  }
+
+
+  /**
+   * Count Type InstitutionClientCountOutputType
+   */
+
+  export type InstitutionClientCountOutputType = {
+    refreshTokens: number
+    apiKeys: number
+    escrows: number
+    auditLogs: number
+    files: number
+  }
+
+  export type InstitutionClientCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    refreshTokens?: boolean | InstitutionClientCountOutputTypeCountRefreshTokensArgs
+    apiKeys?: boolean | InstitutionClientCountOutputTypeCountApiKeysArgs
+    escrows?: boolean | InstitutionClientCountOutputTypeCountEscrowsArgs
+    auditLogs?: boolean | InstitutionClientCountOutputTypeCountAuditLogsArgs
+    files?: boolean | InstitutionClientCountOutputTypeCountFilesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientCountOutputType
+     */
+    select?: InstitutionClientCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountRefreshTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionRefreshTokenWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountApiKeysArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionApiKeyWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountEscrowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionEscrowWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountAuditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAuditLogWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionFileWhereInput
+  }
+
+
+  /**
+   * Count Type InstitutionEscrowCountOutputType
+   */
+
+  export type InstitutionEscrowCountOutputType = {
+    deposits: number
+    auditLogs: number
+    aiAnalyses: number
+    files: number
+  }
+
+  export type InstitutionEscrowCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    deposits?: boolean | InstitutionEscrowCountOutputTypeCountDepositsArgs
+    auditLogs?: boolean | InstitutionEscrowCountOutputTypeCountAuditLogsArgs
+    aiAnalyses?: boolean | InstitutionEscrowCountOutputTypeCountAiAnalysesArgs
+    files?: boolean | InstitutionEscrowCountOutputTypeCountFilesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * InstitutionEscrowCountOutputType without action
+   */
+  export type InstitutionEscrowCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrowCountOutputType
+     */
+    select?: InstitutionEscrowCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionEscrowCountOutputType without action
+   */
+  export type InstitutionEscrowCountOutputTypeCountDepositsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionDepositWhereInput
+  }
+
+  /**
+   * InstitutionEscrowCountOutputType without action
+   */
+  export type InstitutionEscrowCountOutputTypeCountAuditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAuditLogWhereInput
+  }
+
+  /**
+   * InstitutionEscrowCountOutputType without action
+   */
+  export type InstitutionEscrowCountOutputTypeCountAiAnalysesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAiAnalysisWhereInput
+  }
+
+  /**
+   * InstitutionEscrowCountOutputType without action
+   */
+  export type InstitutionEscrowCountOutputTypeCountFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionFileWhereInput
   }
 
 
@@ -21602,6 +22723,11880 @@ export namespace Prisma {
 
 
   /**
+   * Model InstitutionClient
+   */
+
+  export type AggregateInstitutionClient = {
+    _count: InstitutionClientCountAggregateOutputType | null
+    _min: InstitutionClientMinAggregateOutputType | null
+    _max: InstitutionClientMaxAggregateOutputType | null
+  }
+
+  export type InstitutionClientMinAggregateOutputType = {
+    id: string | null
+    email: string | null
+    passwordHash: string | null
+    companyName: string | null
+    tier: $Enums.ClientTier | null
+    status: $Enums.ClientStatus | null
+    kycStatus: string | null
+    jurisdiction: string | null
+    primaryWallet: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    lastLoginAt: Date | null
+  }
+
+  export type InstitutionClientMaxAggregateOutputType = {
+    id: string | null
+    email: string | null
+    passwordHash: string | null
+    companyName: string | null
+    tier: $Enums.ClientTier | null
+    status: $Enums.ClientStatus | null
+    kycStatus: string | null
+    jurisdiction: string | null
+    primaryWallet: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    lastLoginAt: Date | null
+  }
+
+  export type InstitutionClientCountAggregateOutputType = {
+    id: number
+    email: number
+    passwordHash: number
+    companyName: number
+    tier: number
+    status: number
+    kycStatus: number
+    jurisdiction: number
+    primaryWallet: number
+    settledWallets: number
+    createdAt: number
+    updatedAt: number
+    lastLoginAt: number
+    _all: number
+  }
+
+
+  export type InstitutionClientMinAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    companyName?: true
+    tier?: true
+    status?: true
+    kycStatus?: true
+    jurisdiction?: true
+    primaryWallet?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+  }
+
+  export type InstitutionClientMaxAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    companyName?: true
+    tier?: true
+    status?: true
+    kycStatus?: true
+    jurisdiction?: true
+    primaryWallet?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+  }
+
+  export type InstitutionClientCountAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    companyName?: true
+    tier?: true
+    status?: true
+    kycStatus?: true
+    jurisdiction?: true
+    primaryWallet?: true
+    settledWallets?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+    _all?: true
+  }
+
+  export type InstitutionClientAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionClient to aggregate.
+     */
+    where?: InstitutionClientWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionClients to fetch.
+     */
+    orderBy?: InstitutionClientOrderByWithRelationInput | InstitutionClientOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionClientWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionClients from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionClients.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionClients
+    **/
+    _count?: true | InstitutionClientCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionClientMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionClientMaxAggregateInputType
+  }
+
+  export type GetInstitutionClientAggregateType<T extends InstitutionClientAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionClient]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionClient[P]>
+      : GetScalarType<T[P], AggregateInstitutionClient[P]>
+  }
+
+
+
+
+  export type InstitutionClientGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionClientWhereInput
+    orderBy?: InstitutionClientOrderByWithAggregationInput | InstitutionClientOrderByWithAggregationInput[]
+    by: InstitutionClientScalarFieldEnum[] | InstitutionClientScalarFieldEnum
+    having?: InstitutionClientScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionClientCountAggregateInputType | true
+    _min?: InstitutionClientMinAggregateInputType
+    _max?: InstitutionClientMaxAggregateInputType
+  }
+
+  export type InstitutionClientGroupByOutputType = {
+    id: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier: $Enums.ClientTier
+    status: $Enums.ClientStatus
+    kycStatus: string
+    jurisdiction: string | null
+    primaryWallet: string | null
+    settledWallets: string[]
+    createdAt: Date
+    updatedAt: Date
+    lastLoginAt: Date | null
+    _count: InstitutionClientCountAggregateOutputType | null
+    _min: InstitutionClientMinAggregateOutputType | null
+    _max: InstitutionClientMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionClientGroupByPayload<T extends InstitutionClientGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionClientGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionClientGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionClientGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionClientGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionClientSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    companyName?: boolean
+    tier?: boolean
+    status?: boolean
+    kycStatus?: boolean
+    jurisdiction?: boolean
+    primaryWallet?: boolean
+    settledWallets?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+    refreshTokens?: boolean | InstitutionClient$refreshTokensArgs<ExtArgs>
+    settings?: boolean | InstitutionClient$settingsArgs<ExtArgs>
+    apiKeys?: boolean | InstitutionClient$apiKeysArgs<ExtArgs>
+    escrows?: boolean | InstitutionClient$escrowsArgs<ExtArgs>
+    auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
+    files?: boolean | InstitutionClient$filesArgs<ExtArgs>
+    _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionClient"]>
+
+  export type InstitutionClientSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    companyName?: boolean
+    tier?: boolean
+    status?: boolean
+    kycStatus?: boolean
+    jurisdiction?: boolean
+    primaryWallet?: boolean
+    settledWallets?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }, ExtArgs["result"]["institutionClient"]>
+
+  export type InstitutionClientSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    companyName?: boolean
+    tier?: boolean
+    status?: boolean
+    kycStatus?: boolean
+    jurisdiction?: boolean
+    primaryWallet?: boolean
+    settledWallets?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }, ExtArgs["result"]["institutionClient"]>
+
+  export type InstitutionClientSelectScalar = {
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    companyName?: boolean
+    tier?: boolean
+    status?: boolean
+    kycStatus?: boolean
+    jurisdiction?: boolean
+    primaryWallet?: boolean
+    settledWallets?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }
+
+  export type InstitutionClientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "passwordHash" | "companyName" | "tier" | "status" | "kycStatus" | "jurisdiction" | "primaryWallet" | "settledWallets" | "createdAt" | "updatedAt" | "lastLoginAt", ExtArgs["result"]["institutionClient"]>
+  export type InstitutionClientInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    refreshTokens?: boolean | InstitutionClient$refreshTokensArgs<ExtArgs>
+    settings?: boolean | InstitutionClient$settingsArgs<ExtArgs>
+    apiKeys?: boolean | InstitutionClient$apiKeysArgs<ExtArgs>
+    escrows?: boolean | InstitutionClient$escrowsArgs<ExtArgs>
+    auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
+    files?: boolean | InstitutionClient$filesArgs<ExtArgs>
+    _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type InstitutionClientIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type InstitutionClientIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $InstitutionClientPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionClient"
+    objects: {
+      refreshTokens: Prisma.$InstitutionRefreshTokenPayload<ExtArgs>[]
+      settings: Prisma.$InstitutionClientSettingsPayload<ExtArgs> | null
+      apiKeys: Prisma.$InstitutionApiKeyPayload<ExtArgs>[]
+      escrows: Prisma.$InstitutionEscrowPayload<ExtArgs>[]
+      auditLogs: Prisma.$InstitutionAuditLogPayload<ExtArgs>[]
+      files: Prisma.$InstitutionFilePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      email: string
+      passwordHash: string
+      companyName: string
+      tier: $Enums.ClientTier
+      status: $Enums.ClientStatus
+      kycStatus: string
+      jurisdiction: string | null
+      primaryWallet: string | null
+      settledWallets: string[]
+      createdAt: Date
+      updatedAt: Date
+      lastLoginAt: Date | null
+    }, ExtArgs["result"]["institutionClient"]>
+    composites: {}
+  }
+
+  type InstitutionClientGetPayload<S extends boolean | null | undefined | InstitutionClientDefaultArgs> = $Result.GetResult<Prisma.$InstitutionClientPayload, S>
+
+  type InstitutionClientCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionClientFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionClientCountAggregateInputType | true
+    }
+
+  export interface InstitutionClientDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionClient'], meta: { name: 'InstitutionClient' } }
+    /**
+     * Find zero or one InstitutionClient that matches the filter.
+     * @param {InstitutionClientFindUniqueArgs} args - Arguments to find a InstitutionClient
+     * @example
+     * // Get one InstitutionClient
+     * const institutionClient = await prisma.institutionClient.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionClientFindUniqueArgs>(args: SelectSubset<T, InstitutionClientFindUniqueArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionClient that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionClientFindUniqueOrThrowArgs} args - Arguments to find a InstitutionClient
+     * @example
+     * // Get one InstitutionClient
+     * const institutionClient = await prisma.institutionClient.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionClientFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionClientFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionClient that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientFindFirstArgs} args - Arguments to find a InstitutionClient
+     * @example
+     * // Get one InstitutionClient
+     * const institutionClient = await prisma.institutionClient.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionClientFindFirstArgs>(args?: SelectSubset<T, InstitutionClientFindFirstArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionClient that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientFindFirstOrThrowArgs} args - Arguments to find a InstitutionClient
+     * @example
+     * // Get one InstitutionClient
+     * const institutionClient = await prisma.institutionClient.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionClientFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionClientFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionClients that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionClients
+     * const institutionClients = await prisma.institutionClient.findMany()
+     * 
+     * // Get first 10 InstitutionClients
+     * const institutionClients = await prisma.institutionClient.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionClientWithIdOnly = await prisma.institutionClient.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionClientFindManyArgs>(args?: SelectSubset<T, InstitutionClientFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionClient.
+     * @param {InstitutionClientCreateArgs} args - Arguments to create a InstitutionClient.
+     * @example
+     * // Create one InstitutionClient
+     * const InstitutionClient = await prisma.institutionClient.create({
+     *   data: {
+     *     // ... data to create a InstitutionClient
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionClientCreateArgs>(args: SelectSubset<T, InstitutionClientCreateArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionClients.
+     * @param {InstitutionClientCreateManyArgs} args - Arguments to create many InstitutionClients.
+     * @example
+     * // Create many InstitutionClients
+     * const institutionClient = await prisma.institutionClient.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionClientCreateManyArgs>(args?: SelectSubset<T, InstitutionClientCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionClients and returns the data saved in the database.
+     * @param {InstitutionClientCreateManyAndReturnArgs} args - Arguments to create many InstitutionClients.
+     * @example
+     * // Create many InstitutionClients
+     * const institutionClient = await prisma.institutionClient.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionClients and only return the `id`
+     * const institutionClientWithIdOnly = await prisma.institutionClient.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionClientCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionClientCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionClient.
+     * @param {InstitutionClientDeleteArgs} args - Arguments to delete one InstitutionClient.
+     * @example
+     * // Delete one InstitutionClient
+     * const InstitutionClient = await prisma.institutionClient.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionClient
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionClientDeleteArgs>(args: SelectSubset<T, InstitutionClientDeleteArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionClient.
+     * @param {InstitutionClientUpdateArgs} args - Arguments to update one InstitutionClient.
+     * @example
+     * // Update one InstitutionClient
+     * const institutionClient = await prisma.institutionClient.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionClientUpdateArgs>(args: SelectSubset<T, InstitutionClientUpdateArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionClients.
+     * @param {InstitutionClientDeleteManyArgs} args - Arguments to filter InstitutionClients to delete.
+     * @example
+     * // Delete a few InstitutionClients
+     * const { count } = await prisma.institutionClient.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionClientDeleteManyArgs>(args?: SelectSubset<T, InstitutionClientDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionClients.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionClients
+     * const institutionClient = await prisma.institutionClient.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionClientUpdateManyArgs>(args: SelectSubset<T, InstitutionClientUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionClients and returns the data updated in the database.
+     * @param {InstitutionClientUpdateManyAndReturnArgs} args - Arguments to update many InstitutionClients.
+     * @example
+     * // Update many InstitutionClients
+     * const institutionClient = await prisma.institutionClient.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionClients and only return the `id`
+     * const institutionClientWithIdOnly = await prisma.institutionClient.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionClientUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionClientUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionClient.
+     * @param {InstitutionClientUpsertArgs} args - Arguments to update or create a InstitutionClient.
+     * @example
+     * // Update or create a InstitutionClient
+     * const institutionClient = await prisma.institutionClient.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionClient
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionClient we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionClientUpsertArgs>(args: SelectSubset<T, InstitutionClientUpsertArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionClients.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientCountArgs} args - Arguments to filter InstitutionClients to count.
+     * @example
+     * // Count the number of InstitutionClients
+     * const count = await prisma.institutionClient.count({
+     *   where: {
+     *     // ... the filter for the InstitutionClients we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionClientCountArgs>(
+      args?: Subset<T, InstitutionClientCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionClientCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionClient.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionClientAggregateArgs>(args: Subset<T, InstitutionClientAggregateArgs>): Prisma.PrismaPromise<GetInstitutionClientAggregateType<T>>
+
+    /**
+     * Group by InstitutionClient.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionClientGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionClientGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionClientGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionClientGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionClientGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionClient model
+   */
+  readonly fields: InstitutionClientFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionClient.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionClientClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    refreshTokens<T extends InstitutionClient$refreshTokensArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    settings<T extends InstitutionClient$settingsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$settingsArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    apiKeys<T extends InstitutionClient$apiKeysArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$apiKeysArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    escrows<T extends InstitutionClient$escrowsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$escrowsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    auditLogs<T extends InstitutionClient$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    files<T extends InstitutionClient$filesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionClient model
+   */
+  interface InstitutionClientFieldRefs {
+    readonly id: FieldRef<"InstitutionClient", 'String'>
+    readonly email: FieldRef<"InstitutionClient", 'String'>
+    readonly passwordHash: FieldRef<"InstitutionClient", 'String'>
+    readonly companyName: FieldRef<"InstitutionClient", 'String'>
+    readonly tier: FieldRef<"InstitutionClient", 'ClientTier'>
+    readonly status: FieldRef<"InstitutionClient", 'ClientStatus'>
+    readonly kycStatus: FieldRef<"InstitutionClient", 'String'>
+    readonly jurisdiction: FieldRef<"InstitutionClient", 'String'>
+    readonly primaryWallet: FieldRef<"InstitutionClient", 'String'>
+    readonly settledWallets: FieldRef<"InstitutionClient", 'String[]'>
+    readonly createdAt: FieldRef<"InstitutionClient", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionClient", 'DateTime'>
+    readonly lastLoginAt: FieldRef<"InstitutionClient", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionClient findUnique
+   */
+  export type InstitutionClientFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClient to fetch.
+     */
+    where: InstitutionClientWhereUniqueInput
+  }
+
+  /**
+   * InstitutionClient findUniqueOrThrow
+   */
+  export type InstitutionClientFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClient to fetch.
+     */
+    where: InstitutionClientWhereUniqueInput
+  }
+
+  /**
+   * InstitutionClient findFirst
+   */
+  export type InstitutionClientFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClient to fetch.
+     */
+    where?: InstitutionClientWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionClients to fetch.
+     */
+    orderBy?: InstitutionClientOrderByWithRelationInput | InstitutionClientOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionClients.
+     */
+    cursor?: InstitutionClientWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionClients from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionClients.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionClients.
+     */
+    distinct?: InstitutionClientScalarFieldEnum | InstitutionClientScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient findFirstOrThrow
+   */
+  export type InstitutionClientFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClient to fetch.
+     */
+    where?: InstitutionClientWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionClients to fetch.
+     */
+    orderBy?: InstitutionClientOrderByWithRelationInput | InstitutionClientOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionClients.
+     */
+    cursor?: InstitutionClientWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionClients from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionClients.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionClients.
+     */
+    distinct?: InstitutionClientScalarFieldEnum | InstitutionClientScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient findMany
+   */
+  export type InstitutionClientFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClients to fetch.
+     */
+    where?: InstitutionClientWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionClients to fetch.
+     */
+    orderBy?: InstitutionClientOrderByWithRelationInput | InstitutionClientOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionClients.
+     */
+    cursor?: InstitutionClientWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionClients from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionClients.
+     */
+    skip?: number
+    distinct?: InstitutionClientScalarFieldEnum | InstitutionClientScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient create
+   */
+  export type InstitutionClientCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionClient.
+     */
+    data: XOR<InstitutionClientCreateInput, InstitutionClientUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionClient createMany
+   */
+  export type InstitutionClientCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionClients.
+     */
+    data: InstitutionClientCreateManyInput | InstitutionClientCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionClient createManyAndReturn
+   */
+  export type InstitutionClientCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionClients.
+     */
+    data: InstitutionClientCreateManyInput | InstitutionClientCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionClient update
+   */
+  export type InstitutionClientUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionClient.
+     */
+    data: XOR<InstitutionClientUpdateInput, InstitutionClientUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionClient to update.
+     */
+    where: InstitutionClientWhereUniqueInput
+  }
+
+  /**
+   * InstitutionClient updateMany
+   */
+  export type InstitutionClientUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionClients.
+     */
+    data: XOR<InstitutionClientUpdateManyMutationInput, InstitutionClientUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionClients to update
+     */
+    where?: InstitutionClientWhereInput
+    /**
+     * Limit how many InstitutionClients to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionClient updateManyAndReturn
+   */
+  export type InstitutionClientUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionClients.
+     */
+    data: XOR<InstitutionClientUpdateManyMutationInput, InstitutionClientUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionClients to update
+     */
+    where?: InstitutionClientWhereInput
+    /**
+     * Limit how many InstitutionClients to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionClient upsert
+   */
+  export type InstitutionClientUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionClient to update in case it exists.
+     */
+    where: InstitutionClientWhereUniqueInput
+    /**
+     * In case the InstitutionClient found by the `where` argument doesn't exist, create a new InstitutionClient with this data.
+     */
+    create: XOR<InstitutionClientCreateInput, InstitutionClientUncheckedCreateInput>
+    /**
+     * In case the InstitutionClient was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionClientUpdateInput, InstitutionClientUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionClient delete
+   */
+  export type InstitutionClientDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionClient to delete.
+     */
+    where: InstitutionClientWhereUniqueInput
+  }
+
+  /**
+   * InstitutionClient deleteMany
+   */
+  export type InstitutionClientDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionClients to delete
+     */
+    where?: InstitutionClientWhereInput
+    /**
+     * Limit how many InstitutionClients to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionClient.refreshTokens
+   */
+  export type InstitutionClient$refreshTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    where?: InstitutionRefreshTokenWhereInput
+    orderBy?: InstitutionRefreshTokenOrderByWithRelationInput | InstitutionRefreshTokenOrderByWithRelationInput[]
+    cursor?: InstitutionRefreshTokenWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionRefreshTokenScalarFieldEnum | InstitutionRefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.settings
+   */
+  export type InstitutionClient$settingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    where?: InstitutionClientSettingsWhereInput
+  }
+
+  /**
+   * InstitutionClient.apiKeys
+   */
+  export type InstitutionClient$apiKeysArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    where?: InstitutionApiKeyWhereInput
+    orderBy?: InstitutionApiKeyOrderByWithRelationInput | InstitutionApiKeyOrderByWithRelationInput[]
+    cursor?: InstitutionApiKeyWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionApiKeyScalarFieldEnum | InstitutionApiKeyScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.escrows
+   */
+  export type InstitutionClient$escrowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    where?: InstitutionEscrowWhereInput
+    orderBy?: InstitutionEscrowOrderByWithRelationInput | InstitutionEscrowOrderByWithRelationInput[]
+    cursor?: InstitutionEscrowWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionEscrowScalarFieldEnum | InstitutionEscrowScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.auditLogs
+   */
+  export type InstitutionClient$auditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    where?: InstitutionAuditLogWhereInput
+    orderBy?: InstitutionAuditLogOrderByWithRelationInput | InstitutionAuditLogOrderByWithRelationInput[]
+    cursor?: InstitutionAuditLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionAuditLogScalarFieldEnum | InstitutionAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.files
+   */
+  export type InstitutionClient$filesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    where?: InstitutionFileWhereInput
+    orderBy?: InstitutionFileOrderByWithRelationInput | InstitutionFileOrderByWithRelationInput[]
+    cursor?: InstitutionFileWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionFileScalarFieldEnum | InstitutionFileScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient without action
+   */
+  export type InstitutionClientDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionRefreshToken
+   */
+
+  export type AggregateInstitutionRefreshToken = {
+    _count: InstitutionRefreshTokenCountAggregateOutputType | null
+    _min: InstitutionRefreshTokenMinAggregateOutputType | null
+    _max: InstitutionRefreshTokenMaxAggregateOutputType | null
+  }
+
+  export type InstitutionRefreshTokenMinAggregateOutputType = {
+    id: string | null
+    tokenHash: string | null
+    clientId: string | null
+    expiresAt: Date | null
+    revokedAt: Date | null
+    deviceInfo: string | null
+    ipAddress: string | null
+    createdAt: Date | null
+  }
+
+  export type InstitutionRefreshTokenMaxAggregateOutputType = {
+    id: string | null
+    tokenHash: string | null
+    clientId: string | null
+    expiresAt: Date | null
+    revokedAt: Date | null
+    deviceInfo: string | null
+    ipAddress: string | null
+    createdAt: Date | null
+  }
+
+  export type InstitutionRefreshTokenCountAggregateOutputType = {
+    id: number
+    tokenHash: number
+    clientId: number
+    expiresAt: number
+    revokedAt: number
+    deviceInfo: number
+    ipAddress: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type InstitutionRefreshTokenMinAggregateInputType = {
+    id?: true
+    tokenHash?: true
+    clientId?: true
+    expiresAt?: true
+    revokedAt?: true
+    deviceInfo?: true
+    ipAddress?: true
+    createdAt?: true
+  }
+
+  export type InstitutionRefreshTokenMaxAggregateInputType = {
+    id?: true
+    tokenHash?: true
+    clientId?: true
+    expiresAt?: true
+    revokedAt?: true
+    deviceInfo?: true
+    ipAddress?: true
+    createdAt?: true
+  }
+
+  export type InstitutionRefreshTokenCountAggregateInputType = {
+    id?: true
+    tokenHash?: true
+    clientId?: true
+    expiresAt?: true
+    revokedAt?: true
+    deviceInfo?: true
+    ipAddress?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type InstitutionRefreshTokenAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionRefreshToken to aggregate.
+     */
+    where?: InstitutionRefreshTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionRefreshTokens to fetch.
+     */
+    orderBy?: InstitutionRefreshTokenOrderByWithRelationInput | InstitutionRefreshTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionRefreshTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionRefreshTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionRefreshTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionRefreshTokens
+    **/
+    _count?: true | InstitutionRefreshTokenCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionRefreshTokenMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionRefreshTokenMaxAggregateInputType
+  }
+
+  export type GetInstitutionRefreshTokenAggregateType<T extends InstitutionRefreshTokenAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionRefreshToken]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionRefreshToken[P]>
+      : GetScalarType<T[P], AggregateInstitutionRefreshToken[P]>
+  }
+
+
+
+
+  export type InstitutionRefreshTokenGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionRefreshTokenWhereInput
+    orderBy?: InstitutionRefreshTokenOrderByWithAggregationInput | InstitutionRefreshTokenOrderByWithAggregationInput[]
+    by: InstitutionRefreshTokenScalarFieldEnum[] | InstitutionRefreshTokenScalarFieldEnum
+    having?: InstitutionRefreshTokenScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionRefreshTokenCountAggregateInputType | true
+    _min?: InstitutionRefreshTokenMinAggregateInputType
+    _max?: InstitutionRefreshTokenMaxAggregateInputType
+  }
+
+  export type InstitutionRefreshTokenGroupByOutputType = {
+    id: string
+    tokenHash: string
+    clientId: string
+    expiresAt: Date
+    revokedAt: Date | null
+    deviceInfo: string | null
+    ipAddress: string | null
+    createdAt: Date
+    _count: InstitutionRefreshTokenCountAggregateOutputType | null
+    _min: InstitutionRefreshTokenMinAggregateOutputType | null
+    _max: InstitutionRefreshTokenMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionRefreshTokenGroupByPayload<T extends InstitutionRefreshTokenGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionRefreshTokenGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionRefreshTokenGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionRefreshTokenGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionRefreshTokenGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionRefreshTokenSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tokenHash?: boolean
+    clientId?: boolean
+    expiresAt?: boolean
+    revokedAt?: boolean
+    deviceInfo?: boolean
+    ipAddress?: boolean
+    createdAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionRefreshToken"]>
+
+  export type InstitutionRefreshTokenSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tokenHash?: boolean
+    clientId?: boolean
+    expiresAt?: boolean
+    revokedAt?: boolean
+    deviceInfo?: boolean
+    ipAddress?: boolean
+    createdAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionRefreshToken"]>
+
+  export type InstitutionRefreshTokenSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tokenHash?: boolean
+    clientId?: boolean
+    expiresAt?: boolean
+    revokedAt?: boolean
+    deviceInfo?: boolean
+    ipAddress?: boolean
+    createdAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionRefreshToken"]>
+
+  export type InstitutionRefreshTokenSelectScalar = {
+    id?: boolean
+    tokenHash?: boolean
+    clientId?: boolean
+    expiresAt?: boolean
+    revokedAt?: boolean
+    deviceInfo?: boolean
+    ipAddress?: boolean
+    createdAt?: boolean
+  }
+
+  export type InstitutionRefreshTokenOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tokenHash" | "clientId" | "expiresAt" | "revokedAt" | "deviceInfo" | "ipAddress" | "createdAt", ExtArgs["result"]["institutionRefreshToken"]>
+  export type InstitutionRefreshTokenInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionRefreshTokenIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionRefreshTokenIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionRefreshTokenPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionRefreshToken"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tokenHash: string
+      clientId: string
+      expiresAt: Date
+      revokedAt: Date | null
+      deviceInfo: string | null
+      ipAddress: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["institutionRefreshToken"]>
+    composites: {}
+  }
+
+  type InstitutionRefreshTokenGetPayload<S extends boolean | null | undefined | InstitutionRefreshTokenDefaultArgs> = $Result.GetResult<Prisma.$InstitutionRefreshTokenPayload, S>
+
+  type InstitutionRefreshTokenCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionRefreshTokenFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionRefreshTokenCountAggregateInputType | true
+    }
+
+  export interface InstitutionRefreshTokenDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionRefreshToken'], meta: { name: 'InstitutionRefreshToken' } }
+    /**
+     * Find zero or one InstitutionRefreshToken that matches the filter.
+     * @param {InstitutionRefreshTokenFindUniqueArgs} args - Arguments to find a InstitutionRefreshToken
+     * @example
+     * // Get one InstitutionRefreshToken
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionRefreshTokenFindUniqueArgs>(args: SelectSubset<T, InstitutionRefreshTokenFindUniqueArgs<ExtArgs>>): Prisma__InstitutionRefreshTokenClient<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionRefreshToken that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionRefreshTokenFindUniqueOrThrowArgs} args - Arguments to find a InstitutionRefreshToken
+     * @example
+     * // Get one InstitutionRefreshToken
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionRefreshTokenFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionRefreshTokenFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionRefreshTokenClient<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionRefreshToken that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionRefreshTokenFindFirstArgs} args - Arguments to find a InstitutionRefreshToken
+     * @example
+     * // Get one InstitutionRefreshToken
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionRefreshTokenFindFirstArgs>(args?: SelectSubset<T, InstitutionRefreshTokenFindFirstArgs<ExtArgs>>): Prisma__InstitutionRefreshTokenClient<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionRefreshToken that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionRefreshTokenFindFirstOrThrowArgs} args - Arguments to find a InstitutionRefreshToken
+     * @example
+     * // Get one InstitutionRefreshToken
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionRefreshTokenFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionRefreshTokenFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionRefreshTokenClient<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionRefreshTokens that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionRefreshTokenFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionRefreshTokens
+     * const institutionRefreshTokens = await prisma.institutionRefreshToken.findMany()
+     * 
+     * // Get first 10 InstitutionRefreshTokens
+     * const institutionRefreshTokens = await prisma.institutionRefreshToken.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionRefreshTokenWithIdOnly = await prisma.institutionRefreshToken.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionRefreshTokenFindManyArgs>(args?: SelectSubset<T, InstitutionRefreshTokenFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionRefreshToken.
+     * @param {InstitutionRefreshTokenCreateArgs} args - Arguments to create a InstitutionRefreshToken.
+     * @example
+     * // Create one InstitutionRefreshToken
+     * const InstitutionRefreshToken = await prisma.institutionRefreshToken.create({
+     *   data: {
+     *     // ... data to create a InstitutionRefreshToken
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionRefreshTokenCreateArgs>(args: SelectSubset<T, InstitutionRefreshTokenCreateArgs<ExtArgs>>): Prisma__InstitutionRefreshTokenClient<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionRefreshTokens.
+     * @param {InstitutionRefreshTokenCreateManyArgs} args - Arguments to create many InstitutionRefreshTokens.
+     * @example
+     * // Create many InstitutionRefreshTokens
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionRefreshTokenCreateManyArgs>(args?: SelectSubset<T, InstitutionRefreshTokenCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionRefreshTokens and returns the data saved in the database.
+     * @param {InstitutionRefreshTokenCreateManyAndReturnArgs} args - Arguments to create many InstitutionRefreshTokens.
+     * @example
+     * // Create many InstitutionRefreshTokens
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionRefreshTokens and only return the `id`
+     * const institutionRefreshTokenWithIdOnly = await prisma.institutionRefreshToken.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionRefreshTokenCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionRefreshTokenCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionRefreshToken.
+     * @param {InstitutionRefreshTokenDeleteArgs} args - Arguments to delete one InstitutionRefreshToken.
+     * @example
+     * // Delete one InstitutionRefreshToken
+     * const InstitutionRefreshToken = await prisma.institutionRefreshToken.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionRefreshToken
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionRefreshTokenDeleteArgs>(args: SelectSubset<T, InstitutionRefreshTokenDeleteArgs<ExtArgs>>): Prisma__InstitutionRefreshTokenClient<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionRefreshToken.
+     * @param {InstitutionRefreshTokenUpdateArgs} args - Arguments to update one InstitutionRefreshToken.
+     * @example
+     * // Update one InstitutionRefreshToken
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionRefreshTokenUpdateArgs>(args: SelectSubset<T, InstitutionRefreshTokenUpdateArgs<ExtArgs>>): Prisma__InstitutionRefreshTokenClient<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionRefreshTokens.
+     * @param {InstitutionRefreshTokenDeleteManyArgs} args - Arguments to filter InstitutionRefreshTokens to delete.
+     * @example
+     * // Delete a few InstitutionRefreshTokens
+     * const { count } = await prisma.institutionRefreshToken.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionRefreshTokenDeleteManyArgs>(args?: SelectSubset<T, InstitutionRefreshTokenDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionRefreshTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionRefreshTokenUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionRefreshTokens
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionRefreshTokenUpdateManyArgs>(args: SelectSubset<T, InstitutionRefreshTokenUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionRefreshTokens and returns the data updated in the database.
+     * @param {InstitutionRefreshTokenUpdateManyAndReturnArgs} args - Arguments to update many InstitutionRefreshTokens.
+     * @example
+     * // Update many InstitutionRefreshTokens
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionRefreshTokens and only return the `id`
+     * const institutionRefreshTokenWithIdOnly = await prisma.institutionRefreshToken.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionRefreshTokenUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionRefreshTokenUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionRefreshToken.
+     * @param {InstitutionRefreshTokenUpsertArgs} args - Arguments to update or create a InstitutionRefreshToken.
+     * @example
+     * // Update or create a InstitutionRefreshToken
+     * const institutionRefreshToken = await prisma.institutionRefreshToken.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionRefreshToken
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionRefreshToken we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionRefreshTokenUpsertArgs>(args: SelectSubset<T, InstitutionRefreshTokenUpsertArgs<ExtArgs>>): Prisma__InstitutionRefreshTokenClient<$Result.GetResult<Prisma.$InstitutionRefreshTokenPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionRefreshTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionRefreshTokenCountArgs} args - Arguments to filter InstitutionRefreshTokens to count.
+     * @example
+     * // Count the number of InstitutionRefreshTokens
+     * const count = await prisma.institutionRefreshToken.count({
+     *   where: {
+     *     // ... the filter for the InstitutionRefreshTokens we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionRefreshTokenCountArgs>(
+      args?: Subset<T, InstitutionRefreshTokenCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionRefreshTokenCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionRefreshToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionRefreshTokenAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionRefreshTokenAggregateArgs>(args: Subset<T, InstitutionRefreshTokenAggregateArgs>): Prisma.PrismaPromise<GetInstitutionRefreshTokenAggregateType<T>>
+
+    /**
+     * Group by InstitutionRefreshToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionRefreshTokenGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionRefreshTokenGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionRefreshTokenGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionRefreshTokenGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionRefreshTokenGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionRefreshTokenGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionRefreshToken model
+   */
+  readonly fields: InstitutionRefreshTokenFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionRefreshToken.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionRefreshTokenClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionRefreshToken model
+   */
+  interface InstitutionRefreshTokenFieldRefs {
+    readonly id: FieldRef<"InstitutionRefreshToken", 'String'>
+    readonly tokenHash: FieldRef<"InstitutionRefreshToken", 'String'>
+    readonly clientId: FieldRef<"InstitutionRefreshToken", 'String'>
+    readonly expiresAt: FieldRef<"InstitutionRefreshToken", 'DateTime'>
+    readonly revokedAt: FieldRef<"InstitutionRefreshToken", 'DateTime'>
+    readonly deviceInfo: FieldRef<"InstitutionRefreshToken", 'String'>
+    readonly ipAddress: FieldRef<"InstitutionRefreshToken", 'String'>
+    readonly createdAt: FieldRef<"InstitutionRefreshToken", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionRefreshToken findUnique
+   */
+  export type InstitutionRefreshTokenFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionRefreshToken to fetch.
+     */
+    where: InstitutionRefreshTokenWhereUniqueInput
+  }
+
+  /**
+   * InstitutionRefreshToken findUniqueOrThrow
+   */
+  export type InstitutionRefreshTokenFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionRefreshToken to fetch.
+     */
+    where: InstitutionRefreshTokenWhereUniqueInput
+  }
+
+  /**
+   * InstitutionRefreshToken findFirst
+   */
+  export type InstitutionRefreshTokenFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionRefreshToken to fetch.
+     */
+    where?: InstitutionRefreshTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionRefreshTokens to fetch.
+     */
+    orderBy?: InstitutionRefreshTokenOrderByWithRelationInput | InstitutionRefreshTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionRefreshTokens.
+     */
+    cursor?: InstitutionRefreshTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionRefreshTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionRefreshTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionRefreshTokens.
+     */
+    distinct?: InstitutionRefreshTokenScalarFieldEnum | InstitutionRefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionRefreshToken findFirstOrThrow
+   */
+  export type InstitutionRefreshTokenFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionRefreshToken to fetch.
+     */
+    where?: InstitutionRefreshTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionRefreshTokens to fetch.
+     */
+    orderBy?: InstitutionRefreshTokenOrderByWithRelationInput | InstitutionRefreshTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionRefreshTokens.
+     */
+    cursor?: InstitutionRefreshTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionRefreshTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionRefreshTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionRefreshTokens.
+     */
+    distinct?: InstitutionRefreshTokenScalarFieldEnum | InstitutionRefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionRefreshToken findMany
+   */
+  export type InstitutionRefreshTokenFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionRefreshTokens to fetch.
+     */
+    where?: InstitutionRefreshTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionRefreshTokens to fetch.
+     */
+    orderBy?: InstitutionRefreshTokenOrderByWithRelationInput | InstitutionRefreshTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionRefreshTokens.
+     */
+    cursor?: InstitutionRefreshTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionRefreshTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionRefreshTokens.
+     */
+    skip?: number
+    distinct?: InstitutionRefreshTokenScalarFieldEnum | InstitutionRefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionRefreshToken create
+   */
+  export type InstitutionRefreshTokenCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionRefreshToken.
+     */
+    data: XOR<InstitutionRefreshTokenCreateInput, InstitutionRefreshTokenUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionRefreshToken createMany
+   */
+  export type InstitutionRefreshTokenCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionRefreshTokens.
+     */
+    data: InstitutionRefreshTokenCreateManyInput | InstitutionRefreshTokenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionRefreshToken createManyAndReturn
+   */
+  export type InstitutionRefreshTokenCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionRefreshTokens.
+     */
+    data: InstitutionRefreshTokenCreateManyInput | InstitutionRefreshTokenCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionRefreshToken update
+   */
+  export type InstitutionRefreshTokenUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionRefreshToken.
+     */
+    data: XOR<InstitutionRefreshTokenUpdateInput, InstitutionRefreshTokenUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionRefreshToken to update.
+     */
+    where: InstitutionRefreshTokenWhereUniqueInput
+  }
+
+  /**
+   * InstitutionRefreshToken updateMany
+   */
+  export type InstitutionRefreshTokenUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionRefreshTokens.
+     */
+    data: XOR<InstitutionRefreshTokenUpdateManyMutationInput, InstitutionRefreshTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionRefreshTokens to update
+     */
+    where?: InstitutionRefreshTokenWhereInput
+    /**
+     * Limit how many InstitutionRefreshTokens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionRefreshToken updateManyAndReturn
+   */
+  export type InstitutionRefreshTokenUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionRefreshTokens.
+     */
+    data: XOR<InstitutionRefreshTokenUpdateManyMutationInput, InstitutionRefreshTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionRefreshTokens to update
+     */
+    where?: InstitutionRefreshTokenWhereInput
+    /**
+     * Limit how many InstitutionRefreshTokens to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionRefreshToken upsert
+   */
+  export type InstitutionRefreshTokenUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionRefreshToken to update in case it exists.
+     */
+    where: InstitutionRefreshTokenWhereUniqueInput
+    /**
+     * In case the InstitutionRefreshToken found by the `where` argument doesn't exist, create a new InstitutionRefreshToken with this data.
+     */
+    create: XOR<InstitutionRefreshTokenCreateInput, InstitutionRefreshTokenUncheckedCreateInput>
+    /**
+     * In case the InstitutionRefreshToken was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionRefreshTokenUpdateInput, InstitutionRefreshTokenUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionRefreshToken delete
+   */
+  export type InstitutionRefreshTokenDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionRefreshToken to delete.
+     */
+    where: InstitutionRefreshTokenWhereUniqueInput
+  }
+
+  /**
+   * InstitutionRefreshToken deleteMany
+   */
+  export type InstitutionRefreshTokenDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionRefreshTokens to delete
+     */
+    where?: InstitutionRefreshTokenWhereInput
+    /**
+     * Limit how many InstitutionRefreshTokens to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionRefreshToken without action
+   */
+  export type InstitutionRefreshTokenDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionRefreshToken
+     */
+    select?: InstitutionRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionRefreshToken
+     */
+    omit?: InstitutionRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionRefreshTokenInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionClientSettings
+   */
+
+  export type AggregateInstitutionClientSettings = {
+    _count: InstitutionClientSettingsCountAggregateOutputType | null
+    _avg: InstitutionClientSettingsAvgAggregateOutputType | null
+    _sum: InstitutionClientSettingsSumAggregateOutputType | null
+    _min: InstitutionClientSettingsMinAggregateOutputType | null
+    _max: InstitutionClientSettingsMaxAggregateOutputType | null
+  }
+
+  export type InstitutionClientSettingsAvgAggregateOutputType = {
+    autoApproveThreshold: Decimal | null
+  }
+
+  export type InstitutionClientSettingsSumAggregateOutputType = {
+    autoApproveThreshold: Decimal | null
+  }
+
+  export type InstitutionClientSettingsMinAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    defaultCorridor: string | null
+    defaultCurrency: string | null
+    notificationEmail: string | null
+    webhookUrl: string | null
+    webhookSecret: string | null
+    settlementAuthorityWallet: string | null
+    timezone: string | null
+    autoApproveThreshold: Decimal | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionClientSettingsMaxAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    defaultCorridor: string | null
+    defaultCurrency: string | null
+    notificationEmail: string | null
+    webhookUrl: string | null
+    webhookSecret: string | null
+    settlementAuthorityWallet: string | null
+    timezone: string | null
+    autoApproveThreshold: Decimal | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionClientSettingsCountAggregateOutputType = {
+    id: number
+    clientId: number
+    defaultCorridor: number
+    defaultCurrency: number
+    notificationEmail: number
+    webhookUrl: number
+    webhookSecret: number
+    settlementAuthorityWallet: number
+    timezone: number
+    autoApproveThreshold: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionClientSettingsAvgAggregateInputType = {
+    autoApproveThreshold?: true
+  }
+
+  export type InstitutionClientSettingsSumAggregateInputType = {
+    autoApproveThreshold?: true
+  }
+
+  export type InstitutionClientSettingsMinAggregateInputType = {
+    id?: true
+    clientId?: true
+    defaultCorridor?: true
+    defaultCurrency?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    webhookSecret?: true
+    settlementAuthorityWallet?: true
+    timezone?: true
+    autoApproveThreshold?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionClientSettingsMaxAggregateInputType = {
+    id?: true
+    clientId?: true
+    defaultCorridor?: true
+    defaultCurrency?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    webhookSecret?: true
+    settlementAuthorityWallet?: true
+    timezone?: true
+    autoApproveThreshold?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionClientSettingsCountAggregateInputType = {
+    id?: true
+    clientId?: true
+    defaultCorridor?: true
+    defaultCurrency?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    webhookSecret?: true
+    settlementAuthorityWallet?: true
+    timezone?: true
+    autoApproveThreshold?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionClientSettingsAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionClientSettings to aggregate.
+     */
+    where?: InstitutionClientSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionClientSettings to fetch.
+     */
+    orderBy?: InstitutionClientSettingsOrderByWithRelationInput | InstitutionClientSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionClientSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionClientSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionClientSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionClientSettings
+    **/
+    _count?: true | InstitutionClientSettingsCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionClientSettingsAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionClientSettingsSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionClientSettingsMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionClientSettingsMaxAggregateInputType
+  }
+
+  export type GetInstitutionClientSettingsAggregateType<T extends InstitutionClientSettingsAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionClientSettings]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionClientSettings[P]>
+      : GetScalarType<T[P], AggregateInstitutionClientSettings[P]>
+  }
+
+
+
+
+  export type InstitutionClientSettingsGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionClientSettingsWhereInput
+    orderBy?: InstitutionClientSettingsOrderByWithAggregationInput | InstitutionClientSettingsOrderByWithAggregationInput[]
+    by: InstitutionClientSettingsScalarFieldEnum[] | InstitutionClientSettingsScalarFieldEnum
+    having?: InstitutionClientSettingsScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionClientSettingsCountAggregateInputType | true
+    _avg?: InstitutionClientSettingsAvgAggregateInputType
+    _sum?: InstitutionClientSettingsSumAggregateInputType
+    _min?: InstitutionClientSettingsMinAggregateInputType
+    _max?: InstitutionClientSettingsMaxAggregateInputType
+  }
+
+  export type InstitutionClientSettingsGroupByOutputType = {
+    id: string
+    clientId: string
+    defaultCorridor: string | null
+    defaultCurrency: string
+    notificationEmail: string | null
+    webhookUrl: string | null
+    webhookSecret: string | null
+    settlementAuthorityWallet: string | null
+    timezone: string
+    autoApproveThreshold: Decimal | null
+    createdAt: Date
+    updatedAt: Date
+    _count: InstitutionClientSettingsCountAggregateOutputType | null
+    _avg: InstitutionClientSettingsAvgAggregateOutputType | null
+    _sum: InstitutionClientSettingsSumAggregateOutputType | null
+    _min: InstitutionClientSettingsMinAggregateOutputType | null
+    _max: InstitutionClientSettingsMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionClientSettingsGroupByPayload<T extends InstitutionClientSettingsGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionClientSettingsGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionClientSettingsGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionClientSettingsGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionClientSettingsGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionClientSettingsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    defaultCorridor?: boolean
+    defaultCurrency?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    webhookSecret?: boolean
+    settlementAuthorityWallet?: boolean
+    timezone?: boolean
+    autoApproveThreshold?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionClientSettings"]>
+
+  export type InstitutionClientSettingsSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    defaultCorridor?: boolean
+    defaultCurrency?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    webhookSecret?: boolean
+    settlementAuthorityWallet?: boolean
+    timezone?: boolean
+    autoApproveThreshold?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionClientSettings"]>
+
+  export type InstitutionClientSettingsSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    defaultCorridor?: boolean
+    defaultCurrency?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    webhookSecret?: boolean
+    settlementAuthorityWallet?: boolean
+    timezone?: boolean
+    autoApproveThreshold?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionClientSettings"]>
+
+  export type InstitutionClientSettingsSelectScalar = {
+    id?: boolean
+    clientId?: boolean
+    defaultCorridor?: boolean
+    defaultCurrency?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    webhookSecret?: boolean
+    settlementAuthorityWallet?: boolean
+    timezone?: boolean
+    autoApproveThreshold?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
+  export type InstitutionClientSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionClientSettingsIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionClientSettingsIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionClientSettingsPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionClientSettings"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      clientId: string
+      defaultCorridor: string | null
+      defaultCurrency: string
+      notificationEmail: string | null
+      webhookUrl: string | null
+      webhookSecret: string | null
+      settlementAuthorityWallet: string | null
+      timezone: string
+      autoApproveThreshold: Prisma.Decimal | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["institutionClientSettings"]>
+    composites: {}
+  }
+
+  type InstitutionClientSettingsGetPayload<S extends boolean | null | undefined | InstitutionClientSettingsDefaultArgs> = $Result.GetResult<Prisma.$InstitutionClientSettingsPayload, S>
+
+  type InstitutionClientSettingsCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionClientSettingsFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionClientSettingsCountAggregateInputType | true
+    }
+
+  export interface InstitutionClientSettingsDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionClientSettings'], meta: { name: 'InstitutionClientSettings' } }
+    /**
+     * Find zero or one InstitutionClientSettings that matches the filter.
+     * @param {InstitutionClientSettingsFindUniqueArgs} args - Arguments to find a InstitutionClientSettings
+     * @example
+     * // Get one InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionClientSettingsFindUniqueArgs>(args: SelectSubset<T, InstitutionClientSettingsFindUniqueArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionClientSettings that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionClientSettingsFindUniqueOrThrowArgs} args - Arguments to find a InstitutionClientSettings
+     * @example
+     * // Get one InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionClientSettingsFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionClientSettingsFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionClientSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientSettingsFindFirstArgs} args - Arguments to find a InstitutionClientSettings
+     * @example
+     * // Get one InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionClientSettingsFindFirstArgs>(args?: SelectSubset<T, InstitutionClientSettingsFindFirstArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionClientSettings that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientSettingsFindFirstOrThrowArgs} args - Arguments to find a InstitutionClientSettings
+     * @example
+     * // Get one InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionClientSettingsFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionClientSettingsFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionClientSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientSettingsFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.findMany()
+     * 
+     * // Get first 10 InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionClientSettingsWithIdOnly = await prisma.institutionClientSettings.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionClientSettingsFindManyArgs>(args?: SelectSubset<T, InstitutionClientSettingsFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionClientSettings.
+     * @param {InstitutionClientSettingsCreateArgs} args - Arguments to create a InstitutionClientSettings.
+     * @example
+     * // Create one InstitutionClientSettings
+     * const InstitutionClientSettings = await prisma.institutionClientSettings.create({
+     *   data: {
+     *     // ... data to create a InstitutionClientSettings
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionClientSettingsCreateArgs>(args: SelectSubset<T, InstitutionClientSettingsCreateArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionClientSettings.
+     * @param {InstitutionClientSettingsCreateManyArgs} args - Arguments to create many InstitutionClientSettings.
+     * @example
+     * // Create many InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionClientSettingsCreateManyArgs>(args?: SelectSubset<T, InstitutionClientSettingsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionClientSettings and returns the data saved in the database.
+     * @param {InstitutionClientSettingsCreateManyAndReturnArgs} args - Arguments to create many InstitutionClientSettings.
+     * @example
+     * // Create many InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionClientSettings and only return the `id`
+     * const institutionClientSettingsWithIdOnly = await prisma.institutionClientSettings.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionClientSettingsCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionClientSettingsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionClientSettings.
+     * @param {InstitutionClientSettingsDeleteArgs} args - Arguments to delete one InstitutionClientSettings.
+     * @example
+     * // Delete one InstitutionClientSettings
+     * const InstitutionClientSettings = await prisma.institutionClientSettings.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionClientSettings
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionClientSettingsDeleteArgs>(args: SelectSubset<T, InstitutionClientSettingsDeleteArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionClientSettings.
+     * @param {InstitutionClientSettingsUpdateArgs} args - Arguments to update one InstitutionClientSettings.
+     * @example
+     * // Update one InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionClientSettingsUpdateArgs>(args: SelectSubset<T, InstitutionClientSettingsUpdateArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionClientSettings.
+     * @param {InstitutionClientSettingsDeleteManyArgs} args - Arguments to filter InstitutionClientSettings to delete.
+     * @example
+     * // Delete a few InstitutionClientSettings
+     * const { count } = await prisma.institutionClientSettings.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionClientSettingsDeleteManyArgs>(args?: SelectSubset<T, InstitutionClientSettingsDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionClientSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientSettingsUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionClientSettingsUpdateManyArgs>(args: SelectSubset<T, InstitutionClientSettingsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionClientSettings and returns the data updated in the database.
+     * @param {InstitutionClientSettingsUpdateManyAndReturnArgs} args - Arguments to update many InstitutionClientSettings.
+     * @example
+     * // Update many InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionClientSettings and only return the `id`
+     * const institutionClientSettingsWithIdOnly = await prisma.institutionClientSettings.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionClientSettingsUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionClientSettingsUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionClientSettings.
+     * @param {InstitutionClientSettingsUpsertArgs} args - Arguments to update or create a InstitutionClientSettings.
+     * @example
+     * // Update or create a InstitutionClientSettings
+     * const institutionClientSettings = await prisma.institutionClientSettings.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionClientSettings
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionClientSettings we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionClientSettingsUpsertArgs>(args: SelectSubset<T, InstitutionClientSettingsUpsertArgs<ExtArgs>>): Prisma__InstitutionClientSettingsClient<$Result.GetResult<Prisma.$InstitutionClientSettingsPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionClientSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientSettingsCountArgs} args - Arguments to filter InstitutionClientSettings to count.
+     * @example
+     * // Count the number of InstitutionClientSettings
+     * const count = await prisma.institutionClientSettings.count({
+     *   where: {
+     *     // ... the filter for the InstitutionClientSettings we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionClientSettingsCountArgs>(
+      args?: Subset<T, InstitutionClientSettingsCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionClientSettingsCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionClientSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientSettingsAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionClientSettingsAggregateArgs>(args: Subset<T, InstitutionClientSettingsAggregateArgs>): Prisma.PrismaPromise<GetInstitutionClientSettingsAggregateType<T>>
+
+    /**
+     * Group by InstitutionClientSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionClientSettingsGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionClientSettingsGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionClientSettingsGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionClientSettingsGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionClientSettingsGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionClientSettingsGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionClientSettings model
+   */
+  readonly fields: InstitutionClientSettingsFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionClientSettings.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionClientSettingsClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionClientSettings model
+   */
+  interface InstitutionClientSettingsFieldRefs {
+    readonly id: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly clientId: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly defaultCorridor: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly defaultCurrency: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly notificationEmail: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly webhookUrl: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly webhookSecret: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly settlementAuthorityWallet: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly timezone: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly autoApproveThreshold: FieldRef<"InstitutionClientSettings", 'Decimal'>
+    readonly createdAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionClientSettings findUnique
+   */
+  export type InstitutionClientSettingsFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClientSettings to fetch.
+     */
+    where: InstitutionClientSettingsWhereUniqueInput
+  }
+
+  /**
+   * InstitutionClientSettings findUniqueOrThrow
+   */
+  export type InstitutionClientSettingsFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClientSettings to fetch.
+     */
+    where: InstitutionClientSettingsWhereUniqueInput
+  }
+
+  /**
+   * InstitutionClientSettings findFirst
+   */
+  export type InstitutionClientSettingsFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClientSettings to fetch.
+     */
+    where?: InstitutionClientSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionClientSettings to fetch.
+     */
+    orderBy?: InstitutionClientSettingsOrderByWithRelationInput | InstitutionClientSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionClientSettings.
+     */
+    cursor?: InstitutionClientSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionClientSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionClientSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionClientSettings.
+     */
+    distinct?: InstitutionClientSettingsScalarFieldEnum | InstitutionClientSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClientSettings findFirstOrThrow
+   */
+  export type InstitutionClientSettingsFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClientSettings to fetch.
+     */
+    where?: InstitutionClientSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionClientSettings to fetch.
+     */
+    orderBy?: InstitutionClientSettingsOrderByWithRelationInput | InstitutionClientSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionClientSettings.
+     */
+    cursor?: InstitutionClientSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionClientSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionClientSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionClientSettings.
+     */
+    distinct?: InstitutionClientSettingsScalarFieldEnum | InstitutionClientSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClientSettings findMany
+   */
+  export type InstitutionClientSettingsFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionClientSettings to fetch.
+     */
+    where?: InstitutionClientSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionClientSettings to fetch.
+     */
+    orderBy?: InstitutionClientSettingsOrderByWithRelationInput | InstitutionClientSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionClientSettings.
+     */
+    cursor?: InstitutionClientSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionClientSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionClientSettings.
+     */
+    skip?: number
+    distinct?: InstitutionClientSettingsScalarFieldEnum | InstitutionClientSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClientSettings create
+   */
+  export type InstitutionClientSettingsCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionClientSettings.
+     */
+    data: XOR<InstitutionClientSettingsCreateInput, InstitutionClientSettingsUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionClientSettings createMany
+   */
+  export type InstitutionClientSettingsCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionClientSettings.
+     */
+    data: InstitutionClientSettingsCreateManyInput | InstitutionClientSettingsCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionClientSettings createManyAndReturn
+   */
+  export type InstitutionClientSettingsCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionClientSettings.
+     */
+    data: InstitutionClientSettingsCreateManyInput | InstitutionClientSettingsCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionClientSettings update
+   */
+  export type InstitutionClientSettingsUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionClientSettings.
+     */
+    data: XOR<InstitutionClientSettingsUpdateInput, InstitutionClientSettingsUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionClientSettings to update.
+     */
+    where: InstitutionClientSettingsWhereUniqueInput
+  }
+
+  /**
+   * InstitutionClientSettings updateMany
+   */
+  export type InstitutionClientSettingsUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionClientSettings.
+     */
+    data: XOR<InstitutionClientSettingsUpdateManyMutationInput, InstitutionClientSettingsUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionClientSettings to update
+     */
+    where?: InstitutionClientSettingsWhereInput
+    /**
+     * Limit how many InstitutionClientSettings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionClientSettings updateManyAndReturn
+   */
+  export type InstitutionClientSettingsUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionClientSettings.
+     */
+    data: XOR<InstitutionClientSettingsUpdateManyMutationInput, InstitutionClientSettingsUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionClientSettings to update
+     */
+    where?: InstitutionClientSettingsWhereInput
+    /**
+     * Limit how many InstitutionClientSettings to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionClientSettings upsert
+   */
+  export type InstitutionClientSettingsUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionClientSettings to update in case it exists.
+     */
+    where: InstitutionClientSettingsWhereUniqueInput
+    /**
+     * In case the InstitutionClientSettings found by the `where` argument doesn't exist, create a new InstitutionClientSettings with this data.
+     */
+    create: XOR<InstitutionClientSettingsCreateInput, InstitutionClientSettingsUncheckedCreateInput>
+    /**
+     * In case the InstitutionClientSettings was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionClientSettingsUpdateInput, InstitutionClientSettingsUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionClientSettings delete
+   */
+  export type InstitutionClientSettingsDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionClientSettings to delete.
+     */
+    where: InstitutionClientSettingsWhereUniqueInput
+  }
+
+  /**
+   * InstitutionClientSettings deleteMany
+   */
+  export type InstitutionClientSettingsDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionClientSettings to delete
+     */
+    where?: InstitutionClientSettingsWhereInput
+    /**
+     * Limit how many InstitutionClientSettings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionClientSettings without action
+   */
+  export type InstitutionClientSettingsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClientSettings
+     */
+    select?: InstitutionClientSettingsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClientSettings
+     */
+    omit?: InstitutionClientSettingsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientSettingsInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionApiKey
+   */
+
+  export type AggregateInstitutionApiKey = {
+    _count: InstitutionApiKeyCountAggregateOutputType | null
+    _min: InstitutionApiKeyMinAggregateOutputType | null
+    _max: InstitutionApiKeyMaxAggregateOutputType | null
+  }
+
+  export type InstitutionApiKeyMinAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    keyHash: string | null
+    name: string | null
+    active: boolean | null
+    lastUsedAt: Date | null
+    expiresAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionApiKeyMaxAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    keyHash: string | null
+    name: string | null
+    active: boolean | null
+    lastUsedAt: Date | null
+    expiresAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionApiKeyCountAggregateOutputType = {
+    id: number
+    clientId: number
+    keyHash: number
+    name: number
+    permissions: number
+    active: number
+    lastUsedAt: number
+    expiresAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionApiKeyMinAggregateInputType = {
+    id?: true
+    clientId?: true
+    keyHash?: true
+    name?: true
+    active?: true
+    lastUsedAt?: true
+    expiresAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionApiKeyMaxAggregateInputType = {
+    id?: true
+    clientId?: true
+    keyHash?: true
+    name?: true
+    active?: true
+    lastUsedAt?: true
+    expiresAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionApiKeyCountAggregateInputType = {
+    id?: true
+    clientId?: true
+    keyHash?: true
+    name?: true
+    permissions?: true
+    active?: true
+    lastUsedAt?: true
+    expiresAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionApiKeyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionApiKey to aggregate.
+     */
+    where?: InstitutionApiKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionApiKeys to fetch.
+     */
+    orderBy?: InstitutionApiKeyOrderByWithRelationInput | InstitutionApiKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionApiKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionApiKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionApiKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionApiKeys
+    **/
+    _count?: true | InstitutionApiKeyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionApiKeyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionApiKeyMaxAggregateInputType
+  }
+
+  export type GetInstitutionApiKeyAggregateType<T extends InstitutionApiKeyAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionApiKey]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionApiKey[P]>
+      : GetScalarType<T[P], AggregateInstitutionApiKey[P]>
+  }
+
+
+
+
+  export type InstitutionApiKeyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionApiKeyWhereInput
+    orderBy?: InstitutionApiKeyOrderByWithAggregationInput | InstitutionApiKeyOrderByWithAggregationInput[]
+    by: InstitutionApiKeyScalarFieldEnum[] | InstitutionApiKeyScalarFieldEnum
+    having?: InstitutionApiKeyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionApiKeyCountAggregateInputType | true
+    _min?: InstitutionApiKeyMinAggregateInputType
+    _max?: InstitutionApiKeyMaxAggregateInputType
+  }
+
+  export type InstitutionApiKeyGroupByOutputType = {
+    id: string
+    clientId: string
+    keyHash: string
+    name: string
+    permissions: string[]
+    active: boolean
+    lastUsedAt: Date | null
+    expiresAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: InstitutionApiKeyCountAggregateOutputType | null
+    _min: InstitutionApiKeyMinAggregateOutputType | null
+    _max: InstitutionApiKeyMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionApiKeyGroupByPayload<T extends InstitutionApiKeyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionApiKeyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionApiKeyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionApiKeyGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionApiKeyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionApiKeySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    keyHash?: boolean
+    name?: boolean
+    permissions?: boolean
+    active?: boolean
+    lastUsedAt?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionApiKey"]>
+
+  export type InstitutionApiKeySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    keyHash?: boolean
+    name?: boolean
+    permissions?: boolean
+    active?: boolean
+    lastUsedAt?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionApiKey"]>
+
+  export type InstitutionApiKeySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    keyHash?: boolean
+    name?: boolean
+    permissions?: boolean
+    active?: boolean
+    lastUsedAt?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionApiKey"]>
+
+  export type InstitutionApiKeySelectScalar = {
+    id?: boolean
+    clientId?: boolean
+    keyHash?: boolean
+    name?: boolean
+    permissions?: boolean
+    active?: boolean
+    lastUsedAt?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InstitutionApiKeyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "keyHash" | "name" | "permissions" | "active" | "lastUsedAt" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionApiKey"]>
+  export type InstitutionApiKeyInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionApiKeyIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionApiKeyIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionApiKeyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionApiKey"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      clientId: string
+      keyHash: string
+      name: string
+      permissions: string[]
+      active: boolean
+      lastUsedAt: Date | null
+      expiresAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["institutionApiKey"]>
+    composites: {}
+  }
+
+  type InstitutionApiKeyGetPayload<S extends boolean | null | undefined | InstitutionApiKeyDefaultArgs> = $Result.GetResult<Prisma.$InstitutionApiKeyPayload, S>
+
+  type InstitutionApiKeyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionApiKeyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionApiKeyCountAggregateInputType | true
+    }
+
+  export interface InstitutionApiKeyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionApiKey'], meta: { name: 'InstitutionApiKey' } }
+    /**
+     * Find zero or one InstitutionApiKey that matches the filter.
+     * @param {InstitutionApiKeyFindUniqueArgs} args - Arguments to find a InstitutionApiKey
+     * @example
+     * // Get one InstitutionApiKey
+     * const institutionApiKey = await prisma.institutionApiKey.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionApiKeyFindUniqueArgs>(args: SelectSubset<T, InstitutionApiKeyFindUniqueArgs<ExtArgs>>): Prisma__InstitutionApiKeyClient<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionApiKey that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionApiKeyFindUniqueOrThrowArgs} args - Arguments to find a InstitutionApiKey
+     * @example
+     * // Get one InstitutionApiKey
+     * const institutionApiKey = await prisma.institutionApiKey.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionApiKeyFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionApiKeyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionApiKeyClient<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionApiKey that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApiKeyFindFirstArgs} args - Arguments to find a InstitutionApiKey
+     * @example
+     * // Get one InstitutionApiKey
+     * const institutionApiKey = await prisma.institutionApiKey.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionApiKeyFindFirstArgs>(args?: SelectSubset<T, InstitutionApiKeyFindFirstArgs<ExtArgs>>): Prisma__InstitutionApiKeyClient<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionApiKey that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApiKeyFindFirstOrThrowArgs} args - Arguments to find a InstitutionApiKey
+     * @example
+     * // Get one InstitutionApiKey
+     * const institutionApiKey = await prisma.institutionApiKey.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionApiKeyFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionApiKeyFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionApiKeyClient<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionApiKeys that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApiKeyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionApiKeys
+     * const institutionApiKeys = await prisma.institutionApiKey.findMany()
+     * 
+     * // Get first 10 InstitutionApiKeys
+     * const institutionApiKeys = await prisma.institutionApiKey.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionApiKeyWithIdOnly = await prisma.institutionApiKey.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionApiKeyFindManyArgs>(args?: SelectSubset<T, InstitutionApiKeyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionApiKey.
+     * @param {InstitutionApiKeyCreateArgs} args - Arguments to create a InstitutionApiKey.
+     * @example
+     * // Create one InstitutionApiKey
+     * const InstitutionApiKey = await prisma.institutionApiKey.create({
+     *   data: {
+     *     // ... data to create a InstitutionApiKey
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionApiKeyCreateArgs>(args: SelectSubset<T, InstitutionApiKeyCreateArgs<ExtArgs>>): Prisma__InstitutionApiKeyClient<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionApiKeys.
+     * @param {InstitutionApiKeyCreateManyArgs} args - Arguments to create many InstitutionApiKeys.
+     * @example
+     * // Create many InstitutionApiKeys
+     * const institutionApiKey = await prisma.institutionApiKey.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionApiKeyCreateManyArgs>(args?: SelectSubset<T, InstitutionApiKeyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionApiKeys and returns the data saved in the database.
+     * @param {InstitutionApiKeyCreateManyAndReturnArgs} args - Arguments to create many InstitutionApiKeys.
+     * @example
+     * // Create many InstitutionApiKeys
+     * const institutionApiKey = await prisma.institutionApiKey.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionApiKeys and only return the `id`
+     * const institutionApiKeyWithIdOnly = await prisma.institutionApiKey.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionApiKeyCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionApiKeyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionApiKey.
+     * @param {InstitutionApiKeyDeleteArgs} args - Arguments to delete one InstitutionApiKey.
+     * @example
+     * // Delete one InstitutionApiKey
+     * const InstitutionApiKey = await prisma.institutionApiKey.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionApiKey
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionApiKeyDeleteArgs>(args: SelectSubset<T, InstitutionApiKeyDeleteArgs<ExtArgs>>): Prisma__InstitutionApiKeyClient<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionApiKey.
+     * @param {InstitutionApiKeyUpdateArgs} args - Arguments to update one InstitutionApiKey.
+     * @example
+     * // Update one InstitutionApiKey
+     * const institutionApiKey = await prisma.institutionApiKey.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionApiKeyUpdateArgs>(args: SelectSubset<T, InstitutionApiKeyUpdateArgs<ExtArgs>>): Prisma__InstitutionApiKeyClient<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionApiKeys.
+     * @param {InstitutionApiKeyDeleteManyArgs} args - Arguments to filter InstitutionApiKeys to delete.
+     * @example
+     * // Delete a few InstitutionApiKeys
+     * const { count } = await prisma.institutionApiKey.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionApiKeyDeleteManyArgs>(args?: SelectSubset<T, InstitutionApiKeyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionApiKeys.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApiKeyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionApiKeys
+     * const institutionApiKey = await prisma.institutionApiKey.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionApiKeyUpdateManyArgs>(args: SelectSubset<T, InstitutionApiKeyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionApiKeys and returns the data updated in the database.
+     * @param {InstitutionApiKeyUpdateManyAndReturnArgs} args - Arguments to update many InstitutionApiKeys.
+     * @example
+     * // Update many InstitutionApiKeys
+     * const institutionApiKey = await prisma.institutionApiKey.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionApiKeys and only return the `id`
+     * const institutionApiKeyWithIdOnly = await prisma.institutionApiKey.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionApiKeyUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionApiKeyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionApiKey.
+     * @param {InstitutionApiKeyUpsertArgs} args - Arguments to update or create a InstitutionApiKey.
+     * @example
+     * // Update or create a InstitutionApiKey
+     * const institutionApiKey = await prisma.institutionApiKey.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionApiKey
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionApiKey we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionApiKeyUpsertArgs>(args: SelectSubset<T, InstitutionApiKeyUpsertArgs<ExtArgs>>): Prisma__InstitutionApiKeyClient<$Result.GetResult<Prisma.$InstitutionApiKeyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionApiKeys.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApiKeyCountArgs} args - Arguments to filter InstitutionApiKeys to count.
+     * @example
+     * // Count the number of InstitutionApiKeys
+     * const count = await prisma.institutionApiKey.count({
+     *   where: {
+     *     // ... the filter for the InstitutionApiKeys we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionApiKeyCountArgs>(
+      args?: Subset<T, InstitutionApiKeyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionApiKeyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionApiKey.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApiKeyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionApiKeyAggregateArgs>(args: Subset<T, InstitutionApiKeyAggregateArgs>): Prisma.PrismaPromise<GetInstitutionApiKeyAggregateType<T>>
+
+    /**
+     * Group by InstitutionApiKey.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApiKeyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionApiKeyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionApiKeyGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionApiKeyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionApiKeyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionApiKeyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionApiKey model
+   */
+  readonly fields: InstitutionApiKeyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionApiKey.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionApiKeyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionApiKey model
+   */
+  interface InstitutionApiKeyFieldRefs {
+    readonly id: FieldRef<"InstitutionApiKey", 'String'>
+    readonly clientId: FieldRef<"InstitutionApiKey", 'String'>
+    readonly keyHash: FieldRef<"InstitutionApiKey", 'String'>
+    readonly name: FieldRef<"InstitutionApiKey", 'String'>
+    readonly permissions: FieldRef<"InstitutionApiKey", 'String[]'>
+    readonly active: FieldRef<"InstitutionApiKey", 'Boolean'>
+    readonly lastUsedAt: FieldRef<"InstitutionApiKey", 'DateTime'>
+    readonly expiresAt: FieldRef<"InstitutionApiKey", 'DateTime'>
+    readonly createdAt: FieldRef<"InstitutionApiKey", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionApiKey", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionApiKey findUnique
+   */
+  export type InstitutionApiKeyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApiKey to fetch.
+     */
+    where: InstitutionApiKeyWhereUniqueInput
+  }
+
+  /**
+   * InstitutionApiKey findUniqueOrThrow
+   */
+  export type InstitutionApiKeyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApiKey to fetch.
+     */
+    where: InstitutionApiKeyWhereUniqueInput
+  }
+
+  /**
+   * InstitutionApiKey findFirst
+   */
+  export type InstitutionApiKeyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApiKey to fetch.
+     */
+    where?: InstitutionApiKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionApiKeys to fetch.
+     */
+    orderBy?: InstitutionApiKeyOrderByWithRelationInput | InstitutionApiKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionApiKeys.
+     */
+    cursor?: InstitutionApiKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionApiKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionApiKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionApiKeys.
+     */
+    distinct?: InstitutionApiKeyScalarFieldEnum | InstitutionApiKeyScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionApiKey findFirstOrThrow
+   */
+  export type InstitutionApiKeyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApiKey to fetch.
+     */
+    where?: InstitutionApiKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionApiKeys to fetch.
+     */
+    orderBy?: InstitutionApiKeyOrderByWithRelationInput | InstitutionApiKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionApiKeys.
+     */
+    cursor?: InstitutionApiKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionApiKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionApiKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionApiKeys.
+     */
+    distinct?: InstitutionApiKeyScalarFieldEnum | InstitutionApiKeyScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionApiKey findMany
+   */
+  export type InstitutionApiKeyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApiKeys to fetch.
+     */
+    where?: InstitutionApiKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionApiKeys to fetch.
+     */
+    orderBy?: InstitutionApiKeyOrderByWithRelationInput | InstitutionApiKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionApiKeys.
+     */
+    cursor?: InstitutionApiKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionApiKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionApiKeys.
+     */
+    skip?: number
+    distinct?: InstitutionApiKeyScalarFieldEnum | InstitutionApiKeyScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionApiKey create
+   */
+  export type InstitutionApiKeyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionApiKey.
+     */
+    data: XOR<InstitutionApiKeyCreateInput, InstitutionApiKeyUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionApiKey createMany
+   */
+  export type InstitutionApiKeyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionApiKeys.
+     */
+    data: InstitutionApiKeyCreateManyInput | InstitutionApiKeyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionApiKey createManyAndReturn
+   */
+  export type InstitutionApiKeyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionApiKeys.
+     */
+    data: InstitutionApiKeyCreateManyInput | InstitutionApiKeyCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionApiKey update
+   */
+  export type InstitutionApiKeyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionApiKey.
+     */
+    data: XOR<InstitutionApiKeyUpdateInput, InstitutionApiKeyUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionApiKey to update.
+     */
+    where: InstitutionApiKeyWhereUniqueInput
+  }
+
+  /**
+   * InstitutionApiKey updateMany
+   */
+  export type InstitutionApiKeyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionApiKeys.
+     */
+    data: XOR<InstitutionApiKeyUpdateManyMutationInput, InstitutionApiKeyUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionApiKeys to update
+     */
+    where?: InstitutionApiKeyWhereInput
+    /**
+     * Limit how many InstitutionApiKeys to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionApiKey updateManyAndReturn
+   */
+  export type InstitutionApiKeyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionApiKeys.
+     */
+    data: XOR<InstitutionApiKeyUpdateManyMutationInput, InstitutionApiKeyUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionApiKeys to update
+     */
+    where?: InstitutionApiKeyWhereInput
+    /**
+     * Limit how many InstitutionApiKeys to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionApiKey upsert
+   */
+  export type InstitutionApiKeyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionApiKey to update in case it exists.
+     */
+    where: InstitutionApiKeyWhereUniqueInput
+    /**
+     * In case the InstitutionApiKey found by the `where` argument doesn't exist, create a new InstitutionApiKey with this data.
+     */
+    create: XOR<InstitutionApiKeyCreateInput, InstitutionApiKeyUncheckedCreateInput>
+    /**
+     * In case the InstitutionApiKey was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionApiKeyUpdateInput, InstitutionApiKeyUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionApiKey delete
+   */
+  export type InstitutionApiKeyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionApiKey to delete.
+     */
+    where: InstitutionApiKeyWhereUniqueInput
+  }
+
+  /**
+   * InstitutionApiKey deleteMany
+   */
+  export type InstitutionApiKeyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionApiKeys to delete
+     */
+    where?: InstitutionApiKeyWhereInput
+    /**
+     * Limit how many InstitutionApiKeys to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionApiKey without action
+   */
+  export type InstitutionApiKeyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApiKey
+     */
+    select?: InstitutionApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApiKey
+     */
+    omit?: InstitutionApiKeyOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionApiKeyInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionEscrow
+   */
+
+  export type AggregateInstitutionEscrow = {
+    _count: InstitutionEscrowCountAggregateOutputType | null
+    _avg: InstitutionEscrowAvgAggregateOutputType | null
+    _sum: InstitutionEscrowSumAggregateOutputType | null
+    _min: InstitutionEscrowMinAggregateOutputType | null
+    _max: InstitutionEscrowMaxAggregateOutputType | null
+  }
+
+  export type InstitutionEscrowAvgAggregateOutputType = {
+    amount: Decimal | null
+    platformFee: Decimal | null
+    riskScore: number | null
+  }
+
+  export type InstitutionEscrowSumAggregateOutputType = {
+    amount: Decimal | null
+    platformFee: Decimal | null
+    riskScore: number | null
+  }
+
+  export type InstitutionEscrowMinAggregateOutputType = {
+    id: string | null
+    escrowId: string | null
+    clientId: string | null
+    payerWallet: string | null
+    recipientWallet: string | null
+    usdcMint: string | null
+    amount: Decimal | null
+    platformFee: Decimal | null
+    corridor: string | null
+    conditionType: $Enums.InstitutionConditionType | null
+    status: $Enums.InstitutionEscrowStatus | null
+    settlementAuthority: string | null
+    riskScore: number | null
+    escrowPda: string | null
+    vaultPda: string | null
+    depositTxSignature: string | null
+    releaseTxSignature: string | null
+    cancelTxSignature: string | null
+    expiresAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    resolvedAt: Date | null
+    fundedAt: Date | null
+  }
+
+  export type InstitutionEscrowMaxAggregateOutputType = {
+    id: string | null
+    escrowId: string | null
+    clientId: string | null
+    payerWallet: string | null
+    recipientWallet: string | null
+    usdcMint: string | null
+    amount: Decimal | null
+    platformFee: Decimal | null
+    corridor: string | null
+    conditionType: $Enums.InstitutionConditionType | null
+    status: $Enums.InstitutionEscrowStatus | null
+    settlementAuthority: string | null
+    riskScore: number | null
+    escrowPda: string | null
+    vaultPda: string | null
+    depositTxSignature: string | null
+    releaseTxSignature: string | null
+    cancelTxSignature: string | null
+    expiresAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    resolvedAt: Date | null
+    fundedAt: Date | null
+  }
+
+  export type InstitutionEscrowCountAggregateOutputType = {
+    id: number
+    escrowId: number
+    clientId: number
+    payerWallet: number
+    recipientWallet: number
+    usdcMint: number
+    amount: number
+    platformFee: number
+    corridor: number
+    conditionType: number
+    status: number
+    settlementAuthority: number
+    riskScore: number
+    escrowPda: number
+    vaultPda: number
+    depositTxSignature: number
+    releaseTxSignature: number
+    cancelTxSignature: number
+    expiresAt: number
+    createdAt: number
+    updatedAt: number
+    resolvedAt: number
+    fundedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionEscrowAvgAggregateInputType = {
+    amount?: true
+    platformFee?: true
+    riskScore?: true
+  }
+
+  export type InstitutionEscrowSumAggregateInputType = {
+    amount?: true
+    platformFee?: true
+    riskScore?: true
+  }
+
+  export type InstitutionEscrowMinAggregateInputType = {
+    id?: true
+    escrowId?: true
+    clientId?: true
+    payerWallet?: true
+    recipientWallet?: true
+    usdcMint?: true
+    amount?: true
+    platformFee?: true
+    corridor?: true
+    conditionType?: true
+    status?: true
+    settlementAuthority?: true
+    riskScore?: true
+    escrowPda?: true
+    vaultPda?: true
+    depositTxSignature?: true
+    releaseTxSignature?: true
+    cancelTxSignature?: true
+    expiresAt?: true
+    createdAt?: true
+    updatedAt?: true
+    resolvedAt?: true
+    fundedAt?: true
+  }
+
+  export type InstitutionEscrowMaxAggregateInputType = {
+    id?: true
+    escrowId?: true
+    clientId?: true
+    payerWallet?: true
+    recipientWallet?: true
+    usdcMint?: true
+    amount?: true
+    platformFee?: true
+    corridor?: true
+    conditionType?: true
+    status?: true
+    settlementAuthority?: true
+    riskScore?: true
+    escrowPda?: true
+    vaultPda?: true
+    depositTxSignature?: true
+    releaseTxSignature?: true
+    cancelTxSignature?: true
+    expiresAt?: true
+    createdAt?: true
+    updatedAt?: true
+    resolvedAt?: true
+    fundedAt?: true
+  }
+
+  export type InstitutionEscrowCountAggregateInputType = {
+    id?: true
+    escrowId?: true
+    clientId?: true
+    payerWallet?: true
+    recipientWallet?: true
+    usdcMint?: true
+    amount?: true
+    platformFee?: true
+    corridor?: true
+    conditionType?: true
+    status?: true
+    settlementAuthority?: true
+    riskScore?: true
+    escrowPda?: true
+    vaultPda?: true
+    depositTxSignature?: true
+    releaseTxSignature?: true
+    cancelTxSignature?: true
+    expiresAt?: true
+    createdAt?: true
+    updatedAt?: true
+    resolvedAt?: true
+    fundedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionEscrowAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionEscrow to aggregate.
+     */
+    where?: InstitutionEscrowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionEscrows to fetch.
+     */
+    orderBy?: InstitutionEscrowOrderByWithRelationInput | InstitutionEscrowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionEscrowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionEscrows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionEscrows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionEscrows
+    **/
+    _count?: true | InstitutionEscrowCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionEscrowAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionEscrowSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionEscrowMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionEscrowMaxAggregateInputType
+  }
+
+  export type GetInstitutionEscrowAggregateType<T extends InstitutionEscrowAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionEscrow]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionEscrow[P]>
+      : GetScalarType<T[P], AggregateInstitutionEscrow[P]>
+  }
+
+
+
+
+  export type InstitutionEscrowGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionEscrowWhereInput
+    orderBy?: InstitutionEscrowOrderByWithAggregationInput | InstitutionEscrowOrderByWithAggregationInput[]
+    by: InstitutionEscrowScalarFieldEnum[] | InstitutionEscrowScalarFieldEnum
+    having?: InstitutionEscrowScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionEscrowCountAggregateInputType | true
+    _avg?: InstitutionEscrowAvgAggregateInputType
+    _sum?: InstitutionEscrowSumAggregateInputType
+    _min?: InstitutionEscrowMinAggregateInputType
+    _max?: InstitutionEscrowMaxAggregateInputType
+  }
+
+  export type InstitutionEscrowGroupByOutputType = {
+    id: string
+    escrowId: string
+    clientId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal
+    platformFee: Decimal
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore: number | null
+    escrowPda: string | null
+    vaultPda: string | null
+    depositTxSignature: string | null
+    releaseTxSignature: string | null
+    cancelTxSignature: string | null
+    expiresAt: Date
+    createdAt: Date
+    updatedAt: Date
+    resolvedAt: Date | null
+    fundedAt: Date | null
+    _count: InstitutionEscrowCountAggregateOutputType | null
+    _avg: InstitutionEscrowAvgAggregateOutputType | null
+    _sum: InstitutionEscrowSumAggregateOutputType | null
+    _min: InstitutionEscrowMinAggregateOutputType | null
+    _max: InstitutionEscrowMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionEscrowGroupByPayload<T extends InstitutionEscrowGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionEscrowGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionEscrowGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionEscrowGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionEscrowGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionEscrowSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    clientId?: boolean
+    payerWallet?: boolean
+    recipientWallet?: boolean
+    usdcMint?: boolean
+    amount?: boolean
+    platformFee?: boolean
+    corridor?: boolean
+    conditionType?: boolean
+    status?: boolean
+    settlementAuthority?: boolean
+    riskScore?: boolean
+    escrowPda?: boolean
+    vaultPda?: boolean
+    depositTxSignature?: boolean
+    releaseTxSignature?: boolean
+    cancelTxSignature?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    resolvedAt?: boolean
+    fundedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
+    auditLogs?: boolean | InstitutionEscrow$auditLogsArgs<ExtArgs>
+    aiAnalyses?: boolean | InstitutionEscrow$aiAnalysesArgs<ExtArgs>
+    files?: boolean | InstitutionEscrow$filesArgs<ExtArgs>
+    _count?: boolean | InstitutionEscrowCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionEscrow"]>
+
+  export type InstitutionEscrowSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    clientId?: boolean
+    payerWallet?: boolean
+    recipientWallet?: boolean
+    usdcMint?: boolean
+    amount?: boolean
+    platformFee?: boolean
+    corridor?: boolean
+    conditionType?: boolean
+    status?: boolean
+    settlementAuthority?: boolean
+    riskScore?: boolean
+    escrowPda?: boolean
+    vaultPda?: boolean
+    depositTxSignature?: boolean
+    releaseTxSignature?: boolean
+    cancelTxSignature?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    resolvedAt?: boolean
+    fundedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionEscrow"]>
+
+  export type InstitutionEscrowSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    clientId?: boolean
+    payerWallet?: boolean
+    recipientWallet?: boolean
+    usdcMint?: boolean
+    amount?: boolean
+    platformFee?: boolean
+    corridor?: boolean
+    conditionType?: boolean
+    status?: boolean
+    settlementAuthority?: boolean
+    riskScore?: boolean
+    escrowPda?: boolean
+    vaultPda?: boolean
+    depositTxSignature?: boolean
+    releaseTxSignature?: boolean
+    cancelTxSignature?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    resolvedAt?: boolean
+    fundedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionEscrow"]>
+
+  export type InstitutionEscrowSelectScalar = {
+    id?: boolean
+    escrowId?: boolean
+    clientId?: boolean
+    payerWallet?: boolean
+    recipientWallet?: boolean
+    usdcMint?: boolean
+    amount?: boolean
+    platformFee?: boolean
+    corridor?: boolean
+    conditionType?: boolean
+    status?: boolean
+    settlementAuthority?: boolean
+    riskScore?: boolean
+    escrowPda?: boolean
+    vaultPda?: boolean
+    depositTxSignature?: boolean
+    releaseTxSignature?: boolean
+    cancelTxSignature?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    resolvedAt?: boolean
+    fundedAt?: boolean
+  }
+
+  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "escrowPda" | "vaultPda" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
+  export type InstitutionEscrowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
+    auditLogs?: boolean | InstitutionEscrow$auditLogsArgs<ExtArgs>
+    aiAnalyses?: boolean | InstitutionEscrow$aiAnalysesArgs<ExtArgs>
+    files?: boolean | InstitutionEscrow$filesArgs<ExtArgs>
+    _count?: boolean | InstitutionEscrowCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type InstitutionEscrowIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionEscrowIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionEscrowPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionEscrow"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+      deposits: Prisma.$InstitutionDepositPayload<ExtArgs>[]
+      auditLogs: Prisma.$InstitutionAuditLogPayload<ExtArgs>[]
+      aiAnalyses: Prisma.$InstitutionAiAnalysisPayload<ExtArgs>[]
+      files: Prisma.$InstitutionFilePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      escrowId: string
+      clientId: string
+      payerWallet: string
+      recipientWallet: string
+      usdcMint: string
+      amount: Prisma.Decimal
+      platformFee: Prisma.Decimal
+      corridor: string
+      conditionType: $Enums.InstitutionConditionType
+      status: $Enums.InstitutionEscrowStatus
+      settlementAuthority: string
+      riskScore: number | null
+      escrowPda: string | null
+      vaultPda: string | null
+      depositTxSignature: string | null
+      releaseTxSignature: string | null
+      cancelTxSignature: string | null
+      expiresAt: Date
+      createdAt: Date
+      updatedAt: Date
+      resolvedAt: Date | null
+      fundedAt: Date | null
+    }, ExtArgs["result"]["institutionEscrow"]>
+    composites: {}
+  }
+
+  type InstitutionEscrowGetPayload<S extends boolean | null | undefined | InstitutionEscrowDefaultArgs> = $Result.GetResult<Prisma.$InstitutionEscrowPayload, S>
+
+  type InstitutionEscrowCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionEscrowFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionEscrowCountAggregateInputType | true
+    }
+
+  export interface InstitutionEscrowDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionEscrow'], meta: { name: 'InstitutionEscrow' } }
+    /**
+     * Find zero or one InstitutionEscrow that matches the filter.
+     * @param {InstitutionEscrowFindUniqueArgs} args - Arguments to find a InstitutionEscrow
+     * @example
+     * // Get one InstitutionEscrow
+     * const institutionEscrow = await prisma.institutionEscrow.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionEscrowFindUniqueArgs>(args: SelectSubset<T, InstitutionEscrowFindUniqueArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionEscrow that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionEscrowFindUniqueOrThrowArgs} args - Arguments to find a InstitutionEscrow
+     * @example
+     * // Get one InstitutionEscrow
+     * const institutionEscrow = await prisma.institutionEscrow.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionEscrowFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionEscrowFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionEscrow that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionEscrowFindFirstArgs} args - Arguments to find a InstitutionEscrow
+     * @example
+     * // Get one InstitutionEscrow
+     * const institutionEscrow = await prisma.institutionEscrow.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionEscrowFindFirstArgs>(args?: SelectSubset<T, InstitutionEscrowFindFirstArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionEscrow that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionEscrowFindFirstOrThrowArgs} args - Arguments to find a InstitutionEscrow
+     * @example
+     * // Get one InstitutionEscrow
+     * const institutionEscrow = await prisma.institutionEscrow.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionEscrowFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionEscrowFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionEscrows that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionEscrowFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionEscrows
+     * const institutionEscrows = await prisma.institutionEscrow.findMany()
+     * 
+     * // Get first 10 InstitutionEscrows
+     * const institutionEscrows = await prisma.institutionEscrow.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionEscrowWithIdOnly = await prisma.institutionEscrow.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionEscrowFindManyArgs>(args?: SelectSubset<T, InstitutionEscrowFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionEscrow.
+     * @param {InstitutionEscrowCreateArgs} args - Arguments to create a InstitutionEscrow.
+     * @example
+     * // Create one InstitutionEscrow
+     * const InstitutionEscrow = await prisma.institutionEscrow.create({
+     *   data: {
+     *     // ... data to create a InstitutionEscrow
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionEscrowCreateArgs>(args: SelectSubset<T, InstitutionEscrowCreateArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionEscrows.
+     * @param {InstitutionEscrowCreateManyArgs} args - Arguments to create many InstitutionEscrows.
+     * @example
+     * // Create many InstitutionEscrows
+     * const institutionEscrow = await prisma.institutionEscrow.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionEscrowCreateManyArgs>(args?: SelectSubset<T, InstitutionEscrowCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionEscrows and returns the data saved in the database.
+     * @param {InstitutionEscrowCreateManyAndReturnArgs} args - Arguments to create many InstitutionEscrows.
+     * @example
+     * // Create many InstitutionEscrows
+     * const institutionEscrow = await prisma.institutionEscrow.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionEscrows and only return the `id`
+     * const institutionEscrowWithIdOnly = await prisma.institutionEscrow.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionEscrowCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionEscrowCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionEscrow.
+     * @param {InstitutionEscrowDeleteArgs} args - Arguments to delete one InstitutionEscrow.
+     * @example
+     * // Delete one InstitutionEscrow
+     * const InstitutionEscrow = await prisma.institutionEscrow.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionEscrow
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionEscrowDeleteArgs>(args: SelectSubset<T, InstitutionEscrowDeleteArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionEscrow.
+     * @param {InstitutionEscrowUpdateArgs} args - Arguments to update one InstitutionEscrow.
+     * @example
+     * // Update one InstitutionEscrow
+     * const institutionEscrow = await prisma.institutionEscrow.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionEscrowUpdateArgs>(args: SelectSubset<T, InstitutionEscrowUpdateArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionEscrows.
+     * @param {InstitutionEscrowDeleteManyArgs} args - Arguments to filter InstitutionEscrows to delete.
+     * @example
+     * // Delete a few InstitutionEscrows
+     * const { count } = await prisma.institutionEscrow.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionEscrowDeleteManyArgs>(args?: SelectSubset<T, InstitutionEscrowDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionEscrows.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionEscrowUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionEscrows
+     * const institutionEscrow = await prisma.institutionEscrow.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionEscrowUpdateManyArgs>(args: SelectSubset<T, InstitutionEscrowUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionEscrows and returns the data updated in the database.
+     * @param {InstitutionEscrowUpdateManyAndReturnArgs} args - Arguments to update many InstitutionEscrows.
+     * @example
+     * // Update many InstitutionEscrows
+     * const institutionEscrow = await prisma.institutionEscrow.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionEscrows and only return the `id`
+     * const institutionEscrowWithIdOnly = await prisma.institutionEscrow.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionEscrowUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionEscrowUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionEscrow.
+     * @param {InstitutionEscrowUpsertArgs} args - Arguments to update or create a InstitutionEscrow.
+     * @example
+     * // Update or create a InstitutionEscrow
+     * const institutionEscrow = await prisma.institutionEscrow.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionEscrow
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionEscrow we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionEscrowUpsertArgs>(args: SelectSubset<T, InstitutionEscrowUpsertArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionEscrows.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionEscrowCountArgs} args - Arguments to filter InstitutionEscrows to count.
+     * @example
+     * // Count the number of InstitutionEscrows
+     * const count = await prisma.institutionEscrow.count({
+     *   where: {
+     *     // ... the filter for the InstitutionEscrows we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionEscrowCountArgs>(
+      args?: Subset<T, InstitutionEscrowCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionEscrowCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionEscrow.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionEscrowAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionEscrowAggregateArgs>(args: Subset<T, InstitutionEscrowAggregateArgs>): Prisma.PrismaPromise<GetInstitutionEscrowAggregateType<T>>
+
+    /**
+     * Group by InstitutionEscrow.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionEscrowGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionEscrowGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionEscrowGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionEscrowGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionEscrowGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionEscrowGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionEscrow model
+   */
+  readonly fields: InstitutionEscrowFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionEscrow.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionEscrowClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    deposits<T extends InstitutionEscrow$depositsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrow$depositsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    auditLogs<T extends InstitutionEscrow$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrow$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    aiAnalyses<T extends InstitutionEscrow$aiAnalysesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrow$aiAnalysesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    files<T extends InstitutionEscrow$filesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrow$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionEscrow model
+   */
+  interface InstitutionEscrowFieldRefs {
+    readonly id: FieldRef<"InstitutionEscrow", 'String'>
+    readonly escrowId: FieldRef<"InstitutionEscrow", 'String'>
+    readonly clientId: FieldRef<"InstitutionEscrow", 'String'>
+    readonly payerWallet: FieldRef<"InstitutionEscrow", 'String'>
+    readonly recipientWallet: FieldRef<"InstitutionEscrow", 'String'>
+    readonly usdcMint: FieldRef<"InstitutionEscrow", 'String'>
+    readonly amount: FieldRef<"InstitutionEscrow", 'Decimal'>
+    readonly platformFee: FieldRef<"InstitutionEscrow", 'Decimal'>
+    readonly corridor: FieldRef<"InstitutionEscrow", 'String'>
+    readonly conditionType: FieldRef<"InstitutionEscrow", 'InstitutionConditionType'>
+    readonly status: FieldRef<"InstitutionEscrow", 'InstitutionEscrowStatus'>
+    readonly settlementAuthority: FieldRef<"InstitutionEscrow", 'String'>
+    readonly riskScore: FieldRef<"InstitutionEscrow", 'Int'>
+    readonly escrowPda: FieldRef<"InstitutionEscrow", 'String'>
+    readonly vaultPda: FieldRef<"InstitutionEscrow", 'String'>
+    readonly depositTxSignature: FieldRef<"InstitutionEscrow", 'String'>
+    readonly releaseTxSignature: FieldRef<"InstitutionEscrow", 'String'>
+    readonly cancelTxSignature: FieldRef<"InstitutionEscrow", 'String'>
+    readonly expiresAt: FieldRef<"InstitutionEscrow", 'DateTime'>
+    readonly createdAt: FieldRef<"InstitutionEscrow", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionEscrow", 'DateTime'>
+    readonly resolvedAt: FieldRef<"InstitutionEscrow", 'DateTime'>
+    readonly fundedAt: FieldRef<"InstitutionEscrow", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionEscrow findUnique
+   */
+  export type InstitutionEscrowFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionEscrow to fetch.
+     */
+    where: InstitutionEscrowWhereUniqueInput
+  }
+
+  /**
+   * InstitutionEscrow findUniqueOrThrow
+   */
+  export type InstitutionEscrowFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionEscrow to fetch.
+     */
+    where: InstitutionEscrowWhereUniqueInput
+  }
+
+  /**
+   * InstitutionEscrow findFirst
+   */
+  export type InstitutionEscrowFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionEscrow to fetch.
+     */
+    where?: InstitutionEscrowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionEscrows to fetch.
+     */
+    orderBy?: InstitutionEscrowOrderByWithRelationInput | InstitutionEscrowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionEscrows.
+     */
+    cursor?: InstitutionEscrowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionEscrows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionEscrows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionEscrows.
+     */
+    distinct?: InstitutionEscrowScalarFieldEnum | InstitutionEscrowScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionEscrow findFirstOrThrow
+   */
+  export type InstitutionEscrowFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionEscrow to fetch.
+     */
+    where?: InstitutionEscrowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionEscrows to fetch.
+     */
+    orderBy?: InstitutionEscrowOrderByWithRelationInput | InstitutionEscrowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionEscrows.
+     */
+    cursor?: InstitutionEscrowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionEscrows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionEscrows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionEscrows.
+     */
+    distinct?: InstitutionEscrowScalarFieldEnum | InstitutionEscrowScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionEscrow findMany
+   */
+  export type InstitutionEscrowFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionEscrows to fetch.
+     */
+    where?: InstitutionEscrowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionEscrows to fetch.
+     */
+    orderBy?: InstitutionEscrowOrderByWithRelationInput | InstitutionEscrowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionEscrows.
+     */
+    cursor?: InstitutionEscrowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionEscrows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionEscrows.
+     */
+    skip?: number
+    distinct?: InstitutionEscrowScalarFieldEnum | InstitutionEscrowScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionEscrow create
+   */
+  export type InstitutionEscrowCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionEscrow.
+     */
+    data: XOR<InstitutionEscrowCreateInput, InstitutionEscrowUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionEscrow createMany
+   */
+  export type InstitutionEscrowCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionEscrows.
+     */
+    data: InstitutionEscrowCreateManyInput | InstitutionEscrowCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionEscrow createManyAndReturn
+   */
+  export type InstitutionEscrowCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionEscrows.
+     */
+    data: InstitutionEscrowCreateManyInput | InstitutionEscrowCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionEscrow update
+   */
+  export type InstitutionEscrowUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionEscrow.
+     */
+    data: XOR<InstitutionEscrowUpdateInput, InstitutionEscrowUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionEscrow to update.
+     */
+    where: InstitutionEscrowWhereUniqueInput
+  }
+
+  /**
+   * InstitutionEscrow updateMany
+   */
+  export type InstitutionEscrowUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionEscrows.
+     */
+    data: XOR<InstitutionEscrowUpdateManyMutationInput, InstitutionEscrowUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionEscrows to update
+     */
+    where?: InstitutionEscrowWhereInput
+    /**
+     * Limit how many InstitutionEscrows to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionEscrow updateManyAndReturn
+   */
+  export type InstitutionEscrowUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionEscrows.
+     */
+    data: XOR<InstitutionEscrowUpdateManyMutationInput, InstitutionEscrowUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionEscrows to update
+     */
+    where?: InstitutionEscrowWhereInput
+    /**
+     * Limit how many InstitutionEscrows to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionEscrow upsert
+   */
+  export type InstitutionEscrowUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionEscrow to update in case it exists.
+     */
+    where: InstitutionEscrowWhereUniqueInput
+    /**
+     * In case the InstitutionEscrow found by the `where` argument doesn't exist, create a new InstitutionEscrow with this data.
+     */
+    create: XOR<InstitutionEscrowCreateInput, InstitutionEscrowUncheckedCreateInput>
+    /**
+     * In case the InstitutionEscrow was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionEscrowUpdateInput, InstitutionEscrowUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionEscrow delete
+   */
+  export type InstitutionEscrowDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionEscrow to delete.
+     */
+    where: InstitutionEscrowWhereUniqueInput
+  }
+
+  /**
+   * InstitutionEscrow deleteMany
+   */
+  export type InstitutionEscrowDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionEscrows to delete
+     */
+    where?: InstitutionEscrowWhereInput
+    /**
+     * Limit how many InstitutionEscrows to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionEscrow.deposits
+   */
+  export type InstitutionEscrow$depositsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    where?: InstitutionDepositWhereInput
+    orderBy?: InstitutionDepositOrderByWithRelationInput | InstitutionDepositOrderByWithRelationInput[]
+    cursor?: InstitutionDepositWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionDepositScalarFieldEnum | InstitutionDepositScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionEscrow.auditLogs
+   */
+  export type InstitutionEscrow$auditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    where?: InstitutionAuditLogWhereInput
+    orderBy?: InstitutionAuditLogOrderByWithRelationInput | InstitutionAuditLogOrderByWithRelationInput[]
+    cursor?: InstitutionAuditLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionAuditLogScalarFieldEnum | InstitutionAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionEscrow.aiAnalyses
+   */
+  export type InstitutionEscrow$aiAnalysesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    where?: InstitutionAiAnalysisWhereInput
+    orderBy?: InstitutionAiAnalysisOrderByWithRelationInput | InstitutionAiAnalysisOrderByWithRelationInput[]
+    cursor?: InstitutionAiAnalysisWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionAiAnalysisScalarFieldEnum | InstitutionAiAnalysisScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionEscrow.files
+   */
+  export type InstitutionEscrow$filesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    where?: InstitutionFileWhereInput
+    orderBy?: InstitutionFileOrderByWithRelationInput | InstitutionFileOrderByWithRelationInput[]
+    cursor?: InstitutionFileWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionFileScalarFieldEnum | InstitutionFileScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionEscrow without action
+   */
+  export type InstitutionEscrowDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionDeposit
+   */
+
+  export type AggregateInstitutionDeposit = {
+    _count: InstitutionDepositCountAggregateOutputType | null
+    _avg: InstitutionDepositAvgAggregateOutputType | null
+    _sum: InstitutionDepositSumAggregateOutputType | null
+    _min: InstitutionDepositMinAggregateOutputType | null
+    _max: InstitutionDepositMaxAggregateOutputType | null
+  }
+
+  export type InstitutionDepositAvgAggregateOutputType = {
+    amount: Decimal | null
+    blockHeight: number | null
+  }
+
+  export type InstitutionDepositSumAggregateOutputType = {
+    amount: Decimal | null
+    blockHeight: bigint | null
+  }
+
+  export type InstitutionDepositMinAggregateOutputType = {
+    id: string | null
+    escrowId: string | null
+    txSignature: string | null
+    amount: Decimal | null
+    confirmedAt: Date | null
+    blockHeight: bigint | null
+    createdAt: Date | null
+  }
+
+  export type InstitutionDepositMaxAggregateOutputType = {
+    id: string | null
+    escrowId: string | null
+    txSignature: string | null
+    amount: Decimal | null
+    confirmedAt: Date | null
+    blockHeight: bigint | null
+    createdAt: Date | null
+  }
+
+  export type InstitutionDepositCountAggregateOutputType = {
+    id: number
+    escrowId: number
+    txSignature: number
+    amount: number
+    confirmedAt: number
+    blockHeight: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type InstitutionDepositAvgAggregateInputType = {
+    amount?: true
+    blockHeight?: true
+  }
+
+  export type InstitutionDepositSumAggregateInputType = {
+    amount?: true
+    blockHeight?: true
+  }
+
+  export type InstitutionDepositMinAggregateInputType = {
+    id?: true
+    escrowId?: true
+    txSignature?: true
+    amount?: true
+    confirmedAt?: true
+    blockHeight?: true
+    createdAt?: true
+  }
+
+  export type InstitutionDepositMaxAggregateInputType = {
+    id?: true
+    escrowId?: true
+    txSignature?: true
+    amount?: true
+    confirmedAt?: true
+    blockHeight?: true
+    createdAt?: true
+  }
+
+  export type InstitutionDepositCountAggregateInputType = {
+    id?: true
+    escrowId?: true
+    txSignature?: true
+    amount?: true
+    confirmedAt?: true
+    blockHeight?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type InstitutionDepositAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionDeposit to aggregate.
+     */
+    where?: InstitutionDepositWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionDeposits to fetch.
+     */
+    orderBy?: InstitutionDepositOrderByWithRelationInput | InstitutionDepositOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionDepositWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionDeposits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionDeposits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionDeposits
+    **/
+    _count?: true | InstitutionDepositCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionDepositAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionDepositSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionDepositMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionDepositMaxAggregateInputType
+  }
+
+  export type GetInstitutionDepositAggregateType<T extends InstitutionDepositAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionDeposit]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionDeposit[P]>
+      : GetScalarType<T[P], AggregateInstitutionDeposit[P]>
+  }
+
+
+
+
+  export type InstitutionDepositGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionDepositWhereInput
+    orderBy?: InstitutionDepositOrderByWithAggregationInput | InstitutionDepositOrderByWithAggregationInput[]
+    by: InstitutionDepositScalarFieldEnum[] | InstitutionDepositScalarFieldEnum
+    having?: InstitutionDepositScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionDepositCountAggregateInputType | true
+    _avg?: InstitutionDepositAvgAggregateInputType
+    _sum?: InstitutionDepositSumAggregateInputType
+    _min?: InstitutionDepositMinAggregateInputType
+    _max?: InstitutionDepositMaxAggregateInputType
+  }
+
+  export type InstitutionDepositGroupByOutputType = {
+    id: string
+    escrowId: string
+    txSignature: string
+    amount: Decimal
+    confirmedAt: Date | null
+    blockHeight: bigint | null
+    createdAt: Date
+    _count: InstitutionDepositCountAggregateOutputType | null
+    _avg: InstitutionDepositAvgAggregateOutputType | null
+    _sum: InstitutionDepositSumAggregateOutputType | null
+    _min: InstitutionDepositMinAggregateOutputType | null
+    _max: InstitutionDepositMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionDepositGroupByPayload<T extends InstitutionDepositGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionDepositGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionDepositGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionDepositGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionDepositGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionDepositSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    txSignature?: boolean
+    amount?: boolean
+    confirmedAt?: boolean
+    blockHeight?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionDeposit"]>
+
+  export type InstitutionDepositSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    txSignature?: boolean
+    amount?: boolean
+    confirmedAt?: boolean
+    blockHeight?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionDeposit"]>
+
+  export type InstitutionDepositSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    txSignature?: boolean
+    amount?: boolean
+    confirmedAt?: boolean
+    blockHeight?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionDeposit"]>
+
+  export type InstitutionDepositSelectScalar = {
+    id?: boolean
+    escrowId?: boolean
+    txSignature?: boolean
+    amount?: boolean
+    confirmedAt?: boolean
+    blockHeight?: boolean
+    createdAt?: boolean
+  }
+
+  export type InstitutionDepositOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "txSignature" | "amount" | "confirmedAt" | "blockHeight" | "createdAt", ExtArgs["result"]["institutionDeposit"]>
+  export type InstitutionDepositInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }
+  export type InstitutionDepositIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }
+  export type InstitutionDepositIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionDepositPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionDeposit"
+    objects: {
+      escrow: Prisma.$InstitutionEscrowPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      escrowId: string
+      txSignature: string
+      amount: Prisma.Decimal
+      confirmedAt: Date | null
+      blockHeight: bigint | null
+      createdAt: Date
+    }, ExtArgs["result"]["institutionDeposit"]>
+    composites: {}
+  }
+
+  type InstitutionDepositGetPayload<S extends boolean | null | undefined | InstitutionDepositDefaultArgs> = $Result.GetResult<Prisma.$InstitutionDepositPayload, S>
+
+  type InstitutionDepositCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionDepositFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionDepositCountAggregateInputType | true
+    }
+
+  export interface InstitutionDepositDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionDeposit'], meta: { name: 'InstitutionDeposit' } }
+    /**
+     * Find zero or one InstitutionDeposit that matches the filter.
+     * @param {InstitutionDepositFindUniqueArgs} args - Arguments to find a InstitutionDeposit
+     * @example
+     * // Get one InstitutionDeposit
+     * const institutionDeposit = await prisma.institutionDeposit.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionDepositFindUniqueArgs>(args: SelectSubset<T, InstitutionDepositFindUniqueArgs<ExtArgs>>): Prisma__InstitutionDepositClient<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionDeposit that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionDepositFindUniqueOrThrowArgs} args - Arguments to find a InstitutionDeposit
+     * @example
+     * // Get one InstitutionDeposit
+     * const institutionDeposit = await prisma.institutionDeposit.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionDepositFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionDepositFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionDepositClient<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionDeposit that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionDepositFindFirstArgs} args - Arguments to find a InstitutionDeposit
+     * @example
+     * // Get one InstitutionDeposit
+     * const institutionDeposit = await prisma.institutionDeposit.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionDepositFindFirstArgs>(args?: SelectSubset<T, InstitutionDepositFindFirstArgs<ExtArgs>>): Prisma__InstitutionDepositClient<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionDeposit that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionDepositFindFirstOrThrowArgs} args - Arguments to find a InstitutionDeposit
+     * @example
+     * // Get one InstitutionDeposit
+     * const institutionDeposit = await prisma.institutionDeposit.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionDepositFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionDepositFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionDepositClient<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionDeposits that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionDepositFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionDeposits
+     * const institutionDeposits = await prisma.institutionDeposit.findMany()
+     * 
+     * // Get first 10 InstitutionDeposits
+     * const institutionDeposits = await prisma.institutionDeposit.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionDepositWithIdOnly = await prisma.institutionDeposit.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionDepositFindManyArgs>(args?: SelectSubset<T, InstitutionDepositFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionDeposit.
+     * @param {InstitutionDepositCreateArgs} args - Arguments to create a InstitutionDeposit.
+     * @example
+     * // Create one InstitutionDeposit
+     * const InstitutionDeposit = await prisma.institutionDeposit.create({
+     *   data: {
+     *     // ... data to create a InstitutionDeposit
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionDepositCreateArgs>(args: SelectSubset<T, InstitutionDepositCreateArgs<ExtArgs>>): Prisma__InstitutionDepositClient<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionDeposits.
+     * @param {InstitutionDepositCreateManyArgs} args - Arguments to create many InstitutionDeposits.
+     * @example
+     * // Create many InstitutionDeposits
+     * const institutionDeposit = await prisma.institutionDeposit.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionDepositCreateManyArgs>(args?: SelectSubset<T, InstitutionDepositCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionDeposits and returns the data saved in the database.
+     * @param {InstitutionDepositCreateManyAndReturnArgs} args - Arguments to create many InstitutionDeposits.
+     * @example
+     * // Create many InstitutionDeposits
+     * const institutionDeposit = await prisma.institutionDeposit.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionDeposits and only return the `id`
+     * const institutionDepositWithIdOnly = await prisma.institutionDeposit.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionDepositCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionDepositCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionDeposit.
+     * @param {InstitutionDepositDeleteArgs} args - Arguments to delete one InstitutionDeposit.
+     * @example
+     * // Delete one InstitutionDeposit
+     * const InstitutionDeposit = await prisma.institutionDeposit.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionDeposit
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionDepositDeleteArgs>(args: SelectSubset<T, InstitutionDepositDeleteArgs<ExtArgs>>): Prisma__InstitutionDepositClient<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionDeposit.
+     * @param {InstitutionDepositUpdateArgs} args - Arguments to update one InstitutionDeposit.
+     * @example
+     * // Update one InstitutionDeposit
+     * const institutionDeposit = await prisma.institutionDeposit.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionDepositUpdateArgs>(args: SelectSubset<T, InstitutionDepositUpdateArgs<ExtArgs>>): Prisma__InstitutionDepositClient<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionDeposits.
+     * @param {InstitutionDepositDeleteManyArgs} args - Arguments to filter InstitutionDeposits to delete.
+     * @example
+     * // Delete a few InstitutionDeposits
+     * const { count } = await prisma.institutionDeposit.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionDepositDeleteManyArgs>(args?: SelectSubset<T, InstitutionDepositDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionDeposits.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionDepositUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionDeposits
+     * const institutionDeposit = await prisma.institutionDeposit.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionDepositUpdateManyArgs>(args: SelectSubset<T, InstitutionDepositUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionDeposits and returns the data updated in the database.
+     * @param {InstitutionDepositUpdateManyAndReturnArgs} args - Arguments to update many InstitutionDeposits.
+     * @example
+     * // Update many InstitutionDeposits
+     * const institutionDeposit = await prisma.institutionDeposit.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionDeposits and only return the `id`
+     * const institutionDepositWithIdOnly = await prisma.institutionDeposit.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionDepositUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionDepositUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionDeposit.
+     * @param {InstitutionDepositUpsertArgs} args - Arguments to update or create a InstitutionDeposit.
+     * @example
+     * // Update or create a InstitutionDeposit
+     * const institutionDeposit = await prisma.institutionDeposit.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionDeposit
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionDeposit we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionDepositUpsertArgs>(args: SelectSubset<T, InstitutionDepositUpsertArgs<ExtArgs>>): Prisma__InstitutionDepositClient<$Result.GetResult<Prisma.$InstitutionDepositPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionDeposits.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionDepositCountArgs} args - Arguments to filter InstitutionDeposits to count.
+     * @example
+     * // Count the number of InstitutionDeposits
+     * const count = await prisma.institutionDeposit.count({
+     *   where: {
+     *     // ... the filter for the InstitutionDeposits we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionDepositCountArgs>(
+      args?: Subset<T, InstitutionDepositCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionDepositCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionDeposit.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionDepositAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionDepositAggregateArgs>(args: Subset<T, InstitutionDepositAggregateArgs>): Prisma.PrismaPromise<GetInstitutionDepositAggregateType<T>>
+
+    /**
+     * Group by InstitutionDeposit.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionDepositGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionDepositGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionDepositGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionDepositGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionDepositGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionDepositGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionDeposit model
+   */
+  readonly fields: InstitutionDepositFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionDeposit.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionDepositClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    escrow<T extends InstitutionEscrowDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrowDefaultArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionDeposit model
+   */
+  interface InstitutionDepositFieldRefs {
+    readonly id: FieldRef<"InstitutionDeposit", 'String'>
+    readonly escrowId: FieldRef<"InstitutionDeposit", 'String'>
+    readonly txSignature: FieldRef<"InstitutionDeposit", 'String'>
+    readonly amount: FieldRef<"InstitutionDeposit", 'Decimal'>
+    readonly confirmedAt: FieldRef<"InstitutionDeposit", 'DateTime'>
+    readonly blockHeight: FieldRef<"InstitutionDeposit", 'BigInt'>
+    readonly createdAt: FieldRef<"InstitutionDeposit", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionDeposit findUnique
+   */
+  export type InstitutionDepositFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionDeposit to fetch.
+     */
+    where: InstitutionDepositWhereUniqueInput
+  }
+
+  /**
+   * InstitutionDeposit findUniqueOrThrow
+   */
+  export type InstitutionDepositFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionDeposit to fetch.
+     */
+    where: InstitutionDepositWhereUniqueInput
+  }
+
+  /**
+   * InstitutionDeposit findFirst
+   */
+  export type InstitutionDepositFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionDeposit to fetch.
+     */
+    where?: InstitutionDepositWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionDeposits to fetch.
+     */
+    orderBy?: InstitutionDepositOrderByWithRelationInput | InstitutionDepositOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionDeposits.
+     */
+    cursor?: InstitutionDepositWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionDeposits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionDeposits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionDeposits.
+     */
+    distinct?: InstitutionDepositScalarFieldEnum | InstitutionDepositScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionDeposit findFirstOrThrow
+   */
+  export type InstitutionDepositFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionDeposit to fetch.
+     */
+    where?: InstitutionDepositWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionDeposits to fetch.
+     */
+    orderBy?: InstitutionDepositOrderByWithRelationInput | InstitutionDepositOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionDeposits.
+     */
+    cursor?: InstitutionDepositWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionDeposits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionDeposits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionDeposits.
+     */
+    distinct?: InstitutionDepositScalarFieldEnum | InstitutionDepositScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionDeposit findMany
+   */
+  export type InstitutionDepositFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionDeposits to fetch.
+     */
+    where?: InstitutionDepositWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionDeposits to fetch.
+     */
+    orderBy?: InstitutionDepositOrderByWithRelationInput | InstitutionDepositOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionDeposits.
+     */
+    cursor?: InstitutionDepositWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionDeposits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionDeposits.
+     */
+    skip?: number
+    distinct?: InstitutionDepositScalarFieldEnum | InstitutionDepositScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionDeposit create
+   */
+  export type InstitutionDepositCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionDeposit.
+     */
+    data: XOR<InstitutionDepositCreateInput, InstitutionDepositUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionDeposit createMany
+   */
+  export type InstitutionDepositCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionDeposits.
+     */
+    data: InstitutionDepositCreateManyInput | InstitutionDepositCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionDeposit createManyAndReturn
+   */
+  export type InstitutionDepositCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionDeposits.
+     */
+    data: InstitutionDepositCreateManyInput | InstitutionDepositCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionDeposit update
+   */
+  export type InstitutionDepositUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionDeposit.
+     */
+    data: XOR<InstitutionDepositUpdateInput, InstitutionDepositUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionDeposit to update.
+     */
+    where: InstitutionDepositWhereUniqueInput
+  }
+
+  /**
+   * InstitutionDeposit updateMany
+   */
+  export type InstitutionDepositUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionDeposits.
+     */
+    data: XOR<InstitutionDepositUpdateManyMutationInput, InstitutionDepositUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionDeposits to update
+     */
+    where?: InstitutionDepositWhereInput
+    /**
+     * Limit how many InstitutionDeposits to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionDeposit updateManyAndReturn
+   */
+  export type InstitutionDepositUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionDeposits.
+     */
+    data: XOR<InstitutionDepositUpdateManyMutationInput, InstitutionDepositUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionDeposits to update
+     */
+    where?: InstitutionDepositWhereInput
+    /**
+     * Limit how many InstitutionDeposits to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionDeposit upsert
+   */
+  export type InstitutionDepositUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionDeposit to update in case it exists.
+     */
+    where: InstitutionDepositWhereUniqueInput
+    /**
+     * In case the InstitutionDeposit found by the `where` argument doesn't exist, create a new InstitutionDeposit with this data.
+     */
+    create: XOR<InstitutionDepositCreateInput, InstitutionDepositUncheckedCreateInput>
+    /**
+     * In case the InstitutionDeposit was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionDepositUpdateInput, InstitutionDepositUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionDeposit delete
+   */
+  export type InstitutionDepositDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionDeposit to delete.
+     */
+    where: InstitutionDepositWhereUniqueInput
+  }
+
+  /**
+   * InstitutionDeposit deleteMany
+   */
+  export type InstitutionDepositDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionDeposits to delete
+     */
+    where?: InstitutionDepositWhereInput
+    /**
+     * Limit how many InstitutionDeposits to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionDeposit without action
+   */
+  export type InstitutionDepositDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionDeposit
+     */
+    select?: InstitutionDepositSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionDeposit
+     */
+    omit?: InstitutionDepositOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionDepositInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionAuditLog
+   */
+
+  export type AggregateInstitutionAuditLog = {
+    _count: InstitutionAuditLogCountAggregateOutputType | null
+    _min: InstitutionAuditLogMinAggregateOutputType | null
+    _max: InstitutionAuditLogMaxAggregateOutputType | null
+  }
+
+  export type InstitutionAuditLogMinAggregateOutputType = {
+    id: string | null
+    escrowId: string | null
+    clientId: string | null
+    action: string | null
+    actor: string | null
+    ipAddress: string | null
+    createdAt: Date | null
+  }
+
+  export type InstitutionAuditLogMaxAggregateOutputType = {
+    id: string | null
+    escrowId: string | null
+    clientId: string | null
+    action: string | null
+    actor: string | null
+    ipAddress: string | null
+    createdAt: Date | null
+  }
+
+  export type InstitutionAuditLogCountAggregateOutputType = {
+    id: number
+    escrowId: number
+    clientId: number
+    action: number
+    actor: number
+    details: number
+    ipAddress: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type InstitutionAuditLogMinAggregateInputType = {
+    id?: true
+    escrowId?: true
+    clientId?: true
+    action?: true
+    actor?: true
+    ipAddress?: true
+    createdAt?: true
+  }
+
+  export type InstitutionAuditLogMaxAggregateInputType = {
+    id?: true
+    escrowId?: true
+    clientId?: true
+    action?: true
+    actor?: true
+    ipAddress?: true
+    createdAt?: true
+  }
+
+  export type InstitutionAuditLogCountAggregateInputType = {
+    id?: true
+    escrowId?: true
+    clientId?: true
+    action?: true
+    actor?: true
+    details?: true
+    ipAddress?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type InstitutionAuditLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionAuditLog to aggregate.
+     */
+    where?: InstitutionAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAuditLogs to fetch.
+     */
+    orderBy?: InstitutionAuditLogOrderByWithRelationInput | InstitutionAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionAuditLogs
+    **/
+    _count?: true | InstitutionAuditLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionAuditLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionAuditLogMaxAggregateInputType
+  }
+
+  export type GetInstitutionAuditLogAggregateType<T extends InstitutionAuditLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionAuditLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionAuditLog[P]>
+      : GetScalarType<T[P], AggregateInstitutionAuditLog[P]>
+  }
+
+
+
+
+  export type InstitutionAuditLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAuditLogWhereInput
+    orderBy?: InstitutionAuditLogOrderByWithAggregationInput | InstitutionAuditLogOrderByWithAggregationInput[]
+    by: InstitutionAuditLogScalarFieldEnum[] | InstitutionAuditLogScalarFieldEnum
+    having?: InstitutionAuditLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionAuditLogCountAggregateInputType | true
+    _min?: InstitutionAuditLogMinAggregateInputType
+    _max?: InstitutionAuditLogMaxAggregateInputType
+  }
+
+  export type InstitutionAuditLogGroupByOutputType = {
+    id: string
+    escrowId: string | null
+    clientId: string | null
+    action: string
+    actor: string
+    details: JsonValue
+    ipAddress: string | null
+    createdAt: Date
+    _count: InstitutionAuditLogCountAggregateOutputType | null
+    _min: InstitutionAuditLogMinAggregateOutputType | null
+    _max: InstitutionAuditLogMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionAuditLogGroupByPayload<T extends InstitutionAuditLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionAuditLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionAuditLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionAuditLogGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionAuditLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionAuditLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    clientId?: boolean
+    action?: boolean
+    actor?: boolean
+    details?: boolean
+    ipAddress?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionAuditLog$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAuditLog$clientArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAuditLog"]>
+
+  export type InstitutionAuditLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    clientId?: boolean
+    action?: boolean
+    actor?: boolean
+    details?: boolean
+    ipAddress?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionAuditLog$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAuditLog$clientArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAuditLog"]>
+
+  export type InstitutionAuditLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    clientId?: boolean
+    action?: boolean
+    actor?: boolean
+    details?: boolean
+    ipAddress?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionAuditLog$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAuditLog$clientArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAuditLog"]>
+
+  export type InstitutionAuditLogSelectScalar = {
+    id?: boolean
+    escrowId?: boolean
+    clientId?: boolean
+    action?: boolean
+    actor?: boolean
+    details?: boolean
+    ipAddress?: boolean
+    createdAt?: boolean
+  }
+
+  export type InstitutionAuditLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "clientId" | "action" | "actor" | "details" | "ipAddress" | "createdAt", ExtArgs["result"]["institutionAuditLog"]>
+  export type InstitutionAuditLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionAuditLog$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAuditLog$clientArgs<ExtArgs>
+  }
+  export type InstitutionAuditLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionAuditLog$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAuditLog$clientArgs<ExtArgs>
+  }
+  export type InstitutionAuditLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionAuditLog$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAuditLog$clientArgs<ExtArgs>
+  }
+
+  export type $InstitutionAuditLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionAuditLog"
+    objects: {
+      escrow: Prisma.$InstitutionEscrowPayload<ExtArgs> | null
+      client: Prisma.$InstitutionClientPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      escrowId: string | null
+      clientId: string | null
+      action: string
+      actor: string
+      details: Prisma.JsonValue
+      ipAddress: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["institutionAuditLog"]>
+    composites: {}
+  }
+
+  type InstitutionAuditLogGetPayload<S extends boolean | null | undefined | InstitutionAuditLogDefaultArgs> = $Result.GetResult<Prisma.$InstitutionAuditLogPayload, S>
+
+  type InstitutionAuditLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionAuditLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionAuditLogCountAggregateInputType | true
+    }
+
+  export interface InstitutionAuditLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionAuditLog'], meta: { name: 'InstitutionAuditLog' } }
+    /**
+     * Find zero or one InstitutionAuditLog that matches the filter.
+     * @param {InstitutionAuditLogFindUniqueArgs} args - Arguments to find a InstitutionAuditLog
+     * @example
+     * // Get one InstitutionAuditLog
+     * const institutionAuditLog = await prisma.institutionAuditLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionAuditLogFindUniqueArgs>(args: SelectSubset<T, InstitutionAuditLogFindUniqueArgs<ExtArgs>>): Prisma__InstitutionAuditLogClient<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionAuditLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionAuditLogFindUniqueOrThrowArgs} args - Arguments to find a InstitutionAuditLog
+     * @example
+     * // Get one InstitutionAuditLog
+     * const institutionAuditLog = await prisma.institutionAuditLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionAuditLogFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionAuditLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionAuditLogClient<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionAuditLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAuditLogFindFirstArgs} args - Arguments to find a InstitutionAuditLog
+     * @example
+     * // Get one InstitutionAuditLog
+     * const institutionAuditLog = await prisma.institutionAuditLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionAuditLogFindFirstArgs>(args?: SelectSubset<T, InstitutionAuditLogFindFirstArgs<ExtArgs>>): Prisma__InstitutionAuditLogClient<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionAuditLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAuditLogFindFirstOrThrowArgs} args - Arguments to find a InstitutionAuditLog
+     * @example
+     * // Get one InstitutionAuditLog
+     * const institutionAuditLog = await prisma.institutionAuditLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionAuditLogFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionAuditLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionAuditLogClient<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionAuditLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAuditLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionAuditLogs
+     * const institutionAuditLogs = await prisma.institutionAuditLog.findMany()
+     * 
+     * // Get first 10 InstitutionAuditLogs
+     * const institutionAuditLogs = await prisma.institutionAuditLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionAuditLogWithIdOnly = await prisma.institutionAuditLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionAuditLogFindManyArgs>(args?: SelectSubset<T, InstitutionAuditLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionAuditLog.
+     * @param {InstitutionAuditLogCreateArgs} args - Arguments to create a InstitutionAuditLog.
+     * @example
+     * // Create one InstitutionAuditLog
+     * const InstitutionAuditLog = await prisma.institutionAuditLog.create({
+     *   data: {
+     *     // ... data to create a InstitutionAuditLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionAuditLogCreateArgs>(args: SelectSubset<T, InstitutionAuditLogCreateArgs<ExtArgs>>): Prisma__InstitutionAuditLogClient<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionAuditLogs.
+     * @param {InstitutionAuditLogCreateManyArgs} args - Arguments to create many InstitutionAuditLogs.
+     * @example
+     * // Create many InstitutionAuditLogs
+     * const institutionAuditLog = await prisma.institutionAuditLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionAuditLogCreateManyArgs>(args?: SelectSubset<T, InstitutionAuditLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionAuditLogs and returns the data saved in the database.
+     * @param {InstitutionAuditLogCreateManyAndReturnArgs} args - Arguments to create many InstitutionAuditLogs.
+     * @example
+     * // Create many InstitutionAuditLogs
+     * const institutionAuditLog = await prisma.institutionAuditLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionAuditLogs and only return the `id`
+     * const institutionAuditLogWithIdOnly = await prisma.institutionAuditLog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionAuditLogCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionAuditLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionAuditLog.
+     * @param {InstitutionAuditLogDeleteArgs} args - Arguments to delete one InstitutionAuditLog.
+     * @example
+     * // Delete one InstitutionAuditLog
+     * const InstitutionAuditLog = await prisma.institutionAuditLog.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionAuditLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionAuditLogDeleteArgs>(args: SelectSubset<T, InstitutionAuditLogDeleteArgs<ExtArgs>>): Prisma__InstitutionAuditLogClient<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionAuditLog.
+     * @param {InstitutionAuditLogUpdateArgs} args - Arguments to update one InstitutionAuditLog.
+     * @example
+     * // Update one InstitutionAuditLog
+     * const institutionAuditLog = await prisma.institutionAuditLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionAuditLogUpdateArgs>(args: SelectSubset<T, InstitutionAuditLogUpdateArgs<ExtArgs>>): Prisma__InstitutionAuditLogClient<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionAuditLogs.
+     * @param {InstitutionAuditLogDeleteManyArgs} args - Arguments to filter InstitutionAuditLogs to delete.
+     * @example
+     * // Delete a few InstitutionAuditLogs
+     * const { count } = await prisma.institutionAuditLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionAuditLogDeleteManyArgs>(args?: SelectSubset<T, InstitutionAuditLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionAuditLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAuditLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionAuditLogs
+     * const institutionAuditLog = await prisma.institutionAuditLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionAuditLogUpdateManyArgs>(args: SelectSubset<T, InstitutionAuditLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionAuditLogs and returns the data updated in the database.
+     * @param {InstitutionAuditLogUpdateManyAndReturnArgs} args - Arguments to update many InstitutionAuditLogs.
+     * @example
+     * // Update many InstitutionAuditLogs
+     * const institutionAuditLog = await prisma.institutionAuditLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionAuditLogs and only return the `id`
+     * const institutionAuditLogWithIdOnly = await prisma.institutionAuditLog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionAuditLogUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionAuditLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionAuditLog.
+     * @param {InstitutionAuditLogUpsertArgs} args - Arguments to update or create a InstitutionAuditLog.
+     * @example
+     * // Update or create a InstitutionAuditLog
+     * const institutionAuditLog = await prisma.institutionAuditLog.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionAuditLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionAuditLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionAuditLogUpsertArgs>(args: SelectSubset<T, InstitutionAuditLogUpsertArgs<ExtArgs>>): Prisma__InstitutionAuditLogClient<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionAuditLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAuditLogCountArgs} args - Arguments to filter InstitutionAuditLogs to count.
+     * @example
+     * // Count the number of InstitutionAuditLogs
+     * const count = await prisma.institutionAuditLog.count({
+     *   where: {
+     *     // ... the filter for the InstitutionAuditLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionAuditLogCountArgs>(
+      args?: Subset<T, InstitutionAuditLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionAuditLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionAuditLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAuditLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionAuditLogAggregateArgs>(args: Subset<T, InstitutionAuditLogAggregateArgs>): Prisma.PrismaPromise<GetInstitutionAuditLogAggregateType<T>>
+
+    /**
+     * Group by InstitutionAuditLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAuditLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionAuditLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionAuditLogGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionAuditLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionAuditLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionAuditLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionAuditLog model
+   */
+  readonly fields: InstitutionAuditLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionAuditLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionAuditLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    escrow<T extends InstitutionAuditLog$escrowArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionAuditLog$escrowArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    client<T extends InstitutionAuditLog$clientArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionAuditLog$clientArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionAuditLog model
+   */
+  interface InstitutionAuditLogFieldRefs {
+    readonly id: FieldRef<"InstitutionAuditLog", 'String'>
+    readonly escrowId: FieldRef<"InstitutionAuditLog", 'String'>
+    readonly clientId: FieldRef<"InstitutionAuditLog", 'String'>
+    readonly action: FieldRef<"InstitutionAuditLog", 'String'>
+    readonly actor: FieldRef<"InstitutionAuditLog", 'String'>
+    readonly details: FieldRef<"InstitutionAuditLog", 'Json'>
+    readonly ipAddress: FieldRef<"InstitutionAuditLog", 'String'>
+    readonly createdAt: FieldRef<"InstitutionAuditLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionAuditLog findUnique
+   */
+  export type InstitutionAuditLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAuditLog to fetch.
+     */
+    where: InstitutionAuditLogWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAuditLog findUniqueOrThrow
+   */
+  export type InstitutionAuditLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAuditLog to fetch.
+     */
+    where: InstitutionAuditLogWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAuditLog findFirst
+   */
+  export type InstitutionAuditLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAuditLog to fetch.
+     */
+    where?: InstitutionAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAuditLogs to fetch.
+     */
+    orderBy?: InstitutionAuditLogOrderByWithRelationInput | InstitutionAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionAuditLogs.
+     */
+    cursor?: InstitutionAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionAuditLogs.
+     */
+    distinct?: InstitutionAuditLogScalarFieldEnum | InstitutionAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAuditLog findFirstOrThrow
+   */
+  export type InstitutionAuditLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAuditLog to fetch.
+     */
+    where?: InstitutionAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAuditLogs to fetch.
+     */
+    orderBy?: InstitutionAuditLogOrderByWithRelationInput | InstitutionAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionAuditLogs.
+     */
+    cursor?: InstitutionAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionAuditLogs.
+     */
+    distinct?: InstitutionAuditLogScalarFieldEnum | InstitutionAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAuditLog findMany
+   */
+  export type InstitutionAuditLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAuditLogs to fetch.
+     */
+    where?: InstitutionAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAuditLogs to fetch.
+     */
+    orderBy?: InstitutionAuditLogOrderByWithRelationInput | InstitutionAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionAuditLogs.
+     */
+    cursor?: InstitutionAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAuditLogs.
+     */
+    skip?: number
+    distinct?: InstitutionAuditLogScalarFieldEnum | InstitutionAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAuditLog create
+   */
+  export type InstitutionAuditLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionAuditLog.
+     */
+    data: XOR<InstitutionAuditLogCreateInput, InstitutionAuditLogUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionAuditLog createMany
+   */
+  export type InstitutionAuditLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionAuditLogs.
+     */
+    data: InstitutionAuditLogCreateManyInput | InstitutionAuditLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionAuditLog createManyAndReturn
+   */
+  export type InstitutionAuditLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionAuditLogs.
+     */
+    data: InstitutionAuditLogCreateManyInput | InstitutionAuditLogCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionAuditLog update
+   */
+  export type InstitutionAuditLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionAuditLog.
+     */
+    data: XOR<InstitutionAuditLogUpdateInput, InstitutionAuditLogUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionAuditLog to update.
+     */
+    where: InstitutionAuditLogWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAuditLog updateMany
+   */
+  export type InstitutionAuditLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionAuditLogs.
+     */
+    data: XOR<InstitutionAuditLogUpdateManyMutationInput, InstitutionAuditLogUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionAuditLogs to update
+     */
+    where?: InstitutionAuditLogWhereInput
+    /**
+     * Limit how many InstitutionAuditLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionAuditLog updateManyAndReturn
+   */
+  export type InstitutionAuditLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionAuditLogs.
+     */
+    data: XOR<InstitutionAuditLogUpdateManyMutationInput, InstitutionAuditLogUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionAuditLogs to update
+     */
+    where?: InstitutionAuditLogWhereInput
+    /**
+     * Limit how many InstitutionAuditLogs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionAuditLog upsert
+   */
+  export type InstitutionAuditLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionAuditLog to update in case it exists.
+     */
+    where: InstitutionAuditLogWhereUniqueInput
+    /**
+     * In case the InstitutionAuditLog found by the `where` argument doesn't exist, create a new InstitutionAuditLog with this data.
+     */
+    create: XOR<InstitutionAuditLogCreateInput, InstitutionAuditLogUncheckedCreateInput>
+    /**
+     * In case the InstitutionAuditLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionAuditLogUpdateInput, InstitutionAuditLogUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionAuditLog delete
+   */
+  export type InstitutionAuditLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionAuditLog to delete.
+     */
+    where: InstitutionAuditLogWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAuditLog deleteMany
+   */
+  export type InstitutionAuditLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionAuditLogs to delete
+     */
+    where?: InstitutionAuditLogWhereInput
+    /**
+     * Limit how many InstitutionAuditLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionAuditLog.escrow
+   */
+  export type InstitutionAuditLog$escrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    where?: InstitutionEscrowWhereInput
+  }
+
+  /**
+   * InstitutionAuditLog.client
+   */
+  export type InstitutionAuditLog$clientArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    where?: InstitutionClientWhereInput
+  }
+
+  /**
+   * InstitutionAuditLog without action
+   */
+  export type InstitutionAuditLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAuditLog
+     */
+    select?: InstitutionAuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAuditLog
+     */
+    omit?: InstitutionAuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAuditLogInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionAiAnalysis
+   */
+
+  export type AggregateInstitutionAiAnalysis = {
+    _count: InstitutionAiAnalysisCountAggregateOutputType | null
+    _avg: InstitutionAiAnalysisAvgAggregateOutputType | null
+    _sum: InstitutionAiAnalysisSumAggregateOutputType | null
+    _min: InstitutionAiAnalysisMinAggregateOutputType | null
+    _max: InstitutionAiAnalysisMaxAggregateOutputType | null
+  }
+
+  export type InstitutionAiAnalysisAvgAggregateOutputType = {
+    riskScore: number | null
+  }
+
+  export type InstitutionAiAnalysisSumAggregateOutputType = {
+    riskScore: number | null
+  }
+
+  export type InstitutionAiAnalysisMinAggregateOutputType = {
+    id: string | null
+    escrowId: string | null
+    fileId: string | null
+    documentHash: string | null
+    riskScore: number | null
+    recommendation: string | null
+    model: string | null
+    createdAt: Date | null
+  }
+
+  export type InstitutionAiAnalysisMaxAggregateOutputType = {
+    id: string | null
+    escrowId: string | null
+    fileId: string | null
+    documentHash: string | null
+    riskScore: number | null
+    recommendation: string | null
+    model: string | null
+    createdAt: Date | null
+  }
+
+  export type InstitutionAiAnalysisCountAggregateOutputType = {
+    id: number
+    escrowId: number
+    fileId: number
+    documentHash: number
+    riskScore: number
+    factors: number
+    recommendation: number
+    extractedFields: number
+    model: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type InstitutionAiAnalysisAvgAggregateInputType = {
+    riskScore?: true
+  }
+
+  export type InstitutionAiAnalysisSumAggregateInputType = {
+    riskScore?: true
+  }
+
+  export type InstitutionAiAnalysisMinAggregateInputType = {
+    id?: true
+    escrowId?: true
+    fileId?: true
+    documentHash?: true
+    riskScore?: true
+    recommendation?: true
+    model?: true
+    createdAt?: true
+  }
+
+  export type InstitutionAiAnalysisMaxAggregateInputType = {
+    id?: true
+    escrowId?: true
+    fileId?: true
+    documentHash?: true
+    riskScore?: true
+    recommendation?: true
+    model?: true
+    createdAt?: true
+  }
+
+  export type InstitutionAiAnalysisCountAggregateInputType = {
+    id?: true
+    escrowId?: true
+    fileId?: true
+    documentHash?: true
+    riskScore?: true
+    factors?: true
+    recommendation?: true
+    extractedFields?: true
+    model?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type InstitutionAiAnalysisAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionAiAnalysis to aggregate.
+     */
+    where?: InstitutionAiAnalysisWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAiAnalyses to fetch.
+     */
+    orderBy?: InstitutionAiAnalysisOrderByWithRelationInput | InstitutionAiAnalysisOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionAiAnalysisWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAiAnalyses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAiAnalyses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionAiAnalyses
+    **/
+    _count?: true | InstitutionAiAnalysisCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionAiAnalysisAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionAiAnalysisSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionAiAnalysisMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionAiAnalysisMaxAggregateInputType
+  }
+
+  export type GetInstitutionAiAnalysisAggregateType<T extends InstitutionAiAnalysisAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionAiAnalysis]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionAiAnalysis[P]>
+      : GetScalarType<T[P], AggregateInstitutionAiAnalysis[P]>
+  }
+
+
+
+
+  export type InstitutionAiAnalysisGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAiAnalysisWhereInput
+    orderBy?: InstitutionAiAnalysisOrderByWithAggregationInput | InstitutionAiAnalysisOrderByWithAggregationInput[]
+    by: InstitutionAiAnalysisScalarFieldEnum[] | InstitutionAiAnalysisScalarFieldEnum
+    having?: InstitutionAiAnalysisScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionAiAnalysisCountAggregateInputType | true
+    _avg?: InstitutionAiAnalysisAvgAggregateInputType
+    _sum?: InstitutionAiAnalysisSumAggregateInputType
+    _min?: InstitutionAiAnalysisMinAggregateInputType
+    _max?: InstitutionAiAnalysisMaxAggregateInputType
+  }
+
+  export type InstitutionAiAnalysisGroupByOutputType = {
+    id: string
+    escrowId: string
+    fileId: string | null
+    documentHash: string | null
+    riskScore: number
+    factors: JsonValue
+    recommendation: string
+    extractedFields: JsonValue
+    model: string
+    createdAt: Date
+    _count: InstitutionAiAnalysisCountAggregateOutputType | null
+    _avg: InstitutionAiAnalysisAvgAggregateOutputType | null
+    _sum: InstitutionAiAnalysisSumAggregateOutputType | null
+    _min: InstitutionAiAnalysisMinAggregateOutputType | null
+    _max: InstitutionAiAnalysisMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionAiAnalysisGroupByPayload<T extends InstitutionAiAnalysisGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionAiAnalysisGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionAiAnalysisGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionAiAnalysisGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionAiAnalysisGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionAiAnalysisSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    fileId?: boolean
+    documentHash?: boolean
+    riskScore?: boolean
+    factors?: boolean
+    recommendation?: boolean
+    extractedFields?: boolean
+    model?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAiAnalysis"]>
+
+  export type InstitutionAiAnalysisSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    fileId?: boolean
+    documentHash?: boolean
+    riskScore?: boolean
+    factors?: boolean
+    recommendation?: boolean
+    extractedFields?: boolean
+    model?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAiAnalysis"]>
+
+  export type InstitutionAiAnalysisSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    escrowId?: boolean
+    fileId?: boolean
+    documentHash?: boolean
+    riskScore?: boolean
+    factors?: boolean
+    recommendation?: boolean
+    extractedFields?: boolean
+    model?: boolean
+    createdAt?: boolean
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAiAnalysis"]>
+
+  export type InstitutionAiAnalysisSelectScalar = {
+    id?: boolean
+    escrowId?: boolean
+    fileId?: boolean
+    documentHash?: boolean
+    riskScore?: boolean
+    factors?: boolean
+    recommendation?: boolean
+    extractedFields?: boolean
+    model?: boolean
+    createdAt?: boolean
+  }
+
+  export type InstitutionAiAnalysisOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "fileId" | "documentHash" | "riskScore" | "factors" | "recommendation" | "extractedFields" | "model" | "createdAt", ExtArgs["result"]["institutionAiAnalysis"]>
+  export type InstitutionAiAnalysisInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }
+  export type InstitutionAiAnalysisIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }
+  export type InstitutionAiAnalysisIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionAiAnalysisPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionAiAnalysis"
+    objects: {
+      escrow: Prisma.$InstitutionEscrowPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      escrowId: string
+      fileId: string | null
+      documentHash: string | null
+      riskScore: number
+      factors: Prisma.JsonValue
+      recommendation: string
+      extractedFields: Prisma.JsonValue
+      model: string
+      createdAt: Date
+    }, ExtArgs["result"]["institutionAiAnalysis"]>
+    composites: {}
+  }
+
+  type InstitutionAiAnalysisGetPayload<S extends boolean | null | undefined | InstitutionAiAnalysisDefaultArgs> = $Result.GetResult<Prisma.$InstitutionAiAnalysisPayload, S>
+
+  type InstitutionAiAnalysisCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionAiAnalysisFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionAiAnalysisCountAggregateInputType | true
+    }
+
+  export interface InstitutionAiAnalysisDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionAiAnalysis'], meta: { name: 'InstitutionAiAnalysis' } }
+    /**
+     * Find zero or one InstitutionAiAnalysis that matches the filter.
+     * @param {InstitutionAiAnalysisFindUniqueArgs} args - Arguments to find a InstitutionAiAnalysis
+     * @example
+     * // Get one InstitutionAiAnalysis
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionAiAnalysisFindUniqueArgs>(args: SelectSubset<T, InstitutionAiAnalysisFindUniqueArgs<ExtArgs>>): Prisma__InstitutionAiAnalysisClient<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionAiAnalysis that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionAiAnalysisFindUniqueOrThrowArgs} args - Arguments to find a InstitutionAiAnalysis
+     * @example
+     * // Get one InstitutionAiAnalysis
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionAiAnalysisFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionAiAnalysisFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionAiAnalysisClient<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionAiAnalysis that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAiAnalysisFindFirstArgs} args - Arguments to find a InstitutionAiAnalysis
+     * @example
+     * // Get one InstitutionAiAnalysis
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionAiAnalysisFindFirstArgs>(args?: SelectSubset<T, InstitutionAiAnalysisFindFirstArgs<ExtArgs>>): Prisma__InstitutionAiAnalysisClient<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionAiAnalysis that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAiAnalysisFindFirstOrThrowArgs} args - Arguments to find a InstitutionAiAnalysis
+     * @example
+     * // Get one InstitutionAiAnalysis
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionAiAnalysisFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionAiAnalysisFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionAiAnalysisClient<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionAiAnalyses that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAiAnalysisFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionAiAnalyses
+     * const institutionAiAnalyses = await prisma.institutionAiAnalysis.findMany()
+     * 
+     * // Get first 10 InstitutionAiAnalyses
+     * const institutionAiAnalyses = await prisma.institutionAiAnalysis.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionAiAnalysisWithIdOnly = await prisma.institutionAiAnalysis.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionAiAnalysisFindManyArgs>(args?: SelectSubset<T, InstitutionAiAnalysisFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionAiAnalysis.
+     * @param {InstitutionAiAnalysisCreateArgs} args - Arguments to create a InstitutionAiAnalysis.
+     * @example
+     * // Create one InstitutionAiAnalysis
+     * const InstitutionAiAnalysis = await prisma.institutionAiAnalysis.create({
+     *   data: {
+     *     // ... data to create a InstitutionAiAnalysis
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionAiAnalysisCreateArgs>(args: SelectSubset<T, InstitutionAiAnalysisCreateArgs<ExtArgs>>): Prisma__InstitutionAiAnalysisClient<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionAiAnalyses.
+     * @param {InstitutionAiAnalysisCreateManyArgs} args - Arguments to create many InstitutionAiAnalyses.
+     * @example
+     * // Create many InstitutionAiAnalyses
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionAiAnalysisCreateManyArgs>(args?: SelectSubset<T, InstitutionAiAnalysisCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionAiAnalyses and returns the data saved in the database.
+     * @param {InstitutionAiAnalysisCreateManyAndReturnArgs} args - Arguments to create many InstitutionAiAnalyses.
+     * @example
+     * // Create many InstitutionAiAnalyses
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionAiAnalyses and only return the `id`
+     * const institutionAiAnalysisWithIdOnly = await prisma.institutionAiAnalysis.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionAiAnalysisCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionAiAnalysisCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionAiAnalysis.
+     * @param {InstitutionAiAnalysisDeleteArgs} args - Arguments to delete one InstitutionAiAnalysis.
+     * @example
+     * // Delete one InstitutionAiAnalysis
+     * const InstitutionAiAnalysis = await prisma.institutionAiAnalysis.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionAiAnalysis
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionAiAnalysisDeleteArgs>(args: SelectSubset<T, InstitutionAiAnalysisDeleteArgs<ExtArgs>>): Prisma__InstitutionAiAnalysisClient<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionAiAnalysis.
+     * @param {InstitutionAiAnalysisUpdateArgs} args - Arguments to update one InstitutionAiAnalysis.
+     * @example
+     * // Update one InstitutionAiAnalysis
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionAiAnalysisUpdateArgs>(args: SelectSubset<T, InstitutionAiAnalysisUpdateArgs<ExtArgs>>): Prisma__InstitutionAiAnalysisClient<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionAiAnalyses.
+     * @param {InstitutionAiAnalysisDeleteManyArgs} args - Arguments to filter InstitutionAiAnalyses to delete.
+     * @example
+     * // Delete a few InstitutionAiAnalyses
+     * const { count } = await prisma.institutionAiAnalysis.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionAiAnalysisDeleteManyArgs>(args?: SelectSubset<T, InstitutionAiAnalysisDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionAiAnalyses.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAiAnalysisUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionAiAnalyses
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionAiAnalysisUpdateManyArgs>(args: SelectSubset<T, InstitutionAiAnalysisUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionAiAnalyses and returns the data updated in the database.
+     * @param {InstitutionAiAnalysisUpdateManyAndReturnArgs} args - Arguments to update many InstitutionAiAnalyses.
+     * @example
+     * // Update many InstitutionAiAnalyses
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionAiAnalyses and only return the `id`
+     * const institutionAiAnalysisWithIdOnly = await prisma.institutionAiAnalysis.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionAiAnalysisUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionAiAnalysisUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionAiAnalysis.
+     * @param {InstitutionAiAnalysisUpsertArgs} args - Arguments to update or create a InstitutionAiAnalysis.
+     * @example
+     * // Update or create a InstitutionAiAnalysis
+     * const institutionAiAnalysis = await prisma.institutionAiAnalysis.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionAiAnalysis
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionAiAnalysis we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionAiAnalysisUpsertArgs>(args: SelectSubset<T, InstitutionAiAnalysisUpsertArgs<ExtArgs>>): Prisma__InstitutionAiAnalysisClient<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionAiAnalyses.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAiAnalysisCountArgs} args - Arguments to filter InstitutionAiAnalyses to count.
+     * @example
+     * // Count the number of InstitutionAiAnalyses
+     * const count = await prisma.institutionAiAnalysis.count({
+     *   where: {
+     *     // ... the filter for the InstitutionAiAnalyses we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionAiAnalysisCountArgs>(
+      args?: Subset<T, InstitutionAiAnalysisCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionAiAnalysisCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionAiAnalysis.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAiAnalysisAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionAiAnalysisAggregateArgs>(args: Subset<T, InstitutionAiAnalysisAggregateArgs>): Prisma.PrismaPromise<GetInstitutionAiAnalysisAggregateType<T>>
+
+    /**
+     * Group by InstitutionAiAnalysis.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAiAnalysisGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionAiAnalysisGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionAiAnalysisGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionAiAnalysisGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionAiAnalysisGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionAiAnalysisGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionAiAnalysis model
+   */
+  readonly fields: InstitutionAiAnalysisFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionAiAnalysis.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionAiAnalysisClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    escrow<T extends InstitutionEscrowDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrowDefaultArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionAiAnalysis model
+   */
+  interface InstitutionAiAnalysisFieldRefs {
+    readonly id: FieldRef<"InstitutionAiAnalysis", 'String'>
+    readonly escrowId: FieldRef<"InstitutionAiAnalysis", 'String'>
+    readonly fileId: FieldRef<"InstitutionAiAnalysis", 'String'>
+    readonly documentHash: FieldRef<"InstitutionAiAnalysis", 'String'>
+    readonly riskScore: FieldRef<"InstitutionAiAnalysis", 'Int'>
+    readonly factors: FieldRef<"InstitutionAiAnalysis", 'Json'>
+    readonly recommendation: FieldRef<"InstitutionAiAnalysis", 'String'>
+    readonly extractedFields: FieldRef<"InstitutionAiAnalysis", 'Json'>
+    readonly model: FieldRef<"InstitutionAiAnalysis", 'String'>
+    readonly createdAt: FieldRef<"InstitutionAiAnalysis", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionAiAnalysis findUnique
+   */
+  export type InstitutionAiAnalysisFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAiAnalysis to fetch.
+     */
+    where: InstitutionAiAnalysisWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAiAnalysis findUniqueOrThrow
+   */
+  export type InstitutionAiAnalysisFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAiAnalysis to fetch.
+     */
+    where: InstitutionAiAnalysisWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAiAnalysis findFirst
+   */
+  export type InstitutionAiAnalysisFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAiAnalysis to fetch.
+     */
+    where?: InstitutionAiAnalysisWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAiAnalyses to fetch.
+     */
+    orderBy?: InstitutionAiAnalysisOrderByWithRelationInput | InstitutionAiAnalysisOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionAiAnalyses.
+     */
+    cursor?: InstitutionAiAnalysisWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAiAnalyses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAiAnalyses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionAiAnalyses.
+     */
+    distinct?: InstitutionAiAnalysisScalarFieldEnum | InstitutionAiAnalysisScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAiAnalysis findFirstOrThrow
+   */
+  export type InstitutionAiAnalysisFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAiAnalysis to fetch.
+     */
+    where?: InstitutionAiAnalysisWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAiAnalyses to fetch.
+     */
+    orderBy?: InstitutionAiAnalysisOrderByWithRelationInput | InstitutionAiAnalysisOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionAiAnalyses.
+     */
+    cursor?: InstitutionAiAnalysisWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAiAnalyses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAiAnalyses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionAiAnalyses.
+     */
+    distinct?: InstitutionAiAnalysisScalarFieldEnum | InstitutionAiAnalysisScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAiAnalysis findMany
+   */
+  export type InstitutionAiAnalysisFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAiAnalyses to fetch.
+     */
+    where?: InstitutionAiAnalysisWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAiAnalyses to fetch.
+     */
+    orderBy?: InstitutionAiAnalysisOrderByWithRelationInput | InstitutionAiAnalysisOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionAiAnalyses.
+     */
+    cursor?: InstitutionAiAnalysisWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAiAnalyses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAiAnalyses.
+     */
+    skip?: number
+    distinct?: InstitutionAiAnalysisScalarFieldEnum | InstitutionAiAnalysisScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAiAnalysis create
+   */
+  export type InstitutionAiAnalysisCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionAiAnalysis.
+     */
+    data: XOR<InstitutionAiAnalysisCreateInput, InstitutionAiAnalysisUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionAiAnalysis createMany
+   */
+  export type InstitutionAiAnalysisCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionAiAnalyses.
+     */
+    data: InstitutionAiAnalysisCreateManyInput | InstitutionAiAnalysisCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionAiAnalysis createManyAndReturn
+   */
+  export type InstitutionAiAnalysisCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionAiAnalyses.
+     */
+    data: InstitutionAiAnalysisCreateManyInput | InstitutionAiAnalysisCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionAiAnalysis update
+   */
+  export type InstitutionAiAnalysisUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionAiAnalysis.
+     */
+    data: XOR<InstitutionAiAnalysisUpdateInput, InstitutionAiAnalysisUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionAiAnalysis to update.
+     */
+    where: InstitutionAiAnalysisWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAiAnalysis updateMany
+   */
+  export type InstitutionAiAnalysisUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionAiAnalyses.
+     */
+    data: XOR<InstitutionAiAnalysisUpdateManyMutationInput, InstitutionAiAnalysisUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionAiAnalyses to update
+     */
+    where?: InstitutionAiAnalysisWhereInput
+    /**
+     * Limit how many InstitutionAiAnalyses to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionAiAnalysis updateManyAndReturn
+   */
+  export type InstitutionAiAnalysisUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionAiAnalyses.
+     */
+    data: XOR<InstitutionAiAnalysisUpdateManyMutationInput, InstitutionAiAnalysisUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionAiAnalyses to update
+     */
+    where?: InstitutionAiAnalysisWhereInput
+    /**
+     * Limit how many InstitutionAiAnalyses to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionAiAnalysis upsert
+   */
+  export type InstitutionAiAnalysisUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionAiAnalysis to update in case it exists.
+     */
+    where: InstitutionAiAnalysisWhereUniqueInput
+    /**
+     * In case the InstitutionAiAnalysis found by the `where` argument doesn't exist, create a new InstitutionAiAnalysis with this data.
+     */
+    create: XOR<InstitutionAiAnalysisCreateInput, InstitutionAiAnalysisUncheckedCreateInput>
+    /**
+     * In case the InstitutionAiAnalysis was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionAiAnalysisUpdateInput, InstitutionAiAnalysisUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionAiAnalysis delete
+   */
+  export type InstitutionAiAnalysisDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionAiAnalysis to delete.
+     */
+    where: InstitutionAiAnalysisWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAiAnalysis deleteMany
+   */
+  export type InstitutionAiAnalysisDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionAiAnalyses to delete
+     */
+    where?: InstitutionAiAnalysisWhereInput
+    /**
+     * Limit how many InstitutionAiAnalyses to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionAiAnalysis without action
+   */
+  export type InstitutionAiAnalysisDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionCorridor
+   */
+
+  export type AggregateInstitutionCorridor = {
+    _count: InstitutionCorridorCountAggregateOutputType | null
+    _avg: InstitutionCorridorAvgAggregateOutputType | null
+    _sum: InstitutionCorridorSumAggregateOutputType | null
+    _min: InstitutionCorridorMinAggregateOutputType | null
+    _max: InstitutionCorridorMaxAggregateOutputType | null
+  }
+
+  export type InstitutionCorridorAvgAggregateOutputType = {
+    minAmount: Decimal | null
+    maxAmount: Decimal | null
+    dailyLimit: Decimal | null
+    monthlyLimit: Decimal | null
+  }
+
+  export type InstitutionCorridorSumAggregateOutputType = {
+    minAmount: Decimal | null
+    maxAmount: Decimal | null
+    dailyLimit: Decimal | null
+    monthlyLimit: Decimal | null
+  }
+
+  export type InstitutionCorridorMinAggregateOutputType = {
+    id: string | null
+    sourceCountry: string | null
+    destCountry: string | null
+    code: string | null
+    minAmount: Decimal | null
+    maxAmount: Decimal | null
+    dailyLimit: Decimal | null
+    monthlyLimit: Decimal | null
+    riskLevel: string | null
+    status: $Enums.CorridorStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionCorridorMaxAggregateOutputType = {
+    id: string | null
+    sourceCountry: string | null
+    destCountry: string | null
+    code: string | null
+    minAmount: Decimal | null
+    maxAmount: Decimal | null
+    dailyLimit: Decimal | null
+    monthlyLimit: Decimal | null
+    riskLevel: string | null
+    status: $Enums.CorridorStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionCorridorCountAggregateOutputType = {
+    id: number
+    sourceCountry: number
+    destCountry: number
+    code: number
+    minAmount: number
+    maxAmount: number
+    dailyLimit: number
+    monthlyLimit: number
+    requiredDocuments: number
+    riskLevel: number
+    status: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionCorridorAvgAggregateInputType = {
+    minAmount?: true
+    maxAmount?: true
+    dailyLimit?: true
+    monthlyLimit?: true
+  }
+
+  export type InstitutionCorridorSumAggregateInputType = {
+    minAmount?: true
+    maxAmount?: true
+    dailyLimit?: true
+    monthlyLimit?: true
+  }
+
+  export type InstitutionCorridorMinAggregateInputType = {
+    id?: true
+    sourceCountry?: true
+    destCountry?: true
+    code?: true
+    minAmount?: true
+    maxAmount?: true
+    dailyLimit?: true
+    monthlyLimit?: true
+    riskLevel?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionCorridorMaxAggregateInputType = {
+    id?: true
+    sourceCountry?: true
+    destCountry?: true
+    code?: true
+    minAmount?: true
+    maxAmount?: true
+    dailyLimit?: true
+    monthlyLimit?: true
+    riskLevel?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionCorridorCountAggregateInputType = {
+    id?: true
+    sourceCountry?: true
+    destCountry?: true
+    code?: true
+    minAmount?: true
+    maxAmount?: true
+    dailyLimit?: true
+    monthlyLimit?: true
+    requiredDocuments?: true
+    riskLevel?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionCorridorAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionCorridor to aggregate.
+     */
+    where?: InstitutionCorridorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionCorridors to fetch.
+     */
+    orderBy?: InstitutionCorridorOrderByWithRelationInput | InstitutionCorridorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionCorridorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionCorridors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionCorridors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionCorridors
+    **/
+    _count?: true | InstitutionCorridorCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionCorridorAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionCorridorSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionCorridorMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionCorridorMaxAggregateInputType
+  }
+
+  export type GetInstitutionCorridorAggregateType<T extends InstitutionCorridorAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionCorridor]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionCorridor[P]>
+      : GetScalarType<T[P], AggregateInstitutionCorridor[P]>
+  }
+
+
+
+
+  export type InstitutionCorridorGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionCorridorWhereInput
+    orderBy?: InstitutionCorridorOrderByWithAggregationInput | InstitutionCorridorOrderByWithAggregationInput[]
+    by: InstitutionCorridorScalarFieldEnum[] | InstitutionCorridorScalarFieldEnum
+    having?: InstitutionCorridorScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionCorridorCountAggregateInputType | true
+    _avg?: InstitutionCorridorAvgAggregateInputType
+    _sum?: InstitutionCorridorSumAggregateInputType
+    _min?: InstitutionCorridorMinAggregateInputType
+    _max?: InstitutionCorridorMaxAggregateInputType
+  }
+
+  export type InstitutionCorridorGroupByOutputType = {
+    id: string
+    sourceCountry: string
+    destCountry: string
+    code: string
+    minAmount: Decimal
+    maxAmount: Decimal
+    dailyLimit: Decimal
+    monthlyLimit: Decimal
+    requiredDocuments: string[]
+    riskLevel: string
+    status: $Enums.CorridorStatus
+    createdAt: Date
+    updatedAt: Date
+    _count: InstitutionCorridorCountAggregateOutputType | null
+    _avg: InstitutionCorridorAvgAggregateOutputType | null
+    _sum: InstitutionCorridorSumAggregateOutputType | null
+    _min: InstitutionCorridorMinAggregateOutputType | null
+    _max: InstitutionCorridorMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionCorridorGroupByPayload<T extends InstitutionCorridorGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionCorridorGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionCorridorGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionCorridorGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionCorridorGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionCorridorSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    sourceCountry?: boolean
+    destCountry?: boolean
+    code?: boolean
+    minAmount?: boolean
+    maxAmount?: boolean
+    dailyLimit?: boolean
+    monthlyLimit?: boolean
+    requiredDocuments?: boolean
+    riskLevel?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["institutionCorridor"]>
+
+  export type InstitutionCorridorSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    sourceCountry?: boolean
+    destCountry?: boolean
+    code?: boolean
+    minAmount?: boolean
+    maxAmount?: boolean
+    dailyLimit?: boolean
+    monthlyLimit?: boolean
+    requiredDocuments?: boolean
+    riskLevel?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["institutionCorridor"]>
+
+  export type InstitutionCorridorSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    sourceCountry?: boolean
+    destCountry?: boolean
+    code?: boolean
+    minAmount?: boolean
+    maxAmount?: boolean
+    dailyLimit?: boolean
+    monthlyLimit?: boolean
+    requiredDocuments?: boolean
+    riskLevel?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["institutionCorridor"]>
+
+  export type InstitutionCorridorSelectScalar = {
+    id?: boolean
+    sourceCountry?: boolean
+    destCountry?: boolean
+    code?: boolean
+    minAmount?: boolean
+    maxAmount?: boolean
+    dailyLimit?: boolean
+    monthlyLimit?: boolean
+    requiredDocuments?: boolean
+    riskLevel?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InstitutionCorridorOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sourceCountry" | "destCountry" | "code" | "minAmount" | "maxAmount" | "dailyLimit" | "monthlyLimit" | "requiredDocuments" | "riskLevel" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionCorridor"]>
+
+  export type $InstitutionCorridorPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionCorridor"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      sourceCountry: string
+      destCountry: string
+      code: string
+      minAmount: Prisma.Decimal
+      maxAmount: Prisma.Decimal
+      dailyLimit: Prisma.Decimal
+      monthlyLimit: Prisma.Decimal
+      requiredDocuments: string[]
+      riskLevel: string
+      status: $Enums.CorridorStatus
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["institutionCorridor"]>
+    composites: {}
+  }
+
+  type InstitutionCorridorGetPayload<S extends boolean | null | undefined | InstitutionCorridorDefaultArgs> = $Result.GetResult<Prisma.$InstitutionCorridorPayload, S>
+
+  type InstitutionCorridorCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionCorridorFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionCorridorCountAggregateInputType | true
+    }
+
+  export interface InstitutionCorridorDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionCorridor'], meta: { name: 'InstitutionCorridor' } }
+    /**
+     * Find zero or one InstitutionCorridor that matches the filter.
+     * @param {InstitutionCorridorFindUniqueArgs} args - Arguments to find a InstitutionCorridor
+     * @example
+     * // Get one InstitutionCorridor
+     * const institutionCorridor = await prisma.institutionCorridor.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionCorridorFindUniqueArgs>(args: SelectSubset<T, InstitutionCorridorFindUniqueArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionCorridor that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionCorridorFindUniqueOrThrowArgs} args - Arguments to find a InstitutionCorridor
+     * @example
+     * // Get one InstitutionCorridor
+     * const institutionCorridor = await prisma.institutionCorridor.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionCorridorFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionCorridorFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionCorridor that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionCorridorFindFirstArgs} args - Arguments to find a InstitutionCorridor
+     * @example
+     * // Get one InstitutionCorridor
+     * const institutionCorridor = await prisma.institutionCorridor.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionCorridorFindFirstArgs>(args?: SelectSubset<T, InstitutionCorridorFindFirstArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionCorridor that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionCorridorFindFirstOrThrowArgs} args - Arguments to find a InstitutionCorridor
+     * @example
+     * // Get one InstitutionCorridor
+     * const institutionCorridor = await prisma.institutionCorridor.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionCorridorFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionCorridorFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionCorridors that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionCorridorFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionCorridors
+     * const institutionCorridors = await prisma.institutionCorridor.findMany()
+     * 
+     * // Get first 10 InstitutionCorridors
+     * const institutionCorridors = await prisma.institutionCorridor.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionCorridorWithIdOnly = await prisma.institutionCorridor.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionCorridorFindManyArgs>(args?: SelectSubset<T, InstitutionCorridorFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionCorridor.
+     * @param {InstitutionCorridorCreateArgs} args - Arguments to create a InstitutionCorridor.
+     * @example
+     * // Create one InstitutionCorridor
+     * const InstitutionCorridor = await prisma.institutionCorridor.create({
+     *   data: {
+     *     // ... data to create a InstitutionCorridor
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionCorridorCreateArgs>(args: SelectSubset<T, InstitutionCorridorCreateArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionCorridors.
+     * @param {InstitutionCorridorCreateManyArgs} args - Arguments to create many InstitutionCorridors.
+     * @example
+     * // Create many InstitutionCorridors
+     * const institutionCorridor = await prisma.institutionCorridor.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionCorridorCreateManyArgs>(args?: SelectSubset<T, InstitutionCorridorCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionCorridors and returns the data saved in the database.
+     * @param {InstitutionCorridorCreateManyAndReturnArgs} args - Arguments to create many InstitutionCorridors.
+     * @example
+     * // Create many InstitutionCorridors
+     * const institutionCorridor = await prisma.institutionCorridor.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionCorridors and only return the `id`
+     * const institutionCorridorWithIdOnly = await prisma.institutionCorridor.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionCorridorCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionCorridorCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionCorridor.
+     * @param {InstitutionCorridorDeleteArgs} args - Arguments to delete one InstitutionCorridor.
+     * @example
+     * // Delete one InstitutionCorridor
+     * const InstitutionCorridor = await prisma.institutionCorridor.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionCorridor
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionCorridorDeleteArgs>(args: SelectSubset<T, InstitutionCorridorDeleteArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionCorridor.
+     * @param {InstitutionCorridorUpdateArgs} args - Arguments to update one InstitutionCorridor.
+     * @example
+     * // Update one InstitutionCorridor
+     * const institutionCorridor = await prisma.institutionCorridor.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionCorridorUpdateArgs>(args: SelectSubset<T, InstitutionCorridorUpdateArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionCorridors.
+     * @param {InstitutionCorridorDeleteManyArgs} args - Arguments to filter InstitutionCorridors to delete.
+     * @example
+     * // Delete a few InstitutionCorridors
+     * const { count } = await prisma.institutionCorridor.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionCorridorDeleteManyArgs>(args?: SelectSubset<T, InstitutionCorridorDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionCorridors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionCorridorUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionCorridors
+     * const institutionCorridor = await prisma.institutionCorridor.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionCorridorUpdateManyArgs>(args: SelectSubset<T, InstitutionCorridorUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionCorridors and returns the data updated in the database.
+     * @param {InstitutionCorridorUpdateManyAndReturnArgs} args - Arguments to update many InstitutionCorridors.
+     * @example
+     * // Update many InstitutionCorridors
+     * const institutionCorridor = await prisma.institutionCorridor.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionCorridors and only return the `id`
+     * const institutionCorridorWithIdOnly = await prisma.institutionCorridor.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionCorridorUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionCorridorUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionCorridor.
+     * @param {InstitutionCorridorUpsertArgs} args - Arguments to update or create a InstitutionCorridor.
+     * @example
+     * // Update or create a InstitutionCorridor
+     * const institutionCorridor = await prisma.institutionCorridor.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionCorridor
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionCorridor we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionCorridorUpsertArgs>(args: SelectSubset<T, InstitutionCorridorUpsertArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionCorridors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionCorridorCountArgs} args - Arguments to filter InstitutionCorridors to count.
+     * @example
+     * // Count the number of InstitutionCorridors
+     * const count = await prisma.institutionCorridor.count({
+     *   where: {
+     *     // ... the filter for the InstitutionCorridors we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionCorridorCountArgs>(
+      args?: Subset<T, InstitutionCorridorCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionCorridorCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionCorridor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionCorridorAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionCorridorAggregateArgs>(args: Subset<T, InstitutionCorridorAggregateArgs>): Prisma.PrismaPromise<GetInstitutionCorridorAggregateType<T>>
+
+    /**
+     * Group by InstitutionCorridor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionCorridorGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionCorridorGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionCorridorGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionCorridorGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionCorridorGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionCorridorGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionCorridor model
+   */
+  readonly fields: InstitutionCorridorFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionCorridor.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionCorridorClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionCorridor model
+   */
+  interface InstitutionCorridorFieldRefs {
+    readonly id: FieldRef<"InstitutionCorridor", 'String'>
+    readonly sourceCountry: FieldRef<"InstitutionCorridor", 'String'>
+    readonly destCountry: FieldRef<"InstitutionCorridor", 'String'>
+    readonly code: FieldRef<"InstitutionCorridor", 'String'>
+    readonly minAmount: FieldRef<"InstitutionCorridor", 'Decimal'>
+    readonly maxAmount: FieldRef<"InstitutionCorridor", 'Decimal'>
+    readonly dailyLimit: FieldRef<"InstitutionCorridor", 'Decimal'>
+    readonly monthlyLimit: FieldRef<"InstitutionCorridor", 'Decimal'>
+    readonly requiredDocuments: FieldRef<"InstitutionCorridor", 'String[]'>
+    readonly riskLevel: FieldRef<"InstitutionCorridor", 'String'>
+    readonly status: FieldRef<"InstitutionCorridor", 'CorridorStatus'>
+    readonly createdAt: FieldRef<"InstitutionCorridor", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionCorridor", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionCorridor findUnique
+   */
+  export type InstitutionCorridorFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionCorridor to fetch.
+     */
+    where: InstitutionCorridorWhereUniqueInput
+  }
+
+  /**
+   * InstitutionCorridor findUniqueOrThrow
+   */
+  export type InstitutionCorridorFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionCorridor to fetch.
+     */
+    where: InstitutionCorridorWhereUniqueInput
+  }
+
+  /**
+   * InstitutionCorridor findFirst
+   */
+  export type InstitutionCorridorFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionCorridor to fetch.
+     */
+    where?: InstitutionCorridorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionCorridors to fetch.
+     */
+    orderBy?: InstitutionCorridorOrderByWithRelationInput | InstitutionCorridorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionCorridors.
+     */
+    cursor?: InstitutionCorridorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionCorridors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionCorridors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionCorridors.
+     */
+    distinct?: InstitutionCorridorScalarFieldEnum | InstitutionCorridorScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionCorridor findFirstOrThrow
+   */
+  export type InstitutionCorridorFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionCorridor to fetch.
+     */
+    where?: InstitutionCorridorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionCorridors to fetch.
+     */
+    orderBy?: InstitutionCorridorOrderByWithRelationInput | InstitutionCorridorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionCorridors.
+     */
+    cursor?: InstitutionCorridorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionCorridors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionCorridors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionCorridors.
+     */
+    distinct?: InstitutionCorridorScalarFieldEnum | InstitutionCorridorScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionCorridor findMany
+   */
+  export type InstitutionCorridorFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionCorridors to fetch.
+     */
+    where?: InstitutionCorridorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionCorridors to fetch.
+     */
+    orderBy?: InstitutionCorridorOrderByWithRelationInput | InstitutionCorridorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionCorridors.
+     */
+    cursor?: InstitutionCorridorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionCorridors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionCorridors.
+     */
+    skip?: number
+    distinct?: InstitutionCorridorScalarFieldEnum | InstitutionCorridorScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionCorridor create
+   */
+  export type InstitutionCorridorCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionCorridor.
+     */
+    data: XOR<InstitutionCorridorCreateInput, InstitutionCorridorUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionCorridor createMany
+   */
+  export type InstitutionCorridorCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionCorridors.
+     */
+    data: InstitutionCorridorCreateManyInput | InstitutionCorridorCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionCorridor createManyAndReturn
+   */
+  export type InstitutionCorridorCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionCorridors.
+     */
+    data: InstitutionCorridorCreateManyInput | InstitutionCorridorCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionCorridor update
+   */
+  export type InstitutionCorridorUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionCorridor.
+     */
+    data: XOR<InstitutionCorridorUpdateInput, InstitutionCorridorUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionCorridor to update.
+     */
+    where: InstitutionCorridorWhereUniqueInput
+  }
+
+  /**
+   * InstitutionCorridor updateMany
+   */
+  export type InstitutionCorridorUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionCorridors.
+     */
+    data: XOR<InstitutionCorridorUpdateManyMutationInput, InstitutionCorridorUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionCorridors to update
+     */
+    where?: InstitutionCorridorWhereInput
+    /**
+     * Limit how many InstitutionCorridors to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionCorridor updateManyAndReturn
+   */
+  export type InstitutionCorridorUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionCorridors.
+     */
+    data: XOR<InstitutionCorridorUpdateManyMutationInput, InstitutionCorridorUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionCorridors to update
+     */
+    where?: InstitutionCorridorWhereInput
+    /**
+     * Limit how many InstitutionCorridors to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionCorridor upsert
+   */
+  export type InstitutionCorridorUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionCorridor to update in case it exists.
+     */
+    where: InstitutionCorridorWhereUniqueInput
+    /**
+     * In case the InstitutionCorridor found by the `where` argument doesn't exist, create a new InstitutionCorridor with this data.
+     */
+    create: XOR<InstitutionCorridorCreateInput, InstitutionCorridorUncheckedCreateInput>
+    /**
+     * In case the InstitutionCorridor was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionCorridorUpdateInput, InstitutionCorridorUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionCorridor delete
+   */
+  export type InstitutionCorridorDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Filter which InstitutionCorridor to delete.
+     */
+    where: InstitutionCorridorWhereUniqueInput
+  }
+
+  /**
+   * InstitutionCorridor deleteMany
+   */
+  export type InstitutionCorridorDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionCorridors to delete
+     */
+    where?: InstitutionCorridorWhereInput
+    /**
+     * Limit how many InstitutionCorridors to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionCorridor without action
+   */
+  export type InstitutionCorridorDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridor
+     */
+    select?: InstitutionCorridorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionCorridor
+     */
+    omit?: InstitutionCorridorOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionFile
+   */
+
+  export type AggregateInstitutionFile = {
+    _count: InstitutionFileCountAggregateOutputType | null
+    _avg: InstitutionFileAvgAggregateOutputType | null
+    _sum: InstitutionFileSumAggregateOutputType | null
+    _min: InstitutionFileMinAggregateOutputType | null
+    _max: InstitutionFileMaxAggregateOutputType | null
+  }
+
+  export type InstitutionFileAvgAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type InstitutionFileSumAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type InstitutionFileMinAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    escrowId: string | null
+    fileName: string | null
+    fileKey: string | null
+    mimeType: string | null
+    sizeBytes: number | null
+    documentType: $Enums.DocumentType | null
+    uploadedAt: Date | null
+  }
+
+  export type InstitutionFileMaxAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    escrowId: string | null
+    fileName: string | null
+    fileKey: string | null
+    mimeType: string | null
+    sizeBytes: number | null
+    documentType: $Enums.DocumentType | null
+    uploadedAt: Date | null
+  }
+
+  export type InstitutionFileCountAggregateOutputType = {
+    id: number
+    clientId: number
+    escrowId: number
+    fileName: number
+    fileKey: number
+    mimeType: number
+    sizeBytes: number
+    documentType: number
+    uploadedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionFileAvgAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type InstitutionFileSumAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type InstitutionFileMinAggregateInputType = {
+    id?: true
+    clientId?: true
+    escrowId?: true
+    fileName?: true
+    fileKey?: true
+    mimeType?: true
+    sizeBytes?: true
+    documentType?: true
+    uploadedAt?: true
+  }
+
+  export type InstitutionFileMaxAggregateInputType = {
+    id?: true
+    clientId?: true
+    escrowId?: true
+    fileName?: true
+    fileKey?: true
+    mimeType?: true
+    sizeBytes?: true
+    documentType?: true
+    uploadedAt?: true
+  }
+
+  export type InstitutionFileCountAggregateInputType = {
+    id?: true
+    clientId?: true
+    escrowId?: true
+    fileName?: true
+    fileKey?: true
+    mimeType?: true
+    sizeBytes?: true
+    documentType?: true
+    uploadedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionFileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionFile to aggregate.
+     */
+    where?: InstitutionFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionFiles to fetch.
+     */
+    orderBy?: InstitutionFileOrderByWithRelationInput | InstitutionFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionFiles
+    **/
+    _count?: true | InstitutionFileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionFileAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionFileSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionFileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionFileMaxAggregateInputType
+  }
+
+  export type GetInstitutionFileAggregateType<T extends InstitutionFileAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionFile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionFile[P]>
+      : GetScalarType<T[P], AggregateInstitutionFile[P]>
+  }
+
+
+
+
+  export type InstitutionFileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionFileWhereInput
+    orderBy?: InstitutionFileOrderByWithAggregationInput | InstitutionFileOrderByWithAggregationInput[]
+    by: InstitutionFileScalarFieldEnum[] | InstitutionFileScalarFieldEnum
+    having?: InstitutionFileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionFileCountAggregateInputType | true
+    _avg?: InstitutionFileAvgAggregateInputType
+    _sum?: InstitutionFileSumAggregateInputType
+    _min?: InstitutionFileMinAggregateInputType
+    _max?: InstitutionFileMaxAggregateInputType
+  }
+
+  export type InstitutionFileGroupByOutputType = {
+    id: string
+    clientId: string
+    escrowId: string | null
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt: Date
+    _count: InstitutionFileCountAggregateOutputType | null
+    _avg: InstitutionFileAvgAggregateOutputType | null
+    _sum: InstitutionFileSumAggregateOutputType | null
+    _min: InstitutionFileMinAggregateOutputType | null
+    _max: InstitutionFileMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionFileGroupByPayload<T extends InstitutionFileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionFileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionFileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionFileGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionFileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionFileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    escrowId?: boolean
+    fileName?: boolean
+    fileKey?: boolean
+    mimeType?: boolean
+    sizeBytes?: boolean
+    documentType?: boolean
+    uploadedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionFile$escrowArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionFile"]>
+
+  export type InstitutionFileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    escrowId?: boolean
+    fileName?: boolean
+    fileKey?: boolean
+    mimeType?: boolean
+    sizeBytes?: boolean
+    documentType?: boolean
+    uploadedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionFile$escrowArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionFile"]>
+
+  export type InstitutionFileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    escrowId?: boolean
+    fileName?: boolean
+    fileKey?: boolean
+    mimeType?: boolean
+    sizeBytes?: boolean
+    documentType?: boolean
+    uploadedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionFile$escrowArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionFile"]>
+
+  export type InstitutionFileSelectScalar = {
+    id?: boolean
+    clientId?: boolean
+    escrowId?: boolean
+    fileName?: boolean
+    fileKey?: boolean
+    mimeType?: boolean
+    sizeBytes?: boolean
+    documentType?: boolean
+    uploadedAt?: boolean
+  }
+
+  export type InstitutionFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "escrowId" | "fileName" | "fileKey" | "mimeType" | "sizeBytes" | "documentType" | "uploadedAt", ExtArgs["result"]["institutionFile"]>
+  export type InstitutionFileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionFile$escrowArgs<ExtArgs>
+  }
+  export type InstitutionFileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionFile$escrowArgs<ExtArgs>
+  }
+  export type InstitutionFileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionFile$escrowArgs<ExtArgs>
+  }
+
+  export type $InstitutionFilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionFile"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+      escrow: Prisma.$InstitutionEscrowPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      clientId: string
+      escrowId: string | null
+      fileName: string
+      fileKey: string
+      mimeType: string
+      sizeBytes: number
+      documentType: $Enums.DocumentType
+      uploadedAt: Date
+    }, ExtArgs["result"]["institutionFile"]>
+    composites: {}
+  }
+
+  type InstitutionFileGetPayload<S extends boolean | null | undefined | InstitutionFileDefaultArgs> = $Result.GetResult<Prisma.$InstitutionFilePayload, S>
+
+  type InstitutionFileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionFileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionFileCountAggregateInputType | true
+    }
+
+  export interface InstitutionFileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionFile'], meta: { name: 'InstitutionFile' } }
+    /**
+     * Find zero or one InstitutionFile that matches the filter.
+     * @param {InstitutionFileFindUniqueArgs} args - Arguments to find a InstitutionFile
+     * @example
+     * // Get one InstitutionFile
+     * const institutionFile = await prisma.institutionFile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionFileFindUniqueArgs>(args: SelectSubset<T, InstitutionFileFindUniqueArgs<ExtArgs>>): Prisma__InstitutionFileClient<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionFile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionFileFindUniqueOrThrowArgs} args - Arguments to find a InstitutionFile
+     * @example
+     * // Get one InstitutionFile
+     * const institutionFile = await prisma.institutionFile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionFileFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionFileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionFileClient<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionFile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionFileFindFirstArgs} args - Arguments to find a InstitutionFile
+     * @example
+     * // Get one InstitutionFile
+     * const institutionFile = await prisma.institutionFile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionFileFindFirstArgs>(args?: SelectSubset<T, InstitutionFileFindFirstArgs<ExtArgs>>): Prisma__InstitutionFileClient<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionFile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionFileFindFirstOrThrowArgs} args - Arguments to find a InstitutionFile
+     * @example
+     * // Get one InstitutionFile
+     * const institutionFile = await prisma.institutionFile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionFileFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionFileFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionFileClient<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionFiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionFileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionFiles
+     * const institutionFiles = await prisma.institutionFile.findMany()
+     * 
+     * // Get first 10 InstitutionFiles
+     * const institutionFiles = await prisma.institutionFile.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionFileWithIdOnly = await prisma.institutionFile.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionFileFindManyArgs>(args?: SelectSubset<T, InstitutionFileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionFile.
+     * @param {InstitutionFileCreateArgs} args - Arguments to create a InstitutionFile.
+     * @example
+     * // Create one InstitutionFile
+     * const InstitutionFile = await prisma.institutionFile.create({
+     *   data: {
+     *     // ... data to create a InstitutionFile
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionFileCreateArgs>(args: SelectSubset<T, InstitutionFileCreateArgs<ExtArgs>>): Prisma__InstitutionFileClient<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionFiles.
+     * @param {InstitutionFileCreateManyArgs} args - Arguments to create many InstitutionFiles.
+     * @example
+     * // Create many InstitutionFiles
+     * const institutionFile = await prisma.institutionFile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionFileCreateManyArgs>(args?: SelectSubset<T, InstitutionFileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionFiles and returns the data saved in the database.
+     * @param {InstitutionFileCreateManyAndReturnArgs} args - Arguments to create many InstitutionFiles.
+     * @example
+     * // Create many InstitutionFiles
+     * const institutionFile = await prisma.institutionFile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionFiles and only return the `id`
+     * const institutionFileWithIdOnly = await prisma.institutionFile.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionFileCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionFileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionFile.
+     * @param {InstitutionFileDeleteArgs} args - Arguments to delete one InstitutionFile.
+     * @example
+     * // Delete one InstitutionFile
+     * const InstitutionFile = await prisma.institutionFile.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionFile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionFileDeleteArgs>(args: SelectSubset<T, InstitutionFileDeleteArgs<ExtArgs>>): Prisma__InstitutionFileClient<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionFile.
+     * @param {InstitutionFileUpdateArgs} args - Arguments to update one InstitutionFile.
+     * @example
+     * // Update one InstitutionFile
+     * const institutionFile = await prisma.institutionFile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionFileUpdateArgs>(args: SelectSubset<T, InstitutionFileUpdateArgs<ExtArgs>>): Prisma__InstitutionFileClient<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionFiles.
+     * @param {InstitutionFileDeleteManyArgs} args - Arguments to filter InstitutionFiles to delete.
+     * @example
+     * // Delete a few InstitutionFiles
+     * const { count } = await prisma.institutionFile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionFileDeleteManyArgs>(args?: SelectSubset<T, InstitutionFileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionFileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionFiles
+     * const institutionFile = await prisma.institutionFile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionFileUpdateManyArgs>(args: SelectSubset<T, InstitutionFileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionFiles and returns the data updated in the database.
+     * @param {InstitutionFileUpdateManyAndReturnArgs} args - Arguments to update many InstitutionFiles.
+     * @example
+     * // Update many InstitutionFiles
+     * const institutionFile = await prisma.institutionFile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionFiles and only return the `id`
+     * const institutionFileWithIdOnly = await prisma.institutionFile.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionFileUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionFileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionFile.
+     * @param {InstitutionFileUpsertArgs} args - Arguments to update or create a InstitutionFile.
+     * @example
+     * // Update or create a InstitutionFile
+     * const institutionFile = await prisma.institutionFile.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionFile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionFile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionFileUpsertArgs>(args: SelectSubset<T, InstitutionFileUpsertArgs<ExtArgs>>): Prisma__InstitutionFileClient<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionFileCountArgs} args - Arguments to filter InstitutionFiles to count.
+     * @example
+     * // Count the number of InstitutionFiles
+     * const count = await prisma.institutionFile.count({
+     *   where: {
+     *     // ... the filter for the InstitutionFiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionFileCountArgs>(
+      args?: Subset<T, InstitutionFileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionFileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionFileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionFileAggregateArgs>(args: Subset<T, InstitutionFileAggregateArgs>): Prisma.PrismaPromise<GetInstitutionFileAggregateType<T>>
+
+    /**
+     * Group by InstitutionFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionFileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionFileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionFileGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionFileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionFileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionFileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionFile model
+   */
+  readonly fields: InstitutionFileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionFile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionFileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    escrow<T extends InstitutionFile$escrowArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionFile$escrowArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionFile model
+   */
+  interface InstitutionFileFieldRefs {
+    readonly id: FieldRef<"InstitutionFile", 'String'>
+    readonly clientId: FieldRef<"InstitutionFile", 'String'>
+    readonly escrowId: FieldRef<"InstitutionFile", 'String'>
+    readonly fileName: FieldRef<"InstitutionFile", 'String'>
+    readonly fileKey: FieldRef<"InstitutionFile", 'String'>
+    readonly mimeType: FieldRef<"InstitutionFile", 'String'>
+    readonly sizeBytes: FieldRef<"InstitutionFile", 'Int'>
+    readonly documentType: FieldRef<"InstitutionFile", 'DocumentType'>
+    readonly uploadedAt: FieldRef<"InstitutionFile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionFile findUnique
+   */
+  export type InstitutionFileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionFile to fetch.
+     */
+    where: InstitutionFileWhereUniqueInput
+  }
+
+  /**
+   * InstitutionFile findUniqueOrThrow
+   */
+  export type InstitutionFileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionFile to fetch.
+     */
+    where: InstitutionFileWhereUniqueInput
+  }
+
+  /**
+   * InstitutionFile findFirst
+   */
+  export type InstitutionFileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionFile to fetch.
+     */
+    where?: InstitutionFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionFiles to fetch.
+     */
+    orderBy?: InstitutionFileOrderByWithRelationInput | InstitutionFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionFiles.
+     */
+    cursor?: InstitutionFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionFiles.
+     */
+    distinct?: InstitutionFileScalarFieldEnum | InstitutionFileScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionFile findFirstOrThrow
+   */
+  export type InstitutionFileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionFile to fetch.
+     */
+    where?: InstitutionFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionFiles to fetch.
+     */
+    orderBy?: InstitutionFileOrderByWithRelationInput | InstitutionFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionFiles.
+     */
+    cursor?: InstitutionFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionFiles.
+     */
+    distinct?: InstitutionFileScalarFieldEnum | InstitutionFileScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionFile findMany
+   */
+  export type InstitutionFileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionFiles to fetch.
+     */
+    where?: InstitutionFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionFiles to fetch.
+     */
+    orderBy?: InstitutionFileOrderByWithRelationInput | InstitutionFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionFiles.
+     */
+    cursor?: InstitutionFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionFiles.
+     */
+    skip?: number
+    distinct?: InstitutionFileScalarFieldEnum | InstitutionFileScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionFile create
+   */
+  export type InstitutionFileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionFile.
+     */
+    data: XOR<InstitutionFileCreateInput, InstitutionFileUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionFile createMany
+   */
+  export type InstitutionFileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionFiles.
+     */
+    data: InstitutionFileCreateManyInput | InstitutionFileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionFile createManyAndReturn
+   */
+  export type InstitutionFileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionFiles.
+     */
+    data: InstitutionFileCreateManyInput | InstitutionFileCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionFile update
+   */
+  export type InstitutionFileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionFile.
+     */
+    data: XOR<InstitutionFileUpdateInput, InstitutionFileUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionFile to update.
+     */
+    where: InstitutionFileWhereUniqueInput
+  }
+
+  /**
+   * InstitutionFile updateMany
+   */
+  export type InstitutionFileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionFiles.
+     */
+    data: XOR<InstitutionFileUpdateManyMutationInput, InstitutionFileUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionFiles to update
+     */
+    where?: InstitutionFileWhereInput
+    /**
+     * Limit how many InstitutionFiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionFile updateManyAndReturn
+   */
+  export type InstitutionFileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionFiles.
+     */
+    data: XOR<InstitutionFileUpdateManyMutationInput, InstitutionFileUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionFiles to update
+     */
+    where?: InstitutionFileWhereInput
+    /**
+     * Limit how many InstitutionFiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionFile upsert
+   */
+  export type InstitutionFileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionFile to update in case it exists.
+     */
+    where: InstitutionFileWhereUniqueInput
+    /**
+     * In case the InstitutionFile found by the `where` argument doesn't exist, create a new InstitutionFile with this data.
+     */
+    create: XOR<InstitutionFileCreateInput, InstitutionFileUncheckedCreateInput>
+    /**
+     * In case the InstitutionFile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionFileUpdateInput, InstitutionFileUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionFile delete
+   */
+  export type InstitutionFileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionFile to delete.
+     */
+    where: InstitutionFileWhereUniqueInput
+  }
+
+  /**
+   * InstitutionFile deleteMany
+   */
+  export type InstitutionFileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionFiles to delete
+     */
+    where?: InstitutionFileWhereInput
+    /**
+     * Limit how many InstitutionFiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionFile.escrow
+   */
+  export type InstitutionFile$escrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    where?: InstitutionEscrowWhereInput
+  }
+
+  /**
+   * InstitutionFile without action
+   */
+  export type InstitutionFileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionFile
+     */
+    select?: InstitutionFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionFile
+     */
+    omit?: InstitutionFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionFileInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -21948,6 +34943,179 @@ export namespace Prisma {
   export type TwoPhaseSwapScalarFieldEnum = (typeof TwoPhaseSwapScalarFieldEnum)[keyof typeof TwoPhaseSwapScalarFieldEnum]
 
 
+  export const InstitutionClientScalarFieldEnum: {
+    id: 'id',
+    email: 'email',
+    passwordHash: 'passwordHash',
+    companyName: 'companyName',
+    tier: 'tier',
+    status: 'status',
+    kycStatus: 'kycStatus',
+    jurisdiction: 'jurisdiction',
+    primaryWallet: 'primaryWallet',
+    settledWallets: 'settledWallets',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    lastLoginAt: 'lastLoginAt'
+  };
+
+  export type InstitutionClientScalarFieldEnum = (typeof InstitutionClientScalarFieldEnum)[keyof typeof InstitutionClientScalarFieldEnum]
+
+
+  export const InstitutionRefreshTokenScalarFieldEnum: {
+    id: 'id',
+    tokenHash: 'tokenHash',
+    clientId: 'clientId',
+    expiresAt: 'expiresAt',
+    revokedAt: 'revokedAt',
+    deviceInfo: 'deviceInfo',
+    ipAddress: 'ipAddress',
+    createdAt: 'createdAt'
+  };
+
+  export type InstitutionRefreshTokenScalarFieldEnum = (typeof InstitutionRefreshTokenScalarFieldEnum)[keyof typeof InstitutionRefreshTokenScalarFieldEnum]
+
+
+  export const InstitutionClientSettingsScalarFieldEnum: {
+    id: 'id',
+    clientId: 'clientId',
+    defaultCorridor: 'defaultCorridor',
+    defaultCurrency: 'defaultCurrency',
+    notificationEmail: 'notificationEmail',
+    webhookUrl: 'webhookUrl',
+    webhookSecret: 'webhookSecret',
+    settlementAuthorityWallet: 'settlementAuthorityWallet',
+    timezone: 'timezone',
+    autoApproveThreshold: 'autoApproveThreshold',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InstitutionClientSettingsScalarFieldEnum = (typeof InstitutionClientSettingsScalarFieldEnum)[keyof typeof InstitutionClientSettingsScalarFieldEnum]
+
+
+  export const InstitutionApiKeyScalarFieldEnum: {
+    id: 'id',
+    clientId: 'clientId',
+    keyHash: 'keyHash',
+    name: 'name',
+    permissions: 'permissions',
+    active: 'active',
+    lastUsedAt: 'lastUsedAt',
+    expiresAt: 'expiresAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InstitutionApiKeyScalarFieldEnum = (typeof InstitutionApiKeyScalarFieldEnum)[keyof typeof InstitutionApiKeyScalarFieldEnum]
+
+
+  export const InstitutionEscrowScalarFieldEnum: {
+    id: 'id',
+    escrowId: 'escrowId',
+    clientId: 'clientId',
+    payerWallet: 'payerWallet',
+    recipientWallet: 'recipientWallet',
+    usdcMint: 'usdcMint',
+    amount: 'amount',
+    platformFee: 'platformFee',
+    corridor: 'corridor',
+    conditionType: 'conditionType',
+    status: 'status',
+    settlementAuthority: 'settlementAuthority',
+    riskScore: 'riskScore',
+    escrowPda: 'escrowPda',
+    vaultPda: 'vaultPda',
+    depositTxSignature: 'depositTxSignature',
+    releaseTxSignature: 'releaseTxSignature',
+    cancelTxSignature: 'cancelTxSignature',
+    expiresAt: 'expiresAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    resolvedAt: 'resolvedAt',
+    fundedAt: 'fundedAt'
+  };
+
+  export type InstitutionEscrowScalarFieldEnum = (typeof InstitutionEscrowScalarFieldEnum)[keyof typeof InstitutionEscrowScalarFieldEnum]
+
+
+  export const InstitutionDepositScalarFieldEnum: {
+    id: 'id',
+    escrowId: 'escrowId',
+    txSignature: 'txSignature',
+    amount: 'amount',
+    confirmedAt: 'confirmedAt',
+    blockHeight: 'blockHeight',
+    createdAt: 'createdAt'
+  };
+
+  export type InstitutionDepositScalarFieldEnum = (typeof InstitutionDepositScalarFieldEnum)[keyof typeof InstitutionDepositScalarFieldEnum]
+
+
+  export const InstitutionAuditLogScalarFieldEnum: {
+    id: 'id',
+    escrowId: 'escrowId',
+    clientId: 'clientId',
+    action: 'action',
+    actor: 'actor',
+    details: 'details',
+    ipAddress: 'ipAddress',
+    createdAt: 'createdAt'
+  };
+
+  export type InstitutionAuditLogScalarFieldEnum = (typeof InstitutionAuditLogScalarFieldEnum)[keyof typeof InstitutionAuditLogScalarFieldEnum]
+
+
+  export const InstitutionAiAnalysisScalarFieldEnum: {
+    id: 'id',
+    escrowId: 'escrowId',
+    fileId: 'fileId',
+    documentHash: 'documentHash',
+    riskScore: 'riskScore',
+    factors: 'factors',
+    recommendation: 'recommendation',
+    extractedFields: 'extractedFields',
+    model: 'model',
+    createdAt: 'createdAt'
+  };
+
+  export type InstitutionAiAnalysisScalarFieldEnum = (typeof InstitutionAiAnalysisScalarFieldEnum)[keyof typeof InstitutionAiAnalysisScalarFieldEnum]
+
+
+  export const InstitutionCorridorScalarFieldEnum: {
+    id: 'id',
+    sourceCountry: 'sourceCountry',
+    destCountry: 'destCountry',
+    code: 'code',
+    minAmount: 'minAmount',
+    maxAmount: 'maxAmount',
+    dailyLimit: 'dailyLimit',
+    monthlyLimit: 'monthlyLimit',
+    requiredDocuments: 'requiredDocuments',
+    riskLevel: 'riskLevel',
+    status: 'status',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InstitutionCorridorScalarFieldEnum = (typeof InstitutionCorridorScalarFieldEnum)[keyof typeof InstitutionCorridorScalarFieldEnum]
+
+
+  export const InstitutionFileScalarFieldEnum: {
+    id: 'id',
+    clientId: 'clientId',
+    escrowId: 'escrowId',
+    fileName: 'fileName',
+    fileKey: 'fileKey',
+    mimeType: 'mimeType',
+    sizeBytes: 'sizeBytes',
+    documentType: 'documentType',
+    uploadedAt: 'uploadedAt'
+  };
+
+  export type InstitutionFileScalarFieldEnum = (typeof InstitutionFileScalarFieldEnum)[keyof typeof InstitutionFileScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -22271,6 +35439,90 @@ export namespace Prisma {
    * Reference to a field of type 'TwoPhaseSwapStatus[]'
    */
   export type ListEnumTwoPhaseSwapStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TwoPhaseSwapStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ClientTier'
+   */
+  export type EnumClientTierFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ClientTier'>
+    
+
+
+  /**
+   * Reference to a field of type 'ClientTier[]'
+   */
+  export type ListEnumClientTierFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ClientTier[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ClientStatus'
+   */
+  export type EnumClientStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ClientStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'ClientStatus[]'
+   */
+  export type ListEnumClientStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ClientStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'InstitutionConditionType'
+   */
+  export type EnumInstitutionConditionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionConditionType'>
+    
+
+
+  /**
+   * Reference to a field of type 'InstitutionConditionType[]'
+   */
+  export type ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionConditionType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'InstitutionEscrowStatus'
+   */
+  export type EnumInstitutionEscrowStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionEscrowStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'InstitutionEscrowStatus[]'
+   */
+  export type ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionEscrowStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'CorridorStatus'
+   */
+  export type EnumCorridorStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CorridorStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'CorridorStatus[]'
+   */
+  export type ListEnumCorridorStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CorridorStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DocumentType'
+   */
+  export type EnumDocumentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentType'>
+    
+
+
+  /**
+   * Reference to a field of type 'DocumentType[]'
+   */
+  export type ListEnumDocumentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentType[]'>
     
 
 
@@ -24029,6 +37281,913 @@ export namespace Prisma {
     swapOfferId?: IntNullableWithAggregatesFilter<"TwoPhaseSwap"> | number | null
     delegationStatus?: JsonWithAggregatesFilter<"TwoPhaseSwap">
     stateHistory?: JsonWithAggregatesFilter<"TwoPhaseSwap">
+  }
+
+  export type InstitutionClientWhereInput = {
+    AND?: InstitutionClientWhereInput | InstitutionClientWhereInput[]
+    OR?: InstitutionClientWhereInput[]
+    NOT?: InstitutionClientWhereInput | InstitutionClientWhereInput[]
+    id?: StringFilter<"InstitutionClient"> | string
+    email?: StringFilter<"InstitutionClient"> | string
+    passwordHash?: StringFilter<"InstitutionClient"> | string
+    companyName?: StringFilter<"InstitutionClient"> | string
+    tier?: EnumClientTierFilter<"InstitutionClient"> | $Enums.ClientTier
+    status?: EnumClientStatusFilter<"InstitutionClient"> | $Enums.ClientStatus
+    kycStatus?: StringFilter<"InstitutionClient"> | string
+    jurisdiction?: StringNullableFilter<"InstitutionClient"> | string | null
+    primaryWallet?: StringNullableFilter<"InstitutionClient"> | string | null
+    settledWallets?: StringNullableListFilter<"InstitutionClient">
+    createdAt?: DateTimeFilter<"InstitutionClient"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionClient"> | Date | string
+    lastLoginAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenListRelationFilter
+    settings?: XOR<InstitutionClientSettingsNullableScalarRelationFilter, InstitutionClientSettingsWhereInput> | null
+    apiKeys?: InstitutionApiKeyListRelationFilter
+    escrows?: InstitutionEscrowListRelationFilter
+    auditLogs?: InstitutionAuditLogListRelationFilter
+    files?: InstitutionFileListRelationFilter
+  }
+
+  export type InstitutionClientOrderByWithRelationInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    companyName?: SortOrder
+    tier?: SortOrder
+    status?: SortOrder
+    kycStatus?: SortOrder
+    jurisdiction?: SortOrderInput | SortOrder
+    primaryWallet?: SortOrderInput | SortOrder
+    settledWallets?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
+    refreshTokens?: InstitutionRefreshTokenOrderByRelationAggregateInput
+    settings?: InstitutionClientSettingsOrderByWithRelationInput
+    apiKeys?: InstitutionApiKeyOrderByRelationAggregateInput
+    escrows?: InstitutionEscrowOrderByRelationAggregateInput
+    auditLogs?: InstitutionAuditLogOrderByRelationAggregateInput
+    files?: InstitutionFileOrderByRelationAggregateInput
+  }
+
+  export type InstitutionClientWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    email?: string
+    AND?: InstitutionClientWhereInput | InstitutionClientWhereInput[]
+    OR?: InstitutionClientWhereInput[]
+    NOT?: InstitutionClientWhereInput | InstitutionClientWhereInput[]
+    passwordHash?: StringFilter<"InstitutionClient"> | string
+    companyName?: StringFilter<"InstitutionClient"> | string
+    tier?: EnumClientTierFilter<"InstitutionClient"> | $Enums.ClientTier
+    status?: EnumClientStatusFilter<"InstitutionClient"> | $Enums.ClientStatus
+    kycStatus?: StringFilter<"InstitutionClient"> | string
+    jurisdiction?: StringNullableFilter<"InstitutionClient"> | string | null
+    primaryWallet?: StringNullableFilter<"InstitutionClient"> | string | null
+    settledWallets?: StringNullableListFilter<"InstitutionClient">
+    createdAt?: DateTimeFilter<"InstitutionClient"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionClient"> | Date | string
+    lastLoginAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenListRelationFilter
+    settings?: XOR<InstitutionClientSettingsNullableScalarRelationFilter, InstitutionClientSettingsWhereInput> | null
+    apiKeys?: InstitutionApiKeyListRelationFilter
+    escrows?: InstitutionEscrowListRelationFilter
+    auditLogs?: InstitutionAuditLogListRelationFilter
+    files?: InstitutionFileListRelationFilter
+  }, "id" | "email">
+
+  export type InstitutionClientOrderByWithAggregationInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    companyName?: SortOrder
+    tier?: SortOrder
+    status?: SortOrder
+    kycStatus?: SortOrder
+    jurisdiction?: SortOrderInput | SortOrder
+    primaryWallet?: SortOrderInput | SortOrder
+    settledWallets?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
+    _count?: InstitutionClientCountOrderByAggregateInput
+    _max?: InstitutionClientMaxOrderByAggregateInput
+    _min?: InstitutionClientMinOrderByAggregateInput
+  }
+
+  export type InstitutionClientScalarWhereWithAggregatesInput = {
+    AND?: InstitutionClientScalarWhereWithAggregatesInput | InstitutionClientScalarWhereWithAggregatesInput[]
+    OR?: InstitutionClientScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionClientScalarWhereWithAggregatesInput | InstitutionClientScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionClient"> | string
+    email?: StringWithAggregatesFilter<"InstitutionClient"> | string
+    passwordHash?: StringWithAggregatesFilter<"InstitutionClient"> | string
+    companyName?: StringWithAggregatesFilter<"InstitutionClient"> | string
+    tier?: EnumClientTierWithAggregatesFilter<"InstitutionClient"> | $Enums.ClientTier
+    status?: EnumClientStatusWithAggregatesFilter<"InstitutionClient"> | $Enums.ClientStatus
+    kycStatus?: StringWithAggregatesFilter<"InstitutionClient"> | string
+    jurisdiction?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    primaryWallet?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    settledWallets?: StringNullableListFilter<"InstitutionClient">
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionClient"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionClient"> | Date | string
+    lastLoginAt?: DateTimeNullableWithAggregatesFilter<"InstitutionClient"> | Date | string | null
+  }
+
+  export type InstitutionRefreshTokenWhereInput = {
+    AND?: InstitutionRefreshTokenWhereInput | InstitutionRefreshTokenWhereInput[]
+    OR?: InstitutionRefreshTokenWhereInput[]
+    NOT?: InstitutionRefreshTokenWhereInput | InstitutionRefreshTokenWhereInput[]
+    id?: StringFilter<"InstitutionRefreshToken"> | string
+    tokenHash?: StringFilter<"InstitutionRefreshToken"> | string
+    clientId?: StringFilter<"InstitutionRefreshToken"> | string
+    expiresAt?: DateTimeFilter<"InstitutionRefreshToken"> | Date | string
+    revokedAt?: DateTimeNullableFilter<"InstitutionRefreshToken"> | Date | string | null
+    deviceInfo?: StringNullableFilter<"InstitutionRefreshToken"> | string | null
+    ipAddress?: StringNullableFilter<"InstitutionRefreshToken"> | string | null
+    createdAt?: DateTimeFilter<"InstitutionRefreshToken"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }
+
+  export type InstitutionRefreshTokenOrderByWithRelationInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    clientId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrderInput | SortOrder
+    deviceInfo?: SortOrderInput | SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+  }
+
+  export type InstitutionRefreshTokenWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tokenHash?: string
+    AND?: InstitutionRefreshTokenWhereInput | InstitutionRefreshTokenWhereInput[]
+    OR?: InstitutionRefreshTokenWhereInput[]
+    NOT?: InstitutionRefreshTokenWhereInput | InstitutionRefreshTokenWhereInput[]
+    clientId?: StringFilter<"InstitutionRefreshToken"> | string
+    expiresAt?: DateTimeFilter<"InstitutionRefreshToken"> | Date | string
+    revokedAt?: DateTimeNullableFilter<"InstitutionRefreshToken"> | Date | string | null
+    deviceInfo?: StringNullableFilter<"InstitutionRefreshToken"> | string | null
+    ipAddress?: StringNullableFilter<"InstitutionRefreshToken"> | string | null
+    createdAt?: DateTimeFilter<"InstitutionRefreshToken"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }, "id" | "tokenHash">
+
+  export type InstitutionRefreshTokenOrderByWithAggregationInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    clientId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrderInput | SortOrder
+    deviceInfo?: SortOrderInput | SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: InstitutionRefreshTokenCountOrderByAggregateInput
+    _max?: InstitutionRefreshTokenMaxOrderByAggregateInput
+    _min?: InstitutionRefreshTokenMinOrderByAggregateInput
+  }
+
+  export type InstitutionRefreshTokenScalarWhereWithAggregatesInput = {
+    AND?: InstitutionRefreshTokenScalarWhereWithAggregatesInput | InstitutionRefreshTokenScalarWhereWithAggregatesInput[]
+    OR?: InstitutionRefreshTokenScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionRefreshTokenScalarWhereWithAggregatesInput | InstitutionRefreshTokenScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionRefreshToken"> | string
+    tokenHash?: StringWithAggregatesFilter<"InstitutionRefreshToken"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionRefreshToken"> | string
+    expiresAt?: DateTimeWithAggregatesFilter<"InstitutionRefreshToken"> | Date | string
+    revokedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionRefreshToken"> | Date | string | null
+    deviceInfo?: StringNullableWithAggregatesFilter<"InstitutionRefreshToken"> | string | null
+    ipAddress?: StringNullableWithAggregatesFilter<"InstitutionRefreshToken"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionRefreshToken"> | Date | string
+  }
+
+  export type InstitutionClientSettingsWhereInput = {
+    AND?: InstitutionClientSettingsWhereInput | InstitutionClientSettingsWhereInput[]
+    OR?: InstitutionClientSettingsWhereInput[]
+    NOT?: InstitutionClientSettingsWhereInput | InstitutionClientSettingsWhereInput[]
+    id?: StringFilter<"InstitutionClientSettings"> | string
+    clientId?: StringFilter<"InstitutionClientSettings"> | string
+    defaultCorridor?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    defaultCurrency?: StringFilter<"InstitutionClientSettings"> | string
+    notificationEmail?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    webhookUrl?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    webhookSecret?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    settlementAuthorityWallet?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    timezone?: StringFilter<"InstitutionClientSettings"> | string
+    autoApproveThreshold?: DecimalNullableFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }
+
+  export type InstitutionClientSettingsOrderByWithRelationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    defaultCorridor?: SortOrderInput | SortOrder
+    defaultCurrency?: SortOrder
+    notificationEmail?: SortOrderInput | SortOrder
+    webhookUrl?: SortOrderInput | SortOrder
+    webhookSecret?: SortOrderInput | SortOrder
+    settlementAuthorityWallet?: SortOrderInput | SortOrder
+    timezone?: SortOrder
+    autoApproveThreshold?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+  }
+
+  export type InstitutionClientSettingsWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    clientId?: string
+    AND?: InstitutionClientSettingsWhereInput | InstitutionClientSettingsWhereInput[]
+    OR?: InstitutionClientSettingsWhereInput[]
+    NOT?: InstitutionClientSettingsWhereInput | InstitutionClientSettingsWhereInput[]
+    defaultCorridor?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    defaultCurrency?: StringFilter<"InstitutionClientSettings"> | string
+    notificationEmail?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    webhookUrl?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    webhookSecret?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    settlementAuthorityWallet?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    timezone?: StringFilter<"InstitutionClientSettings"> | string
+    autoApproveThreshold?: DecimalNullableFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }, "id" | "clientId">
+
+  export type InstitutionClientSettingsOrderByWithAggregationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    defaultCorridor?: SortOrderInput | SortOrder
+    defaultCurrency?: SortOrder
+    notificationEmail?: SortOrderInput | SortOrder
+    webhookUrl?: SortOrderInput | SortOrder
+    webhookSecret?: SortOrderInput | SortOrder
+    settlementAuthorityWallet?: SortOrderInput | SortOrder
+    timezone?: SortOrder
+    autoApproveThreshold?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InstitutionClientSettingsCountOrderByAggregateInput
+    _avg?: InstitutionClientSettingsAvgOrderByAggregateInput
+    _max?: InstitutionClientSettingsMaxOrderByAggregateInput
+    _min?: InstitutionClientSettingsMinOrderByAggregateInput
+    _sum?: InstitutionClientSettingsSumOrderByAggregateInput
+  }
+
+  export type InstitutionClientSettingsScalarWhereWithAggregatesInput = {
+    AND?: InstitutionClientSettingsScalarWhereWithAggregatesInput | InstitutionClientSettingsScalarWhereWithAggregatesInput[]
+    OR?: InstitutionClientSettingsScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionClientSettingsScalarWhereWithAggregatesInput | InstitutionClientSettingsScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
+    defaultCorridor?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    defaultCurrency?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
+    notificationEmail?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    webhookUrl?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    webhookSecret?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    settlementAuthorityWallet?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    timezone?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
+    autoApproveThreshold?: DecimalNullableWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
+  }
+
+  export type InstitutionApiKeyWhereInput = {
+    AND?: InstitutionApiKeyWhereInput | InstitutionApiKeyWhereInput[]
+    OR?: InstitutionApiKeyWhereInput[]
+    NOT?: InstitutionApiKeyWhereInput | InstitutionApiKeyWhereInput[]
+    id?: StringFilter<"InstitutionApiKey"> | string
+    clientId?: StringFilter<"InstitutionApiKey"> | string
+    keyHash?: StringFilter<"InstitutionApiKey"> | string
+    name?: StringFilter<"InstitutionApiKey"> | string
+    permissions?: StringNullableListFilter<"InstitutionApiKey">
+    active?: BoolFilter<"InstitutionApiKey"> | boolean
+    lastUsedAt?: DateTimeNullableFilter<"InstitutionApiKey"> | Date | string | null
+    expiresAt?: DateTimeNullableFilter<"InstitutionApiKey"> | Date | string | null
+    createdAt?: DateTimeFilter<"InstitutionApiKey"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionApiKey"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }
+
+  export type InstitutionApiKeyOrderByWithRelationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    keyHash?: SortOrder
+    name?: SortOrder
+    permissions?: SortOrder
+    active?: SortOrder
+    lastUsedAt?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+  }
+
+  export type InstitutionApiKeyWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    keyHash?: string
+    AND?: InstitutionApiKeyWhereInput | InstitutionApiKeyWhereInput[]
+    OR?: InstitutionApiKeyWhereInput[]
+    NOT?: InstitutionApiKeyWhereInput | InstitutionApiKeyWhereInput[]
+    clientId?: StringFilter<"InstitutionApiKey"> | string
+    name?: StringFilter<"InstitutionApiKey"> | string
+    permissions?: StringNullableListFilter<"InstitutionApiKey">
+    active?: BoolFilter<"InstitutionApiKey"> | boolean
+    lastUsedAt?: DateTimeNullableFilter<"InstitutionApiKey"> | Date | string | null
+    expiresAt?: DateTimeNullableFilter<"InstitutionApiKey"> | Date | string | null
+    createdAt?: DateTimeFilter<"InstitutionApiKey"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionApiKey"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }, "id" | "keyHash">
+
+  export type InstitutionApiKeyOrderByWithAggregationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    keyHash?: SortOrder
+    name?: SortOrder
+    permissions?: SortOrder
+    active?: SortOrder
+    lastUsedAt?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InstitutionApiKeyCountOrderByAggregateInput
+    _max?: InstitutionApiKeyMaxOrderByAggregateInput
+    _min?: InstitutionApiKeyMinOrderByAggregateInput
+  }
+
+  export type InstitutionApiKeyScalarWhereWithAggregatesInput = {
+    AND?: InstitutionApiKeyScalarWhereWithAggregatesInput | InstitutionApiKeyScalarWhereWithAggregatesInput[]
+    OR?: InstitutionApiKeyScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionApiKeyScalarWhereWithAggregatesInput | InstitutionApiKeyScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionApiKey"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionApiKey"> | string
+    keyHash?: StringWithAggregatesFilter<"InstitutionApiKey"> | string
+    name?: StringWithAggregatesFilter<"InstitutionApiKey"> | string
+    permissions?: StringNullableListFilter<"InstitutionApiKey">
+    active?: BoolWithAggregatesFilter<"InstitutionApiKey"> | boolean
+    lastUsedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionApiKey"> | Date | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"InstitutionApiKey"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionApiKey"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionApiKey"> | Date | string
+  }
+
+  export type InstitutionEscrowWhereInput = {
+    AND?: InstitutionEscrowWhereInput | InstitutionEscrowWhereInput[]
+    OR?: InstitutionEscrowWhereInput[]
+    NOT?: InstitutionEscrowWhereInput | InstitutionEscrowWhereInput[]
+    id?: StringFilter<"InstitutionEscrow"> | string
+    escrowId?: StringFilter<"InstitutionEscrow"> | string
+    clientId?: StringFilter<"InstitutionEscrow"> | string
+    payerWallet?: StringFilter<"InstitutionEscrow"> | string
+    recipientWallet?: StringFilter<"InstitutionEscrow"> | string
+    usdcMint?: StringFilter<"InstitutionEscrow"> | string
+    amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
+    corridor?: StringFilter<"InstitutionEscrow"> | string
+    conditionType?: EnumInstitutionConditionTypeFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
+    riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
+    escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    expiresAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    createdAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    fundedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+    deposits?: InstitutionDepositListRelationFilter
+    auditLogs?: InstitutionAuditLogListRelationFilter
+    aiAnalyses?: InstitutionAiAnalysisListRelationFilter
+    files?: InstitutionFileListRelationFilter
+  }
+
+  export type InstitutionEscrowOrderByWithRelationInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    clientId?: SortOrder
+    payerWallet?: SortOrder
+    recipientWallet?: SortOrder
+    usdcMint?: SortOrder
+    amount?: SortOrder
+    platformFee?: SortOrder
+    corridor?: SortOrder
+    conditionType?: SortOrder
+    status?: SortOrder
+    settlementAuthority?: SortOrder
+    riskScore?: SortOrderInput | SortOrder
+    escrowPda?: SortOrderInput | SortOrder
+    vaultPda?: SortOrderInput | SortOrder
+    depositTxSignature?: SortOrderInput | SortOrder
+    releaseTxSignature?: SortOrderInput | SortOrder
+    cancelTxSignature?: SortOrderInput | SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    fundedAt?: SortOrderInput | SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+    deposits?: InstitutionDepositOrderByRelationAggregateInput
+    auditLogs?: InstitutionAuditLogOrderByRelationAggregateInput
+    aiAnalyses?: InstitutionAiAnalysisOrderByRelationAggregateInput
+    files?: InstitutionFileOrderByRelationAggregateInput
+  }
+
+  export type InstitutionEscrowWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    escrowId?: string
+    AND?: InstitutionEscrowWhereInput | InstitutionEscrowWhereInput[]
+    OR?: InstitutionEscrowWhereInput[]
+    NOT?: InstitutionEscrowWhereInput | InstitutionEscrowWhereInput[]
+    clientId?: StringFilter<"InstitutionEscrow"> | string
+    payerWallet?: StringFilter<"InstitutionEscrow"> | string
+    recipientWallet?: StringFilter<"InstitutionEscrow"> | string
+    usdcMint?: StringFilter<"InstitutionEscrow"> | string
+    amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
+    corridor?: StringFilter<"InstitutionEscrow"> | string
+    conditionType?: EnumInstitutionConditionTypeFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
+    riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
+    escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    expiresAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    createdAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    fundedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+    deposits?: InstitutionDepositListRelationFilter
+    auditLogs?: InstitutionAuditLogListRelationFilter
+    aiAnalyses?: InstitutionAiAnalysisListRelationFilter
+    files?: InstitutionFileListRelationFilter
+  }, "id" | "escrowId">
+
+  export type InstitutionEscrowOrderByWithAggregationInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    clientId?: SortOrder
+    payerWallet?: SortOrder
+    recipientWallet?: SortOrder
+    usdcMint?: SortOrder
+    amount?: SortOrder
+    platformFee?: SortOrder
+    corridor?: SortOrder
+    conditionType?: SortOrder
+    status?: SortOrder
+    settlementAuthority?: SortOrder
+    riskScore?: SortOrderInput | SortOrder
+    escrowPda?: SortOrderInput | SortOrder
+    vaultPda?: SortOrderInput | SortOrder
+    depositTxSignature?: SortOrderInput | SortOrder
+    releaseTxSignature?: SortOrderInput | SortOrder
+    cancelTxSignature?: SortOrderInput | SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    fundedAt?: SortOrderInput | SortOrder
+    _count?: InstitutionEscrowCountOrderByAggregateInput
+    _avg?: InstitutionEscrowAvgOrderByAggregateInput
+    _max?: InstitutionEscrowMaxOrderByAggregateInput
+    _min?: InstitutionEscrowMinOrderByAggregateInput
+    _sum?: InstitutionEscrowSumOrderByAggregateInput
+  }
+
+  export type InstitutionEscrowScalarWhereWithAggregatesInput = {
+    AND?: InstitutionEscrowScalarWhereWithAggregatesInput | InstitutionEscrowScalarWhereWithAggregatesInput[]
+    OR?: InstitutionEscrowScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionEscrowScalarWhereWithAggregatesInput | InstitutionEscrowScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    escrowId?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    payerWallet?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    recipientWallet?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    usdcMint?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    amount?: DecimalWithAggregatesFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalWithAggregatesFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
+    corridor?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    conditionType?: EnumInstitutionConditionTypeWithAggregatesFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusWithAggregatesFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    riskScore?: IntNullableWithAggregatesFilter<"InstitutionEscrow"> | number | null
+    escrowPda?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    vaultPda?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    depositTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    releaseTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    cancelTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    expiresAt?: DateTimeWithAggregatesFilter<"InstitutionEscrow"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionEscrow"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionEscrow"> | Date | string
+    resolvedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionEscrow"> | Date | string | null
+    fundedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionEscrow"> | Date | string | null
+  }
+
+  export type InstitutionDepositWhereInput = {
+    AND?: InstitutionDepositWhereInput | InstitutionDepositWhereInput[]
+    OR?: InstitutionDepositWhereInput[]
+    NOT?: InstitutionDepositWhereInput | InstitutionDepositWhereInput[]
+    id?: StringFilter<"InstitutionDeposit"> | string
+    escrowId?: StringFilter<"InstitutionDeposit"> | string
+    txSignature?: StringFilter<"InstitutionDeposit"> | string
+    amount?: DecimalFilter<"InstitutionDeposit"> | Decimal | DecimalJsLike | number | string
+    confirmedAt?: DateTimeNullableFilter<"InstitutionDeposit"> | Date | string | null
+    blockHeight?: BigIntNullableFilter<"InstitutionDeposit"> | bigint | number | null
+    createdAt?: DateTimeFilter<"InstitutionDeposit"> | Date | string
+    escrow?: XOR<InstitutionEscrowScalarRelationFilter, InstitutionEscrowWhereInput>
+  }
+
+  export type InstitutionDepositOrderByWithRelationInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    txSignature?: SortOrder
+    amount?: SortOrder
+    confirmedAt?: SortOrderInput | SortOrder
+    blockHeight?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    escrow?: InstitutionEscrowOrderByWithRelationInput
+  }
+
+  export type InstitutionDepositWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: InstitutionDepositWhereInput | InstitutionDepositWhereInput[]
+    OR?: InstitutionDepositWhereInput[]
+    NOT?: InstitutionDepositWhereInput | InstitutionDepositWhereInput[]
+    escrowId?: StringFilter<"InstitutionDeposit"> | string
+    txSignature?: StringFilter<"InstitutionDeposit"> | string
+    amount?: DecimalFilter<"InstitutionDeposit"> | Decimal | DecimalJsLike | number | string
+    confirmedAt?: DateTimeNullableFilter<"InstitutionDeposit"> | Date | string | null
+    blockHeight?: BigIntNullableFilter<"InstitutionDeposit"> | bigint | number | null
+    createdAt?: DateTimeFilter<"InstitutionDeposit"> | Date | string
+    escrow?: XOR<InstitutionEscrowScalarRelationFilter, InstitutionEscrowWhereInput>
+  }, "id">
+
+  export type InstitutionDepositOrderByWithAggregationInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    txSignature?: SortOrder
+    amount?: SortOrder
+    confirmedAt?: SortOrderInput | SortOrder
+    blockHeight?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: InstitutionDepositCountOrderByAggregateInput
+    _avg?: InstitutionDepositAvgOrderByAggregateInput
+    _max?: InstitutionDepositMaxOrderByAggregateInput
+    _min?: InstitutionDepositMinOrderByAggregateInput
+    _sum?: InstitutionDepositSumOrderByAggregateInput
+  }
+
+  export type InstitutionDepositScalarWhereWithAggregatesInput = {
+    AND?: InstitutionDepositScalarWhereWithAggregatesInput | InstitutionDepositScalarWhereWithAggregatesInput[]
+    OR?: InstitutionDepositScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionDepositScalarWhereWithAggregatesInput | InstitutionDepositScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionDeposit"> | string
+    escrowId?: StringWithAggregatesFilter<"InstitutionDeposit"> | string
+    txSignature?: StringWithAggregatesFilter<"InstitutionDeposit"> | string
+    amount?: DecimalWithAggregatesFilter<"InstitutionDeposit"> | Decimal | DecimalJsLike | number | string
+    confirmedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionDeposit"> | Date | string | null
+    blockHeight?: BigIntNullableWithAggregatesFilter<"InstitutionDeposit"> | bigint | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionDeposit"> | Date | string
+  }
+
+  export type InstitutionAuditLogWhereInput = {
+    AND?: InstitutionAuditLogWhereInput | InstitutionAuditLogWhereInput[]
+    OR?: InstitutionAuditLogWhereInput[]
+    NOT?: InstitutionAuditLogWhereInput | InstitutionAuditLogWhereInput[]
+    id?: StringFilter<"InstitutionAuditLog"> | string
+    escrowId?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    clientId?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    action?: StringFilter<"InstitutionAuditLog"> | string
+    actor?: StringFilter<"InstitutionAuditLog"> | string
+    details?: JsonFilter<"InstitutionAuditLog">
+    ipAddress?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    createdAt?: DateTimeFilter<"InstitutionAuditLog"> | Date | string
+    escrow?: XOR<InstitutionEscrowNullableScalarRelationFilter, InstitutionEscrowWhereInput> | null
+    client?: XOR<InstitutionClientNullableScalarRelationFilter, InstitutionClientWhereInput> | null
+  }
+
+  export type InstitutionAuditLogOrderByWithRelationInput = {
+    id?: SortOrder
+    escrowId?: SortOrderInput | SortOrder
+    clientId?: SortOrderInput | SortOrder
+    action?: SortOrder
+    actor?: SortOrder
+    details?: SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    escrow?: InstitutionEscrowOrderByWithRelationInput
+    client?: InstitutionClientOrderByWithRelationInput
+  }
+
+  export type InstitutionAuditLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: InstitutionAuditLogWhereInput | InstitutionAuditLogWhereInput[]
+    OR?: InstitutionAuditLogWhereInput[]
+    NOT?: InstitutionAuditLogWhereInput | InstitutionAuditLogWhereInput[]
+    escrowId?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    clientId?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    action?: StringFilter<"InstitutionAuditLog"> | string
+    actor?: StringFilter<"InstitutionAuditLog"> | string
+    details?: JsonFilter<"InstitutionAuditLog">
+    ipAddress?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    createdAt?: DateTimeFilter<"InstitutionAuditLog"> | Date | string
+    escrow?: XOR<InstitutionEscrowNullableScalarRelationFilter, InstitutionEscrowWhereInput> | null
+    client?: XOR<InstitutionClientNullableScalarRelationFilter, InstitutionClientWhereInput> | null
+  }, "id">
+
+  export type InstitutionAuditLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    escrowId?: SortOrderInput | SortOrder
+    clientId?: SortOrderInput | SortOrder
+    action?: SortOrder
+    actor?: SortOrder
+    details?: SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: InstitutionAuditLogCountOrderByAggregateInput
+    _max?: InstitutionAuditLogMaxOrderByAggregateInput
+    _min?: InstitutionAuditLogMinOrderByAggregateInput
+  }
+
+  export type InstitutionAuditLogScalarWhereWithAggregatesInput = {
+    AND?: InstitutionAuditLogScalarWhereWithAggregatesInput | InstitutionAuditLogScalarWhereWithAggregatesInput[]
+    OR?: InstitutionAuditLogScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionAuditLogScalarWhereWithAggregatesInput | InstitutionAuditLogScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionAuditLog"> | string
+    escrowId?: StringNullableWithAggregatesFilter<"InstitutionAuditLog"> | string | null
+    clientId?: StringNullableWithAggregatesFilter<"InstitutionAuditLog"> | string | null
+    action?: StringWithAggregatesFilter<"InstitutionAuditLog"> | string
+    actor?: StringWithAggregatesFilter<"InstitutionAuditLog"> | string
+    details?: JsonWithAggregatesFilter<"InstitutionAuditLog">
+    ipAddress?: StringNullableWithAggregatesFilter<"InstitutionAuditLog"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionAuditLog"> | Date | string
+  }
+
+  export type InstitutionAiAnalysisWhereInput = {
+    AND?: InstitutionAiAnalysisWhereInput | InstitutionAiAnalysisWhereInput[]
+    OR?: InstitutionAiAnalysisWhereInput[]
+    NOT?: InstitutionAiAnalysisWhereInput | InstitutionAiAnalysisWhereInput[]
+    id?: StringFilter<"InstitutionAiAnalysis"> | string
+    escrowId?: StringFilter<"InstitutionAiAnalysis"> | string
+    fileId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    documentHash?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    riskScore?: IntFilter<"InstitutionAiAnalysis"> | number
+    factors?: JsonFilter<"InstitutionAiAnalysis">
+    recommendation?: StringFilter<"InstitutionAiAnalysis"> | string
+    extractedFields?: JsonFilter<"InstitutionAiAnalysis">
+    model?: StringFilter<"InstitutionAiAnalysis"> | string
+    createdAt?: DateTimeFilter<"InstitutionAiAnalysis"> | Date | string
+    escrow?: XOR<InstitutionEscrowScalarRelationFilter, InstitutionEscrowWhereInput>
+  }
+
+  export type InstitutionAiAnalysisOrderByWithRelationInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    fileId?: SortOrderInput | SortOrder
+    documentHash?: SortOrderInput | SortOrder
+    riskScore?: SortOrder
+    factors?: SortOrder
+    recommendation?: SortOrder
+    extractedFields?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+    escrow?: InstitutionEscrowOrderByWithRelationInput
+  }
+
+  export type InstitutionAiAnalysisWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: InstitutionAiAnalysisWhereInput | InstitutionAiAnalysisWhereInput[]
+    OR?: InstitutionAiAnalysisWhereInput[]
+    NOT?: InstitutionAiAnalysisWhereInput | InstitutionAiAnalysisWhereInput[]
+    escrowId?: StringFilter<"InstitutionAiAnalysis"> | string
+    fileId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    documentHash?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    riskScore?: IntFilter<"InstitutionAiAnalysis"> | number
+    factors?: JsonFilter<"InstitutionAiAnalysis">
+    recommendation?: StringFilter<"InstitutionAiAnalysis"> | string
+    extractedFields?: JsonFilter<"InstitutionAiAnalysis">
+    model?: StringFilter<"InstitutionAiAnalysis"> | string
+    createdAt?: DateTimeFilter<"InstitutionAiAnalysis"> | Date | string
+    escrow?: XOR<InstitutionEscrowScalarRelationFilter, InstitutionEscrowWhereInput>
+  }, "id">
+
+  export type InstitutionAiAnalysisOrderByWithAggregationInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    fileId?: SortOrderInput | SortOrder
+    documentHash?: SortOrderInput | SortOrder
+    riskScore?: SortOrder
+    factors?: SortOrder
+    recommendation?: SortOrder
+    extractedFields?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+    _count?: InstitutionAiAnalysisCountOrderByAggregateInput
+    _avg?: InstitutionAiAnalysisAvgOrderByAggregateInput
+    _max?: InstitutionAiAnalysisMaxOrderByAggregateInput
+    _min?: InstitutionAiAnalysisMinOrderByAggregateInput
+    _sum?: InstitutionAiAnalysisSumOrderByAggregateInput
+  }
+
+  export type InstitutionAiAnalysisScalarWhereWithAggregatesInput = {
+    AND?: InstitutionAiAnalysisScalarWhereWithAggregatesInput | InstitutionAiAnalysisScalarWhereWithAggregatesInput[]
+    OR?: InstitutionAiAnalysisScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionAiAnalysisScalarWhereWithAggregatesInput | InstitutionAiAnalysisScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionAiAnalysis"> | string
+    escrowId?: StringWithAggregatesFilter<"InstitutionAiAnalysis"> | string
+    fileId?: StringNullableWithAggregatesFilter<"InstitutionAiAnalysis"> | string | null
+    documentHash?: StringNullableWithAggregatesFilter<"InstitutionAiAnalysis"> | string | null
+    riskScore?: IntWithAggregatesFilter<"InstitutionAiAnalysis"> | number
+    factors?: JsonWithAggregatesFilter<"InstitutionAiAnalysis">
+    recommendation?: StringWithAggregatesFilter<"InstitutionAiAnalysis"> | string
+    extractedFields?: JsonWithAggregatesFilter<"InstitutionAiAnalysis">
+    model?: StringWithAggregatesFilter<"InstitutionAiAnalysis"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionAiAnalysis"> | Date | string
+  }
+
+  export type InstitutionCorridorWhereInput = {
+    AND?: InstitutionCorridorWhereInput | InstitutionCorridorWhereInput[]
+    OR?: InstitutionCorridorWhereInput[]
+    NOT?: InstitutionCorridorWhereInput | InstitutionCorridorWhereInput[]
+    id?: StringFilter<"InstitutionCorridor"> | string
+    sourceCountry?: StringFilter<"InstitutionCorridor"> | string
+    destCountry?: StringFilter<"InstitutionCorridor"> | string
+    code?: StringFilter<"InstitutionCorridor"> | string
+    minAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: StringNullableListFilter<"InstitutionCorridor">
+    riskLevel?: StringFilter<"InstitutionCorridor"> | string
+    status?: EnumCorridorStatusFilter<"InstitutionCorridor"> | $Enums.CorridorStatus
+    createdAt?: DateTimeFilter<"InstitutionCorridor"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionCorridor"> | Date | string
+  }
+
+  export type InstitutionCorridorOrderByWithRelationInput = {
+    id?: SortOrder
+    sourceCountry?: SortOrder
+    destCountry?: SortOrder
+    code?: SortOrder
+    minAmount?: SortOrder
+    maxAmount?: SortOrder
+    dailyLimit?: SortOrder
+    monthlyLimit?: SortOrder
+    requiredDocuments?: SortOrder
+    riskLevel?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionCorridorWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    code?: string
+    AND?: InstitutionCorridorWhereInput | InstitutionCorridorWhereInput[]
+    OR?: InstitutionCorridorWhereInput[]
+    NOT?: InstitutionCorridorWhereInput | InstitutionCorridorWhereInput[]
+    sourceCountry?: StringFilter<"InstitutionCorridor"> | string
+    destCountry?: StringFilter<"InstitutionCorridor"> | string
+    minAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: StringNullableListFilter<"InstitutionCorridor">
+    riskLevel?: StringFilter<"InstitutionCorridor"> | string
+    status?: EnumCorridorStatusFilter<"InstitutionCorridor"> | $Enums.CorridorStatus
+    createdAt?: DateTimeFilter<"InstitutionCorridor"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionCorridor"> | Date | string
+  }, "id" | "code">
+
+  export type InstitutionCorridorOrderByWithAggregationInput = {
+    id?: SortOrder
+    sourceCountry?: SortOrder
+    destCountry?: SortOrder
+    code?: SortOrder
+    minAmount?: SortOrder
+    maxAmount?: SortOrder
+    dailyLimit?: SortOrder
+    monthlyLimit?: SortOrder
+    requiredDocuments?: SortOrder
+    riskLevel?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InstitutionCorridorCountOrderByAggregateInput
+    _avg?: InstitutionCorridorAvgOrderByAggregateInput
+    _max?: InstitutionCorridorMaxOrderByAggregateInput
+    _min?: InstitutionCorridorMinOrderByAggregateInput
+    _sum?: InstitutionCorridorSumOrderByAggregateInput
+  }
+
+  export type InstitutionCorridorScalarWhereWithAggregatesInput = {
+    AND?: InstitutionCorridorScalarWhereWithAggregatesInput | InstitutionCorridorScalarWhereWithAggregatesInput[]
+    OR?: InstitutionCorridorScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionCorridorScalarWhereWithAggregatesInput | InstitutionCorridorScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
+    sourceCountry?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
+    destCountry?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
+    code?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
+    minAmount?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: StringNullableListFilter<"InstitutionCorridor">
+    riskLevel?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
+    status?: EnumCorridorStatusWithAggregatesFilter<"InstitutionCorridor"> | $Enums.CorridorStatus
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionCorridor"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionCorridor"> | Date | string
+  }
+
+  export type InstitutionFileWhereInput = {
+    AND?: InstitutionFileWhereInput | InstitutionFileWhereInput[]
+    OR?: InstitutionFileWhereInput[]
+    NOT?: InstitutionFileWhereInput | InstitutionFileWhereInput[]
+    id?: StringFilter<"InstitutionFile"> | string
+    clientId?: StringFilter<"InstitutionFile"> | string
+    escrowId?: StringNullableFilter<"InstitutionFile"> | string | null
+    fileName?: StringFilter<"InstitutionFile"> | string
+    fileKey?: StringFilter<"InstitutionFile"> | string
+    mimeType?: StringFilter<"InstitutionFile"> | string
+    sizeBytes?: IntFilter<"InstitutionFile"> | number
+    documentType?: EnumDocumentTypeFilter<"InstitutionFile"> | $Enums.DocumentType
+    uploadedAt?: DateTimeFilter<"InstitutionFile"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+    escrow?: XOR<InstitutionEscrowNullableScalarRelationFilter, InstitutionEscrowWhereInput> | null
+  }
+
+  export type InstitutionFileOrderByWithRelationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    escrowId?: SortOrderInput | SortOrder
+    fileName?: SortOrder
+    fileKey?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    documentType?: SortOrder
+    uploadedAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+    escrow?: InstitutionEscrowOrderByWithRelationInput
+  }
+
+  export type InstitutionFileWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: InstitutionFileWhereInput | InstitutionFileWhereInput[]
+    OR?: InstitutionFileWhereInput[]
+    NOT?: InstitutionFileWhereInput | InstitutionFileWhereInput[]
+    clientId?: StringFilter<"InstitutionFile"> | string
+    escrowId?: StringNullableFilter<"InstitutionFile"> | string | null
+    fileName?: StringFilter<"InstitutionFile"> | string
+    fileKey?: StringFilter<"InstitutionFile"> | string
+    mimeType?: StringFilter<"InstitutionFile"> | string
+    sizeBytes?: IntFilter<"InstitutionFile"> | number
+    documentType?: EnumDocumentTypeFilter<"InstitutionFile"> | $Enums.DocumentType
+    uploadedAt?: DateTimeFilter<"InstitutionFile"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+    escrow?: XOR<InstitutionEscrowNullableScalarRelationFilter, InstitutionEscrowWhereInput> | null
+  }, "id">
+
+  export type InstitutionFileOrderByWithAggregationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    escrowId?: SortOrderInput | SortOrder
+    fileName?: SortOrder
+    fileKey?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    documentType?: SortOrder
+    uploadedAt?: SortOrder
+    _count?: InstitutionFileCountOrderByAggregateInput
+    _avg?: InstitutionFileAvgOrderByAggregateInput
+    _max?: InstitutionFileMaxOrderByAggregateInput
+    _min?: InstitutionFileMinOrderByAggregateInput
+    _sum?: InstitutionFileSumOrderByAggregateInput
+  }
+
+  export type InstitutionFileScalarWhereWithAggregatesInput = {
+    AND?: InstitutionFileScalarWhereWithAggregatesInput | InstitutionFileScalarWhereWithAggregatesInput[]
+    OR?: InstitutionFileScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionFileScalarWhereWithAggregatesInput | InstitutionFileScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionFile"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionFile"> | string
+    escrowId?: StringNullableWithAggregatesFilter<"InstitutionFile"> | string | null
+    fileName?: StringWithAggregatesFilter<"InstitutionFile"> | string
+    fileKey?: StringWithAggregatesFilter<"InstitutionFile"> | string
+    mimeType?: StringWithAggregatesFilter<"InstitutionFile"> | string
+    sizeBytes?: IntWithAggregatesFilter<"InstitutionFile"> | number
+    documentType?: EnumDocumentTypeWithAggregatesFilter<"InstitutionFile"> | $Enums.DocumentType
+    uploadedAt?: DateTimeWithAggregatesFilter<"InstitutionFile"> | Date | string
   }
 
   export type AgreementCreateInput = {
@@ -26083,6 +40242,1037 @@ export namespace Prisma {
     stateHistory?: JsonNullValueInput | InputJsonValue
   }
 
+  export type InstitutionClientCreateInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientCreateManyInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+  }
+
+  export type InstitutionClientUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type InstitutionClientUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type InstitutionRefreshTokenCreateInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    deviceInfo?: string | null
+    ipAddress?: string | null
+    createdAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutRefreshTokensInput
+  }
+
+  export type InstitutionRefreshTokenUncheckedCreateInput = {
+    id?: string
+    tokenHash: string
+    clientId: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    deviceInfo?: string | null
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionRefreshTokenUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deviceInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutRefreshTokensNestedInput
+  }
+
+  export type InstitutionRefreshTokenUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deviceInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionRefreshTokenCreateManyInput = {
+    id?: string
+    tokenHash: string
+    clientId: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    deviceInfo?: string | null
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionRefreshTokenUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deviceInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionRefreshTokenUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deviceInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionClientSettingsCreateInput = {
+    id?: string
+    defaultCorridor?: string | null
+    defaultCurrency?: string
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    webhookSecret?: string | null
+    settlementAuthorityWallet?: string | null
+    timezone?: string
+    autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutSettingsInput
+  }
+
+  export type InstitutionClientSettingsUncheckedCreateInput = {
+    id?: string
+    clientId: string
+    defaultCorridor?: string | null
+    defaultCurrency?: string
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    webhookSecret?: string | null
+    settlementAuthorityWallet?: string | null
+    timezone?: string
+    autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionClientSettingsUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    defaultCorridor?: NullableStringFieldUpdateOperationsInput | string | null
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutSettingsNestedInput
+  }
+
+  export type InstitutionClientSettingsUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    defaultCorridor?: NullableStringFieldUpdateOperationsInput | string | null
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionClientSettingsCreateManyInput = {
+    id?: string
+    clientId: string
+    defaultCorridor?: string | null
+    defaultCurrency?: string
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    webhookSecret?: string | null
+    settlementAuthorityWallet?: string | null
+    timezone?: string
+    autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionClientSettingsUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    defaultCorridor?: NullableStringFieldUpdateOperationsInput | string | null
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionClientSettingsUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    defaultCorridor?: NullableStringFieldUpdateOperationsInput | string | null
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApiKeyCreateInput = {
+    id?: string
+    keyHash: string
+    name: string
+    permissions?: InstitutionApiKeyCreatepermissionsInput | string[]
+    active?: boolean
+    lastUsedAt?: Date | string | null
+    expiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutApiKeysInput
+  }
+
+  export type InstitutionApiKeyUncheckedCreateInput = {
+    id?: string
+    clientId: string
+    keyHash: string
+    name: string
+    permissions?: InstitutionApiKeyCreatepermissionsInput | string[]
+    active?: boolean
+    lastUsedAt?: Date | string | null
+    expiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionApiKeyUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    permissions?: InstitutionApiKeyUpdatepermissionsInput | string[]
+    active?: BoolFieldUpdateOperationsInput | boolean
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutApiKeysNestedInput
+  }
+
+  export type InstitutionApiKeyUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    permissions?: InstitutionApiKeyUpdatepermissionsInput | string[]
+    active?: BoolFieldUpdateOperationsInput | boolean
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApiKeyCreateManyInput = {
+    id?: string
+    clientId: string
+    keyHash: string
+    name: string
+    permissions?: InstitutionApiKeyCreatepermissionsInput | string[]
+    active?: boolean
+    lastUsedAt?: Date | string | null
+    expiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionApiKeyUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    permissions?: InstitutionApiKeyUpdatepermissionsInput | string[]
+    active?: BoolFieldUpdateOperationsInput | boolean
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApiKeyUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    permissions?: InstitutionApiKeyUpdatepermissionsInput | string[]
+    active?: BoolFieldUpdateOperationsInput | boolean
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionEscrowCreateInput = {
+    id?: string
+    escrowId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    client: InstitutionClientCreateNestedOneWithoutEscrowsInput
+    deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowUncheckedCreateInput = {
+    id?: string
+    escrowId: string
+    clientId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
+    deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowCreateManyInput = {
+    id?: string
+    escrowId: string
+    clientId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+  }
+
+  export type InstitutionEscrowUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type InstitutionEscrowUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type InstitutionDepositCreateInput = {
+    id?: string
+    txSignature: string
+    amount: Decimal | DecimalJsLike | number | string
+    confirmedAt?: Date | string | null
+    blockHeight?: bigint | number | null
+    createdAt?: Date | string
+    escrow: InstitutionEscrowCreateNestedOneWithoutDepositsInput
+  }
+
+  export type InstitutionDepositUncheckedCreateInput = {
+    id?: string
+    escrowId: string
+    txSignature: string
+    amount: Decimal | DecimalJsLike | number | string
+    confirmedAt?: Date | string | null
+    blockHeight?: bigint | number | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionDepositUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    txSignature?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrow?: InstitutionEscrowUpdateOneRequiredWithoutDepositsNestedInput
+  }
+
+  export type InstitutionDepositUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    txSignature?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionDepositCreateManyInput = {
+    id?: string
+    escrowId: string
+    txSignature: string
+    amount: Decimal | DecimalJsLike | number | string
+    confirmedAt?: Date | string | null
+    blockHeight?: bigint | number | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionDepositUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    txSignature?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionDepositUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    txSignature?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAuditLogCreateInput = {
+    id?: string
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+    escrow?: InstitutionEscrowCreateNestedOneWithoutAuditLogsInput
+    client?: InstitutionClientCreateNestedOneWithoutAuditLogsInput
+  }
+
+  export type InstitutionAuditLogUncheckedCreateInput = {
+    id?: string
+    escrowId?: string | null
+    clientId?: string | null
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAuditLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrow?: InstitutionEscrowUpdateOneWithoutAuditLogsNestedInput
+    client?: InstitutionClientUpdateOneWithoutAuditLogsNestedInput
+  }
+
+  export type InstitutionAuditLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAuditLogCreateManyInput = {
+    id?: string
+    escrowId?: string | null
+    clientId?: string | null
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAuditLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAuditLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAiAnalysisCreateInput = {
+    id?: string
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model: string
+    createdAt?: Date | string
+    escrow: InstitutionEscrowCreateNestedOneWithoutAiAnalysesInput
+  }
+
+  export type InstitutionAiAnalysisUncheckedCreateInput = {
+    id?: string
+    escrowId: string
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model: string
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAiAnalysisUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrow?: InstitutionEscrowUpdateOneRequiredWithoutAiAnalysesNestedInput
+  }
+
+  export type InstitutionAiAnalysisUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAiAnalysisCreateManyInput = {
+    id?: string
+    escrowId: string
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model: string
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAiAnalysisUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAiAnalysisUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionCorridorCreateInput = {
+    id?: string
+    sourceCountry: string
+    destCountry: string
+    code: string
+    minAmount: Decimal | DecimalJsLike | number | string
+    maxAmount: Decimal | DecimalJsLike | number | string
+    dailyLimit: Decimal | DecimalJsLike | number | string
+    monthlyLimit: Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorCreaterequiredDocumentsInput | string[]
+    riskLevel?: string
+    status?: $Enums.CorridorStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionCorridorUncheckedCreateInput = {
+    id?: string
+    sourceCountry: string
+    destCountry: string
+    code: string
+    minAmount: Decimal | DecimalJsLike | number | string
+    maxAmount: Decimal | DecimalJsLike | number | string
+    dailyLimit: Decimal | DecimalJsLike | number | string
+    monthlyLimit: Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorCreaterequiredDocumentsInput | string[]
+    riskLevel?: string
+    status?: $Enums.CorridorStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionCorridorUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    sourceCountry?: StringFieldUpdateOperationsInput | string
+    destCountry?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorUpdaterequiredDocumentsInput | string[]
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionCorridorUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    sourceCountry?: StringFieldUpdateOperationsInput | string
+    destCountry?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorUpdaterequiredDocumentsInput | string[]
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionCorridorCreateManyInput = {
+    id?: string
+    sourceCountry: string
+    destCountry: string
+    code: string
+    minAmount: Decimal | DecimalJsLike | number | string
+    maxAmount: Decimal | DecimalJsLike | number | string
+    dailyLimit: Decimal | DecimalJsLike | number | string
+    monthlyLimit: Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorCreaterequiredDocumentsInput | string[]
+    riskLevel?: string
+    status?: $Enums.CorridorStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionCorridorUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    sourceCountry?: StringFieldUpdateOperationsInput | string
+    destCountry?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorUpdaterequiredDocumentsInput | string[]
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionCorridorUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    sourceCountry?: StringFieldUpdateOperationsInput | string
+    destCountry?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorUpdaterequiredDocumentsInput | string[]
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionFileCreateInput = {
+    id?: string
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutFilesInput
+    escrow?: InstitutionEscrowCreateNestedOneWithoutFilesInput
+  }
+
+  export type InstitutionFileUncheckedCreateInput = {
+    id?: string
+    clientId: string
+    escrowId?: string | null
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+  }
+
+  export type InstitutionFileUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutFilesNestedInput
+    escrow?: InstitutionEscrowUpdateOneWithoutFilesNestedInput
+  }
+
+  export type InstitutionFileUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionFileCreateManyInput = {
+    id?: string
+    clientId: string
+    escrowId?: string | null
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+  }
+
+  export type InstitutionFileUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionFileUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -27842,6 +43032,688 @@ export namespace Prisma {
     _max?: NestedEnumTwoPhaseSwapStatusFilter<$PrismaModel>
   }
 
+  export type EnumClientTierFilter<$PrismaModel = never> = {
+    equals?: $Enums.ClientTier | EnumClientTierFieldRefInput<$PrismaModel>
+    in?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
+    not?: NestedEnumClientTierFilter<$PrismaModel> | $Enums.ClientTier
+  }
+
+  export type EnumClientStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ClientStatus | EnumClientStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ClientStatus[] | ListEnumClientStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ClientStatus[] | ListEnumClientStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumClientStatusFilter<$PrismaModel> | $Enums.ClientStatus
+  }
+
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
+  export type InstitutionRefreshTokenListRelationFilter = {
+    every?: InstitutionRefreshTokenWhereInput
+    some?: InstitutionRefreshTokenWhereInput
+    none?: InstitutionRefreshTokenWhereInput
+  }
+
+  export type InstitutionClientSettingsNullableScalarRelationFilter = {
+    is?: InstitutionClientSettingsWhereInput | null
+    isNot?: InstitutionClientSettingsWhereInput | null
+  }
+
+  export type InstitutionApiKeyListRelationFilter = {
+    every?: InstitutionApiKeyWhereInput
+    some?: InstitutionApiKeyWhereInput
+    none?: InstitutionApiKeyWhereInput
+  }
+
+  export type InstitutionEscrowListRelationFilter = {
+    every?: InstitutionEscrowWhereInput
+    some?: InstitutionEscrowWhereInput
+    none?: InstitutionEscrowWhereInput
+  }
+
+  export type InstitutionAuditLogListRelationFilter = {
+    every?: InstitutionAuditLogWhereInput
+    some?: InstitutionAuditLogWhereInput
+    none?: InstitutionAuditLogWhereInput
+  }
+
+  export type InstitutionFileListRelationFilter = {
+    every?: InstitutionFileWhereInput
+    some?: InstitutionFileWhereInput
+    none?: InstitutionFileWhereInput
+  }
+
+  export type InstitutionRefreshTokenOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionApiKeyOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionEscrowOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionAuditLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionFileOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionClientCountOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    companyName?: SortOrder
+    tier?: SortOrder
+    status?: SortOrder
+    kycStatus?: SortOrder
+    jurisdiction?: SortOrder
+    primaryWallet?: SortOrder
+    settledWallets?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type InstitutionClientMaxOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    companyName?: SortOrder
+    tier?: SortOrder
+    status?: SortOrder
+    kycStatus?: SortOrder
+    jurisdiction?: SortOrder
+    primaryWallet?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type InstitutionClientMinOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    companyName?: SortOrder
+    tier?: SortOrder
+    status?: SortOrder
+    kycStatus?: SortOrder
+    jurisdiction?: SortOrder
+    primaryWallet?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type EnumClientTierWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ClientTier | EnumClientTierFieldRefInput<$PrismaModel>
+    in?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
+    not?: NestedEnumClientTierWithAggregatesFilter<$PrismaModel> | $Enums.ClientTier
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumClientTierFilter<$PrismaModel>
+    _max?: NestedEnumClientTierFilter<$PrismaModel>
+  }
+
+  export type EnumClientStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ClientStatus | EnumClientStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ClientStatus[] | ListEnumClientStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ClientStatus[] | ListEnumClientStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumClientStatusWithAggregatesFilter<$PrismaModel> | $Enums.ClientStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumClientStatusFilter<$PrismaModel>
+    _max?: NestedEnumClientStatusFilter<$PrismaModel>
+  }
+
+  export type InstitutionClientScalarRelationFilter = {
+    is?: InstitutionClientWhereInput
+    isNot?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionRefreshTokenCountOrderByAggregateInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    clientId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrder
+    deviceInfo?: SortOrder
+    ipAddress?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionRefreshTokenMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    clientId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrder
+    deviceInfo?: SortOrder
+    ipAddress?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionRefreshTokenMinOrderByAggregateInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    clientId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrder
+    deviceInfo?: SortOrder
+    ipAddress?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionClientSettingsCountOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    defaultCorridor?: SortOrder
+    defaultCurrency?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    webhookSecret?: SortOrder
+    settlementAuthorityWallet?: SortOrder
+    timezone?: SortOrder
+    autoApproveThreshold?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionClientSettingsAvgOrderByAggregateInput = {
+    autoApproveThreshold?: SortOrder
+  }
+
+  export type InstitutionClientSettingsMaxOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    defaultCorridor?: SortOrder
+    defaultCurrency?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    webhookSecret?: SortOrder
+    settlementAuthorityWallet?: SortOrder
+    timezone?: SortOrder
+    autoApproveThreshold?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionClientSettingsMinOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    defaultCorridor?: SortOrder
+    defaultCurrency?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    webhookSecret?: SortOrder
+    settlementAuthorityWallet?: SortOrder
+    timezone?: SortOrder
+    autoApproveThreshold?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionClientSettingsSumOrderByAggregateInput = {
+    autoApproveThreshold?: SortOrder
+  }
+
+  export type InstitutionApiKeyCountOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    keyHash?: SortOrder
+    name?: SortOrder
+    permissions?: SortOrder
+    active?: SortOrder
+    lastUsedAt?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionApiKeyMaxOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    keyHash?: SortOrder
+    name?: SortOrder
+    active?: SortOrder
+    lastUsedAt?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionApiKeyMinOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    keyHash?: SortOrder
+    name?: SortOrder
+    active?: SortOrder
+    lastUsedAt?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumInstitutionConditionTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel> | $Enums.InstitutionConditionType
+  }
+
+  export type EnumInstitutionEscrowStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionEscrowStatus | EnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionEscrowStatus[] | ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionEscrowStatus[] | ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel> | $Enums.InstitutionEscrowStatus
+  }
+
+  export type InstitutionDepositListRelationFilter = {
+    every?: InstitutionDepositWhereInput
+    some?: InstitutionDepositWhereInput
+    none?: InstitutionDepositWhereInput
+  }
+
+  export type InstitutionAiAnalysisListRelationFilter = {
+    every?: InstitutionAiAnalysisWhereInput
+    some?: InstitutionAiAnalysisWhereInput
+    none?: InstitutionAiAnalysisWhereInput
+  }
+
+  export type InstitutionDepositOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionAiAnalysisOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionEscrowCountOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    clientId?: SortOrder
+    payerWallet?: SortOrder
+    recipientWallet?: SortOrder
+    usdcMint?: SortOrder
+    amount?: SortOrder
+    platformFee?: SortOrder
+    corridor?: SortOrder
+    conditionType?: SortOrder
+    status?: SortOrder
+    settlementAuthority?: SortOrder
+    riskScore?: SortOrder
+    escrowPda?: SortOrder
+    vaultPda?: SortOrder
+    depositTxSignature?: SortOrder
+    releaseTxSignature?: SortOrder
+    cancelTxSignature?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    resolvedAt?: SortOrder
+    fundedAt?: SortOrder
+  }
+
+  export type InstitutionEscrowAvgOrderByAggregateInput = {
+    amount?: SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrder
+  }
+
+  export type InstitutionEscrowMaxOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    clientId?: SortOrder
+    payerWallet?: SortOrder
+    recipientWallet?: SortOrder
+    usdcMint?: SortOrder
+    amount?: SortOrder
+    platformFee?: SortOrder
+    corridor?: SortOrder
+    conditionType?: SortOrder
+    status?: SortOrder
+    settlementAuthority?: SortOrder
+    riskScore?: SortOrder
+    escrowPda?: SortOrder
+    vaultPda?: SortOrder
+    depositTxSignature?: SortOrder
+    releaseTxSignature?: SortOrder
+    cancelTxSignature?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    resolvedAt?: SortOrder
+    fundedAt?: SortOrder
+  }
+
+  export type InstitutionEscrowMinOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    clientId?: SortOrder
+    payerWallet?: SortOrder
+    recipientWallet?: SortOrder
+    usdcMint?: SortOrder
+    amount?: SortOrder
+    platformFee?: SortOrder
+    corridor?: SortOrder
+    conditionType?: SortOrder
+    status?: SortOrder
+    settlementAuthority?: SortOrder
+    riskScore?: SortOrder
+    escrowPda?: SortOrder
+    vaultPda?: SortOrder
+    depositTxSignature?: SortOrder
+    releaseTxSignature?: SortOrder
+    cancelTxSignature?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    resolvedAt?: SortOrder
+    fundedAt?: SortOrder
+  }
+
+  export type InstitutionEscrowSumOrderByAggregateInput = {
+    amount?: SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrder
+  }
+
+  export type EnumInstitutionConditionTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionConditionTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionConditionType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel>
+  }
+
+  export type EnumInstitutionEscrowStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionEscrowStatus | EnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionEscrowStatus[] | ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionEscrowStatus[] | ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionEscrowStatusWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionEscrowStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
+  }
+
+  export type InstitutionEscrowScalarRelationFilter = {
+    is?: InstitutionEscrowWhereInput
+    isNot?: InstitutionEscrowWhereInput
+  }
+
+  export type InstitutionDepositCountOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    txSignature?: SortOrder
+    amount?: SortOrder
+    confirmedAt?: SortOrder
+    blockHeight?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionDepositAvgOrderByAggregateInput = {
+    amount?: SortOrder
+    blockHeight?: SortOrder
+  }
+
+  export type InstitutionDepositMaxOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    txSignature?: SortOrder
+    amount?: SortOrder
+    confirmedAt?: SortOrder
+    blockHeight?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionDepositMinOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    txSignature?: SortOrder
+    amount?: SortOrder
+    confirmedAt?: SortOrder
+    blockHeight?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionDepositSumOrderByAggregateInput = {
+    amount?: SortOrder
+    blockHeight?: SortOrder
+  }
+
+  export type InstitutionEscrowNullableScalarRelationFilter = {
+    is?: InstitutionEscrowWhereInput | null
+    isNot?: InstitutionEscrowWhereInput | null
+  }
+
+  export type InstitutionClientNullableScalarRelationFilter = {
+    is?: InstitutionClientWhereInput | null
+    isNot?: InstitutionClientWhereInput | null
+  }
+
+  export type InstitutionAuditLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    clientId?: SortOrder
+    action?: SortOrder
+    actor?: SortOrder
+    details?: SortOrder
+    ipAddress?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionAuditLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    clientId?: SortOrder
+    action?: SortOrder
+    actor?: SortOrder
+    ipAddress?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionAuditLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    clientId?: SortOrder
+    action?: SortOrder
+    actor?: SortOrder
+    ipAddress?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionAiAnalysisCountOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    fileId?: SortOrder
+    documentHash?: SortOrder
+    riskScore?: SortOrder
+    factors?: SortOrder
+    recommendation?: SortOrder
+    extractedFields?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionAiAnalysisAvgOrderByAggregateInput = {
+    riskScore?: SortOrder
+  }
+
+  export type InstitutionAiAnalysisMaxOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    fileId?: SortOrder
+    documentHash?: SortOrder
+    riskScore?: SortOrder
+    recommendation?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionAiAnalysisMinOrderByAggregateInput = {
+    id?: SortOrder
+    escrowId?: SortOrder
+    fileId?: SortOrder
+    documentHash?: SortOrder
+    riskScore?: SortOrder
+    recommendation?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstitutionAiAnalysisSumOrderByAggregateInput = {
+    riskScore?: SortOrder
+  }
+
+  export type EnumCorridorStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CorridorStatus | EnumCorridorStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CorridorStatus[] | ListEnumCorridorStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CorridorStatus[] | ListEnumCorridorStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCorridorStatusFilter<$PrismaModel> | $Enums.CorridorStatus
+  }
+
+  export type InstitutionCorridorCountOrderByAggregateInput = {
+    id?: SortOrder
+    sourceCountry?: SortOrder
+    destCountry?: SortOrder
+    code?: SortOrder
+    minAmount?: SortOrder
+    maxAmount?: SortOrder
+    dailyLimit?: SortOrder
+    monthlyLimit?: SortOrder
+    requiredDocuments?: SortOrder
+    riskLevel?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionCorridorAvgOrderByAggregateInput = {
+    minAmount?: SortOrder
+    maxAmount?: SortOrder
+    dailyLimit?: SortOrder
+    monthlyLimit?: SortOrder
+  }
+
+  export type InstitutionCorridorMaxOrderByAggregateInput = {
+    id?: SortOrder
+    sourceCountry?: SortOrder
+    destCountry?: SortOrder
+    code?: SortOrder
+    minAmount?: SortOrder
+    maxAmount?: SortOrder
+    dailyLimit?: SortOrder
+    monthlyLimit?: SortOrder
+    riskLevel?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionCorridorMinOrderByAggregateInput = {
+    id?: SortOrder
+    sourceCountry?: SortOrder
+    destCountry?: SortOrder
+    code?: SortOrder
+    minAmount?: SortOrder
+    maxAmount?: SortOrder
+    dailyLimit?: SortOrder
+    monthlyLimit?: SortOrder
+    riskLevel?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionCorridorSumOrderByAggregateInput = {
+    minAmount?: SortOrder
+    maxAmount?: SortOrder
+    dailyLimit?: SortOrder
+    monthlyLimit?: SortOrder
+  }
+
+  export type EnumCorridorStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CorridorStatus | EnumCorridorStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CorridorStatus[] | ListEnumCorridorStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CorridorStatus[] | ListEnumCorridorStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCorridorStatusWithAggregatesFilter<$PrismaModel> | $Enums.CorridorStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCorridorStatusFilter<$PrismaModel>
+    _max?: NestedEnumCorridorStatusFilter<$PrismaModel>
+  }
+
+  export type EnumDocumentTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.DocumentType | EnumDocumentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.DocumentType[] | ListEnumDocumentTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DocumentType[] | ListEnumDocumentTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumDocumentTypeFilter<$PrismaModel> | $Enums.DocumentType
+  }
+
+  export type InstitutionFileCountOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    escrowId?: SortOrder
+    fileName?: SortOrder
+    fileKey?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    documentType?: SortOrder
+    uploadedAt?: SortOrder
+  }
+
+  export type InstitutionFileAvgOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type InstitutionFileMaxOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    escrowId?: SortOrder
+    fileName?: SortOrder
+    fileKey?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    documentType?: SortOrder
+    uploadedAt?: SortOrder
+  }
+
+  export type InstitutionFileMinOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    escrowId?: SortOrder
+    fileName?: SortOrder
+    fileKey?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    documentType?: SortOrder
+    uploadedAt?: SortOrder
+  }
+
+  export type InstitutionFileSumOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type EnumDocumentTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DocumentType | EnumDocumentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.DocumentType[] | ListEnumDocumentTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DocumentType[] | ListEnumDocumentTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumDocumentTypeWithAggregatesFilter<$PrismaModel> | $Enums.DocumentType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDocumentTypeFilter<$PrismaModel>
+    _max?: NestedEnumDocumentTypeFilter<$PrismaModel>
+  }
+
   export type DepositCreateNestedManyWithoutAgreementInput = {
     create?: XOR<DepositCreateWithoutAgreementInput, DepositUncheckedCreateWithoutAgreementInput> | DepositCreateWithoutAgreementInput[] | DepositUncheckedCreateWithoutAgreementInput[]
     connectOrCreate?: DepositCreateOrConnectWithoutAgreementInput | DepositCreateOrConnectWithoutAgreementInput[]
@@ -28782,6 +44654,613 @@ export namespace Prisma {
     update?: XOR<XOR<SwapOfferUpdateToOneWithWhereWithoutTwoPhaseSwapInput, SwapOfferUpdateWithoutTwoPhaseSwapInput>, SwapOfferUncheckedUpdateWithoutTwoPhaseSwapInput>
   }
 
+  export type InstitutionClientCreatesettledWalletsInput = {
+    set: string[]
+  }
+
+  export type InstitutionRefreshTokenCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionRefreshTokenCreateManyClientInputEnvelope
+    connect?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+  }
+
+  export type InstitutionClientSettingsCreateNestedOneWithoutClientInput = {
+    create?: XOR<InstitutionClientSettingsCreateWithoutClientInput, InstitutionClientSettingsUncheckedCreateWithoutClientInput>
+    connectOrCreate?: InstitutionClientSettingsCreateOrConnectWithoutClientInput
+    connect?: InstitutionClientSettingsWhereUniqueInput
+  }
+
+  export type InstitutionApiKeyCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionApiKeyCreateWithoutClientInput, InstitutionApiKeyUncheckedCreateWithoutClientInput> | InstitutionApiKeyCreateWithoutClientInput[] | InstitutionApiKeyUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionApiKeyCreateOrConnectWithoutClientInput | InstitutionApiKeyCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionApiKeyCreateManyClientInputEnvelope
+    connect?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+  }
+
+  export type InstitutionEscrowCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutClientInput, InstitutionEscrowUncheckedCreateWithoutClientInput> | InstitutionEscrowCreateWithoutClientInput[] | InstitutionEscrowUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutClientInput | InstitutionEscrowCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionEscrowCreateManyClientInputEnvelope
+    connect?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+  }
+
+  export type InstitutionAuditLogCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionAuditLogCreateWithoutClientInput, InstitutionAuditLogUncheckedCreateWithoutClientInput> | InstitutionAuditLogCreateWithoutClientInput[] | InstitutionAuditLogUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAuditLogCreateOrConnectWithoutClientInput | InstitutionAuditLogCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionAuditLogCreateManyClientInputEnvelope
+    connect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+  }
+
+  export type InstitutionFileCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionFileCreateWithoutClientInput, InstitutionFileUncheckedCreateWithoutClientInput> | InstitutionFileCreateWithoutClientInput[] | InstitutionFileUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionFileCreateOrConnectWithoutClientInput | InstitutionFileCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionFileCreateManyClientInputEnvelope
+    connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+  }
+
+  export type InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionRefreshTokenCreateManyClientInputEnvelope
+    connect?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+  }
+
+  export type InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput = {
+    create?: XOR<InstitutionClientSettingsCreateWithoutClientInput, InstitutionClientSettingsUncheckedCreateWithoutClientInput>
+    connectOrCreate?: InstitutionClientSettingsCreateOrConnectWithoutClientInput
+    connect?: InstitutionClientSettingsWhereUniqueInput
+  }
+
+  export type InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionApiKeyCreateWithoutClientInput, InstitutionApiKeyUncheckedCreateWithoutClientInput> | InstitutionApiKeyCreateWithoutClientInput[] | InstitutionApiKeyUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionApiKeyCreateOrConnectWithoutClientInput | InstitutionApiKeyCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionApiKeyCreateManyClientInputEnvelope
+    connect?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+  }
+
+  export type InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutClientInput, InstitutionEscrowUncheckedCreateWithoutClientInput> | InstitutionEscrowCreateWithoutClientInput[] | InstitutionEscrowUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutClientInput | InstitutionEscrowCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionEscrowCreateManyClientInputEnvelope
+    connect?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+  }
+
+  export type InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionAuditLogCreateWithoutClientInput, InstitutionAuditLogUncheckedCreateWithoutClientInput> | InstitutionAuditLogCreateWithoutClientInput[] | InstitutionAuditLogUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAuditLogCreateOrConnectWithoutClientInput | InstitutionAuditLogCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionAuditLogCreateManyClientInputEnvelope
+    connect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+  }
+
+  export type InstitutionFileUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionFileCreateWithoutClientInput, InstitutionFileUncheckedCreateWithoutClientInput> | InstitutionFileCreateWithoutClientInput[] | InstitutionFileUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionFileCreateOrConnectWithoutClientInput | InstitutionFileCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionFileCreateManyClientInputEnvelope
+    connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+  }
+
+  export type EnumClientTierFieldUpdateOperationsInput = {
+    set?: $Enums.ClientTier
+  }
+
+  export type EnumClientStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ClientStatus
+  }
+
+  export type InstitutionClientUpdatesettledWalletsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type InstitutionRefreshTokenUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionRefreshTokenUpsertWithWhereUniqueWithoutClientInput | InstitutionRefreshTokenUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionRefreshTokenCreateManyClientInputEnvelope
+    set?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+    disconnect?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+    delete?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+    connect?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+    update?: InstitutionRefreshTokenUpdateWithWhereUniqueWithoutClientInput | InstitutionRefreshTokenUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionRefreshTokenUpdateManyWithWhereWithoutClientInput | InstitutionRefreshTokenUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionRefreshTokenScalarWhereInput | InstitutionRefreshTokenScalarWhereInput[]
+  }
+
+  export type InstitutionClientSettingsUpdateOneWithoutClientNestedInput = {
+    create?: XOR<InstitutionClientSettingsCreateWithoutClientInput, InstitutionClientSettingsUncheckedCreateWithoutClientInput>
+    connectOrCreate?: InstitutionClientSettingsCreateOrConnectWithoutClientInput
+    upsert?: InstitutionClientSettingsUpsertWithoutClientInput
+    disconnect?: InstitutionClientSettingsWhereInput | boolean
+    delete?: InstitutionClientSettingsWhereInput | boolean
+    connect?: InstitutionClientSettingsWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientSettingsUpdateToOneWithWhereWithoutClientInput, InstitutionClientSettingsUpdateWithoutClientInput>, InstitutionClientSettingsUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionApiKeyUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionApiKeyCreateWithoutClientInput, InstitutionApiKeyUncheckedCreateWithoutClientInput> | InstitutionApiKeyCreateWithoutClientInput[] | InstitutionApiKeyUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionApiKeyCreateOrConnectWithoutClientInput | InstitutionApiKeyCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionApiKeyUpsertWithWhereUniqueWithoutClientInput | InstitutionApiKeyUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionApiKeyCreateManyClientInputEnvelope
+    set?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+    disconnect?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+    delete?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+    connect?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+    update?: InstitutionApiKeyUpdateWithWhereUniqueWithoutClientInput | InstitutionApiKeyUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionApiKeyUpdateManyWithWhereWithoutClientInput | InstitutionApiKeyUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionApiKeyScalarWhereInput | InstitutionApiKeyScalarWhereInput[]
+  }
+
+  export type InstitutionEscrowUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutClientInput, InstitutionEscrowUncheckedCreateWithoutClientInput> | InstitutionEscrowCreateWithoutClientInput[] | InstitutionEscrowUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutClientInput | InstitutionEscrowCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionEscrowUpsertWithWhereUniqueWithoutClientInput | InstitutionEscrowUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionEscrowCreateManyClientInputEnvelope
+    set?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+    disconnect?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+    delete?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+    connect?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+    update?: InstitutionEscrowUpdateWithWhereUniqueWithoutClientInput | InstitutionEscrowUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionEscrowUpdateManyWithWhereWithoutClientInput | InstitutionEscrowUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionEscrowScalarWhereInput | InstitutionEscrowScalarWhereInput[]
+  }
+
+  export type InstitutionAuditLogUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionAuditLogCreateWithoutClientInput, InstitutionAuditLogUncheckedCreateWithoutClientInput> | InstitutionAuditLogCreateWithoutClientInput[] | InstitutionAuditLogUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAuditLogCreateOrConnectWithoutClientInput | InstitutionAuditLogCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionAuditLogUpsertWithWhereUniqueWithoutClientInput | InstitutionAuditLogUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionAuditLogCreateManyClientInputEnvelope
+    set?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    disconnect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    delete?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    connect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    update?: InstitutionAuditLogUpdateWithWhereUniqueWithoutClientInput | InstitutionAuditLogUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionAuditLogUpdateManyWithWhereWithoutClientInput | InstitutionAuditLogUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionAuditLogScalarWhereInput | InstitutionAuditLogScalarWhereInput[]
+  }
+
+  export type InstitutionFileUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionFileCreateWithoutClientInput, InstitutionFileUncheckedCreateWithoutClientInput> | InstitutionFileCreateWithoutClientInput[] | InstitutionFileUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionFileCreateOrConnectWithoutClientInput | InstitutionFileCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionFileUpsertWithWhereUniqueWithoutClientInput | InstitutionFileUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionFileCreateManyClientInputEnvelope
+    set?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    disconnect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    delete?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    update?: InstitutionFileUpdateWithWhereUniqueWithoutClientInput | InstitutionFileUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionFileUpdateManyWithWhereWithoutClientInput | InstitutionFileUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
+  }
+
+  export type InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionRefreshTokenUpsertWithWhereUniqueWithoutClientInput | InstitutionRefreshTokenUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionRefreshTokenCreateManyClientInputEnvelope
+    set?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+    disconnect?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+    delete?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+    connect?: InstitutionRefreshTokenWhereUniqueInput | InstitutionRefreshTokenWhereUniqueInput[]
+    update?: InstitutionRefreshTokenUpdateWithWhereUniqueWithoutClientInput | InstitutionRefreshTokenUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionRefreshTokenUpdateManyWithWhereWithoutClientInput | InstitutionRefreshTokenUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionRefreshTokenScalarWhereInput | InstitutionRefreshTokenScalarWhereInput[]
+  }
+
+  export type InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput = {
+    create?: XOR<InstitutionClientSettingsCreateWithoutClientInput, InstitutionClientSettingsUncheckedCreateWithoutClientInput>
+    connectOrCreate?: InstitutionClientSettingsCreateOrConnectWithoutClientInput
+    upsert?: InstitutionClientSettingsUpsertWithoutClientInput
+    disconnect?: InstitutionClientSettingsWhereInput | boolean
+    delete?: InstitutionClientSettingsWhereInput | boolean
+    connect?: InstitutionClientSettingsWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientSettingsUpdateToOneWithWhereWithoutClientInput, InstitutionClientSettingsUpdateWithoutClientInput>, InstitutionClientSettingsUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionApiKeyCreateWithoutClientInput, InstitutionApiKeyUncheckedCreateWithoutClientInput> | InstitutionApiKeyCreateWithoutClientInput[] | InstitutionApiKeyUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionApiKeyCreateOrConnectWithoutClientInput | InstitutionApiKeyCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionApiKeyUpsertWithWhereUniqueWithoutClientInput | InstitutionApiKeyUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionApiKeyCreateManyClientInputEnvelope
+    set?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+    disconnect?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+    delete?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+    connect?: InstitutionApiKeyWhereUniqueInput | InstitutionApiKeyWhereUniqueInput[]
+    update?: InstitutionApiKeyUpdateWithWhereUniqueWithoutClientInput | InstitutionApiKeyUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionApiKeyUpdateManyWithWhereWithoutClientInput | InstitutionApiKeyUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionApiKeyScalarWhereInput | InstitutionApiKeyScalarWhereInput[]
+  }
+
+  export type InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutClientInput, InstitutionEscrowUncheckedCreateWithoutClientInput> | InstitutionEscrowCreateWithoutClientInput[] | InstitutionEscrowUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutClientInput | InstitutionEscrowCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionEscrowUpsertWithWhereUniqueWithoutClientInput | InstitutionEscrowUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionEscrowCreateManyClientInputEnvelope
+    set?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+    disconnect?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+    delete?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+    connect?: InstitutionEscrowWhereUniqueInput | InstitutionEscrowWhereUniqueInput[]
+    update?: InstitutionEscrowUpdateWithWhereUniqueWithoutClientInput | InstitutionEscrowUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionEscrowUpdateManyWithWhereWithoutClientInput | InstitutionEscrowUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionEscrowScalarWhereInput | InstitutionEscrowScalarWhereInput[]
+  }
+
+  export type InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionAuditLogCreateWithoutClientInput, InstitutionAuditLogUncheckedCreateWithoutClientInput> | InstitutionAuditLogCreateWithoutClientInput[] | InstitutionAuditLogUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAuditLogCreateOrConnectWithoutClientInput | InstitutionAuditLogCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionAuditLogUpsertWithWhereUniqueWithoutClientInput | InstitutionAuditLogUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionAuditLogCreateManyClientInputEnvelope
+    set?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    disconnect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    delete?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    connect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    update?: InstitutionAuditLogUpdateWithWhereUniqueWithoutClientInput | InstitutionAuditLogUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionAuditLogUpdateManyWithWhereWithoutClientInput | InstitutionAuditLogUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionAuditLogScalarWhereInput | InstitutionAuditLogScalarWhereInput[]
+  }
+
+  export type InstitutionFileUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionFileCreateWithoutClientInput, InstitutionFileUncheckedCreateWithoutClientInput> | InstitutionFileCreateWithoutClientInput[] | InstitutionFileUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionFileCreateOrConnectWithoutClientInput | InstitutionFileCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionFileUpsertWithWhereUniqueWithoutClientInput | InstitutionFileUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionFileCreateManyClientInputEnvelope
+    set?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    disconnect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    delete?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    update?: InstitutionFileUpdateWithWhereUniqueWithoutClientInput | InstitutionFileUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionFileUpdateManyWithWhereWithoutClientInput | InstitutionFileUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutRefreshTokensInput = {
+    create?: XOR<InstitutionClientCreateWithoutRefreshTokensInput, InstitutionClientUncheckedCreateWithoutRefreshTokensInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutRefreshTokensInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutRefreshTokensNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutRefreshTokensInput, InstitutionClientUncheckedCreateWithoutRefreshTokensInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutRefreshTokensInput
+    upsert?: InstitutionClientUpsertWithoutRefreshTokensInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutRefreshTokensInput, InstitutionClientUpdateWithoutRefreshTokensInput>, InstitutionClientUncheckedUpdateWithoutRefreshTokensInput>
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutSettingsInput = {
+    create?: XOR<InstitutionClientCreateWithoutSettingsInput, InstitutionClientUncheckedCreateWithoutSettingsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutSettingsInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutSettingsNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutSettingsInput, InstitutionClientUncheckedCreateWithoutSettingsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutSettingsInput
+    upsert?: InstitutionClientUpsertWithoutSettingsInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutSettingsInput, InstitutionClientUpdateWithoutSettingsInput>, InstitutionClientUncheckedUpdateWithoutSettingsInput>
+  }
+
+  export type InstitutionApiKeyCreatepermissionsInput = {
+    set: string[]
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutApiKeysInput = {
+    create?: XOR<InstitutionClientCreateWithoutApiKeysInput, InstitutionClientUncheckedCreateWithoutApiKeysInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutApiKeysInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionApiKeyUpdatepermissionsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutApiKeysNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutApiKeysInput, InstitutionClientUncheckedCreateWithoutApiKeysInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutApiKeysInput
+    upsert?: InstitutionClientUpsertWithoutApiKeysInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutApiKeysInput, InstitutionClientUpdateWithoutApiKeysInput>, InstitutionClientUncheckedUpdateWithoutApiKeysInput>
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutEscrowsInput = {
+    create?: XOR<InstitutionClientCreateWithoutEscrowsInput, InstitutionClientUncheckedCreateWithoutEscrowsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutEscrowsInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionDepositCreateNestedManyWithoutEscrowInput = {
+    create?: XOR<InstitutionDepositCreateWithoutEscrowInput, InstitutionDepositUncheckedCreateWithoutEscrowInput> | InstitutionDepositCreateWithoutEscrowInput[] | InstitutionDepositUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionDepositCreateOrConnectWithoutEscrowInput | InstitutionDepositCreateOrConnectWithoutEscrowInput[]
+    createMany?: InstitutionDepositCreateManyEscrowInputEnvelope
+    connect?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+  }
+
+  export type InstitutionAuditLogCreateNestedManyWithoutEscrowInput = {
+    create?: XOR<InstitutionAuditLogCreateWithoutEscrowInput, InstitutionAuditLogUncheckedCreateWithoutEscrowInput> | InstitutionAuditLogCreateWithoutEscrowInput[] | InstitutionAuditLogUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionAuditLogCreateOrConnectWithoutEscrowInput | InstitutionAuditLogCreateOrConnectWithoutEscrowInput[]
+    createMany?: InstitutionAuditLogCreateManyEscrowInputEnvelope
+    connect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+  }
+
+  export type InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput = {
+    create?: XOR<InstitutionAiAnalysisCreateWithoutEscrowInput, InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput> | InstitutionAiAnalysisCreateWithoutEscrowInput[] | InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput | InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput[]
+    createMany?: InstitutionAiAnalysisCreateManyEscrowInputEnvelope
+    connect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+  }
+
+  export type InstitutionFileCreateNestedManyWithoutEscrowInput = {
+    create?: XOR<InstitutionFileCreateWithoutEscrowInput, InstitutionFileUncheckedCreateWithoutEscrowInput> | InstitutionFileCreateWithoutEscrowInput[] | InstitutionFileUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionFileCreateOrConnectWithoutEscrowInput | InstitutionFileCreateOrConnectWithoutEscrowInput[]
+    createMany?: InstitutionFileCreateManyEscrowInputEnvelope
+    connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+  }
+
+  export type InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput = {
+    create?: XOR<InstitutionDepositCreateWithoutEscrowInput, InstitutionDepositUncheckedCreateWithoutEscrowInput> | InstitutionDepositCreateWithoutEscrowInput[] | InstitutionDepositUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionDepositCreateOrConnectWithoutEscrowInput | InstitutionDepositCreateOrConnectWithoutEscrowInput[]
+    createMany?: InstitutionDepositCreateManyEscrowInputEnvelope
+    connect?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+  }
+
+  export type InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput = {
+    create?: XOR<InstitutionAuditLogCreateWithoutEscrowInput, InstitutionAuditLogUncheckedCreateWithoutEscrowInput> | InstitutionAuditLogCreateWithoutEscrowInput[] | InstitutionAuditLogUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionAuditLogCreateOrConnectWithoutEscrowInput | InstitutionAuditLogCreateOrConnectWithoutEscrowInput[]
+    createMany?: InstitutionAuditLogCreateManyEscrowInputEnvelope
+    connect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+  }
+
+  export type InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput = {
+    create?: XOR<InstitutionAiAnalysisCreateWithoutEscrowInput, InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput> | InstitutionAiAnalysisCreateWithoutEscrowInput[] | InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput | InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput[]
+    createMany?: InstitutionAiAnalysisCreateManyEscrowInputEnvelope
+    connect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+  }
+
+  export type InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput = {
+    create?: XOR<InstitutionFileCreateWithoutEscrowInput, InstitutionFileUncheckedCreateWithoutEscrowInput> | InstitutionFileCreateWithoutEscrowInput[] | InstitutionFileUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionFileCreateOrConnectWithoutEscrowInput | InstitutionFileCreateOrConnectWithoutEscrowInput[]
+    createMany?: InstitutionFileCreateManyEscrowInputEnvelope
+    connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+  }
+
+  export type EnumInstitutionConditionTypeFieldUpdateOperationsInput = {
+    set?: $Enums.InstitutionConditionType
+  }
+
+  export type EnumInstitutionEscrowStatusFieldUpdateOperationsInput = {
+    set?: $Enums.InstitutionEscrowStatus
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutEscrowsInput, InstitutionClientUncheckedCreateWithoutEscrowsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutEscrowsInput
+    upsert?: InstitutionClientUpsertWithoutEscrowsInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutEscrowsInput, InstitutionClientUpdateWithoutEscrowsInput>, InstitutionClientUncheckedUpdateWithoutEscrowsInput>
+  }
+
+  export type InstitutionDepositUpdateManyWithoutEscrowNestedInput = {
+    create?: XOR<InstitutionDepositCreateWithoutEscrowInput, InstitutionDepositUncheckedCreateWithoutEscrowInput> | InstitutionDepositCreateWithoutEscrowInput[] | InstitutionDepositUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionDepositCreateOrConnectWithoutEscrowInput | InstitutionDepositCreateOrConnectWithoutEscrowInput[]
+    upsert?: InstitutionDepositUpsertWithWhereUniqueWithoutEscrowInput | InstitutionDepositUpsertWithWhereUniqueWithoutEscrowInput[]
+    createMany?: InstitutionDepositCreateManyEscrowInputEnvelope
+    set?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+    disconnect?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+    delete?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+    connect?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+    update?: InstitutionDepositUpdateWithWhereUniqueWithoutEscrowInput | InstitutionDepositUpdateWithWhereUniqueWithoutEscrowInput[]
+    updateMany?: InstitutionDepositUpdateManyWithWhereWithoutEscrowInput | InstitutionDepositUpdateManyWithWhereWithoutEscrowInput[]
+    deleteMany?: InstitutionDepositScalarWhereInput | InstitutionDepositScalarWhereInput[]
+  }
+
+  export type InstitutionAuditLogUpdateManyWithoutEscrowNestedInput = {
+    create?: XOR<InstitutionAuditLogCreateWithoutEscrowInput, InstitutionAuditLogUncheckedCreateWithoutEscrowInput> | InstitutionAuditLogCreateWithoutEscrowInput[] | InstitutionAuditLogUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionAuditLogCreateOrConnectWithoutEscrowInput | InstitutionAuditLogCreateOrConnectWithoutEscrowInput[]
+    upsert?: InstitutionAuditLogUpsertWithWhereUniqueWithoutEscrowInput | InstitutionAuditLogUpsertWithWhereUniqueWithoutEscrowInput[]
+    createMany?: InstitutionAuditLogCreateManyEscrowInputEnvelope
+    set?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    disconnect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    delete?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    connect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    update?: InstitutionAuditLogUpdateWithWhereUniqueWithoutEscrowInput | InstitutionAuditLogUpdateWithWhereUniqueWithoutEscrowInput[]
+    updateMany?: InstitutionAuditLogUpdateManyWithWhereWithoutEscrowInput | InstitutionAuditLogUpdateManyWithWhereWithoutEscrowInput[]
+    deleteMany?: InstitutionAuditLogScalarWhereInput | InstitutionAuditLogScalarWhereInput[]
+  }
+
+  export type InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput = {
+    create?: XOR<InstitutionAiAnalysisCreateWithoutEscrowInput, InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput> | InstitutionAiAnalysisCreateWithoutEscrowInput[] | InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput | InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput[]
+    upsert?: InstitutionAiAnalysisUpsertWithWhereUniqueWithoutEscrowInput | InstitutionAiAnalysisUpsertWithWhereUniqueWithoutEscrowInput[]
+    createMany?: InstitutionAiAnalysisCreateManyEscrowInputEnvelope
+    set?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    disconnect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    delete?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    connect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    update?: InstitutionAiAnalysisUpdateWithWhereUniqueWithoutEscrowInput | InstitutionAiAnalysisUpdateWithWhereUniqueWithoutEscrowInput[]
+    updateMany?: InstitutionAiAnalysisUpdateManyWithWhereWithoutEscrowInput | InstitutionAiAnalysisUpdateManyWithWhereWithoutEscrowInput[]
+    deleteMany?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
+  }
+
+  export type InstitutionFileUpdateManyWithoutEscrowNestedInput = {
+    create?: XOR<InstitutionFileCreateWithoutEscrowInput, InstitutionFileUncheckedCreateWithoutEscrowInput> | InstitutionFileCreateWithoutEscrowInput[] | InstitutionFileUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionFileCreateOrConnectWithoutEscrowInput | InstitutionFileCreateOrConnectWithoutEscrowInput[]
+    upsert?: InstitutionFileUpsertWithWhereUniqueWithoutEscrowInput | InstitutionFileUpsertWithWhereUniqueWithoutEscrowInput[]
+    createMany?: InstitutionFileCreateManyEscrowInputEnvelope
+    set?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    disconnect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    delete?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    update?: InstitutionFileUpdateWithWhereUniqueWithoutEscrowInput | InstitutionFileUpdateWithWhereUniqueWithoutEscrowInput[]
+    updateMany?: InstitutionFileUpdateManyWithWhereWithoutEscrowInput | InstitutionFileUpdateManyWithWhereWithoutEscrowInput[]
+    deleteMany?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
+  }
+
+  export type InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput = {
+    create?: XOR<InstitutionDepositCreateWithoutEscrowInput, InstitutionDepositUncheckedCreateWithoutEscrowInput> | InstitutionDepositCreateWithoutEscrowInput[] | InstitutionDepositUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionDepositCreateOrConnectWithoutEscrowInput | InstitutionDepositCreateOrConnectWithoutEscrowInput[]
+    upsert?: InstitutionDepositUpsertWithWhereUniqueWithoutEscrowInput | InstitutionDepositUpsertWithWhereUniqueWithoutEscrowInput[]
+    createMany?: InstitutionDepositCreateManyEscrowInputEnvelope
+    set?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+    disconnect?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+    delete?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+    connect?: InstitutionDepositWhereUniqueInput | InstitutionDepositWhereUniqueInput[]
+    update?: InstitutionDepositUpdateWithWhereUniqueWithoutEscrowInput | InstitutionDepositUpdateWithWhereUniqueWithoutEscrowInput[]
+    updateMany?: InstitutionDepositUpdateManyWithWhereWithoutEscrowInput | InstitutionDepositUpdateManyWithWhereWithoutEscrowInput[]
+    deleteMany?: InstitutionDepositScalarWhereInput | InstitutionDepositScalarWhereInput[]
+  }
+
+  export type InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput = {
+    create?: XOR<InstitutionAuditLogCreateWithoutEscrowInput, InstitutionAuditLogUncheckedCreateWithoutEscrowInput> | InstitutionAuditLogCreateWithoutEscrowInput[] | InstitutionAuditLogUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionAuditLogCreateOrConnectWithoutEscrowInput | InstitutionAuditLogCreateOrConnectWithoutEscrowInput[]
+    upsert?: InstitutionAuditLogUpsertWithWhereUniqueWithoutEscrowInput | InstitutionAuditLogUpsertWithWhereUniqueWithoutEscrowInput[]
+    createMany?: InstitutionAuditLogCreateManyEscrowInputEnvelope
+    set?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    disconnect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    delete?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    connect?: InstitutionAuditLogWhereUniqueInput | InstitutionAuditLogWhereUniqueInput[]
+    update?: InstitutionAuditLogUpdateWithWhereUniqueWithoutEscrowInput | InstitutionAuditLogUpdateWithWhereUniqueWithoutEscrowInput[]
+    updateMany?: InstitutionAuditLogUpdateManyWithWhereWithoutEscrowInput | InstitutionAuditLogUpdateManyWithWhereWithoutEscrowInput[]
+    deleteMany?: InstitutionAuditLogScalarWhereInput | InstitutionAuditLogScalarWhereInput[]
+  }
+
+  export type InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput = {
+    create?: XOR<InstitutionAiAnalysisCreateWithoutEscrowInput, InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput> | InstitutionAiAnalysisCreateWithoutEscrowInput[] | InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput | InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput[]
+    upsert?: InstitutionAiAnalysisUpsertWithWhereUniqueWithoutEscrowInput | InstitutionAiAnalysisUpsertWithWhereUniqueWithoutEscrowInput[]
+    createMany?: InstitutionAiAnalysisCreateManyEscrowInputEnvelope
+    set?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    disconnect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    delete?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    connect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    update?: InstitutionAiAnalysisUpdateWithWhereUniqueWithoutEscrowInput | InstitutionAiAnalysisUpdateWithWhereUniqueWithoutEscrowInput[]
+    updateMany?: InstitutionAiAnalysisUpdateManyWithWhereWithoutEscrowInput | InstitutionAiAnalysisUpdateManyWithWhereWithoutEscrowInput[]
+    deleteMany?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
+  }
+
+  export type InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput = {
+    create?: XOR<InstitutionFileCreateWithoutEscrowInput, InstitutionFileUncheckedCreateWithoutEscrowInput> | InstitutionFileCreateWithoutEscrowInput[] | InstitutionFileUncheckedCreateWithoutEscrowInput[]
+    connectOrCreate?: InstitutionFileCreateOrConnectWithoutEscrowInput | InstitutionFileCreateOrConnectWithoutEscrowInput[]
+    upsert?: InstitutionFileUpsertWithWhereUniqueWithoutEscrowInput | InstitutionFileUpsertWithWhereUniqueWithoutEscrowInput[]
+    createMany?: InstitutionFileCreateManyEscrowInputEnvelope
+    set?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    disconnect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    delete?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
+    update?: InstitutionFileUpdateWithWhereUniqueWithoutEscrowInput | InstitutionFileUpdateWithWhereUniqueWithoutEscrowInput[]
+    updateMany?: InstitutionFileUpdateManyWithWhereWithoutEscrowInput | InstitutionFileUpdateManyWithWhereWithoutEscrowInput[]
+    deleteMany?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
+  }
+
+  export type InstitutionEscrowCreateNestedOneWithoutDepositsInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutDepositsInput, InstitutionEscrowUncheckedCreateWithoutDepositsInput>
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutDepositsInput
+    connect?: InstitutionEscrowWhereUniqueInput
+  }
+
+  export type InstitutionEscrowUpdateOneRequiredWithoutDepositsNestedInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutDepositsInput, InstitutionEscrowUncheckedCreateWithoutDepositsInput>
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutDepositsInput
+    upsert?: InstitutionEscrowUpsertWithoutDepositsInput
+    connect?: InstitutionEscrowWhereUniqueInput
+    update?: XOR<XOR<InstitutionEscrowUpdateToOneWithWhereWithoutDepositsInput, InstitutionEscrowUpdateWithoutDepositsInput>, InstitutionEscrowUncheckedUpdateWithoutDepositsInput>
+  }
+
+  export type InstitutionEscrowCreateNestedOneWithoutAuditLogsInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutAuditLogsInput, InstitutionEscrowUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutAuditLogsInput
+    connect?: InstitutionEscrowWhereUniqueInput
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutAuditLogsInput = {
+    create?: XOR<InstitutionClientCreateWithoutAuditLogsInput, InstitutionClientUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutAuditLogsInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionEscrowUpdateOneWithoutAuditLogsNestedInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutAuditLogsInput, InstitutionEscrowUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutAuditLogsInput
+    upsert?: InstitutionEscrowUpsertWithoutAuditLogsInput
+    disconnect?: InstitutionEscrowWhereInput | boolean
+    delete?: InstitutionEscrowWhereInput | boolean
+    connect?: InstitutionEscrowWhereUniqueInput
+    update?: XOR<XOR<InstitutionEscrowUpdateToOneWithWhereWithoutAuditLogsInput, InstitutionEscrowUpdateWithoutAuditLogsInput>, InstitutionEscrowUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type InstitutionClientUpdateOneWithoutAuditLogsNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutAuditLogsInput, InstitutionClientUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutAuditLogsInput
+    upsert?: InstitutionClientUpsertWithoutAuditLogsInput
+    disconnect?: InstitutionClientWhereInput | boolean
+    delete?: InstitutionClientWhereInput | boolean
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutAuditLogsInput, InstitutionClientUpdateWithoutAuditLogsInput>, InstitutionClientUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type InstitutionEscrowCreateNestedOneWithoutAiAnalysesInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutAiAnalysesInput, InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput>
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutAiAnalysesInput
+    connect?: InstitutionEscrowWhereUniqueInput
+  }
+
+  export type InstitutionEscrowUpdateOneRequiredWithoutAiAnalysesNestedInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutAiAnalysesInput, InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput>
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutAiAnalysesInput
+    upsert?: InstitutionEscrowUpsertWithoutAiAnalysesInput
+    connect?: InstitutionEscrowWhereUniqueInput
+    update?: XOR<XOR<InstitutionEscrowUpdateToOneWithWhereWithoutAiAnalysesInput, InstitutionEscrowUpdateWithoutAiAnalysesInput>, InstitutionEscrowUncheckedUpdateWithoutAiAnalysesInput>
+  }
+
+  export type InstitutionCorridorCreaterequiredDocumentsInput = {
+    set: string[]
+  }
+
+  export type InstitutionCorridorUpdaterequiredDocumentsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type EnumCorridorStatusFieldUpdateOperationsInput = {
+    set?: $Enums.CorridorStatus
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutFilesInput = {
+    create?: XOR<InstitutionClientCreateWithoutFilesInput, InstitutionClientUncheckedCreateWithoutFilesInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutFilesInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionEscrowCreateNestedOneWithoutFilesInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutFilesInput, InstitutionEscrowUncheckedCreateWithoutFilesInput>
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutFilesInput
+    connect?: InstitutionEscrowWhereUniqueInput
+  }
+
+  export type EnumDocumentTypeFieldUpdateOperationsInput = {
+    set?: $Enums.DocumentType
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutFilesNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutFilesInput, InstitutionClientUncheckedCreateWithoutFilesInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutFilesInput
+    upsert?: InstitutionClientUpsertWithoutFilesInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutFilesInput, InstitutionClientUpdateWithoutFilesInput>, InstitutionClientUncheckedUpdateWithoutFilesInput>
+  }
+
+  export type InstitutionEscrowUpdateOneWithoutFilesNestedInput = {
+    create?: XOR<InstitutionEscrowCreateWithoutFilesInput, InstitutionEscrowUncheckedCreateWithoutFilesInput>
+    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutFilesInput
+    upsert?: InstitutionEscrowUpsertWithoutFilesInput
+    disconnect?: InstitutionEscrowWhereInput | boolean
+    delete?: InstitutionEscrowWhereInput | boolean
+    connect?: InstitutionEscrowWhereUniqueInput
+    update?: XOR<XOR<InstitutionEscrowUpdateToOneWithWhereWithoutFilesInput, InstitutionEscrowUpdateWithoutFilesInput>, InstitutionEscrowUncheckedUpdateWithoutFilesInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -29356,6 +45835,108 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTwoPhaseSwapStatusFilter<$PrismaModel>
     _max?: NestedEnumTwoPhaseSwapStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumClientTierFilter<$PrismaModel = never> = {
+    equals?: $Enums.ClientTier | EnumClientTierFieldRefInput<$PrismaModel>
+    in?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
+    not?: NestedEnumClientTierFilter<$PrismaModel> | $Enums.ClientTier
+  }
+
+  export type NestedEnumClientStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ClientStatus | EnumClientStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ClientStatus[] | ListEnumClientStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ClientStatus[] | ListEnumClientStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumClientStatusFilter<$PrismaModel> | $Enums.ClientStatus
+  }
+
+  export type NestedEnumClientTierWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ClientTier | EnumClientTierFieldRefInput<$PrismaModel>
+    in?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
+    not?: NestedEnumClientTierWithAggregatesFilter<$PrismaModel> | $Enums.ClientTier
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumClientTierFilter<$PrismaModel>
+    _max?: NestedEnumClientTierFilter<$PrismaModel>
+  }
+
+  export type NestedEnumClientStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ClientStatus | EnumClientStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ClientStatus[] | ListEnumClientStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ClientStatus[] | ListEnumClientStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumClientStatusWithAggregatesFilter<$PrismaModel> | $Enums.ClientStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumClientStatusFilter<$PrismaModel>
+    _max?: NestedEnumClientStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumInstitutionConditionTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel> | $Enums.InstitutionConditionType
+  }
+
+  export type NestedEnumInstitutionEscrowStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionEscrowStatus | EnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionEscrowStatus[] | ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionEscrowStatus[] | ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel> | $Enums.InstitutionEscrowStatus
+  }
+
+  export type NestedEnumInstitutionConditionTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionConditionTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionConditionType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumInstitutionEscrowStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionEscrowStatus | EnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionEscrowStatus[] | ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionEscrowStatus[] | ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionEscrowStatusWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionEscrowStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumCorridorStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CorridorStatus | EnumCorridorStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CorridorStatus[] | ListEnumCorridorStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CorridorStatus[] | ListEnumCorridorStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCorridorStatusFilter<$PrismaModel> | $Enums.CorridorStatus
+  }
+
+  export type NestedEnumCorridorStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CorridorStatus | EnumCorridorStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CorridorStatus[] | ListEnumCorridorStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CorridorStatus[] | ListEnumCorridorStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCorridorStatusWithAggregatesFilter<$PrismaModel> | $Enums.CorridorStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCorridorStatusFilter<$PrismaModel>
+    _max?: NestedEnumCorridorStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumDocumentTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.DocumentType | EnumDocumentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.DocumentType[] | ListEnumDocumentTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DocumentType[] | ListEnumDocumentTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumDocumentTypeFilter<$PrismaModel> | $Enums.DocumentType
+  }
+
+  export type NestedEnumDocumentTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DocumentType | EnumDocumentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.DocumentType[] | ListEnumDocumentTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DocumentType[] | ListEnumDocumentTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumDocumentTypeWithAggregatesFilter<$PrismaModel> | $Enums.DocumentType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDocumentTypeFilter<$PrismaModel>
+    _max?: NestedEnumDocumentTypeFilter<$PrismaModel>
   }
 
   export type DepositCreateWithoutAgreementInput = {
@@ -32514,6 +49095,1785 @@ export namespace Prisma {
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
   }
 
+  export type InstitutionRefreshTokenCreateWithoutClientInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    deviceInfo?: string | null
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionRefreshTokenUncheckedCreateWithoutClientInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    deviceInfo?: string | null
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionRefreshTokenCreateOrConnectWithoutClientInput = {
+    where: InstitutionRefreshTokenWhereUniqueInput
+    create: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionRefreshTokenCreateManyClientInputEnvelope = {
+    data: InstitutionRefreshTokenCreateManyClientInput | InstitutionRefreshTokenCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionClientSettingsCreateWithoutClientInput = {
+    id?: string
+    defaultCorridor?: string | null
+    defaultCurrency?: string
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    webhookSecret?: string | null
+    settlementAuthorityWallet?: string | null
+    timezone?: string
+    autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionClientSettingsUncheckedCreateWithoutClientInput = {
+    id?: string
+    defaultCorridor?: string | null
+    defaultCurrency?: string
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    webhookSecret?: string | null
+    settlementAuthorityWallet?: string | null
+    timezone?: string
+    autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionClientSettingsCreateOrConnectWithoutClientInput = {
+    where: InstitutionClientSettingsWhereUniqueInput
+    create: XOR<InstitutionClientSettingsCreateWithoutClientInput, InstitutionClientSettingsUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionApiKeyCreateWithoutClientInput = {
+    id?: string
+    keyHash: string
+    name: string
+    permissions?: InstitutionApiKeyCreatepermissionsInput | string[]
+    active?: boolean
+    lastUsedAt?: Date | string | null
+    expiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionApiKeyUncheckedCreateWithoutClientInput = {
+    id?: string
+    keyHash: string
+    name: string
+    permissions?: InstitutionApiKeyCreatepermissionsInput | string[]
+    active?: boolean
+    lastUsedAt?: Date | string | null
+    expiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionApiKeyCreateOrConnectWithoutClientInput = {
+    where: InstitutionApiKeyWhereUniqueInput
+    create: XOR<InstitutionApiKeyCreateWithoutClientInput, InstitutionApiKeyUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionApiKeyCreateManyClientInputEnvelope = {
+    data: InstitutionApiKeyCreateManyClientInput | InstitutionApiKeyCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionEscrowCreateWithoutClientInput = {
+    id?: string
+    escrowId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowUncheckedCreateWithoutClientInput = {
+    id?: string
+    escrowId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowCreateOrConnectWithoutClientInput = {
+    where: InstitutionEscrowWhereUniqueInput
+    create: XOR<InstitutionEscrowCreateWithoutClientInput, InstitutionEscrowUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionEscrowCreateManyClientInputEnvelope = {
+    data: InstitutionEscrowCreateManyClientInput | InstitutionEscrowCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionAuditLogCreateWithoutClientInput = {
+    id?: string
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+    escrow?: InstitutionEscrowCreateNestedOneWithoutAuditLogsInput
+  }
+
+  export type InstitutionAuditLogUncheckedCreateWithoutClientInput = {
+    id?: string
+    escrowId?: string | null
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAuditLogCreateOrConnectWithoutClientInput = {
+    where: InstitutionAuditLogWhereUniqueInput
+    create: XOR<InstitutionAuditLogCreateWithoutClientInput, InstitutionAuditLogUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionAuditLogCreateManyClientInputEnvelope = {
+    data: InstitutionAuditLogCreateManyClientInput | InstitutionAuditLogCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionFileCreateWithoutClientInput = {
+    id?: string
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+    escrow?: InstitutionEscrowCreateNestedOneWithoutFilesInput
+  }
+
+  export type InstitutionFileUncheckedCreateWithoutClientInput = {
+    id?: string
+    escrowId?: string | null
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+  }
+
+  export type InstitutionFileCreateOrConnectWithoutClientInput = {
+    where: InstitutionFileWhereUniqueInput
+    create: XOR<InstitutionFileCreateWithoutClientInput, InstitutionFileUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionFileCreateManyClientInputEnvelope = {
+    data: InstitutionFileCreateManyClientInput | InstitutionFileCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionRefreshTokenUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionRefreshTokenWhereUniqueInput
+    update: XOR<InstitutionRefreshTokenUpdateWithoutClientInput, InstitutionRefreshTokenUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionRefreshTokenUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionRefreshTokenWhereUniqueInput
+    data: XOR<InstitutionRefreshTokenUpdateWithoutClientInput, InstitutionRefreshTokenUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionRefreshTokenUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionRefreshTokenScalarWhereInput
+    data: XOR<InstitutionRefreshTokenUpdateManyMutationInput, InstitutionRefreshTokenUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionRefreshTokenScalarWhereInput = {
+    AND?: InstitutionRefreshTokenScalarWhereInput | InstitutionRefreshTokenScalarWhereInput[]
+    OR?: InstitutionRefreshTokenScalarWhereInput[]
+    NOT?: InstitutionRefreshTokenScalarWhereInput | InstitutionRefreshTokenScalarWhereInput[]
+    id?: StringFilter<"InstitutionRefreshToken"> | string
+    tokenHash?: StringFilter<"InstitutionRefreshToken"> | string
+    clientId?: StringFilter<"InstitutionRefreshToken"> | string
+    expiresAt?: DateTimeFilter<"InstitutionRefreshToken"> | Date | string
+    revokedAt?: DateTimeNullableFilter<"InstitutionRefreshToken"> | Date | string | null
+    deviceInfo?: StringNullableFilter<"InstitutionRefreshToken"> | string | null
+    ipAddress?: StringNullableFilter<"InstitutionRefreshToken"> | string | null
+    createdAt?: DateTimeFilter<"InstitutionRefreshToken"> | Date | string
+  }
+
+  export type InstitutionClientSettingsUpsertWithoutClientInput = {
+    update: XOR<InstitutionClientSettingsUpdateWithoutClientInput, InstitutionClientSettingsUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionClientSettingsCreateWithoutClientInput, InstitutionClientSettingsUncheckedCreateWithoutClientInput>
+    where?: InstitutionClientSettingsWhereInput
+  }
+
+  export type InstitutionClientSettingsUpdateToOneWithWhereWithoutClientInput = {
+    where?: InstitutionClientSettingsWhereInput
+    data: XOR<InstitutionClientSettingsUpdateWithoutClientInput, InstitutionClientSettingsUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionClientSettingsUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    defaultCorridor?: NullableStringFieldUpdateOperationsInput | string | null
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionClientSettingsUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    defaultCorridor?: NullableStringFieldUpdateOperationsInput | string | null
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApiKeyUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionApiKeyWhereUniqueInput
+    update: XOR<InstitutionApiKeyUpdateWithoutClientInput, InstitutionApiKeyUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionApiKeyCreateWithoutClientInput, InstitutionApiKeyUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionApiKeyUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionApiKeyWhereUniqueInput
+    data: XOR<InstitutionApiKeyUpdateWithoutClientInput, InstitutionApiKeyUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionApiKeyUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionApiKeyScalarWhereInput
+    data: XOR<InstitutionApiKeyUpdateManyMutationInput, InstitutionApiKeyUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionApiKeyScalarWhereInput = {
+    AND?: InstitutionApiKeyScalarWhereInput | InstitutionApiKeyScalarWhereInput[]
+    OR?: InstitutionApiKeyScalarWhereInput[]
+    NOT?: InstitutionApiKeyScalarWhereInput | InstitutionApiKeyScalarWhereInput[]
+    id?: StringFilter<"InstitutionApiKey"> | string
+    clientId?: StringFilter<"InstitutionApiKey"> | string
+    keyHash?: StringFilter<"InstitutionApiKey"> | string
+    name?: StringFilter<"InstitutionApiKey"> | string
+    permissions?: StringNullableListFilter<"InstitutionApiKey">
+    active?: BoolFilter<"InstitutionApiKey"> | boolean
+    lastUsedAt?: DateTimeNullableFilter<"InstitutionApiKey"> | Date | string | null
+    expiresAt?: DateTimeNullableFilter<"InstitutionApiKey"> | Date | string | null
+    createdAt?: DateTimeFilter<"InstitutionApiKey"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionApiKey"> | Date | string
+  }
+
+  export type InstitutionEscrowUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionEscrowWhereUniqueInput
+    update: XOR<InstitutionEscrowUpdateWithoutClientInput, InstitutionEscrowUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionEscrowCreateWithoutClientInput, InstitutionEscrowUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionEscrowUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionEscrowWhereUniqueInput
+    data: XOR<InstitutionEscrowUpdateWithoutClientInput, InstitutionEscrowUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionEscrowUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionEscrowScalarWhereInput
+    data: XOR<InstitutionEscrowUpdateManyMutationInput, InstitutionEscrowUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionEscrowScalarWhereInput = {
+    AND?: InstitutionEscrowScalarWhereInput | InstitutionEscrowScalarWhereInput[]
+    OR?: InstitutionEscrowScalarWhereInput[]
+    NOT?: InstitutionEscrowScalarWhereInput | InstitutionEscrowScalarWhereInput[]
+    id?: StringFilter<"InstitutionEscrow"> | string
+    escrowId?: StringFilter<"InstitutionEscrow"> | string
+    clientId?: StringFilter<"InstitutionEscrow"> | string
+    payerWallet?: StringFilter<"InstitutionEscrow"> | string
+    recipientWallet?: StringFilter<"InstitutionEscrow"> | string
+    usdcMint?: StringFilter<"InstitutionEscrow"> | string
+    amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
+    corridor?: StringFilter<"InstitutionEscrow"> | string
+    conditionType?: EnumInstitutionConditionTypeFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
+    riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
+    escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    expiresAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    createdAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    fundedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+  }
+
+  export type InstitutionAuditLogUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionAuditLogWhereUniqueInput
+    update: XOR<InstitutionAuditLogUpdateWithoutClientInput, InstitutionAuditLogUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionAuditLogCreateWithoutClientInput, InstitutionAuditLogUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionAuditLogUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionAuditLogWhereUniqueInput
+    data: XOR<InstitutionAuditLogUpdateWithoutClientInput, InstitutionAuditLogUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionAuditLogUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionAuditLogScalarWhereInput
+    data: XOR<InstitutionAuditLogUpdateManyMutationInput, InstitutionAuditLogUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionAuditLogScalarWhereInput = {
+    AND?: InstitutionAuditLogScalarWhereInput | InstitutionAuditLogScalarWhereInput[]
+    OR?: InstitutionAuditLogScalarWhereInput[]
+    NOT?: InstitutionAuditLogScalarWhereInput | InstitutionAuditLogScalarWhereInput[]
+    id?: StringFilter<"InstitutionAuditLog"> | string
+    escrowId?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    clientId?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    action?: StringFilter<"InstitutionAuditLog"> | string
+    actor?: StringFilter<"InstitutionAuditLog"> | string
+    details?: JsonFilter<"InstitutionAuditLog">
+    ipAddress?: StringNullableFilter<"InstitutionAuditLog"> | string | null
+    createdAt?: DateTimeFilter<"InstitutionAuditLog"> | Date | string
+  }
+
+  export type InstitutionFileUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionFileWhereUniqueInput
+    update: XOR<InstitutionFileUpdateWithoutClientInput, InstitutionFileUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionFileCreateWithoutClientInput, InstitutionFileUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionFileUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionFileWhereUniqueInput
+    data: XOR<InstitutionFileUpdateWithoutClientInput, InstitutionFileUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionFileUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionFileScalarWhereInput
+    data: XOR<InstitutionFileUpdateManyMutationInput, InstitutionFileUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionFileScalarWhereInput = {
+    AND?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
+    OR?: InstitutionFileScalarWhereInput[]
+    NOT?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
+    id?: StringFilter<"InstitutionFile"> | string
+    clientId?: StringFilter<"InstitutionFile"> | string
+    escrowId?: StringNullableFilter<"InstitutionFile"> | string | null
+    fileName?: StringFilter<"InstitutionFile"> | string
+    fileKey?: StringFilter<"InstitutionFile"> | string
+    mimeType?: StringFilter<"InstitutionFile"> | string
+    sizeBytes?: IntFilter<"InstitutionFile"> | number
+    documentType?: EnumDocumentTypeFilter<"InstitutionFile"> | $Enums.DocumentType
+    uploadedAt?: DateTimeFilter<"InstitutionFile"> | Date | string
+  }
+
+  export type InstitutionClientCreateWithoutRefreshTokensInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutRefreshTokensInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutRefreshTokensInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutRefreshTokensInput, InstitutionClientUncheckedCreateWithoutRefreshTokensInput>
+  }
+
+  export type InstitutionClientUpsertWithoutRefreshTokensInput = {
+    update: XOR<InstitutionClientUpdateWithoutRefreshTokensInput, InstitutionClientUncheckedUpdateWithoutRefreshTokensInput>
+    create: XOR<InstitutionClientCreateWithoutRefreshTokensInput, InstitutionClientUncheckedCreateWithoutRefreshTokensInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutRefreshTokensInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutRefreshTokensInput, InstitutionClientUncheckedUpdateWithoutRefreshTokensInput>
+  }
+
+  export type InstitutionClientUpdateWithoutRefreshTokensInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutRefreshTokensInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientCreateWithoutSettingsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutSettingsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutSettingsInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutSettingsInput, InstitutionClientUncheckedCreateWithoutSettingsInput>
+  }
+
+  export type InstitutionClientUpsertWithoutSettingsInput = {
+    update: XOR<InstitutionClientUpdateWithoutSettingsInput, InstitutionClientUncheckedUpdateWithoutSettingsInput>
+    create: XOR<InstitutionClientCreateWithoutSettingsInput, InstitutionClientUncheckedCreateWithoutSettingsInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutSettingsInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutSettingsInput, InstitutionClientUncheckedUpdateWithoutSettingsInput>
+  }
+
+  export type InstitutionClientUpdateWithoutSettingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutSettingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientCreateWithoutApiKeysInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutApiKeysInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutApiKeysInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutApiKeysInput, InstitutionClientUncheckedCreateWithoutApiKeysInput>
+  }
+
+  export type InstitutionClientUpsertWithoutApiKeysInput = {
+    update: XOR<InstitutionClientUpdateWithoutApiKeysInput, InstitutionClientUncheckedUpdateWithoutApiKeysInput>
+    create: XOR<InstitutionClientCreateWithoutApiKeysInput, InstitutionClientUncheckedCreateWithoutApiKeysInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutApiKeysInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutApiKeysInput, InstitutionClientUncheckedUpdateWithoutApiKeysInput>
+  }
+
+  export type InstitutionClientUpdateWithoutApiKeysInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutApiKeysInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientCreateWithoutEscrowsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutEscrowsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutEscrowsInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutEscrowsInput, InstitutionClientUncheckedCreateWithoutEscrowsInput>
+  }
+
+  export type InstitutionDepositCreateWithoutEscrowInput = {
+    id?: string
+    txSignature: string
+    amount: Decimal | DecimalJsLike | number | string
+    confirmedAt?: Date | string | null
+    blockHeight?: bigint | number | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionDepositUncheckedCreateWithoutEscrowInput = {
+    id?: string
+    txSignature: string
+    amount: Decimal | DecimalJsLike | number | string
+    confirmedAt?: Date | string | null
+    blockHeight?: bigint | number | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionDepositCreateOrConnectWithoutEscrowInput = {
+    where: InstitutionDepositWhereUniqueInput
+    create: XOR<InstitutionDepositCreateWithoutEscrowInput, InstitutionDepositUncheckedCreateWithoutEscrowInput>
+  }
+
+  export type InstitutionDepositCreateManyEscrowInputEnvelope = {
+    data: InstitutionDepositCreateManyEscrowInput | InstitutionDepositCreateManyEscrowInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionAuditLogCreateWithoutEscrowInput = {
+    id?: string
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+    client?: InstitutionClientCreateNestedOneWithoutAuditLogsInput
+  }
+
+  export type InstitutionAuditLogUncheckedCreateWithoutEscrowInput = {
+    id?: string
+    clientId?: string | null
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAuditLogCreateOrConnectWithoutEscrowInput = {
+    where: InstitutionAuditLogWhereUniqueInput
+    create: XOR<InstitutionAuditLogCreateWithoutEscrowInput, InstitutionAuditLogUncheckedCreateWithoutEscrowInput>
+  }
+
+  export type InstitutionAuditLogCreateManyEscrowInputEnvelope = {
+    data: InstitutionAuditLogCreateManyEscrowInput | InstitutionAuditLogCreateManyEscrowInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionAiAnalysisCreateWithoutEscrowInput = {
+    id?: string
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model: string
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput = {
+    id?: string
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model: string
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAiAnalysisCreateOrConnectWithoutEscrowInput = {
+    where: InstitutionAiAnalysisWhereUniqueInput
+    create: XOR<InstitutionAiAnalysisCreateWithoutEscrowInput, InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput>
+  }
+
+  export type InstitutionAiAnalysisCreateManyEscrowInputEnvelope = {
+    data: InstitutionAiAnalysisCreateManyEscrowInput | InstitutionAiAnalysisCreateManyEscrowInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionFileCreateWithoutEscrowInput = {
+    id?: string
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutFilesInput
+  }
+
+  export type InstitutionFileUncheckedCreateWithoutEscrowInput = {
+    id?: string
+    clientId: string
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+  }
+
+  export type InstitutionFileCreateOrConnectWithoutEscrowInput = {
+    where: InstitutionFileWhereUniqueInput
+    create: XOR<InstitutionFileCreateWithoutEscrowInput, InstitutionFileUncheckedCreateWithoutEscrowInput>
+  }
+
+  export type InstitutionFileCreateManyEscrowInputEnvelope = {
+    data: InstitutionFileCreateManyEscrowInput | InstitutionFileCreateManyEscrowInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionClientUpsertWithoutEscrowsInput = {
+    update: XOR<InstitutionClientUpdateWithoutEscrowsInput, InstitutionClientUncheckedUpdateWithoutEscrowsInput>
+    create: XOR<InstitutionClientCreateWithoutEscrowsInput, InstitutionClientUncheckedCreateWithoutEscrowsInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutEscrowsInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutEscrowsInput, InstitutionClientUncheckedUpdateWithoutEscrowsInput>
+  }
+
+  export type InstitutionClientUpdateWithoutEscrowsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutEscrowsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionDepositUpsertWithWhereUniqueWithoutEscrowInput = {
+    where: InstitutionDepositWhereUniqueInput
+    update: XOR<InstitutionDepositUpdateWithoutEscrowInput, InstitutionDepositUncheckedUpdateWithoutEscrowInput>
+    create: XOR<InstitutionDepositCreateWithoutEscrowInput, InstitutionDepositUncheckedCreateWithoutEscrowInput>
+  }
+
+  export type InstitutionDepositUpdateWithWhereUniqueWithoutEscrowInput = {
+    where: InstitutionDepositWhereUniqueInput
+    data: XOR<InstitutionDepositUpdateWithoutEscrowInput, InstitutionDepositUncheckedUpdateWithoutEscrowInput>
+  }
+
+  export type InstitutionDepositUpdateManyWithWhereWithoutEscrowInput = {
+    where: InstitutionDepositScalarWhereInput
+    data: XOR<InstitutionDepositUpdateManyMutationInput, InstitutionDepositUncheckedUpdateManyWithoutEscrowInput>
+  }
+
+  export type InstitutionDepositScalarWhereInput = {
+    AND?: InstitutionDepositScalarWhereInput | InstitutionDepositScalarWhereInput[]
+    OR?: InstitutionDepositScalarWhereInput[]
+    NOT?: InstitutionDepositScalarWhereInput | InstitutionDepositScalarWhereInput[]
+    id?: StringFilter<"InstitutionDeposit"> | string
+    escrowId?: StringFilter<"InstitutionDeposit"> | string
+    txSignature?: StringFilter<"InstitutionDeposit"> | string
+    amount?: DecimalFilter<"InstitutionDeposit"> | Decimal | DecimalJsLike | number | string
+    confirmedAt?: DateTimeNullableFilter<"InstitutionDeposit"> | Date | string | null
+    blockHeight?: BigIntNullableFilter<"InstitutionDeposit"> | bigint | number | null
+    createdAt?: DateTimeFilter<"InstitutionDeposit"> | Date | string
+  }
+
+  export type InstitutionAuditLogUpsertWithWhereUniqueWithoutEscrowInput = {
+    where: InstitutionAuditLogWhereUniqueInput
+    update: XOR<InstitutionAuditLogUpdateWithoutEscrowInput, InstitutionAuditLogUncheckedUpdateWithoutEscrowInput>
+    create: XOR<InstitutionAuditLogCreateWithoutEscrowInput, InstitutionAuditLogUncheckedCreateWithoutEscrowInput>
+  }
+
+  export type InstitutionAuditLogUpdateWithWhereUniqueWithoutEscrowInput = {
+    where: InstitutionAuditLogWhereUniqueInput
+    data: XOR<InstitutionAuditLogUpdateWithoutEscrowInput, InstitutionAuditLogUncheckedUpdateWithoutEscrowInput>
+  }
+
+  export type InstitutionAuditLogUpdateManyWithWhereWithoutEscrowInput = {
+    where: InstitutionAuditLogScalarWhereInput
+    data: XOR<InstitutionAuditLogUpdateManyMutationInput, InstitutionAuditLogUncheckedUpdateManyWithoutEscrowInput>
+  }
+
+  export type InstitutionAiAnalysisUpsertWithWhereUniqueWithoutEscrowInput = {
+    where: InstitutionAiAnalysisWhereUniqueInput
+    update: XOR<InstitutionAiAnalysisUpdateWithoutEscrowInput, InstitutionAiAnalysisUncheckedUpdateWithoutEscrowInput>
+    create: XOR<InstitutionAiAnalysisCreateWithoutEscrowInput, InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput>
+  }
+
+  export type InstitutionAiAnalysisUpdateWithWhereUniqueWithoutEscrowInput = {
+    where: InstitutionAiAnalysisWhereUniqueInput
+    data: XOR<InstitutionAiAnalysisUpdateWithoutEscrowInput, InstitutionAiAnalysisUncheckedUpdateWithoutEscrowInput>
+  }
+
+  export type InstitutionAiAnalysisUpdateManyWithWhereWithoutEscrowInput = {
+    where: InstitutionAiAnalysisScalarWhereInput
+    data: XOR<InstitutionAiAnalysisUpdateManyMutationInput, InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowInput>
+  }
+
+  export type InstitutionAiAnalysisScalarWhereInput = {
+    AND?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
+    OR?: InstitutionAiAnalysisScalarWhereInput[]
+    NOT?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
+    id?: StringFilter<"InstitutionAiAnalysis"> | string
+    escrowId?: StringFilter<"InstitutionAiAnalysis"> | string
+    fileId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    documentHash?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    riskScore?: IntFilter<"InstitutionAiAnalysis"> | number
+    factors?: JsonFilter<"InstitutionAiAnalysis">
+    recommendation?: StringFilter<"InstitutionAiAnalysis"> | string
+    extractedFields?: JsonFilter<"InstitutionAiAnalysis">
+    model?: StringFilter<"InstitutionAiAnalysis"> | string
+    createdAt?: DateTimeFilter<"InstitutionAiAnalysis"> | Date | string
+  }
+
+  export type InstitutionFileUpsertWithWhereUniqueWithoutEscrowInput = {
+    where: InstitutionFileWhereUniqueInput
+    update: XOR<InstitutionFileUpdateWithoutEscrowInput, InstitutionFileUncheckedUpdateWithoutEscrowInput>
+    create: XOR<InstitutionFileCreateWithoutEscrowInput, InstitutionFileUncheckedCreateWithoutEscrowInput>
+  }
+
+  export type InstitutionFileUpdateWithWhereUniqueWithoutEscrowInput = {
+    where: InstitutionFileWhereUniqueInput
+    data: XOR<InstitutionFileUpdateWithoutEscrowInput, InstitutionFileUncheckedUpdateWithoutEscrowInput>
+  }
+
+  export type InstitutionFileUpdateManyWithWhereWithoutEscrowInput = {
+    where: InstitutionFileScalarWhereInput
+    data: XOR<InstitutionFileUpdateManyMutationInput, InstitutionFileUncheckedUpdateManyWithoutEscrowInput>
+  }
+
+  export type InstitutionEscrowCreateWithoutDepositsInput = {
+    id?: string
+    escrowId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    client: InstitutionClientCreateNestedOneWithoutEscrowsInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowUncheckedCreateWithoutDepositsInput = {
+    id?: string
+    escrowId: string
+    clientId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowCreateOrConnectWithoutDepositsInput = {
+    where: InstitutionEscrowWhereUniqueInput
+    create: XOR<InstitutionEscrowCreateWithoutDepositsInput, InstitutionEscrowUncheckedCreateWithoutDepositsInput>
+  }
+
+  export type InstitutionEscrowUpsertWithoutDepositsInput = {
+    update: XOR<InstitutionEscrowUpdateWithoutDepositsInput, InstitutionEscrowUncheckedUpdateWithoutDepositsInput>
+    create: XOR<InstitutionEscrowCreateWithoutDepositsInput, InstitutionEscrowUncheckedCreateWithoutDepositsInput>
+    where?: InstitutionEscrowWhereInput
+  }
+
+  export type InstitutionEscrowUpdateToOneWithWhereWithoutDepositsInput = {
+    where?: InstitutionEscrowWhereInput
+    data: XOR<InstitutionEscrowUpdateWithoutDepositsInput, InstitutionEscrowUncheckedUpdateWithoutDepositsInput>
+  }
+
+  export type InstitutionEscrowUpdateWithoutDepositsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowUncheckedUpdateWithoutDepositsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowCreateWithoutAuditLogsInput = {
+    id?: string
+    escrowId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    client: InstitutionClientCreateNestedOneWithoutEscrowsInput
+    deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowUncheckedCreateWithoutAuditLogsInput = {
+    id?: string
+    escrowId: string
+    clientId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowCreateOrConnectWithoutAuditLogsInput = {
+    where: InstitutionEscrowWhereUniqueInput
+    create: XOR<InstitutionEscrowCreateWithoutAuditLogsInput, InstitutionEscrowUncheckedCreateWithoutAuditLogsInput>
+  }
+
+  export type InstitutionClientCreateWithoutAuditLogsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutAuditLogsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutAuditLogsInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutAuditLogsInput, InstitutionClientUncheckedCreateWithoutAuditLogsInput>
+  }
+
+  export type InstitutionEscrowUpsertWithoutAuditLogsInput = {
+    update: XOR<InstitutionEscrowUpdateWithoutAuditLogsInput, InstitutionEscrowUncheckedUpdateWithoutAuditLogsInput>
+    create: XOR<InstitutionEscrowCreateWithoutAuditLogsInput, InstitutionEscrowUncheckedCreateWithoutAuditLogsInput>
+    where?: InstitutionEscrowWhereInput
+  }
+
+  export type InstitutionEscrowUpdateToOneWithWhereWithoutAuditLogsInput = {
+    where?: InstitutionEscrowWhereInput
+    data: XOR<InstitutionEscrowUpdateWithoutAuditLogsInput, InstitutionEscrowUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type InstitutionEscrowUpdateWithoutAuditLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
+    deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowUncheckedUpdateWithoutAuditLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionClientUpsertWithoutAuditLogsInput = {
+    update: XOR<InstitutionClientUpdateWithoutAuditLogsInput, InstitutionClientUncheckedUpdateWithoutAuditLogsInput>
+    create: XOR<InstitutionClientCreateWithoutAuditLogsInput, InstitutionClientUncheckedCreateWithoutAuditLogsInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutAuditLogsInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutAuditLogsInput, InstitutionClientUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type InstitutionClientUpdateWithoutAuditLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutAuditLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionEscrowCreateWithoutAiAnalysesInput = {
+    id?: string
+    escrowId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    client: InstitutionClientCreateNestedOneWithoutEscrowsInput
+    deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput = {
+    id?: string
+    escrowId: string
+    clientId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowCreateOrConnectWithoutAiAnalysesInput = {
+    where: InstitutionEscrowWhereUniqueInput
+    create: XOR<InstitutionEscrowCreateWithoutAiAnalysesInput, InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput>
+  }
+
+  export type InstitutionEscrowUpsertWithoutAiAnalysesInput = {
+    update: XOR<InstitutionEscrowUpdateWithoutAiAnalysesInput, InstitutionEscrowUncheckedUpdateWithoutAiAnalysesInput>
+    create: XOR<InstitutionEscrowCreateWithoutAiAnalysesInput, InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput>
+    where?: InstitutionEscrowWhereInput
+  }
+
+  export type InstitutionEscrowUpdateToOneWithWhereWithoutAiAnalysesInput = {
+    where?: InstitutionEscrowWhereInput
+    data: XOR<InstitutionEscrowUpdateWithoutAiAnalysesInput, InstitutionEscrowUncheckedUpdateWithoutAiAnalysesInput>
+  }
+
+  export type InstitutionEscrowUpdateWithoutAiAnalysesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
+    deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowUncheckedUpdateWithoutAiAnalysesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionClientCreateWithoutFilesInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutFilesInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutFilesInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutFilesInput, InstitutionClientUncheckedCreateWithoutFilesInput>
+  }
+
+  export type InstitutionEscrowCreateWithoutFilesInput = {
+    id?: string
+    escrowId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    client: InstitutionClientCreateNestedOneWithoutEscrowsInput
+    deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowUncheckedCreateWithoutFilesInput = {
+    id?: string
+    escrowId: string
+    clientId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+    deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
+  }
+
+  export type InstitutionEscrowCreateOrConnectWithoutFilesInput = {
+    where: InstitutionEscrowWhereUniqueInput
+    create: XOR<InstitutionEscrowCreateWithoutFilesInput, InstitutionEscrowUncheckedCreateWithoutFilesInput>
+  }
+
+  export type InstitutionClientUpsertWithoutFilesInput = {
+    update: XOR<InstitutionClientUpdateWithoutFilesInput, InstitutionClientUncheckedUpdateWithoutFilesInput>
+    create: XOR<InstitutionClientCreateWithoutFilesInput, InstitutionClientUncheckedCreateWithoutFilesInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutFilesInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutFilesInput, InstitutionClientUncheckedUpdateWithoutFilesInput>
+  }
+
+  export type InstitutionClientUpdateWithoutFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionEscrowUpsertWithoutFilesInput = {
+    update: XOR<InstitutionEscrowUpdateWithoutFilesInput, InstitutionEscrowUncheckedUpdateWithoutFilesInput>
+    create: XOR<InstitutionEscrowCreateWithoutFilesInput, InstitutionEscrowUncheckedCreateWithoutFilesInput>
+    where?: InstitutionEscrowWhereInput
+  }
+
+  export type InstitutionEscrowUpdateToOneWithWhereWithoutFilesInput = {
+    where?: InstitutionEscrowWhereInput
+    data: XOR<InstitutionEscrowUpdateWithoutFilesInput, InstitutionEscrowUncheckedUpdateWithoutFilesInput>
+  }
+
+  export type InstitutionEscrowUpdateWithoutFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
+    deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowUncheckedUpdateWithoutFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
+  }
+
   export type DepositCreateManyAgreementInput = {
     id?: string
     type: $Enums.DepositType
@@ -33657,6 +52017,454 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type InstitutionRefreshTokenCreateManyClientInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    deviceInfo?: string | null
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionApiKeyCreateManyClientInput = {
+    id?: string
+    keyHash: string
+    name: string
+    permissions?: InstitutionApiKeyCreatepermissionsInput | string[]
+    active?: boolean
+    lastUsedAt?: Date | string | null
+    expiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionEscrowCreateManyClientInput = {
+    id?: string
+    escrowId: string
+    payerWallet: string
+    recipientWallet: string
+    usdcMint: string
+    amount: Decimal | DecimalJsLike | number | string
+    platformFee: Decimal | DecimalJsLike | number | string
+    corridor: string
+    conditionType: $Enums.InstitutionConditionType
+    status?: $Enums.InstitutionEscrowStatus
+    settlementAuthority: string
+    riskScore?: number | null
+    escrowPda?: string | null
+    vaultPda?: string | null
+    depositTxSignature?: string | null
+    releaseTxSignature?: string | null
+    cancelTxSignature?: string | null
+    expiresAt: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    resolvedAt?: Date | string | null
+    fundedAt?: Date | string | null
+  }
+
+  export type InstitutionAuditLogCreateManyClientInput = {
+    id?: string
+    escrowId?: string | null
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionFileCreateManyClientInput = {
+    id?: string
+    escrowId?: string | null
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+  }
+
+  export type InstitutionRefreshTokenUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deviceInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionRefreshTokenUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deviceInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionRefreshTokenUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deviceInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApiKeyUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    permissions?: InstitutionApiKeyUpdatepermissionsInput | string[]
+    active?: BoolFieldUpdateOperationsInput | boolean
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApiKeyUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    permissions?: InstitutionApiKeyUpdatepermissionsInput | string[]
+    active?: BoolFieldUpdateOperationsInput | boolean
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApiKeyUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    permissions?: InstitutionApiKeyUpdatepermissionsInput | string[]
+    active?: BoolFieldUpdateOperationsInput | boolean
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionEscrowUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
+  }
+
+  export type InstitutionEscrowUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
+    payerWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    usdcMint?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
+    settlementAuthority?: StringFieldUpdateOperationsInput | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
+    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type InstitutionAuditLogUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrow?: InstitutionEscrowUpdateOneWithoutAuditLogsNestedInput
+  }
+
+  export type InstitutionAuditLogUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAuditLogUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionFileUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrow?: InstitutionEscrowUpdateOneWithoutFilesNestedInput
+  }
+
+  export type InstitutionFileUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionFileUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionDepositCreateManyEscrowInput = {
+    id?: string
+    txSignature: string
+    amount: Decimal | DecimalJsLike | number | string
+    confirmedAt?: Date | string | null
+    blockHeight?: bigint | number | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAuditLogCreateManyEscrowInput = {
+    id?: string
+    clientId?: string | null
+    action: string
+    actor: string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: string | null
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAiAnalysisCreateManyEscrowInput = {
+    id?: string
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model: string
+    createdAt?: Date | string
+  }
+
+  export type InstitutionFileCreateManyEscrowInput = {
+    id?: string
+    clientId: string
+    fileName: string
+    fileKey: string
+    mimeType: string
+    sizeBytes: number
+    documentType: $Enums.DocumentType
+    uploadedAt?: Date | string
+  }
+
+  export type InstitutionDepositUpdateWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    txSignature?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionDepositUncheckedUpdateWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    txSignature?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionDepositUncheckedUpdateManyWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    txSignature?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAuditLogUpdateWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneWithoutAuditLogsNestedInput
+  }
+
+  export type InstitutionAuditLogUncheckedUpdateWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAuditLogUncheckedUpdateManyWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    action?: StringFieldUpdateOperationsInput | string
+    actor?: StringFieldUpdateOperationsInput | string
+    details?: JsonNullValueInput | InputJsonValue
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAiAnalysisUpdateWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAiAnalysisUncheckedUpdateWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionFileUpdateWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutFilesNestedInput
+  }
+
+  export type InstitutionFileUncheckedUpdateWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionFileUncheckedUpdateManyWithoutEscrowInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    fileKey?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

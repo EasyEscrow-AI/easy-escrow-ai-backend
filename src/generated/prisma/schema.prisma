@@ -674,3 +674,311 @@ model TwoPhaseSwap {
   @@index([status, expiresAt], name: "idx_two_phase_status_expiry")
   @@map("two_phase_swaps")
 }
+
+// ============================================
+// INSTITUTION ESCROW SYSTEM
+// Cross-border stablecoin (USDC) payments
+// ============================================
+
+// Enums for institution escrow
+enum InstitutionEscrowStatus {
+  CREATED
+  FUNDED
+  COMPLIANCE_HOLD
+  RELEASING
+  RELEASED
+  CANCELLING
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
+enum InstitutionConditionType {
+  ADMIN_RELEASE
+  TIME_LOCK
+  COMPLIANCE_CHECK
+}
+
+enum ClientTier {
+  STANDARD
+  PREMIUM
+  ENTERPRISE
+}
+
+enum ClientStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum DocumentType {
+  INVOICE
+  CONTRACT
+  SHIPPING_DOC
+  LETTER_OF_CREDIT
+  OTHER
+}
+
+enum CorridorStatus {
+  ACTIVE
+  SUSPENDED
+  DEPRECATED
+}
+
+// ============================================
+// CLIENT & AUTH MODELS
+// ============================================
+
+// Institution client account (email + password auth)
+model InstitutionClient {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  passwordHash   String       @map("password_hash")
+  companyName    String       @map("company_name")
+  tier           ClientTier   @default(STANDARD)
+  status         ClientStatus @default(PENDING_VERIFICATION)
+  kycStatus      String       @default("PENDING") @map("kyc_status")
+  jurisdiction   String?
+  primaryWallet  String?      @map("primary_wallet")
+  settledWallets String[]     @default([]) @map("settled_wallets")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  lastLoginAt    DateTime?    @map("last_login_at")
+
+  // Relations
+  refreshTokens InstitutionRefreshToken[]
+  settings      InstitutionClientSettings?
+  apiKeys       InstitutionApiKey[]
+  escrows       InstitutionEscrow[]
+  auditLogs     InstitutionAuditLog[]
+  files         InstitutionFile[]
+
+  @@index([email])
+  @@index([status])
+  @@index([tier])
+  @@index([primaryWallet])
+  @@index([createdAt])
+  @@map("institution_clients")
+}
+
+// Refresh token storage (hashed)
+model InstitutionRefreshToken {
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique @map("token_hash")
+  clientId   String    @map("client_id")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  deviceInfo String?   @map("device_info")
+  ipAddress  String?   @map("ip_address")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([expiresAt])
+  @@index([tokenHash])
+  @@map("institution_refresh_tokens")
+}
+
+// Per-client settings
+model InstitutionClientSettings {
+  id                        String   @id @default(uuid())
+  clientId                  String   @unique @map("client_id")
+  defaultCorridor           String?  @map("default_corridor")
+  defaultCurrency           String   @default("USDC") @map("default_currency")
+  notificationEmail         String?  @map("notification_email")
+  webhookUrl                String?  @map("webhook_url")
+  webhookSecret             String?  @map("webhook_secret")
+  settlementAuthorityWallet String?  @map("settlement_authority_wallet")
+  timezone                  String   @default("UTC")
+  autoApproveThreshold      Decimal? @map("auto_approve_threshold") @db.Decimal(20, 6)
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("institution_client_settings")
+}
+
+// API key management
+model InstitutionApiKey {
+  id          String    @id @default(uuid())
+  clientId    String    @map("client_id")
+  keyHash     String    @unique @map("key_hash")
+  name        String
+  permissions String[]  @default([])
+  active      Boolean   @default(true)
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([keyHash])
+  @@index([active])
+  @@map("institution_api_keys")
+}
+
+// ============================================
+// ESCROW MODELS
+// ============================================
+
+// Core institution escrow record
+model InstitutionEscrow {
+  id                  String                   @id @default(uuid())
+  escrowId            String                   @unique @map("escrow_id") // UUID for on-chain PDA derivation
+  clientId            String                   @map("client_id")
+  payerWallet         String                   @map("payer_wallet")
+  recipientWallet     String                   @map("recipient_wallet")
+  usdcMint            String                   @map("usdc_mint")
+  amount              Decimal                  @db.Decimal(20, 6) // USDC amount (6 decimal precision)
+  platformFee         Decimal                  @map("platform_fee") @db.Decimal(20, 6)
+  corridor            String // e.g. 'SG-CH'
+  conditionType       InstitutionConditionType @map("condition_type")
+  status              InstitutionEscrowStatus  @default(CREATED)
+  settlementAuthority String                   @map("settlement_authority")
+  riskScore           Int?                     @map("risk_score")
+
+  // On-chain references
+  escrowPda          String? @map("escrow_pda")
+  vaultPda           String? @map("vault_pda")
+  depositTxSignature String? @map("deposit_tx_signature")
+  releaseTxSignature String? @map("release_tx_signature")
+  cancelTxSignature  String? @map("cancel_tx_signature")
+
+  // Timestamps
+  expiresAt  DateTime  @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  resolvedAt DateTime? @map("resolved_at")
+  fundedAt   DateTime? @map("funded_at")
+
+  // Relations
+  client     InstitutionClient       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  deposits   InstitutionDeposit[]
+  auditLogs  InstitutionAuditLog[]
+  aiAnalyses InstitutionAiAnalysis[]
+  files      InstitutionFile[]
+
+  @@index([clientId])
+  @@index([escrowId])
+  @@index([status])
+  @@index([corridor])
+  @@index([payerWallet])
+  @@index([recipientWallet])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@index([status, expiresAt], name: "idx_inst_escrow_status_expiry")
+  @@index([clientId, status], name: "idx_inst_escrow_client_status")
+  @@map("institution_escrows")
+}
+
+// Deposit tracking
+model InstitutionDeposit {
+  id          String    @id @default(uuid())
+  escrowId    String    @map("escrow_id")
+  txSignature String    @map("tx_signature")
+  amount      Decimal   @db.Decimal(20, 6)
+  confirmedAt DateTime? @map("confirmed_at")
+  blockHeight BigInt?   @map("block_height")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  escrow InstitutionEscrow @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+
+  @@index([escrowId])
+  @@index([txSignature])
+  @@map("institution_deposits")
+}
+
+// Audit trail
+model InstitutionAuditLog {
+  id        String   @id @default(uuid())
+  escrowId  String?  @map("escrow_id")
+  clientId  String?  @map("client_id")
+  action    String // e.g. 'ESCROW_CREATED', 'DEPOSIT_CONFIRMED', 'FUNDS_RELEASED'
+  actor     String // wallet or system identifier
+  details   Json     @default("{}")
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  escrow InstitutionEscrow? @relation(fields: [escrowId], references: [escrowId], onDelete: SetNull)
+  client InstitutionClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@index([escrowId])
+  @@index([clientId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("institution_audit_logs")
+}
+
+// AI analysis results
+model InstitutionAiAnalysis {
+  id              String   @id @default(uuid())
+  escrowId        String   @map("escrow_id")
+  fileId          String?  @map("file_id")
+  documentHash    String?  @map("document_hash")
+  riskScore       Int      @map("risk_score") // 0-100
+  factors         Json     @default("[]") // Array of {name, weight, value}
+  recommendation  String // APPROVE, REVIEW, REJECT
+  extractedFields Json     @default("{}") @map("extracted_fields")
+  model           String // AI model used
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  escrow InstitutionEscrow @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+
+  @@index([escrowId])
+  @@index([riskScore])
+  @@index([recommendation])
+  @@index([createdAt])
+  @@map("institution_ai_analyses")
+}
+
+// Corridor configuration
+model InstitutionCorridor {
+  id                String         @id @default(uuid())
+  sourceCountry     String         @map("source_country")
+  destCountry       String         @map("dest_country")
+  code              String         @unique // e.g. 'SG-CH'
+  minAmount         Decimal        @map("min_amount") @db.Decimal(20, 6)
+  maxAmount         Decimal        @map("max_amount") @db.Decimal(20, 6)
+  dailyLimit        Decimal        @map("daily_limit") @db.Decimal(20, 6)
+  monthlyLimit      Decimal        @map("monthly_limit") @db.Decimal(20, 6)
+  requiredDocuments String[]       @default([]) @map("required_documents")
+  riskLevel         String         @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
+  status            CorridorStatus @default(ACTIVE)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  @@index([code])
+  @@index([status])
+  @@index([sourceCountry, destCountry], name: "idx_corridor_countries")
+  @@map("institution_corridors")
+}
+
+// ============================================
+// FILE MODEL
+// ============================================
+
+// File uploads to DO Spaces
+model InstitutionFile {
+  id           String       @id @default(uuid())
+  clientId     String       @map("client_id")
+  escrowId     String?      @map("escrow_id")
+  fileName     String       @map("file_name")
+  fileKey      String       @map("file_key") // DO Spaces object key
+  mimeType     String       @map("mime_type")
+  sizeBytes    Int          @map("size_bytes")
+  documentType DocumentType @map("document_type")
+  uploadedAt   DateTime     @default(now()) @map("uploaded_at")
+
+  client InstitutionClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  escrow InstitutionEscrow? @relation(fields: [escrowId], references: [escrowId], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([escrowId])
+  @@index([documentType])
+  @@index([uploadedAt])
+  @@map("institution_files")
+}

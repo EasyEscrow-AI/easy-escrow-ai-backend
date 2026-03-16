@@ -408,6 +408,149 @@ exports.Prisma.TwoPhaseSwapScalarFieldEnum = {
   stateHistory: 'stateHistory'
 };
 
+exports.Prisma.InstitutionClientScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  companyName: 'companyName',
+  tier: 'tier',
+  status: 'status',
+  kycStatus: 'kycStatus',
+  jurisdiction: 'jurisdiction',
+  primaryWallet: 'primaryWallet',
+  settledWallets: 'settledWallets',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastLoginAt: 'lastLoginAt'
+};
+
+exports.Prisma.InstitutionRefreshTokenScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  clientId: 'clientId',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  deviceInfo: 'deviceInfo',
+  ipAddress: 'ipAddress',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InstitutionClientSettingsScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  defaultCorridor: 'defaultCorridor',
+  defaultCurrency: 'defaultCurrency',
+  notificationEmail: 'notificationEmail',
+  webhookUrl: 'webhookUrl',
+  webhookSecret: 'webhookSecret',
+  settlementAuthorityWallet: 'settlementAuthorityWallet',
+  timezone: 'timezone',
+  autoApproveThreshold: 'autoApproveThreshold',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InstitutionApiKeyScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  keyHash: 'keyHash',
+  name: 'name',
+  permissions: 'permissions',
+  active: 'active',
+  lastUsedAt: 'lastUsedAt',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InstitutionEscrowScalarFieldEnum = {
+  id: 'id',
+  escrowId: 'escrowId',
+  clientId: 'clientId',
+  payerWallet: 'payerWallet',
+  recipientWallet: 'recipientWallet',
+  usdcMint: 'usdcMint',
+  amount: 'amount',
+  platformFee: 'platformFee',
+  corridor: 'corridor',
+  conditionType: 'conditionType',
+  status: 'status',
+  settlementAuthority: 'settlementAuthority',
+  riskScore: 'riskScore',
+  escrowPda: 'escrowPda',
+  vaultPda: 'vaultPda',
+  depositTxSignature: 'depositTxSignature',
+  releaseTxSignature: 'releaseTxSignature',
+  cancelTxSignature: 'cancelTxSignature',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  resolvedAt: 'resolvedAt',
+  fundedAt: 'fundedAt'
+};
+
+exports.Prisma.InstitutionDepositScalarFieldEnum = {
+  id: 'id',
+  escrowId: 'escrowId',
+  txSignature: 'txSignature',
+  amount: 'amount',
+  confirmedAt: 'confirmedAt',
+  blockHeight: 'blockHeight',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InstitutionAuditLogScalarFieldEnum = {
+  id: 'id',
+  escrowId: 'escrowId',
+  clientId: 'clientId',
+  action: 'action',
+  actor: 'actor',
+  details: 'details',
+  ipAddress: 'ipAddress',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InstitutionAiAnalysisScalarFieldEnum = {
+  id: 'id',
+  escrowId: 'escrowId',
+  fileId: 'fileId',
+  documentHash: 'documentHash',
+  riskScore: 'riskScore',
+  factors: 'factors',
+  recommendation: 'recommendation',
+  extractedFields: 'extractedFields',
+  model: 'model',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InstitutionCorridorScalarFieldEnum = {
+  id: 'id',
+  sourceCountry: 'sourceCountry',
+  destCountry: 'destCountry',
+  code: 'code',
+  minAmount: 'minAmount',
+  maxAmount: 'maxAmount',
+  dailyLimit: 'dailyLimit',
+  monthlyLimit: 'monthlyLimit',
+  requiredDocuments: 'requiredDocuments',
+  riskLevel: 'riskLevel',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InstitutionFileScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  escrowId: 'escrowId',
+  fileName: 'fileName',
+  fileKey: 'fileKey',
+  mimeType: 'mimeType',
+  sizeBytes: 'sizeBytes',
+  documentType: 'documentType',
+  uploadedAt: 'uploadedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -543,6 +686,50 @@ exports.TwoPhaseSwapStatus = exports.$Enums.TwoPhaseSwapStatus = {
   EXPIRED: 'EXPIRED'
 };
 
+exports.ClientTier = exports.$Enums.ClientTier = {
+  STANDARD: 'STANDARD',
+  PREMIUM: 'PREMIUM',
+  ENTERPRISE: 'ENTERPRISE'
+};
+
+exports.ClientStatus = exports.$Enums.ClientStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION'
+};
+
+exports.InstitutionConditionType = exports.$Enums.InstitutionConditionType = {
+  ADMIN_RELEASE: 'ADMIN_RELEASE',
+  TIME_LOCK: 'TIME_LOCK',
+  COMPLIANCE_CHECK: 'COMPLIANCE_CHECK'
+};
+
+exports.InstitutionEscrowStatus = exports.$Enums.InstitutionEscrowStatus = {
+  CREATED: 'CREATED',
+  FUNDED: 'FUNDED',
+  COMPLIANCE_HOLD: 'COMPLIANCE_HOLD',
+  RELEASING: 'RELEASING',
+  RELEASED: 'RELEASED',
+  CANCELLING: 'CANCELLING',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED',
+  FAILED: 'FAILED'
+};
+
+exports.CorridorStatus = exports.$Enums.CorridorStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  DEPRECATED: 'DEPRECATED'
+};
+
+exports.DocumentType = exports.$Enums.DocumentType = {
+  INVOICE: 'INVOICE',
+  CONTRACT: 'CONTRACT',
+  SHIPPING_DOC: 'SHIPPING_DOC',
+  LETTER_OF_CREDIT: 'LETTER_OF_CREDIT',
+  OTHER: 'OTHER'
+};
+
 exports.Prisma.ModelName = {
   Agreement: 'Agreement',
   Deposit: 'Deposit',
@@ -558,7 +745,17 @@ exports.Prisma.ModelName = {
   AuthorizedApp: 'AuthorizedApp',
   ZeroFeeSwapLog: 'ZeroFeeSwapLog',
   CnftOffer: 'CnftOffer',
-  TwoPhaseSwap: 'TwoPhaseSwap'
+  TwoPhaseSwap: 'TwoPhaseSwap',
+  InstitutionClient: 'InstitutionClient',
+  InstitutionRefreshToken: 'InstitutionRefreshToken',
+  InstitutionClientSettings: 'InstitutionClientSettings',
+  InstitutionApiKey: 'InstitutionApiKey',
+  InstitutionEscrow: 'InstitutionEscrow',
+  InstitutionDeposit: 'InstitutionDeposit',
+  InstitutionAuditLog: 'InstitutionAuditLog',
+  InstitutionAiAnalysis: 'InstitutionAiAnalysis',
+  InstitutionCorridor: 'InstitutionCorridor',
+  InstitutionFile: 'InstitutionFile'
 };
 
 /**

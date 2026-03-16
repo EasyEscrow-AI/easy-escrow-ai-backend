@@ -9,6 +9,7 @@ import { config } from './index';
 import { validateProgramConfig } from './constants';
 import { getFeeConfig, getCNFTIndexerConfig, getSwapOfferConfig } from './atomicSwap.config';
 import { getNoncePoolConfig } from './noncePool.config';
+import { loadInstitutionEscrowConfig, type InstitutionEscrowConfig } from './institution-escrow.config';
 
 export class ConfigurationError extends Error {
   constructor(message: string) {
@@ -118,6 +119,97 @@ export function validateAtomicSwapConfig(): void {
 }
 
 /**
+ * Validates institution escrow configuration.
+ * Only runs when INSTITUTION_ESCROW_ENABLED=true.
+ * @throws {ConfigurationError} if required config is missing or invalid
+ */
+export function validateInstitutionEscrowConfig(cfg?: InstitutionEscrowConfig): void {
+  const escrowConfig = cfg || loadInstitutionEscrowConfig();
+
+  if (!escrowConfig.enabled) {
+    return; // Skip validation when feature is disabled
+  }
+
+  console.log('\n🔍 Validating institution escrow configuration...');
+
+  // USDC mint address must be set and look like a valid Solana address (base58, 32-44 chars)
+  if (!escrowConfig.usdcMintAddress || escrowConfig.usdcMintAddress.length < 32 || escrowConfig.usdcMintAddress.length > 44) {
+    throw new ConfigurationError(
+      'USDC_MINT_ADDRESS is required when INSTITUTION_ESCROW_ENABLED=true.\n' +
+      'Must be a valid Solana public key (base58 encoded, 32-44 characters).'
+    );
+  }
+
+  // JWT secret must be at least 32 characters
+  const jwtSecret = process.env.JWT_SECRET || '';
+  if (jwtSecret.length < 32) {
+    throw new ConfigurationError(
+      'JWT_SECRET must be at least 32 characters when INSTITUTION_ESCROW_ENABLED=true.\n' +
+      `Current length: ${jwtSecret.length}`
+    );
+  }
+
+  // Min/max USDC validation
+  if (escrowConfig.minUsdc <= 0) {
+    throw new ConfigurationError('INSTITUTION_ESCROW_MIN_USDC must be greater than 0.');
+  }
+
+  if (escrowConfig.maxUsdc <= 0) {
+    throw new ConfigurationError('INSTITUTION_ESCROW_MAX_USDC must be greater than 0.');
+  }
+
+  if (escrowConfig.minUsdc >= escrowConfig.maxUsdc) {
+    throw new ConfigurationError(
+      `INSTITUTION_ESCROW_MIN_USDC (${escrowConfig.minUsdc}) must be less than ` +
+      `INSTITUTION_ESCROW_MAX_USDC (${escrowConfig.maxUsdc}).`
+    );
+  }
+
+  if (escrowConfig.maxUsdc > 10_000_000) {
+    throw new ConfigurationError(
+      `INSTITUTION_ESCROW_MAX_USDC (${escrowConfig.maxUsdc}) exceeds safety limit of 10,000,000 USDC.`
+    );
+  }
+
+  // Default expiry hours
+  if (escrowConfig.defaultExpiryHours < 1 || escrowConfig.defaultExpiryHours > 720) {
+    throw new ConfigurationError(
+      `INSTITUTION_ESCROW_DEFAULT_EXPIRY_HOURS (${escrowConfig.defaultExpiryHours}) ` +
+      'must be between 1 and 720 hours (30 days).'
+    );
+  }
+
+  // AI: if Anthropic API key is set, validate it looks reasonable
+  if (escrowConfig.ai.apiKey && escrowConfig.ai.apiKey.length < 10) {
+    throw new ConfigurationError('ANTHROPIC_API_KEY appears invalid (too short).');
+  }
+
+  // DO Spaces: validate all-or-nothing (if any field is set, all must be set)
+  const spacesFields = [
+    escrowConfig.doSpaces.key,
+    escrowConfig.doSpaces.secret,
+    escrowConfig.doSpaces.endpoint,
+    escrowConfig.doSpaces.bucket,
+    escrowConfig.doSpaces.region,
+  ];
+  const spacesSet = spacesFields.filter((f) => f.length > 0);
+  if (spacesSet.length > 0 && spacesSet.length < spacesFields.length) {
+    throw new ConfigurationError(
+      'DO Spaces configuration is incomplete. When any DO_SPACES_* variable is set, ' +
+      'all must be provided: DO_SPACES_KEY, DO_SPACES_SECRET, DO_SPACES_ENDPOINT, ' +
+      'DO_SPACES_BUCKET, DO_SPACES_REGION.'
+    );
+  }
+
+  console.log('✅ Institution escrow configuration valid');
+  console.log(`   USDC Mint: ${escrowConfig.usdcMintAddress}`);
+  console.log(`   Limits: $${escrowConfig.minUsdc} - $${escrowConfig.maxUsdc} USDC`);
+  console.log(`   Default expiry: ${escrowConfig.defaultExpiryHours} hours`);
+  console.log(`   AI model: ${escrowConfig.ai.model}`);
+  console.log(`   DO Spaces: ${spacesSet.length > 0 ? 'configured' : 'not configured'}`);
+}
+
+/**
  * Validates configuration on application startup
  * Call this before starting the server
  */
@@ -134,6 +226,9 @@ export function validateConfig(): void {
     console.log('\n🔍 Validating atomic swap configuration...');
     validateAtomicSwapConfig();
     console.log('✅ All atomic swap configurations valid');
+
+    // Validate institution escrow config (only when enabled)
+    validateInstitutionEscrowConfig();
   } catch (error) {
     if (error instanceof ConfigurationError) {
       console.error('❌ Configuration Error:', error.message);

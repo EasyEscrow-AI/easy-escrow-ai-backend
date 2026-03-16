@@ -22,6 +22,17 @@ pub use instructions::offer_escrow::{
     expire_offer_escrow as offer_escrow_expire,
 };
 
+// Re-export institution escrow types for use in program module
+pub use instructions::institution_escrow::{
+    InitInstitutionEscrow, DepositInstitutionEscrow,
+    ReleaseInstitutionEscrow, CancelInstitutionEscrow,
+    init_institution_escrow as inst_escrow_init,
+    deposit_institution_escrow as inst_escrow_deposit,
+    release_institution_escrow as inst_escrow_release,
+    cancel_institution_escrow as inst_escrow_cancel,
+};
+pub use state::institution_escrow::InstitutionConditionType;
+
 // Environment-specific Program IDs
 // Automatically selected based on build features
 // Build with: anchor build --features <environment>
@@ -1641,6 +1652,81 @@ pub mod escrow {
         instructions::cancel_two_phase_with_close_handler(ctx, swap_id, party)
     }
 
+    // ============================================================================
+    // INSTITUTION ESCROW INSTRUCTIONS (Cross-Border USDC Payments)
+    // ============================================================================
+
+    /// Initialize a new institution escrow for cross-border USDC payments
+    ///
+    /// Creates the escrow state PDA and an SPL token vault to hold USDC deposits.
+    /// The vault is controlled by the escrow state PDA (PDA-signed transfers).
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with authority, payer/recipient wallets, and escrow accounts
+    /// * `escrow_id` - Unique 32-byte escrow identifier (UUID bytes from backend)
+    /// * `amount` - USDC amount in micro-USDC (6 decimals)
+    /// * `platform_fee` - Platform fee in micro-USDC
+    /// * `condition_type` - Release condition type (AdminRelease, TimeLock, ComplianceCheck)
+    /// * `corridor` - Corridor code padded to 8 bytes (e.g. "SG-CH")
+    /// * `expiry_timestamp` - Unix timestamp when escrow expires
+    pub fn init_institution_escrow(
+        ctx: Context<InitInstitutionEscrow>,
+        escrow_id: [u8; 32],
+        amount: u64,
+        platform_fee: u64,
+        condition_type: InstitutionConditionType,
+        corridor: [u8; 8],
+        expiry_timestamp: i64,
+    ) -> Result<()> {
+        inst_escrow_init(ctx, escrow_id, amount, platform_fee, condition_type, corridor, expiry_timestamp)
+    }
+
+    /// Deposit USDC into an institution escrow vault
+    ///
+    /// Payer deposits USDC (amount + platform_fee) to the token vault.
+    /// Updates escrow status from Created to Funded.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with payer, token accounts, and escrow state
+    /// * `escrow_id` - The escrow identifier to deposit into
+    pub fn deposit_institution_escrow(
+        ctx: Context<DepositInstitutionEscrow>,
+        escrow_id: [u8; 32],
+    ) -> Result<()> {
+        inst_escrow_deposit(ctx, escrow_id)
+    }
+
+    /// Release USDC from institution escrow to recipient
+    ///
+    /// Settlement authority releases USDC: amount to recipient, fee to fee collector.
+    /// Closes the token vault to recover rent. Updates status to Released.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with authority, escrow state, vault, and recipient accounts
+    /// * `escrow_id` - The escrow identifier to release
+    pub fn release_institution_escrow(
+        ctx: Context<ReleaseInstitutionEscrow>,
+        escrow_id: [u8; 32],
+    ) -> Result<()> {
+        inst_escrow_release(ctx, escrow_id)
+    }
+
+    /// Cancel institution escrow and refund USDC to payer
+    ///
+    /// Settlement authority can cancel at any time.
+    /// Payer can cancel only after expiry.
+    /// Refunds all USDC from vault to payer, closes vault.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with caller, escrow state, vault, and payer token accounts
+    /// * `escrow_id` - The escrow identifier to cancel
+    pub fn cancel_institution_escrow(
+        ctx: Context<CancelInstitutionEscrow>,
+        escrow_id: [u8; 32],
+    ) -> Result<()> {
+        inst_escrow_cancel(ctx, escrow_id)
+    }
+
 }
 
 // Account Structures
@@ -1763,6 +1849,26 @@ pub enum EscrowError {
 
     #[msg("Offer is still active - cannot close")]
     OfferStillActive,
+
+    // Institution Escrow errors
+    #[msg("Institution escrow: invalid status for this operation")]
+    InstitutionInvalidStatus,
+    #[msg("Institution escrow: unauthorized caller")]
+    InstitutionUnauthorized,
+    #[msg("Institution escrow: escrow has expired")]
+    InstitutionExpired,
+    #[msg("Institution escrow: deposit amount mismatch")]
+    InstitutionDepositMismatch,
+    #[msg("Institution escrow: payer cannot be recipient")]
+    InstitutionPayerIsRecipient,
+    #[msg("Institution escrow: amount below minimum")]
+    InstitutionAmountTooLow,
+    #[msg("Institution escrow: amount above maximum")]
+    InstitutionAmountTooHigh,
+    #[msg("Institution escrow: expiry too short")]
+    InstitutionExpiryTooShort,
+    #[msg("Institution escrow: expiry too long")]
+    InstitutionExpiryTooLong,
 }
 
 // ============================================================================
