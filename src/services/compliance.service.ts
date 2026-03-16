@@ -53,7 +53,7 @@ export class ComplianceService {
     }
 
     // 2. Validate wallets are allowlisted
-    const walletsResult = await this.validateWallets(params.payerWallet, params.recipientWallet);
+    const walletsResult = await this.validateWallets(params.payerWallet, params.recipientWallet, params.clientId);
     if (!walletsResult.valid) {
       reasons.push(...walletsResult.reasons);
       flags.push('WALLET_NOT_ALLOWLISTED');
@@ -143,12 +143,21 @@ export class ComplianceService {
   async validateWallets(
     payerWallet: string,
     recipientWallet: string,
+    clientId?: string,
   ): Promise<{ valid: boolean; reasons: string[] }> {
     const reasons: string[] = [];
 
     const payerAllowlisted = await this.allowlistService.isAllowlisted(payerWallet);
     if (!payerAllowlisted) {
       reasons.push(`Payer wallet ${payerWallet} is not on the allowlist`);
+    }
+
+    // Verify payer wallet belongs to the calling client
+    if (clientId && payerAllowlisted) {
+      const payerMeta = await this.allowlistService.getWalletMetadata(payerWallet);
+      if (payerMeta && payerMeta.clientId !== clientId) {
+        reasons.push(`Payer wallet ${payerWallet} does not belong to the requesting client`);
+      }
     }
 
     const recipientAllowlisted = await this.allowlistService.isAllowlisted(recipientWallet);
@@ -251,60 +260,53 @@ export class ComplianceService {
       return { valid: false, reasons: [`Corridor ${corridorCode} not found`] };
     }
 
-    // Check per-transaction max (corridor max amount)
+    // Check per-transaction max
     const maxAmount = Number(corridor.maxAmount);
     if (amount > maxAmount) {
-      reasons.push(
-        `Amount ${amount} exceeds per-transaction max ${maxAmount}`,
-      );
+      reasons.push(`Amount ${amount} exceeds per-transaction max ${maxAmount}`);
     }
 
-    // Check daily volume
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Atomic volume check via interactive transaction
+    await this.prisma.$transaction(async (tx) => {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-    const dailyVolume = await this.prisma.institutionEscrow.aggregate({
-      _sum: { amount: true },
-      where: {
-        clientId,
-        corridor: corridorCode,
-        createdAt: { gte: startOfDay },
-        status: { notIn: ['CANCELLED', 'FAILED', 'EXPIRED'] },
-      },
+      const dailyVolume = await tx.institutionEscrow.aggregate({
+        _sum: { amount: true },
+        where: {
+          clientId,
+          corridor: corridorCode,
+          createdAt: { gte: startOfDay },
+          status: { notIn: ['CANCELLED', 'FAILED', 'EXPIRED'] },
+        },
+      });
+
+      const dailyTotal = Number(dailyVolume._sum.amount || 0) + amount;
+      const dailyLimit = Number(corridor.dailyLimit);
+      if (dailyTotal > dailyLimit) {
+        reasons.push(`Daily volume ${dailyTotal} would exceed limit ${dailyLimit}`);
+      }
+
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const monthlyVolume = await tx.institutionEscrow.aggregate({
+        _sum: { amount: true },
+        where: {
+          clientId,
+          corridor: corridorCode,
+          createdAt: { gte: startOfMonth },
+          status: { notIn: ['CANCELLED', 'FAILED', 'EXPIRED'] },
+        },
+      });
+
+      const monthlyTotal = Number(monthlyVolume._sum.amount || 0) + amount;
+      const monthlyLimit = Number(corridor.monthlyLimit);
+      if (monthlyTotal > monthlyLimit) {
+        reasons.push(`Monthly volume ${monthlyTotal} would exceed limit ${monthlyLimit}`);
+      }
     });
-
-    const dailyTotal =
-      Number(dailyVolume._sum.amount || 0) + amount;
-    const dailyLimit = Number(corridor.dailyLimit);
-    if (dailyTotal > dailyLimit) {
-      reasons.push(
-        `Daily volume ${dailyTotal} would exceed limit ${dailyLimit}`,
-      );
-    }
-
-    // Check monthly volume
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    const monthlyVolume = await this.prisma.institutionEscrow.aggregate({
-      _sum: { amount: true },
-      where: {
-        clientId,
-        corridor: corridorCode,
-        createdAt: { gte: startOfMonth },
-        status: { notIn: ['CANCELLED', 'FAILED', 'EXPIRED'] },
-      },
-    });
-
-    const monthlyTotal =
-      Number(monthlyVolume._sum.amount || 0) + amount;
-    const monthlyLimit = Number(corridor.monthlyLimit);
-    if (monthlyTotal > monthlyLimit) {
-      reasons.push(
-        `Monthly volume ${monthlyTotal} would exceed limit ${monthlyLimit}`,
-      );
-    }
 
     return { valid: reasons.length === 0, reasons };
   }

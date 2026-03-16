@@ -64,17 +64,19 @@ describe('InstitutionClientSettingsService', () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.institutionClientSettings.findUnique.resolves(existingSettings);
+      mockPrisma.institutionClientSettings.upsert.resolves(existingSettings);
 
       const result = await settingsService.getSettings('test-client-id');
 
       expect(result).to.deep.equal(existingSettings);
       expect(
-        mockPrisma.institutionClientSettings.findUnique.calledOnce
+        mockPrisma.institutionClientSettings.upsert.calledOnce
       ).to.be.true;
-      expect(
-        mockPrisma.institutionClientSettings.create.called
-      ).to.be.false;
+
+      const upsertArg =
+        mockPrisma.institutionClientSettings.upsert.firstCall.args[0];
+      expect(upsertArg.where.clientId).to.equal('test-client-id');
+      expect(upsertArg.update).to.deep.equal({});
     });
 
     it('should create default settings when none exist', async () => {
@@ -93,21 +95,20 @@ describe('InstitutionClientSettingsService', () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.institutionClientSettings.findUnique.resolves(null);
-      mockPrisma.institutionClientSettings.create.resolves(newSettings);
+      mockPrisma.institutionClientSettings.upsert.resolves(newSettings);
 
       const result = await settingsService.getSettings('new-client-id');
 
       expect(result).to.deep.equal(newSettings);
       expect(
-        mockPrisma.institutionClientSettings.create.calledOnce
+        mockPrisma.institutionClientSettings.upsert.calledOnce
       ).to.be.true;
 
-      const createArg =
-        mockPrisma.institutionClientSettings.create.firstCall.args[0];
-      expect(createArg.data.clientId).to.equal('new-client-id');
-      expect(createArg.data.defaultCurrency).to.equal('USDC');
-      expect(createArg.data.timezone).to.equal('UTC');
+      const upsertArg =
+        mockPrisma.institutionClientSettings.upsert.firstCall.args[0];
+      expect(upsertArg.create.clientId).to.equal('new-client-id');
+      expect(upsertArg.create.defaultCurrency).to.equal('USDC');
+      expect(upsertArg.create.timezone).to.equal('UTC');
     });
   });
 

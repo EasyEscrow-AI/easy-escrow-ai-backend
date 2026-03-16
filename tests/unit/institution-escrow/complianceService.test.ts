@@ -74,11 +74,13 @@ describe('ComplianceService', () => {
       institutionEscrow: {
         aggregate: sandbox.stub().resolves({ _sum: { amount: 0 } }),
       },
+      $transaction: sandbox.stub().callsFake(async (fn: any) => fn(prismaStub)),
     };
 
     // Stub allowlist
     allowlistStub = {
       isAllowlisted: sandbox.stub().resolves(true),
+      getWalletMetadata: sandbox.stub().resolves({ clientId: CLIENT_ID }),
     };
 
     // Create service and inject stubs

@@ -60,8 +60,8 @@ export const validateRecordDeposit = [
     .withMessage('Escrow ID must be a valid UUID'),
   body('txSignature')
     .isString()
-    .matches(SOLANA_ADDRESS_REGEX)
-    .withMessage('txSignature must be a valid base58 transaction signature'),
+    .matches(/^[1-9A-HJ-NP-Za-km-z]{80,90}$/)
+    .withMessage('txSignature must be a valid base58 transaction signature (80-90 chars)'),
 ];
 
 /**

@@ -239,6 +239,16 @@ describe('InstitutionJwtMiddleware', () => {
   // requireSettlementAuthority
   // ---------------------------------------------------------------------------
   describe('requireSettlementAuthority', () => {
+    beforeEach(() => {
+      // requireSettlementAuthority expects req.institutionClient to be set
+      // (it should be called after requireInstitutionAuth in the middleware chain)
+      req.institutionClient = {
+        clientId: 'test-client-id',
+        email: 'test@example.com',
+        tier: 'STANDARD',
+      };
+    });
+
     it('should pass with valid settlement authority key', () => {
       req.headers = {
         'x-settlement-authority-key': 'test-settlement-key-12345',
@@ -251,6 +261,24 @@ describe('InstitutionJwtMiddleware', () => {
       );
 
       expect(next.calledOnce).to.be.true;
+    });
+
+    it('should return 401 when requireInstitutionAuth has not run', () => {
+      req.institutionClient = undefined;
+      req.headers = {
+        'x-settlement-authority-key': 'test-settlement-key-12345',
+      };
+
+      requireSettlementAuthority(
+        req as InstitutionAuthenticatedRequest,
+        res,
+        next
+      );
+
+      expect(next.called).to.be.false;
+      expect(res.status.calledWith(401)).to.be.true;
+      const body = res.json.firstCall.args[0];
+      expect(body.code).to.equal('AUTH_REQUIRED');
     });
 
     it('should return 403 when settlement key is missing', () => {

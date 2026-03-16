@@ -146,7 +146,7 @@ describe('Institution Escrow Lifecycle - Integration Tests', function () {
     });
 
     it('should record a deposit and change status to FUNDED', async () => {
-      const txSignature = '5VERv8NMhVRxQktDHzaKyh3oGT3Y7tptMFjFqgTb';
+      const txSignature = '5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTb5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTbAbCdEfGh';
 
       const fundedEscrow = {
         escrowId: testEscrowId,
@@ -360,7 +360,7 @@ describe('Institution Escrow Lifecycle - Integration Tests', function () {
       const res = await request
         .post(`/api/v1/institution-escrow/${testEscrowId}/deposit`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ txSignature: '5VERv8NMhVRxQktDHzaKyh3oGT3Y7tptMFjFqgTb' })
+        .send({ txSignature: '5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTb5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTbAbCdEfGh' })
         .expect(400);
 
       expect(res.body.error).to.equal('Deposit Recording Failed');
@@ -391,7 +391,7 @@ describe('Institution Escrow Lifecycle - Integration Tests', function () {
       const res = await request
         .post(`/api/v1/institution-escrow/${testEscrowId}/deposit`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ txSignature: '5VERv8NMhVRxQktDHzaKyh3oGT3Y7tptMFjFqgTb' })
+        .send({ txSignature: '5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTb5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTbAbCdEfGh' })
         .expect(410);
 
       expect(res.body.error).to.equal('Deposit Recording Failed');

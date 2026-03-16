@@ -157,6 +157,16 @@ export const requireSettlementAuthority = (
   next: NextFunction
 ): void => {
   try {
+    if (!req.institutionClient) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Authentication required before settlement authority check',
+        code: 'AUTH_REQUIRED',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
     const settlementKey = req.headers['x-settlement-authority-key'] as string;
 
     if (!settlementKey) {

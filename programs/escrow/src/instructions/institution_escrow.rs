@@ -128,6 +128,7 @@ pub struct ReleaseInstitutionEscrow<'info> {
     #[account(
         mut,
         constraint = recipient_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
+        constraint = recipient_token_account.owner == escrow_state.recipient @ EscrowError::InstitutionUnauthorized,
     )]
     pub recipient_token_account: Account<'info, TokenAccount>,
 
@@ -135,6 +136,7 @@ pub struct ReleaseInstitutionEscrow<'info> {
     #[account(
         mut,
         constraint = fee_collector_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
+        constraint = fee_collector_token_account.owner == escrow_state.fee_collector @ EscrowError::InstitutionUnauthorized,
     )]
     pub fee_collector_token_account: Account<'info, TokenAccount>,
 
@@ -174,6 +176,7 @@ pub struct CancelInstitutionEscrow<'info> {
     #[account(
         mut,
         constraint = payer_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
+        constraint = payer_token_account.owner == escrow_state.payer @ EscrowError::InstitutionUnauthorized,
     )]
     pub payer_token_account: Account<'info, TokenAccount>,
 
@@ -308,6 +311,25 @@ pub fn release_institution_escrow(
 
     let amount = escrow_state.amount;
     let platform_fee = escrow_state.platform_fee;
+
+    // Enforce condition type
+    match escrow_state.condition_type {
+        InstitutionConditionType::AdminRelease => {
+            // Settlement authority check (already validated by account constraint) is sufficient
+        },
+        InstitutionConditionType::TimeLock => {
+            // Time lock: funds cannot be released until after the expiry timestamp
+            require!(
+                clock.unix_timestamp >= escrow_state.expiry_timestamp,
+                EscrowError::InstitutionTimeLockNotReached
+            );
+        },
+        InstitutionConditionType::ComplianceCheck => {
+            // Compliance is verified off-chain by the backend before building the release transaction.
+            // The settlement authority signature serves as attestation that compliance was verified.
+            // Future enhancement: add on-chain compliance_passed flag to state.
+        },
+    }
 
     // Derive PDA signer seeds for the escrow_state (vault authority)
     let signer_seeds: &[&[&[u8]]] = &[&[

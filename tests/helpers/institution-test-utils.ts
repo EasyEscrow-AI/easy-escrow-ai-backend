@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 // Mock Prisma client for institution unit tests
 export function createMockPrismaClient() {
-  return {
+  const mock: any = {
     institutionClient: {
       findUnique: sinon.stub(),
       findFirst: sinon.stub(),
@@ -64,6 +64,9 @@ export function createMockPrismaClient() {
       delete: sinon.stub(),
     },
   };
+  // $transaction executes the callback with the mock itself as the tx client
+  mock.$transaction = sinon.stub().callsFake(async (fn: any) => fn(mock));
+  return mock;
 }
 
 // Generate a test JWT token

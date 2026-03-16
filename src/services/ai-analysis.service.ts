@@ -65,6 +65,14 @@ export class AiAnalysisService {
     // Rate limit check
     await this.checkRateLimit(clientId);
 
+    // Verify escrow belongs to this client
+    const escrow = await this.prisma.institutionEscrow.findFirst({
+      where: { escrowId, clientId },
+    });
+    if (!escrow) {
+      throw new Error('Escrow not found or access denied');
+    }
+
     // Check cache first
     const cacheKey = `${AI_CACHE_PREFIX}${escrowId}:${fileId}`;
     try {

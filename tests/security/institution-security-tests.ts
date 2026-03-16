@@ -414,7 +414,16 @@ describe('Security: Settlement Authority Bypass', () => {
   beforeEach(() => {
     // Ensure env var matches what tests expect
     process.env.SETTLEMENT_AUTHORITY_API_KEY = 'correct-settlement-key-abcdef';
-    req = { headers: {} };
+    req = {
+      headers: {},
+      // requireSettlementAuthority expects req.institutionClient to be set
+      // (it runs after requireInstitutionAuth in the middleware chain)
+      institutionClient: {
+        clientId: 'test-client-id',
+        email: 'test@example.com',
+        tier: 'STANDARD',
+      },
+    };
     res = {
       status: sinon.stub().returnsThis(),
       json: sinon.stub().returnsThis(),

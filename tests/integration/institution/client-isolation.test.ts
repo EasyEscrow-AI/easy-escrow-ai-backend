@@ -198,7 +198,7 @@ describe('Institution Client Isolation - Integration Tests', function () {
       const res = await request
         .post(`/api/v1/institution-escrow/${escrowIdA}/deposit`)
         .set('Authorization', `Bearer ${tokenB}`)
-        .send({ txSignature: '5VERv8NMhVRxQktDHzaKyh3oGT3Y7tptMFjFqgTb' })
+        .send({ txSignature: '5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTb5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTbAbCdEfGh' })
         .expect(400);
 
       expect(res.body.error).to.equal('Deposit Recording Failed');

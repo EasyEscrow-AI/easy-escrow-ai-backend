@@ -89,8 +89,8 @@ describe('Institution Concurrent Operations - Integration Tests', function () {
 
   describe('Two Simultaneous Deposits on Same Escrow', () => {
     it('should allow only one deposit when two are submitted concurrently', async () => {
-      const txSig1 = '5VERv8NMhVRxQktDHzaKyh3oGT3Y7tptMFjFqgTb';
-      const txSig2 = '6WERv8NMhVRxQktDHzaKyh3oGT3Y7tptMFjFqgTb';
+      const txSig1 = '5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTb5VERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTbAbCdEfGh';
+      const txSig2 = '6WERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTb6WERv8NMhVRxQktDHzaKyh3GT3Y7tptMFjFqgTbAbCdEfGh';
 
       // First deposit succeeds, second fails because status is no longer CREATED
       let depositCallCount = 0;

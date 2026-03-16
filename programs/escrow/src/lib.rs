@@ -1869,6 +1869,8 @@ pub enum EscrowError {
     InstitutionExpiryTooShort,
     #[msg("Institution escrow: expiry too long")]
     InstitutionExpiryTooLong,
+    #[msg("Institution escrow: time lock period not reached")]
+    InstitutionTimeLockNotReached,
 }
 
 // ============================================================================

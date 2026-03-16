@@ -32,21 +32,11 @@ export class InstitutionClientSettingsService {
    * Get settings for a client, creating defaults if none exist
    */
   async getSettings(clientId: string) {
-    let settings = await this.prisma.institutionClientSettings.findUnique({
+    return this.prisma.institutionClientSettings.upsert({
       where: { clientId },
+      create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC' },
+      update: {},
     });
-
-    if (!settings) {
-      settings = await this.prisma.institutionClientSettings.create({
-        data: {
-          clientId,
-          defaultCurrency: 'USDC',
-          timezone: 'UTC',
-        },
-      });
-    }
-
-    return settings;
   }
 
   /**
@@ -97,52 +87,44 @@ export class InstitutionClientSettingsService {
       );
     }
 
-    // Update InstitutionClient.primaryWallet if provided
-    if (wallets.primaryWallet) {
-      const existingClient = await this.prisma.institutionClient.findUnique({
+    return this.prisma.$transaction(async (tx) => {
+      if (wallets.primaryWallet) {
+        const existingClient = await tx.institutionClient.findUnique({
+          where: { id: clientId },
+          select: { settledWallets: true },
+        });
+        const settledWallets = existingClient?.settledWallets || [];
+        const updatedSettledWallets = settledWallets.includes(wallets.primaryWallet)
+          ? settledWallets
+          : [...settledWallets, wallets.primaryWallet];
+
+        await tx.institutionClient.update({
+          where: { id: clientId },
+          data: {
+            primaryWallet: wallets.primaryWallet,
+            settledWallets: updatedSettledWallets,
+          },
+        });
+      }
+
+      if (wallets.settlementWallet) {
+        await tx.institutionClientSettings.upsert({
+          where: { clientId },
+          update: { settlementAuthorityWallet: wallets.settlementWallet },
+          create: {
+            clientId,
+            defaultCurrency: 'USDC',
+            timezone: 'UTC',
+            settlementAuthorityWallet: wallets.settlementWallet,
+          },
+        });
+      }
+
+      return tx.institutionClient.findUnique({
         where: { id: clientId },
-        select: { settledWallets: true },
+        include: { settings: true },
       });
-
-      const settledWallets = existingClient?.settledWallets || [];
-      const updatedSettledWallets = settledWallets.includes(
-        wallets.primaryWallet
-      )
-        ? settledWallets
-        : [...settledWallets, wallets.primaryWallet];
-
-      await this.prisma.institutionClient.update({
-        where: { id: clientId },
-        data: {
-          primaryWallet: wallets.primaryWallet,
-          settledWallets: updatedSettledWallets,
-        },
-      });
-    }
-
-    // Update settlementAuthorityWallet if settlementWallet provided
-    if (wallets.settlementWallet) {
-      await this.prisma.institutionClientSettings.upsert({
-        where: { clientId },
-        update: {
-          settlementAuthorityWallet: wallets.settlementWallet,
-        },
-        create: {
-          clientId,
-          defaultCurrency: 'USDC',
-          timezone: 'UTC',
-          settlementAuthorityWallet: wallets.settlementWallet,
-        },
-      });
-    }
-
-    // Return the updated client with settings
-    const client = await this.prisma.institutionClient.findUnique({
-      where: { id: clientId },
-      include: { settings: true },
     });
-
-    return client;
   }
 
   /**
