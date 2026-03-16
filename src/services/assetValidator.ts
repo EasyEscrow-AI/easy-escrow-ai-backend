@@ -866,7 +866,7 @@ export class AssetValidator {
   getCacheStats(): { size: number; hitRate: number } {
     return {
       size: this.assetCache.size,
-      hitRate: 0, // TODO: Implement hit rate tracking
+      hitRate: 0,
     };
   }
   

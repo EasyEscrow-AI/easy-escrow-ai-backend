@@ -1197,28 +1197,46 @@ export class SettlementService {
         const depositNftTx = transactions.find(t => t.operationType === TransactionOperationType.DEPOSIT_NFT);
         const depositSolTx = transactions.find(t => t.operationType === TransactionOperationType.DEPOSIT_SOL);
 
-        // TODO: Implement v2 settlement receipt generation
-        // await receiptService.generateSettlementReceipt({
-        //   agreementId: agreement.agreementId,
-        //   escrowTxId: agreement.initTxId || '',
-        //   nftDepositTxId: depositNftTx?.txId || '',
-        //   solDepositTxId: depositSolTx?.txId || '',
-        //   settlementTxId,
-        //   blockHeight: blockHeight || BigInt(0),
-        // });
+        const receiptResult = await receiptService.generateReceipt({
+          agreementId: agreement.agreementId,
+          nftMint: agreement.nftMint || '',
+          price: agreement.price?.toString() || '0',
+          platformFee: feeCalculation.platformFee.toString(),
+          creatorRoyalty: feeCalculation.creatorRoyalty.gt(0) ? feeCalculation.creatorRoyalty.toString() : undefined,
+          buyer: agreement.buyer!,
+          seller: agreement.seller,
+          escrowTxId: agreement.initTxId || '',
+          depositNftTxId: depositNftTx?.txId,
+          depositUsdcTxId: depositSolTx?.txId,
+          settlementTxId,
+          createdAt: agreement.createdAt,
+          settledAt: new Date(),
+        });
 
-        console.log(`[SettlementService] V2 Receipt generation skipped (not yet implemented) for ${agreement.agreementId}`);
+        if (receiptResult.success) {
+          console.log(`[SettlementService] V2 Receipt generated: ${receiptResult.receipt?.id}`);
+        } else {
+          console.error(`[SettlementService] V2 Receipt generation failed for ${agreement.agreementId}: ${receiptResult.error}`);
+        }
       } catch (receiptError) {
         console.error('[SettlementService] Failed to generate V2 receipt:', receiptError);
       }
 
       // 8. Trigger webhook
       try {
-        // TODO: Implement v2 webhook trigger
-        // await WebhookEventsService.triggerAgreementSettledEvent(agreement.id);
-        console.log(`[SettlementService] V2 Webhook trigger skipped (not yet implemented) for ${agreement.agreementId}`);
+        await WebhookEventsService.publishEscrowSettled({
+          agreementId: agreement.agreementId,
+          nftMint: agreement.nftMint || '',
+          price: agreement.price?.toString() || '0',
+          platformFee: feeCalculation.platformFee.toString(),
+          creatorRoyalty: feeCalculation.creatorRoyalty.gt(0) ? feeCalculation.creatorRoyalty.toString() : undefined,
+          sellerReceived: feeCalculation.sellerReceived.toString(),
+          buyer: agreement.buyer!,
+          seller: agreement.seller,
+          settleTxId: settlementTxId,
+        });
       } catch (webhookError) {
-        console.error('[SettlementService] Failed to trigger V2 webhook:', webhookError);
+        console.error('[SettlementService] Failed to publish V2 webhook event:', webhookError);
       }
 
       return settlementResult;

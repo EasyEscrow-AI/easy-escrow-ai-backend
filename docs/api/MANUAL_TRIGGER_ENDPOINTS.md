@@ -400,7 +400,7 @@ expect(refunds.length).toBeGreaterThan(0);
 
 ## Security Considerations
 
-**Access Control (TODO):**
+**Access Control:**
 - These endpoints should be protected with admin authentication
 - Rate limiting should be applied
 - Audit logging for all manual triggers

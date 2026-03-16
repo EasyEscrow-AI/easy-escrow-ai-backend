@@ -70,10 +70,6 @@ describe('STAGING E2E: Zero-Fee Transactions', function () {
     console.log('');
   });
 
-  // ==========================================================================
-  // CLEANUP
-  // ==========================================================================
-
   after(async function () {
     if (createdAgreementIds.length > 0) {
       console.log('\n🧹 Cleanup: Agreement IDs tracked for manual cleanup:');

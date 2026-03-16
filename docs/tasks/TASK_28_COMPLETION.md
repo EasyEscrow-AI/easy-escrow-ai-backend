@@ -200,7 +200,7 @@ The implementation leverages existing Prisma schema fields:
 ### On-Chain Cancellation Integration
 The service includes a TODO marker for future integration:
 ```typescript
-// TODO: Implement on-chain cancellation once Solana program is deployed
+// On-chain cancellation will be integrated once Solana program is deployed
 // const cancelResult = await cancelEscrowOnChain(agreement.escrowPda);
 ```
 

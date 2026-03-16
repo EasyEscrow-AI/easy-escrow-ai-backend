@@ -71,10 +71,6 @@ describe('STAGING E2E: Admin Cancellation', function () {
     console.log('');
   });
 
-  // ==========================================================================
-  // CLEANUP
-  // ==========================================================================
-
   after(async function () {
     if (createdAgreementIds.length > 0) {
       console.log('\n🧹 Cleanup: Agreement IDs tracked for manual cleanup:');

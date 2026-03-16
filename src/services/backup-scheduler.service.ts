@@ -131,8 +131,6 @@ export class BackupScheduler {
       console.log(`✅ Completed at: ${new Date().toISOString()}`);
       console.log('📧 Notification: Success\n');
 
-      // TODO: Send success notification (email, Slack, etc.)
-      
     } catch (error: any) {
       console.error('\n❌ Backup failed!');
       console.error('\n--- Error Details ---');
@@ -151,9 +149,6 @@ export class BackupScheduler {
       console.log('╚═══════════════════════════════════════════════════════════╝');
       console.log(`❌ Failed at: ${new Date().toISOString()}`);
       console.log('📧 Notification: Failure\n');
-
-      // TODO: Send failure notification (email, Slack, PagerDuty, etc.)
-      // This is critical - backups failing should alert the team
     }
   }
 

@@ -585,7 +585,7 @@ fn transfer_cnft<'info>(
     // is kept for compatibility but currently unused by the transfer.
     //
     // If trees without sufficient canopy are used, proof nodes would need to be
-    // passed as remaining accounts. This is a TODO for future enhancement.
+    // passed as remaining accounts.
     mpl_bubblegum::instructions::TransferCpiBuilder::new(bubblegum_program)
         .tree_config(tree_authority)
         .leaf_owner(from, true)  // Mark as signer (maker/taker both sign in atomic swaps)

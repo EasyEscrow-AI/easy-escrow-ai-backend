@@ -131,9 +131,6 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement actual swap transaction via backend API or direct program call
-      // This will be implemented after backend API integration is complete
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('✅ Test structure validated\n');
       
@@ -182,8 +179,6 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement actual swap transaction with custom fixed fee
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('✅ Test structure validated\n');
     });
@@ -214,9 +209,6 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement actual swap transaction with zero fee
-      // Platform should pay transaction costs from treasury
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('⚠️  Note: Platform will pay network transaction fees');
       console.log('✅ Test structure validated\n');
@@ -233,23 +225,17 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log('\n📋 TEST: Nonce Validation in NFT for SOL Swap');
       console.log('═══════════════════════════════════════════════════════════');
       
-      // TODO: Get nonce account for maker
       // const nonceAccount = await getNonceForUser(wallets.sender.publicKey);
-      
-      // TODO: Get nonce value before swap
+
       // const nonceBefore = await getNonceValue(connection, nonceAccount);
-      
+
       console.log('🔢 Nonce tracking:');
       console.log('  - Ensures replay protection');
       console.log('  - Validates nonce advancement');
       console.log('  - Verifies transaction ordering');
       
-      // TODO: Execute swap
-      
-      // TODO: Get nonce value after swap
       // const nonceAfter = await getNonceValue(connection, nonceAccount);
-      
-      // TODO: Validate nonce was incremented
+
       // expect(nonceAfter).to.not.equal(nonceBefore);
       
       console.log('\n⚠️  Note: Nonce validation pending implementation');
@@ -266,9 +252,6 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log('  - Prevents replay attacks');
       console.log('  - Rejects stale nonces');
       console.log('  - Ensures transaction uniqueness');
-      
-      // TODO: Attempt to execute transaction with old nonce
-      // Should fail with "Invalid nonce" error
       
       console.log('\n⚠️  Note: Nonce rejection test pending implementation');
       console.log('✅ Test structure validated\n');

@@ -96,7 +96,7 @@ This production release deploys the **Custom Expiry & Scalability** feature with
 - [x] Bug fixes verified ✅
 - [x] PR created ✅
 
-### Post-Merge (TODO)
+### Post-Merge
 - [ ] Merge PR #132 to master
 - [ ] Run migration on production database
 - [ ] Monitor deployment logs

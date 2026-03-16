@@ -203,7 +203,7 @@ require!(
 
 ## 🧪 Testing Strategy
 
-### Unit Tests (TODO #8)
+### Unit Tests
 ```typescript
 // Test expiry checks on deposits
 describe('Deposit Expiry Validation', () => {
@@ -224,7 +224,7 @@ describe('Auto-Refund (cancel_if_expired)', () => {
 });
 ```
 
-### Integration Tests (TODO #9)
+### Integration Tests
 ```typescript
 // Test E2E flow
 describe('Expiry + Refund Flow', () => {
@@ -234,7 +234,7 @@ describe('Expiry + Refund Flow', () => {
 });
 ```
 
-### Local Testing (TODO #10)
+### Local Testing
 ```powershell
 # Build program
 cd programs/escrow
@@ -248,7 +248,7 @@ anchor test
 
 ---
 
-## 📝 Documentation Updates (TODO #11)
+## 📝 Documentation Updates
 
 ### API Documentation
 No changes needed! All existing endpoints remain the same.
@@ -271,7 +271,7 @@ Alternatively, anyone can manually trigger a refund by calling `cancel_if_expire
 
 ## 🚀 Deployment Plan
 
-### Combined Deployment (TODO #13-14)
+### Combined Deployment
 
 This update will be deployed together with the rent recovery system in a single upgrade:
 

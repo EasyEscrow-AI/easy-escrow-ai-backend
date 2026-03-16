@@ -72,10 +72,6 @@ describe('PRODUCTION E2E: Concurrent Operations', function () {
     console.log('');
   });
 
-  // ==========================================================================
-  // CLEANUP
-  // ==========================================================================
-
   after(async function () {
     await cleanupAgreements(createdAgreementIds);
   });

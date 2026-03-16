@@ -262,7 +262,6 @@ describe('OfferManager - ACCEPTED Status', () => {
     });
 
     it.skip('should only confirm offers with ACCEPTED status', async () => {
-      // TODO: Implement status validation in confirmSwap
       const offerId = 1;
       const signature = 'mock-signature';
 

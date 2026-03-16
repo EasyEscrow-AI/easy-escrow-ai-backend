@@ -110,10 +110,6 @@ describe('STAGING E2E: Admin Cancel with On-Chain Refund Verification', function
     console.log('✅ Setup complete\n');
   });
 
-  // ==========================================================================
-  // CLEANUP
-  // ==========================================================================
-
   after(async function () {
     if (createdAgreementIds.length > 0) {
       console.log('\n🧹 Test Agreements Created:');

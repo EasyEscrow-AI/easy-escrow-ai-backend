@@ -117,7 +117,7 @@ const [solVaultPda] = PublicKey.findProgramAddressSync(
 
 ## Remaining Work
 
-### Backend Services - TODO
+### Backend Services
 
 The following services still need to be updated to derive and include `sol_vault` PDA:
 

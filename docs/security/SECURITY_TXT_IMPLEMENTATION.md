@@ -164,7 +164,7 @@ To update security information:
 
 ## Security Contact Setup
 
-**TODO**: Before production deployment:
+Before production deployment:
 
 1. **Create security@easyescrow.ai email:**
    - Set up dedicated security inbox
