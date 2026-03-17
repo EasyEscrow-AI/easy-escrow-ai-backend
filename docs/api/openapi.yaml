@@ -50,11 +50,16 @@ tags:
     description: |
       ## Changelog
 
-      ### v1.1.0 — Institutional Escrow (March 2026)
+      ### v1.1.0 — Institutional Escrow
+      **Released: 17 March 2026**
+
       Cross-border stablecoin escrow payments for institutional clients.
 
+      - **AMINA-approved token whitelist** — USDC, USDT, EURC, PYUSD (active); RLUSD, USDG (pending)
+      - Public token list endpoint: `GET /api/v1/institution/tokens`
+      - Escrow creation accepts optional `tokenMint` (defaults to USDC)
       - Institution client authentication (JWT) with registration, login, and token refresh
-      - USDC escrow lifecycle: create, deposit, release, and cancel
+      - Stablecoin escrow lifecycle: create, deposit, release, and cancel
       - AI-powered document analysis for compliance risk scoring
       - Wallet whitelists and jurisdiction payment corridors
       - File uploads for escrow supporting documents (PDF, images, Excel, CSV)
@@ -64,7 +69,9 @@ tags:
       - Settlement authority pattern for release operations
       - AI data anonymisation (PII redaction before model processing)
 
-      ### v1.0.0 — Atomic Swaps (October 2025)
+      ### v1.0.0 — Atomic Swaps
+      **Released: 15 October 2025**
+
       Non-custodial peer-to-peer NFT and SOL atomic swaps on Solana.
 
       - NFT ↔ SOL, NFT ↔ NFT, and NFT + SOL ↔ NFT swap types
@@ -175,10 +182,11 @@ tags:
     description: |
       ## Cross-Border Institutional Escrow
 
-      The Institution Escrow system enables **cross-border stablecoin (USDC) payments on Solana** for
-      institutional clients.
+      The Institution Escrow system enables **cross-border stablecoin payments on Solana** for
+      institutional clients. Supports AMINA-approved stablecoins including USDC, USDT, EURC, and PYUSD.
 
       ### Key Features
+      - **Multi-token support** — AMINA-approved stablecoins (USDC default, plus USDT, EURC, PYUSD)
       - **Authenticated accounts** via email + password with JWT tokens
       - **Compliance checks** with allowlists and corridor-based limits
       - **AI-powered document analysis** for risk assessment
@@ -187,10 +195,11 @@ tags:
       ### How It Works
       1. **Register** an institution client account
       2. **Configure** wallets and API keys via settings
-      3. **Create** an escrow with payer/recipient wallets, amount, and corridor
-      4. **Deposit** USDC on-chain and record the transaction signature
-      5. **Release** funds (requires settlement authority) or **cancel** the escrow
-      6. Optionally **analyze** uploaded documents with AI for risk scoring
+      3. **List approved tokens** via `/api/v1/institution/tokens`
+      4. **Create** an escrow with payer/recipient wallets, amount, corridor, and optional `tokenMint`
+      5. **Deposit** stablecoins on-chain and record the transaction signature
+      6. **Release** funds (requires settlement authority) or **cancel** the escrow
+      7. Optionally **analyze** uploaded documents with AI for risk scoring
 
       ### Feature Gate
       This feature is gated by the `INSTITUTION_ESCROW_ENABLED` environment variable.
@@ -203,8 +212,10 @@ tags:
     description: Client profile lookup, search, list, and archive
   - name: Institution Files
     description: Document uploads for compliance (PDF, images, Excel, CSV)
+  - name: Institution Tokens
+    description: AMINA-approved stablecoin whitelist (public endpoint, no auth required)
   - name: Institution Escrow
-    description: Cross-border USDC escrow payment lifecycle
+    description: Cross-border stablecoin escrow payment lifecycle
   - name: AI Analysis
     description: AI-powered escrow document risk analysis (renamed routes)
   - name: Institution Admin
@@ -228,6 +239,7 @@ x-tagGroups:
       - Institution Auth
       - Institution Settings
       - Institution Clients
+      - Institution Tokens
       - Institution Files
       - Institution Escrow
       - AI Analysis
@@ -1602,6 +1614,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Tokens (AMINA Whitelist) ──────────────────────────────
+
+  /api/v1/institution/tokens:
+    get:
+      tags:
+        - Institution Tokens
+      summary: List approved tokens
+      description: |
+        Returns all active AMINA-approved stablecoins available for institution escrow.
+        This is a **public endpoint** — no authentication required.
+
+        Use this to populate the token selector dropdown in the portal UI.
+        Each token includes its Solana SPL mint address, issuer, jurisdiction, and AMINA approval status.
+      responses:
+        '200':
+          description: Approved token list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovedToken'
+                  timestamp:
+                    type: string
+                    format: date-time
+              example:
+                success: true
+                data:
+                  - symbol: USDC
+                    name: USD Coin
+                    mintAddress: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+                    decimals: 6
+                    issuer: Circle
+                    jurisdiction: US
+                    chain: solana
+                    isDefault: true
+                    aminaApproved: true
+                  - symbol: USDT
+                    name: Tether USD
+                    mintAddress: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB
+                    decimals: 6
+                    issuer: Tether
+                    jurisdiction: BVI
+                    chain: solana
+                    isDefault: false
+                    aminaApproved: true
+                  - symbol: EURC
+                    name: Euro Coin
+                    mintAddress: HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr
+                    decimals: 6
+                    issuer: Circle
+                    jurisdiction: EU
+                    chain: solana
+                    isDefault: false
+                    aminaApproved: true
+                  - symbol: PYUSD
+                    name: PayPal USD
+                    mintAddress: 2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo
+                    decimals: 6
+                    issuer: Paxos (PayPal)
+                    jurisdiction: US
+                    chain: solana
+                    isDefault: false
+                    aminaApproved: true
+                timestamp: "2026-03-17T10:00:00.000Z"
 
   # ── Institution Files ──────────────────────────────────────────────────
 
@@ -4421,6 +4505,57 @@ components:
           minLength: 8
           description: New password (minimum 8 characters)
 
+    ApprovedToken:
+      type: object
+      description: An AMINA-approved stablecoin available for institution escrow
+      properties:
+        symbol:
+          type: string
+          description: Token ticker symbol
+          example: USDC
+        name:
+          type: string
+          description: Full token name
+          example: USD Coin
+        mintAddress:
+          type: string
+          description: Solana SPL token mint address
+          example: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+        decimals:
+          type: integer
+          description: Token decimal precision
+          example: 6
+        issuer:
+          type: string
+          description: Token issuing organization
+          example: Circle
+        jurisdiction:
+          type: string
+          nullable: true
+          description: Issuer regulatory jurisdiction (ISO country code)
+          example: US
+        chain:
+          type: string
+          description: Blockchain network
+          example: solana
+        isDefault:
+          type: boolean
+          description: Whether this is the default token (USDC)
+          example: true
+        aminaApproved:
+          type: boolean
+          description: AMINA Bank approved asset
+          example: true
+      required:
+        - symbol
+        - name
+        - mintAddress
+        - decimals
+        - issuer
+        - chain
+        - isDefault
+        - aminaApproved
+
     InstitutionAuthTokens:
       type: object
       properties:
@@ -4849,7 +4984,7 @@ components:
           type: number
           minimum: 1
           maximum: 10000000
-          description: USDC amount (1 to 10,000,000)
+          description: Stablecoin amount (1 to 10,000,000)
           example: 50000
         corridor:
           type: string
@@ -4875,6 +5010,12 @@ components:
           type: string
           description: Optional Solana wallet address of the settlement authority
           example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        tokenMint:
+          type: string
+          description: |
+            Optional SPL token mint address. Must be on the AMINA-approved whitelist.
+            Defaults to USDC if omitted. Use `GET /api/v1/institution/tokens` to list available tokens.
+          example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
     InstitutionEscrowDetail:
       type: object

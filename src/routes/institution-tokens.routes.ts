@@ -45,10 +45,11 @@ router.get(
         })),
         timestamp: new Date().toISOString(),
       });
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Token list error:', err);
       res.status(500).json({
         error: 'Failed to fetch approved tokens',
+        message: err.message,
         timestamp: new Date().toISOString(),
       });
     }

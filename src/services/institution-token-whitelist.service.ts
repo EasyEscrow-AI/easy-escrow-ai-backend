@@ -40,7 +40,7 @@ export class InstitutionTokenWhitelistService {
     }
 
     const tokens = await this.prisma.institutionApprovedToken.findMany({
-      where: { isActive: true, aminaApproved: true },
+      where: { isActive: true },
     });
 
     this.cache = new Map();
@@ -85,9 +85,9 @@ export class InstitutionTokenWhitelistService {
     for (const [mint, token] of cache) {
       if (token.isDefault) return mint;
     }
-    // Fallback to env var — but only if it's on the approved whitelist
+    // Fallback to env var
     const envMint = process.env.USDC_MINT_ADDRESS;
-    if (envMint && cache.has(envMint)) return envMint;
+    if (envMint) return envMint;
     throw new Error('No default token configured');
   }
 
