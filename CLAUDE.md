@@ -222,7 +222,6 @@ anchor idl build         # Generate IDL separately from project root
 ### 7. Pull Request Rules
 
 **Always create PRs as ready for review (not draft):**
-
 ```bash
 gh pr create --title "..." --body "..."
 ```
