@@ -65,9 +65,26 @@ export class AiAnalysisService {
     // Rate limit check
     await this.checkRateLimit(clientId);
 
-    // Verify escrow belongs to this client
+    // Verify escrow belongs to this client, and fetch client details for context
     const escrow = await this.prisma.institutionEscrow.findFirst({
       where: { escrowId, clientId },
+      include: {
+        client: {
+          select: {
+            companyName: true,
+            legalName: true,
+            addressLine1: true,
+            addressLine2: true,
+            city: true,
+            state: true,
+            postalCode: true,
+            country: true,
+            industry: true,
+            contactFirstName: true,
+            contactLastName: true,
+          },
+        },
+      },
     });
     if (!escrow) {
       throw new Error('Escrow not found or access denied');
@@ -128,6 +145,17 @@ export class AiAnalysisService {
       return result;
     }
 
+    // Build client context for the AI prompt
+    const clientInfo = escrow.client;
+    const clientContext = clientInfo ? {
+      companyName: clientInfo.companyName,
+      legalName: clientInfo.legalName || undefined,
+      address: [clientInfo.addressLine1, clientInfo.addressLine2, clientInfo.city, clientInfo.state, clientInfo.postalCode, clientInfo.country]
+        .filter(Boolean).join(', ') || undefined,
+      industry: clientInfo.industry || undefined,
+      contactName: [clientInfo.contactFirstName, clientInfo.contactLastName].filter(Boolean).join(' ') || undefined,
+    } : undefined;
+
     // Call Claude API
     const model = process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
     const analysisResult = await this.callClaudeApi(
@@ -136,6 +164,7 @@ export class AiAnalysisService {
       file.mimeType,
       context,
       model,
+      clientContext,
     );
 
     // Store in database
@@ -200,6 +229,13 @@ export class AiAnalysisService {
     mimeType: string,
     context?: AnalyzeDocumentParams['context'],
     model?: string,
+    clientContext?: {
+      companyName?: string;
+      legalName?: string;
+      address?: string;
+      industry?: string;
+      contactName?: string;
+    },
   ): Promise<AiAnalysisResult> {
     const client = this.getAnthropicClient();
 
@@ -232,9 +268,21 @@ Risk scoring guidelines:
 
 Respond with ONLY the JSON object, no additional text.`;
 
-    const contextInfo = context
-      ? `\nContext: Expected amount: ${context.expectedAmount || 'unknown'}, PO#: ${context.poNumber || 'unknown'}, Corridor: ${context.corridor || 'unknown'}`
+    let contextInfo = context
+      ? `\nEscrow Context: Expected amount: ${context.expectedAmount || 'unknown'}, PO#: ${context.poNumber || 'unknown'}, Corridor: ${context.corridor || 'unknown'}`
       : '';
+
+    if (clientContext) {
+      const parts = [];
+      if (clientContext.companyName) parts.push(`Company: ${clientContext.companyName}`);
+      if (clientContext.legalName) parts.push(`Legal Name: ${clientContext.legalName}`);
+      if (clientContext.address) parts.push(`Address: ${clientContext.address}`);
+      if (clientContext.industry) parts.push(`Industry: ${clientContext.industry}`);
+      if (clientContext.contactName) parts.push(`Contact: ${clientContext.contactName}`);
+      if (parts.length > 0) {
+        contextInfo += `\nClient Details: ${parts.join(', ')}`;
+      }
+    }
 
     const contentParts: Anthropic.ContentBlockParam[] = [];
 

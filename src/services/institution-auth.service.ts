@@ -215,11 +215,17 @@ export class InstitutionAuthService {
 
   /**
    * Get client profile by ID (without password hash)
+   * Returns expanded profile with settings and wallets
    */
   async getProfile(clientId: string) {
     const client = await this.prisma.institutionClient.findUnique({
       where: { id: clientId },
-      include: { settings: true },
+      include: {
+        settings: true,
+        wallets: {
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }],
+        },
+      },
     });
 
     if (!client) {

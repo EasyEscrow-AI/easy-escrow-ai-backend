@@ -1,12 +1,15 @@
 /**
  * Institution Settings Routes
  *
- * GET    /api/v1/institution/settings          → getSettings
- * PUT    /api/v1/institution/settings          → updateSettings
- * PUT    /api/v1/institution/settings/wallets  → updateWallets
- * POST   /api/v1/institution/api-keys          → generateApiKey
- * DELETE /api/v1/institution/api-keys/:id      → revokeApiKey
- * GET    /api/v1/institution/api-keys          → listApiKeys
+ * GET    /api/v1/institution/settings                  → getSettings
+ * PUT    /api/v1/institution/settings                  → updateSettings
+ * PUT    /api/v1/institution/settings/wallets          → updateWallets (legacy flat)
+ * PUT    /api/v1/institution/settings/wallets/manage   → addOrUpdateWallet (new model)
+ * GET    /api/v1/institution/settings/wallets/list     → listWallets
+ * DELETE /api/v1/institution/settings/wallets/:id      → deleteWallet
+ * POST   /api/v1/institution/api-keys                  → generateApiKey
+ * DELETE /api/v1/institution/api-keys/:id              → revokeApiKey
+ * GET    /api/v1/institution/api-keys                  → listApiKeys
  */
 
 import { Router, Response } from 'express';
@@ -101,6 +104,87 @@ router.put(
     } catch (error: any) {
       res.status(400).json({
         error: 'Wallet Update Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
+// PUT /api/v1/institution/settings/wallets/manage — Add or update a wallet
+router.put(
+  '/api/v1/institution/settings/wallets/manage',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getInstitutionClientSettingsService();
+      const wallet = await service.addOrUpdateWallet(
+        req.institutionClient!.clientId,
+        req.body,
+      );
+
+      res.status(200).json({
+        success: true,
+        data: wallet,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        error: 'Wallet Update Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
+// GET /api/v1/institution/settings/wallets/list — List all wallets
+router.get(
+  '/api/v1/institution/settings/wallets/list',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getInstitutionClientSettingsService();
+      const wallets = await service.listWallets(req.institutionClient!.clientId);
+
+      res.status(200).json({
+        success: true,
+        data: wallets,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
+// DELETE /api/v1/institution/settings/wallets/:id — Delete a wallet
+router.delete(
+  '/api/v1/institution/settings/wallets/:id',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getInstitutionClientSettingsService();
+      await service.deleteWallet(
+        req.institutionClient!.clientId,
+        req.params.id,
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Wallet deleted',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        error: 'Wallet Deletion Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
