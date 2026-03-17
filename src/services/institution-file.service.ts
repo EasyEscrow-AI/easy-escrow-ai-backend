@@ -10,7 +10,14 @@ import { getInstitutionEscrowConfig } from '../config/institution-escrow.config'
 import multer from 'multer';
 import { Readable } from 'stream';
 
-const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls
+  'text/csv', // .csv
+];
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 /**

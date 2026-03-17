@@ -421,7 +421,70 @@ exports.Prisma.InstitutionClientScalarFieldEnum = {
   settledWallets: 'settledWallets',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  lastLoginAt: 'lastLoginAt'
+  lastLoginAt: 'lastLoginAt',
+  legalName: 'legalName',
+  tradingName: 'tradingName',
+  registrationNumber: 'registrationNumber',
+  registrationCountry: 'registrationCountry',
+  entityType: 'entityType',
+  lei: 'lei',
+  taxId: 'taxId',
+  taxCountry: 'taxCountry',
+  addressLine1: 'addressLine1',
+  addressLine2: 'addressLine2',
+  city: 'city',
+  state: 'state',
+  postalCode: 'postalCode',
+  country: 'country',
+  contactFirstName: 'contactFirstName',
+  contactLastName: 'contactLastName',
+  contactEmail: 'contactEmail',
+  contactPhone: 'contactPhone',
+  contactTitle: 'contactTitle',
+  kybStatus: 'kybStatus',
+  kybVerifiedAt: 'kybVerifiedAt',
+  kybExpiresAt: 'kybExpiresAt',
+  riskRating: 'riskRating',
+  riskNotes: 'riskNotes',
+  sanctionsStatus: 'sanctionsStatus',
+  sourceOfFunds: 'sourceOfFunds',
+  isRegulatedEntity: 'isRegulatedEntity',
+  regulatoryStatus: 'regulatoryStatus',
+  licenseType: 'licenseType',
+  licenseNumber: 'licenseNumber',
+  regulatoryBody: 'regulatoryBody',
+  industry: 'industry',
+  websiteUrl: 'websiteUrl',
+  businessDescription: 'businessDescription',
+  yearEstablished: 'yearEstablished',
+  employeeCountRange: 'employeeCountRange',
+  annualRevenueRange: 'annualRevenueRange',
+  expectedMonthlyVolume: 'expectedMonthlyVolume',
+  purposeOfAccount: 'purposeOfAccount',
+  walletCustodyType: 'walletCustodyType',
+  custodianName: 'custodianName',
+  preferredSettlementChain: 'preferredSettlementChain',
+  accountManagerName: 'accountManagerName',
+  accountManagerEmail: 'accountManagerEmail',
+  onboardingCompletedAt: 'onboardingCompletedAt',
+  nextReviewDate: 'nextReviewDate',
+  referralSource: 'referralSource',
+  isTestAccount: 'isTestAccount',
+  isArchived: 'isArchived'
+};
+
+exports.Prisma.InstitutionWalletScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  name: 'name',
+  address: 'address',
+  chain: 'chain',
+  description: 'description',
+  provider: 'provider',
+  isPrimary: 'isPrimary',
+  isSettlement: 'isSettlement',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.InstitutionRefreshTokenScalarFieldEnum = {
@@ -698,6 +761,79 @@ exports.ClientStatus = exports.$Enums.ClientStatus = {
   PENDING_VERIFICATION: 'PENDING_VERIFICATION'
 };
 
+exports.EntityType = exports.$Enums.EntityType = {
+  CORPORATION: 'CORPORATION',
+  LLC: 'LLC',
+  PARTNERSHIP: 'PARTNERSHIP',
+  SOLE_PROPRIETORSHIP: 'SOLE_PROPRIETORSHIP',
+  TRUST: 'TRUST',
+  FOUNDATION: 'FOUNDATION',
+  COOPERATIVE: 'COOPERATIVE',
+  NON_PROFIT: 'NON_PROFIT',
+  GOVERNMENT: 'GOVERNMENT',
+  OTHER: 'OTHER'
+};
+
+exports.KybStatus = exports.$Enums.KybStatus = {
+  NOT_STARTED: 'NOT_STARTED',
+  PENDING: 'PENDING',
+  IN_REVIEW: 'IN_REVIEW',
+  VERIFIED: 'VERIFIED',
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED'
+};
+
+exports.RiskRating = exports.$Enums.RiskRating = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL',
+  UNRATED: 'UNRATED'
+};
+
+exports.SanctionsStatus = exports.$Enums.SanctionsStatus = {
+  CLEAR: 'CLEAR',
+  FLAGGED: 'FLAGGED',
+  BLOCKED: 'BLOCKED',
+  PENDING_REVIEW: 'PENDING_REVIEW'
+};
+
+exports.RegulatoryStatus = exports.$Enums.RegulatoryStatus = {
+  REGULATED: 'REGULATED',
+  UNREGULATED: 'UNREGULATED',
+  EXEMPT: 'EXEMPT',
+  PENDING_LICENSE: 'PENDING_LICENSE',
+  SUSPENDED: 'SUSPENDED'
+};
+
+exports.EmployeeCountRange = exports.$Enums.EmployeeCountRange = {
+  RANGE_1_10: 'RANGE_1_10',
+  RANGE_11_50: 'RANGE_11_50',
+  RANGE_51_200: 'RANGE_51_200',
+  RANGE_201_500: 'RANGE_201_500',
+  RANGE_501_1000: 'RANGE_501_1000',
+  RANGE_1001_5000: 'RANGE_1001_5000',
+  RANGE_5001_PLUS: 'RANGE_5001_PLUS'
+};
+
+exports.AnnualRevenueRange = exports.$Enums.AnnualRevenueRange = {
+  UNDER_1M: 'UNDER_1M',
+  RANGE_1M_10M: 'RANGE_1M_10M',
+  RANGE_10M_50M: 'RANGE_10M_50M',
+  RANGE_50M_100M: 'RANGE_50M_100M',
+  RANGE_100M_500M: 'RANGE_100M_500M',
+  RANGE_500M_1B: 'RANGE_500M_1B',
+  OVER_1B: 'OVER_1B'
+};
+
+exports.WalletCustodyType = exports.$Enums.WalletCustodyType = {
+  SELF_CUSTODY: 'SELF_CUSTODY',
+  THIRD_PARTY: 'THIRD_PARTY',
+  MPC: 'MPC',
+  MULTISIG: 'MULTISIG',
+  EXCHANGE: 'EXCHANGE'
+};
+
 exports.InstitutionConditionType = exports.$Enums.InstitutionConditionType = {
   ADMIN_RELEASE: 'ADMIN_RELEASE',
   TIME_LOCK: 'TIME_LOCK',
@@ -747,6 +883,7 @@ exports.Prisma.ModelName = {
   CnftOffer: 'CnftOffer',
   TwoPhaseSwap: 'TwoPhaseSwap',
   InstitutionClient: 'InstitutionClient',
+  InstitutionWallet: 'InstitutionWallet',
   InstitutionRefreshToken: 'InstitutionRefreshToken',
   InstitutionClientSettings: 'InstitutionClientSettings',
   InstitutionApiKey: 'InstitutionApiKey',

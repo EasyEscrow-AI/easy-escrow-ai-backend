@@ -725,6 +725,80 @@ enum CorridorStatus {
   DEPRECATED
 }
 
+// Enums for expanded institution client profile
+enum EntityType {
+  CORPORATION
+  LLC
+  PARTNERSHIP
+  SOLE_PROPRIETORSHIP
+  TRUST
+  FOUNDATION
+  COOPERATIVE
+  NON_PROFIT
+  GOVERNMENT
+  OTHER
+}
+
+enum KybStatus {
+  NOT_STARTED
+  PENDING
+  IN_REVIEW
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum RiskRating {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+  UNRATED
+}
+
+enum RegulatoryStatus {
+  REGULATED
+  UNREGULATED
+  EXEMPT
+  PENDING_LICENSE
+  SUSPENDED
+}
+
+enum SanctionsStatus {
+  CLEAR
+  FLAGGED
+  BLOCKED
+  PENDING_REVIEW
+}
+
+enum WalletCustodyType {
+  SELF_CUSTODY
+  THIRD_PARTY
+  MPC
+  MULTISIG
+  EXCHANGE
+}
+
+enum EmployeeCountRange {
+  RANGE_1_10
+  RANGE_11_50
+  RANGE_51_200
+  RANGE_201_500
+  RANGE_501_1000
+  RANGE_1001_5000
+  RANGE_5001_PLUS
+}
+
+enum AnnualRevenueRange {
+  UNDER_1M
+  RANGE_1M_10M
+  RANGE_10M_50M
+  RANGE_50M_100M
+  RANGE_100M_500M
+  RANGE_500M_1B
+  OVER_1B
+}
+
 // ============================================
 // CLIENT & AUTH MODELS
 // ============================================
@@ -745,6 +819,71 @@ model InstitutionClient {
   updatedAt       DateTime      @updatedAt @map("updated_at")
   lastLoginAt     DateTime?     @map("last_login_at")
 
+  // Legal Entity
+  legalName             String?          @map("legal_name")
+  tradingName           String?          @map("trading_name")
+  registrationNumber    String?          @map("registration_number")
+  registrationCountry   String?          @map("registration_country")
+  entityType            EntityType?      @map("entity_type")
+  lei                   String?          // Legal Entity Identifier
+  taxId                 String?          @map("tax_id")
+  taxCountry            String?          @map("tax_country")
+
+  // Registered Address
+  addressLine1          String?          @map("address_line_1")
+  addressLine2          String?          @map("address_line_2")
+  city                  String?
+  state                 String?
+  postalCode            String?          @map("postal_code")
+  country               String?
+
+  // Primary Contact
+  contactFirstName      String?          @map("contact_first_name")
+  contactLastName       String?          @map("contact_last_name")
+  contactEmail          String?          @map("contact_email")
+  contactPhone          String?          @map("contact_phone")
+  contactTitle          String?          @map("contact_title")
+
+  // Compliance
+  kybStatus             KybStatus?       @map("kyb_status")
+  kybVerifiedAt         DateTime?        @map("kyb_verified_at")
+  kybExpiresAt          DateTime?        @map("kyb_expires_at")
+  riskRating            RiskRating?      @map("risk_rating")
+  riskNotes             String?          @map("risk_notes")
+  sanctionsStatus       SanctionsStatus? @map("sanctions_status")
+  sourceOfFunds         String?          @map("source_of_funds")
+
+  // Regulatory
+  isRegulatedEntity     Boolean?         @map("is_regulated_entity")
+  regulatoryStatus      RegulatoryStatus? @map("regulatory_status")
+  licenseType           String?          @map("license_type")
+  licenseNumber         String?          @map("license_number")
+  regulatoryBody        String?          @map("regulatory_body")
+
+  // Business
+  industry              String?
+  websiteUrl            String?          @map("website_url")
+  businessDescription   String?          @map("business_description")
+  yearEstablished       Int?             @map("year_established")
+  employeeCountRange    EmployeeCountRange? @map("employee_count_range")
+  annualRevenueRange    AnnualRevenueRange? @map("annual_revenue_range")
+  expectedMonthlyVolume Decimal?         @map("expected_monthly_volume") @db.Decimal(20, 6)
+  purposeOfAccount      String?          @map("purpose_of_account")
+
+  // Crypto
+  walletCustodyType     WalletCustodyType? @map("wallet_custody_type")
+  custodianName         String?          @map("custodian_name")
+  preferredSettlementChain String?       @map("preferred_settlement_chain")
+
+  // Account Management
+  accountManagerName    String?          @map("account_manager_name")
+  accountManagerEmail   String?          @map("account_manager_email")
+  onboardingCompletedAt DateTime?        @map("onboarding_completed_at")
+  nextReviewDate        DateTime?        @map("next_review_date")
+  referralSource        String?          @map("referral_source")
+  isTestAccount         Boolean          @default(false) @map("is_test_account")
+  isArchived            Boolean          @default(false) @map("is_archived")
+
   // Relations
   refreshTokens   InstitutionRefreshToken[]
   settings        InstitutionClientSettings?
@@ -752,13 +891,41 @@ model InstitutionClient {
   escrows         InstitutionEscrow[]
   auditLogs       InstitutionAuditLog[]
   files           InstitutionFile[]
+  wallets         InstitutionWallet[]
 
   @@index([email])
   @@index([status])
   @@index([tier])
   @@index([primaryWallet])
   @@index([createdAt])
+  @@index([isArchived])
+  @@index([industry])
+  @@index([country])
+  @@index([kybStatus])
   @@map("institution_clients")
+}
+
+// Institution wallet management (replaces flat primaryWallet/settledWallets)
+model InstitutionWallet {
+  id            String    @id @default(uuid())
+  clientId      String    @map("client_id")
+  name          String
+  address       String
+  chain         String    @default("solana")
+  description   String?
+  provider      String?
+  isPrimary     Boolean   @default(false) @map("is_primary")
+  isSettlement  Boolean   @default(false) @map("is_settlement")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  client        InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([address])
+  @@index([isPrimary])
+  @@index([isSettlement])
+  @@map("institution_wallets")
 }
 
 // Refresh token storage (hashed)

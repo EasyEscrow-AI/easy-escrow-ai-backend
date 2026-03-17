@@ -94,6 +94,11 @@ export type TwoPhaseSwap = $Result.DefaultSelection<Prisma.$TwoPhaseSwapPayload>
  */
 export type InstitutionClient = $Result.DefaultSelection<Prisma.$InstitutionClientPayload>
 /**
+ * Model InstitutionWallet
+ * 
+ */
+export type InstitutionWallet = $Result.DefaultSelection<Prisma.$InstitutionWalletPayload>
+/**
  * Model InstitutionRefreshToken
  * 
  */
@@ -349,6 +354,103 @@ export const CorridorStatus: {
 
 export type CorridorStatus = (typeof CorridorStatus)[keyof typeof CorridorStatus]
 
+
+export const EntityType: {
+  CORPORATION: 'CORPORATION',
+  LLC: 'LLC',
+  PARTNERSHIP: 'PARTNERSHIP',
+  SOLE_PROPRIETORSHIP: 'SOLE_PROPRIETORSHIP',
+  TRUST: 'TRUST',
+  FOUNDATION: 'FOUNDATION',
+  COOPERATIVE: 'COOPERATIVE',
+  NON_PROFIT: 'NON_PROFIT',
+  GOVERNMENT: 'GOVERNMENT',
+  OTHER: 'OTHER'
+};
+
+export type EntityType = (typeof EntityType)[keyof typeof EntityType]
+
+
+export const KybStatus: {
+  NOT_STARTED: 'NOT_STARTED',
+  PENDING: 'PENDING',
+  IN_REVIEW: 'IN_REVIEW',
+  VERIFIED: 'VERIFIED',
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED'
+};
+
+export type KybStatus = (typeof KybStatus)[keyof typeof KybStatus]
+
+
+export const RiskRating: {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL',
+  UNRATED: 'UNRATED'
+};
+
+export type RiskRating = (typeof RiskRating)[keyof typeof RiskRating]
+
+
+export const RegulatoryStatus: {
+  REGULATED: 'REGULATED',
+  UNREGULATED: 'UNREGULATED',
+  EXEMPT: 'EXEMPT',
+  PENDING_LICENSE: 'PENDING_LICENSE',
+  SUSPENDED: 'SUSPENDED'
+};
+
+export type RegulatoryStatus = (typeof RegulatoryStatus)[keyof typeof RegulatoryStatus]
+
+
+export const SanctionsStatus: {
+  CLEAR: 'CLEAR',
+  FLAGGED: 'FLAGGED',
+  BLOCKED: 'BLOCKED',
+  PENDING_REVIEW: 'PENDING_REVIEW'
+};
+
+export type SanctionsStatus = (typeof SanctionsStatus)[keyof typeof SanctionsStatus]
+
+
+export const WalletCustodyType: {
+  SELF_CUSTODY: 'SELF_CUSTODY',
+  THIRD_PARTY: 'THIRD_PARTY',
+  MPC: 'MPC',
+  MULTISIG: 'MULTISIG',
+  EXCHANGE: 'EXCHANGE'
+};
+
+export type WalletCustodyType = (typeof WalletCustodyType)[keyof typeof WalletCustodyType]
+
+
+export const EmployeeCountRange: {
+  RANGE_1_10: 'RANGE_1_10',
+  RANGE_11_50: 'RANGE_11_50',
+  RANGE_51_200: 'RANGE_51_200',
+  RANGE_201_500: 'RANGE_201_500',
+  RANGE_501_1000: 'RANGE_501_1000',
+  RANGE_1001_5000: 'RANGE_1001_5000',
+  RANGE_5001_PLUS: 'RANGE_5001_PLUS'
+};
+
+export type EmployeeCountRange = (typeof EmployeeCountRange)[keyof typeof EmployeeCountRange]
+
+
+export const AnnualRevenueRange: {
+  UNDER_1M: 'UNDER_1M',
+  RANGE_1M_10M: 'RANGE_1M_10M',
+  RANGE_10M_50M: 'RANGE_10M_50M',
+  RANGE_50M_100M: 'RANGE_50M_100M',
+  RANGE_100M_500M: 'RANGE_100M_500M',
+  RANGE_500M_1B: 'RANGE_500M_1B',
+  OVER_1B: 'OVER_1B'
+};
+
+export type AnnualRevenueRange = (typeof AnnualRevenueRange)[keyof typeof AnnualRevenueRange]
+
 }
 
 export type AgreementStatus = $Enums.AgreementStatus
@@ -426,6 +528,38 @@ export const DocumentType: typeof $Enums.DocumentType
 export type CorridorStatus = $Enums.CorridorStatus
 
 export const CorridorStatus: typeof $Enums.CorridorStatus
+
+export type EntityType = $Enums.EntityType
+
+export const EntityType: typeof $Enums.EntityType
+
+export type KybStatus = $Enums.KybStatus
+
+export const KybStatus: typeof $Enums.KybStatus
+
+export type RiskRating = $Enums.RiskRating
+
+export const RiskRating: typeof $Enums.RiskRating
+
+export type RegulatoryStatus = $Enums.RegulatoryStatus
+
+export const RegulatoryStatus: typeof $Enums.RegulatoryStatus
+
+export type SanctionsStatus = $Enums.SanctionsStatus
+
+export const SanctionsStatus: typeof $Enums.SanctionsStatus
+
+export type WalletCustodyType = $Enums.WalletCustodyType
+
+export const WalletCustodyType: typeof $Enums.WalletCustodyType
+
+export type EmployeeCountRange = $Enums.EmployeeCountRange
+
+export const EmployeeCountRange: typeof $Enums.EmployeeCountRange
+
+export type AnnualRevenueRange = $Enums.AnnualRevenueRange
+
+export const AnnualRevenueRange: typeof $Enums.AnnualRevenueRange
 
 /**
  * ##  Prisma Client ʲˢ
@@ -704,6 +838,16 @@ export class PrismaClient<
     * ```
     */
   get institutionClient(): Prisma.InstitutionClientDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionWallet`: Exposes CRUD operations for the **InstitutionWallet** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionWallets
+    * const institutionWallets = await prisma.institutionWallet.findMany()
+    * ```
+    */
+  get institutionWallet(): Prisma.InstitutionWalletDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.institutionRefreshToken`: Exposes CRUD operations for the **InstitutionRefreshToken** model.
@@ -1250,6 +1394,7 @@ export namespace Prisma {
     CnftOffer: 'CnftOffer',
     TwoPhaseSwap: 'TwoPhaseSwap',
     InstitutionClient: 'InstitutionClient',
+    InstitutionWallet: 'InstitutionWallet',
     InstitutionRefreshToken: 'InstitutionRefreshToken',
     InstitutionClientSettings: 'InstitutionClientSettings',
     InstitutionApiKey: 'InstitutionApiKey',
@@ -1277,7 +1422,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionFile"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionFile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2465,6 +2610,80 @@ export namespace Prisma {
           }
         }
       }
+      InstitutionWallet: {
+        payload: Prisma.$InstitutionWalletPayload<ExtArgs>
+        fields: Prisma.InstitutionWalletFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionWalletFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionWalletFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionWalletFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionWalletFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionWalletFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionWalletCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionWalletCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionWalletCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionWalletDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>
+          }
+          update: {
+            args: Prisma.InstitutionWalletUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionWalletDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionWalletUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionWalletUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionWalletUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionWalletPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionWalletAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionWallet>
+          }
+          groupBy: {
+            args: Prisma.InstitutionWalletGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionWalletGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionWalletCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionWalletCountAggregateOutputType> | number
+          }
+        }
+      }
       InstitutionRefreshToken: {
         payload: Prisma.$InstitutionRefreshTokenPayload<ExtArgs>
         fields: Prisma.InstitutionRefreshTokenFieldRefs
@@ -3243,6 +3462,7 @@ export namespace Prisma {
     cnftOffer?: CnftOfferOmit
     twoPhaseSwap?: TwoPhaseSwapOmit
     institutionClient?: InstitutionClientOmit
+    institutionWallet?: InstitutionWalletOmit
     institutionRefreshToken?: InstitutionRefreshTokenOmit
     institutionClientSettings?: InstitutionClientSettingsOmit
     institutionApiKey?: InstitutionApiKeyOmit
@@ -3577,6 +3797,7 @@ export namespace Prisma {
     escrows: number
     auditLogs: number
     files: number
+    wallets: number
   }
 
   export type InstitutionClientCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3585,6 +3806,7 @@ export namespace Prisma {
     escrows?: boolean | InstitutionClientCountOutputTypeCountEscrowsArgs
     auditLogs?: boolean | InstitutionClientCountOutputTypeCountAuditLogsArgs
     files?: boolean | InstitutionClientCountOutputTypeCountFilesArgs
+    wallets?: boolean | InstitutionClientCountOutputTypeCountWalletsArgs
   }
 
   // Custom InputTypes
@@ -3631,6 +3853,13 @@ export namespace Prisma {
    */
   export type InstitutionClientCountOutputTypeCountFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InstitutionFileWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountWalletsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionWalletWhereInput
   }
 
 
@@ -22728,8 +22957,20 @@ export namespace Prisma {
 
   export type AggregateInstitutionClient = {
     _count: InstitutionClientCountAggregateOutputType | null
+    _avg: InstitutionClientAvgAggregateOutputType | null
+    _sum: InstitutionClientSumAggregateOutputType | null
     _min: InstitutionClientMinAggregateOutputType | null
     _max: InstitutionClientMaxAggregateOutputType | null
+  }
+
+  export type InstitutionClientAvgAggregateOutputType = {
+    yearEstablished: number | null
+    expectedMonthlyVolume: Decimal | null
+  }
+
+  export type InstitutionClientSumAggregateOutputType = {
+    yearEstablished: number | null
+    expectedMonthlyVolume: Decimal | null
   }
 
   export type InstitutionClientMinAggregateOutputType = {
@@ -22745,6 +22986,55 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     lastLoginAt: Date | null
+    legalName: string | null
+    tradingName: string | null
+    registrationNumber: string | null
+    registrationCountry: string | null
+    entityType: $Enums.EntityType | null
+    lei: string | null
+    taxId: string | null
+    taxCountry: string | null
+    addressLine1: string | null
+    addressLine2: string | null
+    city: string | null
+    state: string | null
+    postalCode: string | null
+    country: string | null
+    contactFirstName: string | null
+    contactLastName: string | null
+    contactEmail: string | null
+    contactPhone: string | null
+    contactTitle: string | null
+    kybStatus: $Enums.KybStatus | null
+    kybVerifiedAt: Date | null
+    kybExpiresAt: Date | null
+    riskRating: $Enums.RiskRating | null
+    riskNotes: string | null
+    sanctionsStatus: $Enums.SanctionsStatus | null
+    sourceOfFunds: string | null
+    isRegulatedEntity: boolean | null
+    regulatoryStatus: $Enums.RegulatoryStatus | null
+    licenseType: string | null
+    licenseNumber: string | null
+    regulatoryBody: string | null
+    industry: string | null
+    websiteUrl: string | null
+    businessDescription: string | null
+    yearEstablished: number | null
+    employeeCountRange: $Enums.EmployeeCountRange | null
+    annualRevenueRange: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume: Decimal | null
+    purposeOfAccount: string | null
+    walletCustodyType: $Enums.WalletCustodyType | null
+    custodianName: string | null
+    preferredSettlementChain: string | null
+    accountManagerName: string | null
+    accountManagerEmail: string | null
+    onboardingCompletedAt: Date | null
+    nextReviewDate: Date | null
+    referralSource: string | null
+    isTestAccount: boolean | null
+    isArchived: boolean | null
   }
 
   export type InstitutionClientMaxAggregateOutputType = {
@@ -22760,6 +23050,55 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     lastLoginAt: Date | null
+    legalName: string | null
+    tradingName: string | null
+    registrationNumber: string | null
+    registrationCountry: string | null
+    entityType: $Enums.EntityType | null
+    lei: string | null
+    taxId: string | null
+    taxCountry: string | null
+    addressLine1: string | null
+    addressLine2: string | null
+    city: string | null
+    state: string | null
+    postalCode: string | null
+    country: string | null
+    contactFirstName: string | null
+    contactLastName: string | null
+    contactEmail: string | null
+    contactPhone: string | null
+    contactTitle: string | null
+    kybStatus: $Enums.KybStatus | null
+    kybVerifiedAt: Date | null
+    kybExpiresAt: Date | null
+    riskRating: $Enums.RiskRating | null
+    riskNotes: string | null
+    sanctionsStatus: $Enums.SanctionsStatus | null
+    sourceOfFunds: string | null
+    isRegulatedEntity: boolean | null
+    regulatoryStatus: $Enums.RegulatoryStatus | null
+    licenseType: string | null
+    licenseNumber: string | null
+    regulatoryBody: string | null
+    industry: string | null
+    websiteUrl: string | null
+    businessDescription: string | null
+    yearEstablished: number | null
+    employeeCountRange: $Enums.EmployeeCountRange | null
+    annualRevenueRange: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume: Decimal | null
+    purposeOfAccount: string | null
+    walletCustodyType: $Enums.WalletCustodyType | null
+    custodianName: string | null
+    preferredSettlementChain: string | null
+    accountManagerName: string | null
+    accountManagerEmail: string | null
+    onboardingCompletedAt: Date | null
+    nextReviewDate: Date | null
+    referralSource: string | null
+    isTestAccount: boolean | null
+    isArchived: boolean | null
   }
 
   export type InstitutionClientCountAggregateOutputType = {
@@ -22776,9 +23115,68 @@ export namespace Prisma {
     createdAt: number
     updatedAt: number
     lastLoginAt: number
+    legalName: number
+    tradingName: number
+    registrationNumber: number
+    registrationCountry: number
+    entityType: number
+    lei: number
+    taxId: number
+    taxCountry: number
+    addressLine1: number
+    addressLine2: number
+    city: number
+    state: number
+    postalCode: number
+    country: number
+    contactFirstName: number
+    contactLastName: number
+    contactEmail: number
+    contactPhone: number
+    contactTitle: number
+    kybStatus: number
+    kybVerifiedAt: number
+    kybExpiresAt: number
+    riskRating: number
+    riskNotes: number
+    sanctionsStatus: number
+    sourceOfFunds: number
+    isRegulatedEntity: number
+    regulatoryStatus: number
+    licenseType: number
+    licenseNumber: number
+    regulatoryBody: number
+    industry: number
+    websiteUrl: number
+    businessDescription: number
+    yearEstablished: number
+    employeeCountRange: number
+    annualRevenueRange: number
+    expectedMonthlyVolume: number
+    purposeOfAccount: number
+    walletCustodyType: number
+    custodianName: number
+    preferredSettlementChain: number
+    accountManagerName: number
+    accountManagerEmail: number
+    onboardingCompletedAt: number
+    nextReviewDate: number
+    referralSource: number
+    isTestAccount: number
+    isArchived: number
     _all: number
   }
 
+
+  export type InstitutionClientAvgAggregateInputType = {
+    yearEstablished?: true
+    expectedMonthlyVolume?: true
+  }
+
+  export type InstitutionClientSumAggregateInputType = {
+    yearEstablished?: true
+    expectedMonthlyVolume?: true
+  }
 
   export type InstitutionClientMinAggregateInputType = {
     id?: true
@@ -22793,6 +23191,55 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     lastLoginAt?: true
+    legalName?: true
+    tradingName?: true
+    registrationNumber?: true
+    registrationCountry?: true
+    entityType?: true
+    lei?: true
+    taxId?: true
+    taxCountry?: true
+    addressLine1?: true
+    addressLine2?: true
+    city?: true
+    state?: true
+    postalCode?: true
+    country?: true
+    contactFirstName?: true
+    contactLastName?: true
+    contactEmail?: true
+    contactPhone?: true
+    contactTitle?: true
+    kybStatus?: true
+    kybVerifiedAt?: true
+    kybExpiresAt?: true
+    riskRating?: true
+    riskNotes?: true
+    sanctionsStatus?: true
+    sourceOfFunds?: true
+    isRegulatedEntity?: true
+    regulatoryStatus?: true
+    licenseType?: true
+    licenseNumber?: true
+    regulatoryBody?: true
+    industry?: true
+    websiteUrl?: true
+    businessDescription?: true
+    yearEstablished?: true
+    employeeCountRange?: true
+    annualRevenueRange?: true
+    expectedMonthlyVolume?: true
+    purposeOfAccount?: true
+    walletCustodyType?: true
+    custodianName?: true
+    preferredSettlementChain?: true
+    accountManagerName?: true
+    accountManagerEmail?: true
+    onboardingCompletedAt?: true
+    nextReviewDate?: true
+    referralSource?: true
+    isTestAccount?: true
+    isArchived?: true
   }
 
   export type InstitutionClientMaxAggregateInputType = {
@@ -22808,6 +23255,55 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     lastLoginAt?: true
+    legalName?: true
+    tradingName?: true
+    registrationNumber?: true
+    registrationCountry?: true
+    entityType?: true
+    lei?: true
+    taxId?: true
+    taxCountry?: true
+    addressLine1?: true
+    addressLine2?: true
+    city?: true
+    state?: true
+    postalCode?: true
+    country?: true
+    contactFirstName?: true
+    contactLastName?: true
+    contactEmail?: true
+    contactPhone?: true
+    contactTitle?: true
+    kybStatus?: true
+    kybVerifiedAt?: true
+    kybExpiresAt?: true
+    riskRating?: true
+    riskNotes?: true
+    sanctionsStatus?: true
+    sourceOfFunds?: true
+    isRegulatedEntity?: true
+    regulatoryStatus?: true
+    licenseType?: true
+    licenseNumber?: true
+    regulatoryBody?: true
+    industry?: true
+    websiteUrl?: true
+    businessDescription?: true
+    yearEstablished?: true
+    employeeCountRange?: true
+    annualRevenueRange?: true
+    expectedMonthlyVolume?: true
+    purposeOfAccount?: true
+    walletCustodyType?: true
+    custodianName?: true
+    preferredSettlementChain?: true
+    accountManagerName?: true
+    accountManagerEmail?: true
+    onboardingCompletedAt?: true
+    nextReviewDate?: true
+    referralSource?: true
+    isTestAccount?: true
+    isArchived?: true
   }
 
   export type InstitutionClientCountAggregateInputType = {
@@ -22824,6 +23320,55 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     lastLoginAt?: true
+    legalName?: true
+    tradingName?: true
+    registrationNumber?: true
+    registrationCountry?: true
+    entityType?: true
+    lei?: true
+    taxId?: true
+    taxCountry?: true
+    addressLine1?: true
+    addressLine2?: true
+    city?: true
+    state?: true
+    postalCode?: true
+    country?: true
+    contactFirstName?: true
+    contactLastName?: true
+    contactEmail?: true
+    contactPhone?: true
+    contactTitle?: true
+    kybStatus?: true
+    kybVerifiedAt?: true
+    kybExpiresAt?: true
+    riskRating?: true
+    riskNotes?: true
+    sanctionsStatus?: true
+    sourceOfFunds?: true
+    isRegulatedEntity?: true
+    regulatoryStatus?: true
+    licenseType?: true
+    licenseNumber?: true
+    regulatoryBody?: true
+    industry?: true
+    websiteUrl?: true
+    businessDescription?: true
+    yearEstablished?: true
+    employeeCountRange?: true
+    annualRevenueRange?: true
+    expectedMonthlyVolume?: true
+    purposeOfAccount?: true
+    walletCustodyType?: true
+    custodianName?: true
+    preferredSettlementChain?: true
+    accountManagerName?: true
+    accountManagerEmail?: true
+    onboardingCompletedAt?: true
+    nextReviewDate?: true
+    referralSource?: true
+    isTestAccount?: true
+    isArchived?: true
     _all?: true
   }
 
@@ -22865,6 +23410,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionClientAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionClientSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: InstitutionClientMinAggregateInputType
@@ -22895,6 +23452,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: InstitutionClientCountAggregateInputType | true
+    _avg?: InstitutionClientAvgAggregateInputType
+    _sum?: InstitutionClientSumAggregateInputType
     _min?: InstitutionClientMinAggregateInputType
     _max?: InstitutionClientMaxAggregateInputType
   }
@@ -22913,7 +23472,58 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     lastLoginAt: Date | null
+    legalName: string | null
+    tradingName: string | null
+    registrationNumber: string | null
+    registrationCountry: string | null
+    entityType: $Enums.EntityType | null
+    lei: string | null
+    taxId: string | null
+    taxCountry: string | null
+    addressLine1: string | null
+    addressLine2: string | null
+    city: string | null
+    state: string | null
+    postalCode: string | null
+    country: string | null
+    contactFirstName: string | null
+    contactLastName: string | null
+    contactEmail: string | null
+    contactPhone: string | null
+    contactTitle: string | null
+    kybStatus: $Enums.KybStatus | null
+    kybVerifiedAt: Date | null
+    kybExpiresAt: Date | null
+    riskRating: $Enums.RiskRating | null
+    riskNotes: string | null
+    sanctionsStatus: $Enums.SanctionsStatus | null
+    sourceOfFunds: string | null
+    isRegulatedEntity: boolean | null
+    regulatoryStatus: $Enums.RegulatoryStatus | null
+    licenseType: string | null
+    licenseNumber: string | null
+    regulatoryBody: string | null
+    industry: string | null
+    websiteUrl: string | null
+    businessDescription: string | null
+    yearEstablished: number | null
+    employeeCountRange: $Enums.EmployeeCountRange | null
+    annualRevenueRange: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume: Decimal | null
+    purposeOfAccount: string | null
+    walletCustodyType: $Enums.WalletCustodyType | null
+    custodianName: string | null
+    preferredSettlementChain: string | null
+    accountManagerName: string | null
+    accountManagerEmail: string | null
+    onboardingCompletedAt: Date | null
+    nextReviewDate: Date | null
+    referralSource: string | null
+    isTestAccount: boolean
+    isArchived: boolean
     _count: InstitutionClientCountAggregateOutputType | null
+    _avg: InstitutionClientAvgAggregateOutputType | null
+    _sum: InstitutionClientSumAggregateOutputType | null
     _min: InstitutionClientMinAggregateOutputType | null
     _max: InstitutionClientMaxAggregateOutputType | null
   }
@@ -22946,12 +23556,62 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     lastLoginAt?: boolean
+    legalName?: boolean
+    tradingName?: boolean
+    registrationNumber?: boolean
+    registrationCountry?: boolean
+    entityType?: boolean
+    lei?: boolean
+    taxId?: boolean
+    taxCountry?: boolean
+    addressLine1?: boolean
+    addressLine2?: boolean
+    city?: boolean
+    state?: boolean
+    postalCode?: boolean
+    country?: boolean
+    contactFirstName?: boolean
+    contactLastName?: boolean
+    contactEmail?: boolean
+    contactPhone?: boolean
+    contactTitle?: boolean
+    kybStatus?: boolean
+    kybVerifiedAt?: boolean
+    kybExpiresAt?: boolean
+    riskRating?: boolean
+    riskNotes?: boolean
+    sanctionsStatus?: boolean
+    sourceOfFunds?: boolean
+    isRegulatedEntity?: boolean
+    regulatoryStatus?: boolean
+    licenseType?: boolean
+    licenseNumber?: boolean
+    regulatoryBody?: boolean
+    industry?: boolean
+    websiteUrl?: boolean
+    businessDescription?: boolean
+    yearEstablished?: boolean
+    employeeCountRange?: boolean
+    annualRevenueRange?: boolean
+    expectedMonthlyVolume?: boolean
+    purposeOfAccount?: boolean
+    walletCustodyType?: boolean
+    custodianName?: boolean
+    preferredSettlementChain?: boolean
+    accountManagerName?: boolean
+    accountManagerEmail?: boolean
+    onboardingCompletedAt?: boolean
+    nextReviewDate?: boolean
+    referralSource?: boolean
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: boolean | InstitutionClient$refreshTokensArgs<ExtArgs>
     settings?: boolean | InstitutionClient$settingsArgs<ExtArgs>
     apiKeys?: boolean | InstitutionClient$apiKeysArgs<ExtArgs>
     escrows?: boolean | InstitutionClient$escrowsArgs<ExtArgs>
     auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
     files?: boolean | InstitutionClient$filesArgs<ExtArgs>
+    wallets?: boolean | InstitutionClient$walletsArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionClient"]>
 
@@ -22969,6 +23629,55 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     lastLoginAt?: boolean
+    legalName?: boolean
+    tradingName?: boolean
+    registrationNumber?: boolean
+    registrationCountry?: boolean
+    entityType?: boolean
+    lei?: boolean
+    taxId?: boolean
+    taxCountry?: boolean
+    addressLine1?: boolean
+    addressLine2?: boolean
+    city?: boolean
+    state?: boolean
+    postalCode?: boolean
+    country?: boolean
+    contactFirstName?: boolean
+    contactLastName?: boolean
+    contactEmail?: boolean
+    contactPhone?: boolean
+    contactTitle?: boolean
+    kybStatus?: boolean
+    kybVerifiedAt?: boolean
+    kybExpiresAt?: boolean
+    riskRating?: boolean
+    riskNotes?: boolean
+    sanctionsStatus?: boolean
+    sourceOfFunds?: boolean
+    isRegulatedEntity?: boolean
+    regulatoryStatus?: boolean
+    licenseType?: boolean
+    licenseNumber?: boolean
+    regulatoryBody?: boolean
+    industry?: boolean
+    websiteUrl?: boolean
+    businessDescription?: boolean
+    yearEstablished?: boolean
+    employeeCountRange?: boolean
+    annualRevenueRange?: boolean
+    expectedMonthlyVolume?: boolean
+    purposeOfAccount?: boolean
+    walletCustodyType?: boolean
+    custodianName?: boolean
+    preferredSettlementChain?: boolean
+    accountManagerName?: boolean
+    accountManagerEmail?: boolean
+    onboardingCompletedAt?: boolean
+    nextReviewDate?: boolean
+    referralSource?: boolean
+    isTestAccount?: boolean
+    isArchived?: boolean
   }, ExtArgs["result"]["institutionClient"]>
 
   export type InstitutionClientSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -22985,6 +23694,55 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     lastLoginAt?: boolean
+    legalName?: boolean
+    tradingName?: boolean
+    registrationNumber?: boolean
+    registrationCountry?: boolean
+    entityType?: boolean
+    lei?: boolean
+    taxId?: boolean
+    taxCountry?: boolean
+    addressLine1?: boolean
+    addressLine2?: boolean
+    city?: boolean
+    state?: boolean
+    postalCode?: boolean
+    country?: boolean
+    contactFirstName?: boolean
+    contactLastName?: boolean
+    contactEmail?: boolean
+    contactPhone?: boolean
+    contactTitle?: boolean
+    kybStatus?: boolean
+    kybVerifiedAt?: boolean
+    kybExpiresAt?: boolean
+    riskRating?: boolean
+    riskNotes?: boolean
+    sanctionsStatus?: boolean
+    sourceOfFunds?: boolean
+    isRegulatedEntity?: boolean
+    regulatoryStatus?: boolean
+    licenseType?: boolean
+    licenseNumber?: boolean
+    regulatoryBody?: boolean
+    industry?: boolean
+    websiteUrl?: boolean
+    businessDescription?: boolean
+    yearEstablished?: boolean
+    employeeCountRange?: boolean
+    annualRevenueRange?: boolean
+    expectedMonthlyVolume?: boolean
+    purposeOfAccount?: boolean
+    walletCustodyType?: boolean
+    custodianName?: boolean
+    preferredSettlementChain?: boolean
+    accountManagerName?: boolean
+    accountManagerEmail?: boolean
+    onboardingCompletedAt?: boolean
+    nextReviewDate?: boolean
+    referralSource?: boolean
+    isTestAccount?: boolean
+    isArchived?: boolean
   }, ExtArgs["result"]["institutionClient"]>
 
   export type InstitutionClientSelectScalar = {
@@ -23001,9 +23759,58 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     lastLoginAt?: boolean
+    legalName?: boolean
+    tradingName?: boolean
+    registrationNumber?: boolean
+    registrationCountry?: boolean
+    entityType?: boolean
+    lei?: boolean
+    taxId?: boolean
+    taxCountry?: boolean
+    addressLine1?: boolean
+    addressLine2?: boolean
+    city?: boolean
+    state?: boolean
+    postalCode?: boolean
+    country?: boolean
+    contactFirstName?: boolean
+    contactLastName?: boolean
+    contactEmail?: boolean
+    contactPhone?: boolean
+    contactTitle?: boolean
+    kybStatus?: boolean
+    kybVerifiedAt?: boolean
+    kybExpiresAt?: boolean
+    riskRating?: boolean
+    riskNotes?: boolean
+    sanctionsStatus?: boolean
+    sourceOfFunds?: boolean
+    isRegulatedEntity?: boolean
+    regulatoryStatus?: boolean
+    licenseType?: boolean
+    licenseNumber?: boolean
+    regulatoryBody?: boolean
+    industry?: boolean
+    websiteUrl?: boolean
+    businessDescription?: boolean
+    yearEstablished?: boolean
+    employeeCountRange?: boolean
+    annualRevenueRange?: boolean
+    expectedMonthlyVolume?: boolean
+    purposeOfAccount?: boolean
+    walletCustodyType?: boolean
+    custodianName?: boolean
+    preferredSettlementChain?: boolean
+    accountManagerName?: boolean
+    accountManagerEmail?: boolean
+    onboardingCompletedAt?: boolean
+    nextReviewDate?: boolean
+    referralSource?: boolean
+    isTestAccount?: boolean
+    isArchived?: boolean
   }
 
-  export type InstitutionClientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "passwordHash" | "companyName" | "tier" | "status" | "kycStatus" | "jurisdiction" | "primaryWallet" | "settledWallets" | "createdAt" | "updatedAt" | "lastLoginAt", ExtArgs["result"]["institutionClient"]>
+  export type InstitutionClientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "passwordHash" | "companyName" | "tier" | "status" | "kycStatus" | "jurisdiction" | "primaryWallet" | "settledWallets" | "createdAt" | "updatedAt" | "lastLoginAt" | "legalName" | "tradingName" | "registrationNumber" | "registrationCountry" | "entityType" | "lei" | "taxId" | "taxCountry" | "addressLine1" | "addressLine2" | "city" | "state" | "postalCode" | "country" | "contactFirstName" | "contactLastName" | "contactEmail" | "contactPhone" | "contactTitle" | "kybStatus" | "kybVerifiedAt" | "kybExpiresAt" | "riskRating" | "riskNotes" | "sanctionsStatus" | "sourceOfFunds" | "isRegulatedEntity" | "regulatoryStatus" | "licenseType" | "licenseNumber" | "regulatoryBody" | "industry" | "websiteUrl" | "businessDescription" | "yearEstablished" | "employeeCountRange" | "annualRevenueRange" | "expectedMonthlyVolume" | "purposeOfAccount" | "walletCustodyType" | "custodianName" | "preferredSettlementChain" | "accountManagerName" | "accountManagerEmail" | "onboardingCompletedAt" | "nextReviewDate" | "referralSource" | "isTestAccount" | "isArchived", ExtArgs["result"]["institutionClient"]>
   export type InstitutionClientInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     refreshTokens?: boolean | InstitutionClient$refreshTokensArgs<ExtArgs>
     settings?: boolean | InstitutionClient$settingsArgs<ExtArgs>
@@ -23011,6 +23818,7 @@ export namespace Prisma {
     escrows?: boolean | InstitutionClient$escrowsArgs<ExtArgs>
     auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
     files?: boolean | InstitutionClient$filesArgs<ExtArgs>
+    wallets?: boolean | InstitutionClient$walletsArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type InstitutionClientIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -23025,6 +23833,7 @@ export namespace Prisma {
       escrows: Prisma.$InstitutionEscrowPayload<ExtArgs>[]
       auditLogs: Prisma.$InstitutionAuditLogPayload<ExtArgs>[]
       files: Prisma.$InstitutionFilePayload<ExtArgs>[]
+      wallets: Prisma.$InstitutionWalletPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -23040,6 +23849,55 @@ export namespace Prisma {
       createdAt: Date
       updatedAt: Date
       lastLoginAt: Date | null
+      legalName: string | null
+      tradingName: string | null
+      registrationNumber: string | null
+      registrationCountry: string | null
+      entityType: $Enums.EntityType | null
+      lei: string | null
+      taxId: string | null
+      taxCountry: string | null
+      addressLine1: string | null
+      addressLine2: string | null
+      city: string | null
+      state: string | null
+      postalCode: string | null
+      country: string | null
+      contactFirstName: string | null
+      contactLastName: string | null
+      contactEmail: string | null
+      contactPhone: string | null
+      contactTitle: string | null
+      kybStatus: $Enums.KybStatus | null
+      kybVerifiedAt: Date | null
+      kybExpiresAt: Date | null
+      riskRating: $Enums.RiskRating | null
+      riskNotes: string | null
+      sanctionsStatus: $Enums.SanctionsStatus | null
+      sourceOfFunds: string | null
+      isRegulatedEntity: boolean | null
+      regulatoryStatus: $Enums.RegulatoryStatus | null
+      licenseType: string | null
+      licenseNumber: string | null
+      regulatoryBody: string | null
+      industry: string | null
+      websiteUrl: string | null
+      businessDescription: string | null
+      yearEstablished: number | null
+      employeeCountRange: $Enums.EmployeeCountRange | null
+      annualRevenueRange: $Enums.AnnualRevenueRange | null
+      expectedMonthlyVolume: Prisma.Decimal | null
+      purposeOfAccount: string | null
+      walletCustodyType: $Enums.WalletCustodyType | null
+      custodianName: string | null
+      preferredSettlementChain: string | null
+      accountManagerName: string | null
+      accountManagerEmail: string | null
+      onboardingCompletedAt: Date | null
+      nextReviewDate: Date | null
+      referralSource: string | null
+      isTestAccount: boolean
+      isArchived: boolean
     }, ExtArgs["result"]["institutionClient"]>
     composites: {}
   }
@@ -23440,6 +24298,7 @@ export namespace Prisma {
     escrows<T extends InstitutionClient$escrowsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$escrowsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     auditLogs<T extends InstitutionClient$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     files<T extends InstitutionClient$filesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    wallets<T extends InstitutionClient$walletsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$walletsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -23482,6 +24341,55 @@ export namespace Prisma {
     readonly createdAt: FieldRef<"InstitutionClient", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionClient", 'DateTime'>
     readonly lastLoginAt: FieldRef<"InstitutionClient", 'DateTime'>
+    readonly legalName: FieldRef<"InstitutionClient", 'String'>
+    readonly tradingName: FieldRef<"InstitutionClient", 'String'>
+    readonly registrationNumber: FieldRef<"InstitutionClient", 'String'>
+    readonly registrationCountry: FieldRef<"InstitutionClient", 'String'>
+    readonly entityType: FieldRef<"InstitutionClient", 'EntityType'>
+    readonly lei: FieldRef<"InstitutionClient", 'String'>
+    readonly taxId: FieldRef<"InstitutionClient", 'String'>
+    readonly taxCountry: FieldRef<"InstitutionClient", 'String'>
+    readonly addressLine1: FieldRef<"InstitutionClient", 'String'>
+    readonly addressLine2: FieldRef<"InstitutionClient", 'String'>
+    readonly city: FieldRef<"InstitutionClient", 'String'>
+    readonly state: FieldRef<"InstitutionClient", 'String'>
+    readonly postalCode: FieldRef<"InstitutionClient", 'String'>
+    readonly country: FieldRef<"InstitutionClient", 'String'>
+    readonly contactFirstName: FieldRef<"InstitutionClient", 'String'>
+    readonly contactLastName: FieldRef<"InstitutionClient", 'String'>
+    readonly contactEmail: FieldRef<"InstitutionClient", 'String'>
+    readonly contactPhone: FieldRef<"InstitutionClient", 'String'>
+    readonly contactTitle: FieldRef<"InstitutionClient", 'String'>
+    readonly kybStatus: FieldRef<"InstitutionClient", 'KybStatus'>
+    readonly kybVerifiedAt: FieldRef<"InstitutionClient", 'DateTime'>
+    readonly kybExpiresAt: FieldRef<"InstitutionClient", 'DateTime'>
+    readonly riskRating: FieldRef<"InstitutionClient", 'RiskRating'>
+    readonly riskNotes: FieldRef<"InstitutionClient", 'String'>
+    readonly sanctionsStatus: FieldRef<"InstitutionClient", 'SanctionsStatus'>
+    readonly sourceOfFunds: FieldRef<"InstitutionClient", 'String'>
+    readonly isRegulatedEntity: FieldRef<"InstitutionClient", 'Boolean'>
+    readonly regulatoryStatus: FieldRef<"InstitutionClient", 'RegulatoryStatus'>
+    readonly licenseType: FieldRef<"InstitutionClient", 'String'>
+    readonly licenseNumber: FieldRef<"InstitutionClient", 'String'>
+    readonly regulatoryBody: FieldRef<"InstitutionClient", 'String'>
+    readonly industry: FieldRef<"InstitutionClient", 'String'>
+    readonly websiteUrl: FieldRef<"InstitutionClient", 'String'>
+    readonly businessDescription: FieldRef<"InstitutionClient", 'String'>
+    readonly yearEstablished: FieldRef<"InstitutionClient", 'Int'>
+    readonly employeeCountRange: FieldRef<"InstitutionClient", 'EmployeeCountRange'>
+    readonly annualRevenueRange: FieldRef<"InstitutionClient", 'AnnualRevenueRange'>
+    readonly expectedMonthlyVolume: FieldRef<"InstitutionClient", 'Decimal'>
+    readonly purposeOfAccount: FieldRef<"InstitutionClient", 'String'>
+    readonly walletCustodyType: FieldRef<"InstitutionClient", 'WalletCustodyType'>
+    readonly custodianName: FieldRef<"InstitutionClient", 'String'>
+    readonly preferredSettlementChain: FieldRef<"InstitutionClient", 'String'>
+    readonly accountManagerName: FieldRef<"InstitutionClient", 'String'>
+    readonly accountManagerEmail: FieldRef<"InstitutionClient", 'String'>
+    readonly onboardingCompletedAt: FieldRef<"InstitutionClient", 'DateTime'>
+    readonly nextReviewDate: FieldRef<"InstitutionClient", 'DateTime'>
+    readonly referralSource: FieldRef<"InstitutionClient", 'String'>
+    readonly isTestAccount: FieldRef<"InstitutionClient", 'Boolean'>
+    readonly isArchived: FieldRef<"InstitutionClient", 'Boolean'>
   }
     
 
@@ -24009,6 +24917,30 @@ export namespace Prisma {
   }
 
   /**
+   * InstitutionClient.wallets
+   */
+  export type InstitutionClient$walletsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    where?: InstitutionWalletWhereInput
+    orderBy?: InstitutionWalletOrderByWithRelationInput | InstitutionWalletOrderByWithRelationInput[]
+    cursor?: InstitutionWalletWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionWalletScalarFieldEnum | InstitutionWalletScalarFieldEnum[]
+  }
+
+  /**
    * InstitutionClient without action
    */
   export type InstitutionClientDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -24024,6 +24956,1142 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: InstitutionClientInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionWallet
+   */
+
+  export type AggregateInstitutionWallet = {
+    _count: InstitutionWalletCountAggregateOutputType | null
+    _min: InstitutionWalletMinAggregateOutputType | null
+    _max: InstitutionWalletMaxAggregateOutputType | null
+  }
+
+  export type InstitutionWalletMinAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    name: string | null
+    address: string | null
+    chain: string | null
+    description: string | null
+    provider: string | null
+    isPrimary: boolean | null
+    isSettlement: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionWalletMaxAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    name: string | null
+    address: string | null
+    chain: string | null
+    description: string | null
+    provider: string | null
+    isPrimary: boolean | null
+    isSettlement: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionWalletCountAggregateOutputType = {
+    id: number
+    clientId: number
+    name: number
+    address: number
+    chain: number
+    description: number
+    provider: number
+    isPrimary: number
+    isSettlement: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionWalletMinAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    address?: true
+    chain?: true
+    description?: true
+    provider?: true
+    isPrimary?: true
+    isSettlement?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionWalletMaxAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    address?: true
+    chain?: true
+    description?: true
+    provider?: true
+    isPrimary?: true
+    isSettlement?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionWalletCountAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    address?: true
+    chain?: true
+    description?: true
+    provider?: true
+    isPrimary?: true
+    isSettlement?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionWalletAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionWallet to aggregate.
+     */
+    where?: InstitutionWalletWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionWallets to fetch.
+     */
+    orderBy?: InstitutionWalletOrderByWithRelationInput | InstitutionWalletOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionWalletWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionWallets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionWallets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionWallets
+    **/
+    _count?: true | InstitutionWalletCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionWalletMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionWalletMaxAggregateInputType
+  }
+
+  export type GetInstitutionWalletAggregateType<T extends InstitutionWalletAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionWallet]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionWallet[P]>
+      : GetScalarType<T[P], AggregateInstitutionWallet[P]>
+  }
+
+
+
+
+  export type InstitutionWalletGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionWalletWhereInput
+    orderBy?: InstitutionWalletOrderByWithAggregationInput | InstitutionWalletOrderByWithAggregationInput[]
+    by: InstitutionWalletScalarFieldEnum[] | InstitutionWalletScalarFieldEnum
+    having?: InstitutionWalletScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionWalletCountAggregateInputType | true
+    _min?: InstitutionWalletMinAggregateInputType
+    _max?: InstitutionWalletMaxAggregateInputType
+  }
+
+  export type InstitutionWalletGroupByOutputType = {
+    id: string
+    clientId: string
+    name: string
+    address: string
+    chain: string
+    description: string | null
+    provider: string | null
+    isPrimary: boolean
+    isSettlement: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: InstitutionWalletCountAggregateOutputType | null
+    _min: InstitutionWalletMinAggregateOutputType | null
+    _max: InstitutionWalletMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionWalletGroupByPayload<T extends InstitutionWalletGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionWalletGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionWalletGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionWalletGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionWalletGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionWalletSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    address?: boolean
+    chain?: boolean
+    description?: boolean
+    provider?: boolean
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionWallet"]>
+
+  export type InstitutionWalletSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    address?: boolean
+    chain?: boolean
+    description?: boolean
+    provider?: boolean
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionWallet"]>
+
+  export type InstitutionWalletSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    address?: boolean
+    chain?: boolean
+    description?: boolean
+    provider?: boolean
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionWallet"]>
+
+  export type InstitutionWalletSelectScalar = {
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    address?: boolean
+    chain?: boolean
+    description?: boolean
+    provider?: boolean
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InstitutionWalletOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "address" | "chain" | "description" | "provider" | "isPrimary" | "isSettlement" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionWallet"]>
+  export type InstitutionWalletInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionWalletIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionWalletIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionWalletPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionWallet"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      clientId: string
+      name: string
+      address: string
+      chain: string
+      description: string | null
+      provider: string | null
+      isPrimary: boolean
+      isSettlement: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["institutionWallet"]>
+    composites: {}
+  }
+
+  type InstitutionWalletGetPayload<S extends boolean | null | undefined | InstitutionWalletDefaultArgs> = $Result.GetResult<Prisma.$InstitutionWalletPayload, S>
+
+  type InstitutionWalletCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionWalletFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionWalletCountAggregateInputType | true
+    }
+
+  export interface InstitutionWalletDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionWallet'], meta: { name: 'InstitutionWallet' } }
+    /**
+     * Find zero or one InstitutionWallet that matches the filter.
+     * @param {InstitutionWalletFindUniqueArgs} args - Arguments to find a InstitutionWallet
+     * @example
+     * // Get one InstitutionWallet
+     * const institutionWallet = await prisma.institutionWallet.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionWalletFindUniqueArgs>(args: SelectSubset<T, InstitutionWalletFindUniqueArgs<ExtArgs>>): Prisma__InstitutionWalletClient<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionWallet that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionWalletFindUniqueOrThrowArgs} args - Arguments to find a InstitutionWallet
+     * @example
+     * // Get one InstitutionWallet
+     * const institutionWallet = await prisma.institutionWallet.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionWalletFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionWalletFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionWalletClient<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionWallet that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionWalletFindFirstArgs} args - Arguments to find a InstitutionWallet
+     * @example
+     * // Get one InstitutionWallet
+     * const institutionWallet = await prisma.institutionWallet.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionWalletFindFirstArgs>(args?: SelectSubset<T, InstitutionWalletFindFirstArgs<ExtArgs>>): Prisma__InstitutionWalletClient<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionWallet that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionWalletFindFirstOrThrowArgs} args - Arguments to find a InstitutionWallet
+     * @example
+     * // Get one InstitutionWallet
+     * const institutionWallet = await prisma.institutionWallet.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionWalletFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionWalletFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionWalletClient<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionWallets that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionWalletFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionWallets
+     * const institutionWallets = await prisma.institutionWallet.findMany()
+     * 
+     * // Get first 10 InstitutionWallets
+     * const institutionWallets = await prisma.institutionWallet.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionWalletWithIdOnly = await prisma.institutionWallet.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionWalletFindManyArgs>(args?: SelectSubset<T, InstitutionWalletFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionWallet.
+     * @param {InstitutionWalletCreateArgs} args - Arguments to create a InstitutionWallet.
+     * @example
+     * // Create one InstitutionWallet
+     * const InstitutionWallet = await prisma.institutionWallet.create({
+     *   data: {
+     *     // ... data to create a InstitutionWallet
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionWalletCreateArgs>(args: SelectSubset<T, InstitutionWalletCreateArgs<ExtArgs>>): Prisma__InstitutionWalletClient<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionWallets.
+     * @param {InstitutionWalletCreateManyArgs} args - Arguments to create many InstitutionWallets.
+     * @example
+     * // Create many InstitutionWallets
+     * const institutionWallet = await prisma.institutionWallet.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionWalletCreateManyArgs>(args?: SelectSubset<T, InstitutionWalletCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionWallets and returns the data saved in the database.
+     * @param {InstitutionWalletCreateManyAndReturnArgs} args - Arguments to create many InstitutionWallets.
+     * @example
+     * // Create many InstitutionWallets
+     * const institutionWallet = await prisma.institutionWallet.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionWallets and only return the `id`
+     * const institutionWalletWithIdOnly = await prisma.institutionWallet.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionWalletCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionWalletCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionWallet.
+     * @param {InstitutionWalletDeleteArgs} args - Arguments to delete one InstitutionWallet.
+     * @example
+     * // Delete one InstitutionWallet
+     * const InstitutionWallet = await prisma.institutionWallet.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionWallet
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionWalletDeleteArgs>(args: SelectSubset<T, InstitutionWalletDeleteArgs<ExtArgs>>): Prisma__InstitutionWalletClient<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionWallet.
+     * @param {InstitutionWalletUpdateArgs} args - Arguments to update one InstitutionWallet.
+     * @example
+     * // Update one InstitutionWallet
+     * const institutionWallet = await prisma.institutionWallet.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionWalletUpdateArgs>(args: SelectSubset<T, InstitutionWalletUpdateArgs<ExtArgs>>): Prisma__InstitutionWalletClient<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionWallets.
+     * @param {InstitutionWalletDeleteManyArgs} args - Arguments to filter InstitutionWallets to delete.
+     * @example
+     * // Delete a few InstitutionWallets
+     * const { count } = await prisma.institutionWallet.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionWalletDeleteManyArgs>(args?: SelectSubset<T, InstitutionWalletDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionWallets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionWalletUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionWallets
+     * const institutionWallet = await prisma.institutionWallet.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionWalletUpdateManyArgs>(args: SelectSubset<T, InstitutionWalletUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionWallets and returns the data updated in the database.
+     * @param {InstitutionWalletUpdateManyAndReturnArgs} args - Arguments to update many InstitutionWallets.
+     * @example
+     * // Update many InstitutionWallets
+     * const institutionWallet = await prisma.institutionWallet.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionWallets and only return the `id`
+     * const institutionWalletWithIdOnly = await prisma.institutionWallet.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionWalletUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionWalletUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionWallet.
+     * @param {InstitutionWalletUpsertArgs} args - Arguments to update or create a InstitutionWallet.
+     * @example
+     * // Update or create a InstitutionWallet
+     * const institutionWallet = await prisma.institutionWallet.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionWallet
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionWallet we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionWalletUpsertArgs>(args: SelectSubset<T, InstitutionWalletUpsertArgs<ExtArgs>>): Prisma__InstitutionWalletClient<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionWallets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionWalletCountArgs} args - Arguments to filter InstitutionWallets to count.
+     * @example
+     * // Count the number of InstitutionWallets
+     * const count = await prisma.institutionWallet.count({
+     *   where: {
+     *     // ... the filter for the InstitutionWallets we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionWalletCountArgs>(
+      args?: Subset<T, InstitutionWalletCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionWalletCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionWallet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionWalletAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionWalletAggregateArgs>(args: Subset<T, InstitutionWalletAggregateArgs>): Prisma.PrismaPromise<GetInstitutionWalletAggregateType<T>>
+
+    /**
+     * Group by InstitutionWallet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionWalletGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionWalletGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionWalletGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionWalletGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionWalletGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionWalletGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionWallet model
+   */
+  readonly fields: InstitutionWalletFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionWallet.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionWalletClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionWallet model
+   */
+  interface InstitutionWalletFieldRefs {
+    readonly id: FieldRef<"InstitutionWallet", 'String'>
+    readonly clientId: FieldRef<"InstitutionWallet", 'String'>
+    readonly name: FieldRef<"InstitutionWallet", 'String'>
+    readonly address: FieldRef<"InstitutionWallet", 'String'>
+    readonly chain: FieldRef<"InstitutionWallet", 'String'>
+    readonly description: FieldRef<"InstitutionWallet", 'String'>
+    readonly provider: FieldRef<"InstitutionWallet", 'String'>
+    readonly isPrimary: FieldRef<"InstitutionWallet", 'Boolean'>
+    readonly isSettlement: FieldRef<"InstitutionWallet", 'Boolean'>
+    readonly createdAt: FieldRef<"InstitutionWallet", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionWallet", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionWallet findUnique
+   */
+  export type InstitutionWalletFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionWallet to fetch.
+     */
+    where: InstitutionWalletWhereUniqueInput
+  }
+
+  /**
+   * InstitutionWallet findUniqueOrThrow
+   */
+  export type InstitutionWalletFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionWallet to fetch.
+     */
+    where: InstitutionWalletWhereUniqueInput
+  }
+
+  /**
+   * InstitutionWallet findFirst
+   */
+  export type InstitutionWalletFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionWallet to fetch.
+     */
+    where?: InstitutionWalletWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionWallets to fetch.
+     */
+    orderBy?: InstitutionWalletOrderByWithRelationInput | InstitutionWalletOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionWallets.
+     */
+    cursor?: InstitutionWalletWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionWallets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionWallets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionWallets.
+     */
+    distinct?: InstitutionWalletScalarFieldEnum | InstitutionWalletScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionWallet findFirstOrThrow
+   */
+  export type InstitutionWalletFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionWallet to fetch.
+     */
+    where?: InstitutionWalletWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionWallets to fetch.
+     */
+    orderBy?: InstitutionWalletOrderByWithRelationInput | InstitutionWalletOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionWallets.
+     */
+    cursor?: InstitutionWalletWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionWallets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionWallets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionWallets.
+     */
+    distinct?: InstitutionWalletScalarFieldEnum | InstitutionWalletScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionWallet findMany
+   */
+  export type InstitutionWalletFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionWallets to fetch.
+     */
+    where?: InstitutionWalletWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionWallets to fetch.
+     */
+    orderBy?: InstitutionWalletOrderByWithRelationInput | InstitutionWalletOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionWallets.
+     */
+    cursor?: InstitutionWalletWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionWallets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionWallets.
+     */
+    skip?: number
+    distinct?: InstitutionWalletScalarFieldEnum | InstitutionWalletScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionWallet create
+   */
+  export type InstitutionWalletCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionWallet.
+     */
+    data: XOR<InstitutionWalletCreateInput, InstitutionWalletUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionWallet createMany
+   */
+  export type InstitutionWalletCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionWallets.
+     */
+    data: InstitutionWalletCreateManyInput | InstitutionWalletCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionWallet createManyAndReturn
+   */
+  export type InstitutionWalletCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionWallets.
+     */
+    data: InstitutionWalletCreateManyInput | InstitutionWalletCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionWallet update
+   */
+  export type InstitutionWalletUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionWallet.
+     */
+    data: XOR<InstitutionWalletUpdateInput, InstitutionWalletUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionWallet to update.
+     */
+    where: InstitutionWalletWhereUniqueInput
+  }
+
+  /**
+   * InstitutionWallet updateMany
+   */
+  export type InstitutionWalletUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionWallets.
+     */
+    data: XOR<InstitutionWalletUpdateManyMutationInput, InstitutionWalletUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionWallets to update
+     */
+    where?: InstitutionWalletWhereInput
+    /**
+     * Limit how many InstitutionWallets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionWallet updateManyAndReturn
+   */
+  export type InstitutionWalletUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionWallets.
+     */
+    data: XOR<InstitutionWalletUpdateManyMutationInput, InstitutionWalletUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionWallets to update
+     */
+    where?: InstitutionWalletWhereInput
+    /**
+     * Limit how many InstitutionWallets to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionWallet upsert
+   */
+  export type InstitutionWalletUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionWallet to update in case it exists.
+     */
+    where: InstitutionWalletWhereUniqueInput
+    /**
+     * In case the InstitutionWallet found by the `where` argument doesn't exist, create a new InstitutionWallet with this data.
+     */
+    create: XOR<InstitutionWalletCreateInput, InstitutionWalletUncheckedCreateInput>
+    /**
+     * In case the InstitutionWallet was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionWalletUpdateInput, InstitutionWalletUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionWallet delete
+   */
+  export type InstitutionWalletDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionWallet to delete.
+     */
+    where: InstitutionWalletWhereUniqueInput
+  }
+
+  /**
+   * InstitutionWallet deleteMany
+   */
+  export type InstitutionWalletDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionWallets to delete
+     */
+    where?: InstitutionWalletWhereInput
+    /**
+     * Limit how many InstitutionWallets to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionWallet without action
+   */
+  export type InstitutionWalletDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionWallet
+     */
+    select?: InstitutionWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionWallet
+     */
+    omit?: InstitutionWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionWalletInclude<ExtArgs> | null
   }
 
 
@@ -34956,10 +37024,76 @@ export namespace Prisma {
     settledWallets: 'settledWallets',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
-    lastLoginAt: 'lastLoginAt'
+    lastLoginAt: 'lastLoginAt',
+    legalName: 'legalName',
+    tradingName: 'tradingName',
+    registrationNumber: 'registrationNumber',
+    registrationCountry: 'registrationCountry',
+    entityType: 'entityType',
+    lei: 'lei',
+    taxId: 'taxId',
+    taxCountry: 'taxCountry',
+    addressLine1: 'addressLine1',
+    addressLine2: 'addressLine2',
+    city: 'city',
+    state: 'state',
+    postalCode: 'postalCode',
+    country: 'country',
+    contactFirstName: 'contactFirstName',
+    contactLastName: 'contactLastName',
+    contactEmail: 'contactEmail',
+    contactPhone: 'contactPhone',
+    contactTitle: 'contactTitle',
+    kybStatus: 'kybStatus',
+    kybVerifiedAt: 'kybVerifiedAt',
+    kybExpiresAt: 'kybExpiresAt',
+    riskRating: 'riskRating',
+    riskNotes: 'riskNotes',
+    sanctionsStatus: 'sanctionsStatus',
+    sourceOfFunds: 'sourceOfFunds',
+    isRegulatedEntity: 'isRegulatedEntity',
+    regulatoryStatus: 'regulatoryStatus',
+    licenseType: 'licenseType',
+    licenseNumber: 'licenseNumber',
+    regulatoryBody: 'regulatoryBody',
+    industry: 'industry',
+    websiteUrl: 'websiteUrl',
+    businessDescription: 'businessDescription',
+    yearEstablished: 'yearEstablished',
+    employeeCountRange: 'employeeCountRange',
+    annualRevenueRange: 'annualRevenueRange',
+    expectedMonthlyVolume: 'expectedMonthlyVolume',
+    purposeOfAccount: 'purposeOfAccount',
+    walletCustodyType: 'walletCustodyType',
+    custodianName: 'custodianName',
+    preferredSettlementChain: 'preferredSettlementChain',
+    accountManagerName: 'accountManagerName',
+    accountManagerEmail: 'accountManagerEmail',
+    onboardingCompletedAt: 'onboardingCompletedAt',
+    nextReviewDate: 'nextReviewDate',
+    referralSource: 'referralSource',
+    isTestAccount: 'isTestAccount',
+    isArchived: 'isArchived'
   };
 
   export type InstitutionClientScalarFieldEnum = (typeof InstitutionClientScalarFieldEnum)[keyof typeof InstitutionClientScalarFieldEnum]
+
+
+  export const InstitutionWalletScalarFieldEnum: {
+    id: 'id',
+    clientId: 'clientId',
+    name: 'name',
+    address: 'address',
+    chain: 'chain',
+    description: 'description',
+    provider: 'provider',
+    isPrimary: 'isPrimary',
+    isSettlement: 'isSettlement',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InstitutionWalletScalarFieldEnum = (typeof InstitutionWalletScalarFieldEnum)[keyof typeof InstitutionWalletScalarFieldEnum]
 
 
   export const InstitutionRefreshTokenScalarFieldEnum: {
@@ -35467,6 +37601,118 @@ export namespace Prisma {
    * Reference to a field of type 'ClientStatus[]'
    */
   export type ListEnumClientStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ClientStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'EntityType'
+   */
+  export type EnumEntityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EntityType'>
+    
+
+
+  /**
+   * Reference to a field of type 'EntityType[]'
+   */
+  export type ListEnumEntityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EntityType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'KybStatus'
+   */
+  export type EnumKybStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'KybStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'KybStatus[]'
+   */
+  export type ListEnumKybStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'KybStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'RiskRating'
+   */
+  export type EnumRiskRatingFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskRating'>
+    
+
+
+  /**
+   * Reference to a field of type 'RiskRating[]'
+   */
+  export type ListEnumRiskRatingFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskRating[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'SanctionsStatus'
+   */
+  export type EnumSanctionsStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SanctionsStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'SanctionsStatus[]'
+   */
+  export type ListEnumSanctionsStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SanctionsStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'RegulatoryStatus'
+   */
+  export type EnumRegulatoryStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RegulatoryStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'RegulatoryStatus[]'
+   */
+  export type ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RegulatoryStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'EmployeeCountRange'
+   */
+  export type EnumEmployeeCountRangeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EmployeeCountRange'>
+    
+
+
+  /**
+   * Reference to a field of type 'EmployeeCountRange[]'
+   */
+  export type ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EmployeeCountRange[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'AnnualRevenueRange'
+   */
+  export type EnumAnnualRevenueRangeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AnnualRevenueRange'>
+    
+
+
+  /**
+   * Reference to a field of type 'AnnualRevenueRange[]'
+   */
+  export type ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AnnualRevenueRange[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WalletCustodyType'
+   */
+  export type EnumWalletCustodyTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WalletCustodyType'>
+    
+
+
+  /**
+   * Reference to a field of type 'WalletCustodyType[]'
+   */
+  export type ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WalletCustodyType[]'>
     
 
 
@@ -37300,12 +39546,62 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"InstitutionClient"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClient"> | Date | string
     lastLoginAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    legalName?: StringNullableFilter<"InstitutionClient"> | string | null
+    tradingName?: StringNullableFilter<"InstitutionClient"> | string | null
+    registrationNumber?: StringNullableFilter<"InstitutionClient"> | string | null
+    registrationCountry?: StringNullableFilter<"InstitutionClient"> | string | null
+    entityType?: EnumEntityTypeNullableFilter<"InstitutionClient"> | $Enums.EntityType | null
+    lei?: StringNullableFilter<"InstitutionClient"> | string | null
+    taxId?: StringNullableFilter<"InstitutionClient"> | string | null
+    taxCountry?: StringNullableFilter<"InstitutionClient"> | string | null
+    addressLine1?: StringNullableFilter<"InstitutionClient"> | string | null
+    addressLine2?: StringNullableFilter<"InstitutionClient"> | string | null
+    city?: StringNullableFilter<"InstitutionClient"> | string | null
+    state?: StringNullableFilter<"InstitutionClient"> | string | null
+    postalCode?: StringNullableFilter<"InstitutionClient"> | string | null
+    country?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactFirstName?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactLastName?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactEmail?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactPhone?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactTitle?: StringNullableFilter<"InstitutionClient"> | string | null
+    kybStatus?: EnumKybStatusNullableFilter<"InstitutionClient"> | $Enums.KybStatus | null
+    kybVerifiedAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    kybExpiresAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    riskRating?: EnumRiskRatingNullableFilter<"InstitutionClient"> | $Enums.RiskRating | null
+    riskNotes?: StringNullableFilter<"InstitutionClient"> | string | null
+    sanctionsStatus?: EnumSanctionsStatusNullableFilter<"InstitutionClient"> | $Enums.SanctionsStatus | null
+    sourceOfFunds?: StringNullableFilter<"InstitutionClient"> | string | null
+    isRegulatedEntity?: BoolNullableFilter<"InstitutionClient"> | boolean | null
+    regulatoryStatus?: EnumRegulatoryStatusNullableFilter<"InstitutionClient"> | $Enums.RegulatoryStatus | null
+    licenseType?: StringNullableFilter<"InstitutionClient"> | string | null
+    licenseNumber?: StringNullableFilter<"InstitutionClient"> | string | null
+    regulatoryBody?: StringNullableFilter<"InstitutionClient"> | string | null
+    industry?: StringNullableFilter<"InstitutionClient"> | string | null
+    websiteUrl?: StringNullableFilter<"InstitutionClient"> | string | null
+    businessDescription?: StringNullableFilter<"InstitutionClient"> | string | null
+    yearEstablished?: IntNullableFilter<"InstitutionClient"> | number | null
+    employeeCountRange?: EnumEmployeeCountRangeNullableFilter<"InstitutionClient"> | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: EnumAnnualRevenueRangeNullableFilter<"InstitutionClient"> | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: DecimalNullableFilter<"InstitutionClient"> | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: StringNullableFilter<"InstitutionClient"> | string | null
+    walletCustodyType?: EnumWalletCustodyTypeNullableFilter<"InstitutionClient"> | $Enums.WalletCustodyType | null
+    custodianName?: StringNullableFilter<"InstitutionClient"> | string | null
+    preferredSettlementChain?: StringNullableFilter<"InstitutionClient"> | string | null
+    accountManagerName?: StringNullableFilter<"InstitutionClient"> | string | null
+    accountManagerEmail?: StringNullableFilter<"InstitutionClient"> | string | null
+    onboardingCompletedAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    nextReviewDate?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    referralSource?: StringNullableFilter<"InstitutionClient"> | string | null
+    isTestAccount?: BoolFilter<"InstitutionClient"> | boolean
+    isArchived?: BoolFilter<"InstitutionClient"> | boolean
     refreshTokens?: InstitutionRefreshTokenListRelationFilter
     settings?: XOR<InstitutionClientSettingsNullableScalarRelationFilter, InstitutionClientSettingsWhereInput> | null
     apiKeys?: InstitutionApiKeyListRelationFilter
     escrows?: InstitutionEscrowListRelationFilter
     auditLogs?: InstitutionAuditLogListRelationFilter
     files?: InstitutionFileListRelationFilter
+    wallets?: InstitutionWalletListRelationFilter
   }
 
   export type InstitutionClientOrderByWithRelationInput = {
@@ -37322,12 +39618,62 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     lastLoginAt?: SortOrderInput | SortOrder
+    legalName?: SortOrderInput | SortOrder
+    tradingName?: SortOrderInput | SortOrder
+    registrationNumber?: SortOrderInput | SortOrder
+    registrationCountry?: SortOrderInput | SortOrder
+    entityType?: SortOrderInput | SortOrder
+    lei?: SortOrderInput | SortOrder
+    taxId?: SortOrderInput | SortOrder
+    taxCountry?: SortOrderInput | SortOrder
+    addressLine1?: SortOrderInput | SortOrder
+    addressLine2?: SortOrderInput | SortOrder
+    city?: SortOrderInput | SortOrder
+    state?: SortOrderInput | SortOrder
+    postalCode?: SortOrderInput | SortOrder
+    country?: SortOrderInput | SortOrder
+    contactFirstName?: SortOrderInput | SortOrder
+    contactLastName?: SortOrderInput | SortOrder
+    contactEmail?: SortOrderInput | SortOrder
+    contactPhone?: SortOrderInput | SortOrder
+    contactTitle?: SortOrderInput | SortOrder
+    kybStatus?: SortOrderInput | SortOrder
+    kybVerifiedAt?: SortOrderInput | SortOrder
+    kybExpiresAt?: SortOrderInput | SortOrder
+    riskRating?: SortOrderInput | SortOrder
+    riskNotes?: SortOrderInput | SortOrder
+    sanctionsStatus?: SortOrderInput | SortOrder
+    sourceOfFunds?: SortOrderInput | SortOrder
+    isRegulatedEntity?: SortOrderInput | SortOrder
+    regulatoryStatus?: SortOrderInput | SortOrder
+    licenseType?: SortOrderInput | SortOrder
+    licenseNumber?: SortOrderInput | SortOrder
+    regulatoryBody?: SortOrderInput | SortOrder
+    industry?: SortOrderInput | SortOrder
+    websiteUrl?: SortOrderInput | SortOrder
+    businessDescription?: SortOrderInput | SortOrder
+    yearEstablished?: SortOrderInput | SortOrder
+    employeeCountRange?: SortOrderInput | SortOrder
+    annualRevenueRange?: SortOrderInput | SortOrder
+    expectedMonthlyVolume?: SortOrderInput | SortOrder
+    purposeOfAccount?: SortOrderInput | SortOrder
+    walletCustodyType?: SortOrderInput | SortOrder
+    custodianName?: SortOrderInput | SortOrder
+    preferredSettlementChain?: SortOrderInput | SortOrder
+    accountManagerName?: SortOrderInput | SortOrder
+    accountManagerEmail?: SortOrderInput | SortOrder
+    onboardingCompletedAt?: SortOrderInput | SortOrder
+    nextReviewDate?: SortOrderInput | SortOrder
+    referralSource?: SortOrderInput | SortOrder
+    isTestAccount?: SortOrder
+    isArchived?: SortOrder
     refreshTokens?: InstitutionRefreshTokenOrderByRelationAggregateInput
     settings?: InstitutionClientSettingsOrderByWithRelationInput
     apiKeys?: InstitutionApiKeyOrderByRelationAggregateInput
     escrows?: InstitutionEscrowOrderByRelationAggregateInput
     auditLogs?: InstitutionAuditLogOrderByRelationAggregateInput
     files?: InstitutionFileOrderByRelationAggregateInput
+    wallets?: InstitutionWalletOrderByRelationAggregateInput
   }
 
   export type InstitutionClientWhereUniqueInput = Prisma.AtLeast<{
@@ -37347,12 +39693,62 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"InstitutionClient"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClient"> | Date | string
     lastLoginAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    legalName?: StringNullableFilter<"InstitutionClient"> | string | null
+    tradingName?: StringNullableFilter<"InstitutionClient"> | string | null
+    registrationNumber?: StringNullableFilter<"InstitutionClient"> | string | null
+    registrationCountry?: StringNullableFilter<"InstitutionClient"> | string | null
+    entityType?: EnumEntityTypeNullableFilter<"InstitutionClient"> | $Enums.EntityType | null
+    lei?: StringNullableFilter<"InstitutionClient"> | string | null
+    taxId?: StringNullableFilter<"InstitutionClient"> | string | null
+    taxCountry?: StringNullableFilter<"InstitutionClient"> | string | null
+    addressLine1?: StringNullableFilter<"InstitutionClient"> | string | null
+    addressLine2?: StringNullableFilter<"InstitutionClient"> | string | null
+    city?: StringNullableFilter<"InstitutionClient"> | string | null
+    state?: StringNullableFilter<"InstitutionClient"> | string | null
+    postalCode?: StringNullableFilter<"InstitutionClient"> | string | null
+    country?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactFirstName?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactLastName?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactEmail?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactPhone?: StringNullableFilter<"InstitutionClient"> | string | null
+    contactTitle?: StringNullableFilter<"InstitutionClient"> | string | null
+    kybStatus?: EnumKybStatusNullableFilter<"InstitutionClient"> | $Enums.KybStatus | null
+    kybVerifiedAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    kybExpiresAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    riskRating?: EnumRiskRatingNullableFilter<"InstitutionClient"> | $Enums.RiskRating | null
+    riskNotes?: StringNullableFilter<"InstitutionClient"> | string | null
+    sanctionsStatus?: EnumSanctionsStatusNullableFilter<"InstitutionClient"> | $Enums.SanctionsStatus | null
+    sourceOfFunds?: StringNullableFilter<"InstitutionClient"> | string | null
+    isRegulatedEntity?: BoolNullableFilter<"InstitutionClient"> | boolean | null
+    regulatoryStatus?: EnumRegulatoryStatusNullableFilter<"InstitutionClient"> | $Enums.RegulatoryStatus | null
+    licenseType?: StringNullableFilter<"InstitutionClient"> | string | null
+    licenseNumber?: StringNullableFilter<"InstitutionClient"> | string | null
+    regulatoryBody?: StringNullableFilter<"InstitutionClient"> | string | null
+    industry?: StringNullableFilter<"InstitutionClient"> | string | null
+    websiteUrl?: StringNullableFilter<"InstitutionClient"> | string | null
+    businessDescription?: StringNullableFilter<"InstitutionClient"> | string | null
+    yearEstablished?: IntNullableFilter<"InstitutionClient"> | number | null
+    employeeCountRange?: EnumEmployeeCountRangeNullableFilter<"InstitutionClient"> | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: EnumAnnualRevenueRangeNullableFilter<"InstitutionClient"> | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: DecimalNullableFilter<"InstitutionClient"> | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: StringNullableFilter<"InstitutionClient"> | string | null
+    walletCustodyType?: EnumWalletCustodyTypeNullableFilter<"InstitutionClient"> | $Enums.WalletCustodyType | null
+    custodianName?: StringNullableFilter<"InstitutionClient"> | string | null
+    preferredSettlementChain?: StringNullableFilter<"InstitutionClient"> | string | null
+    accountManagerName?: StringNullableFilter<"InstitutionClient"> | string | null
+    accountManagerEmail?: StringNullableFilter<"InstitutionClient"> | string | null
+    onboardingCompletedAt?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    nextReviewDate?: DateTimeNullableFilter<"InstitutionClient"> | Date | string | null
+    referralSource?: StringNullableFilter<"InstitutionClient"> | string | null
+    isTestAccount?: BoolFilter<"InstitutionClient"> | boolean
+    isArchived?: BoolFilter<"InstitutionClient"> | boolean
     refreshTokens?: InstitutionRefreshTokenListRelationFilter
     settings?: XOR<InstitutionClientSettingsNullableScalarRelationFilter, InstitutionClientSettingsWhereInput> | null
     apiKeys?: InstitutionApiKeyListRelationFilter
     escrows?: InstitutionEscrowListRelationFilter
     auditLogs?: InstitutionAuditLogListRelationFilter
     files?: InstitutionFileListRelationFilter
+    wallets?: InstitutionWalletListRelationFilter
   }, "id" | "email">
 
   export type InstitutionClientOrderByWithAggregationInput = {
@@ -37369,9 +39765,60 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     lastLoginAt?: SortOrderInput | SortOrder
+    legalName?: SortOrderInput | SortOrder
+    tradingName?: SortOrderInput | SortOrder
+    registrationNumber?: SortOrderInput | SortOrder
+    registrationCountry?: SortOrderInput | SortOrder
+    entityType?: SortOrderInput | SortOrder
+    lei?: SortOrderInput | SortOrder
+    taxId?: SortOrderInput | SortOrder
+    taxCountry?: SortOrderInput | SortOrder
+    addressLine1?: SortOrderInput | SortOrder
+    addressLine2?: SortOrderInput | SortOrder
+    city?: SortOrderInput | SortOrder
+    state?: SortOrderInput | SortOrder
+    postalCode?: SortOrderInput | SortOrder
+    country?: SortOrderInput | SortOrder
+    contactFirstName?: SortOrderInput | SortOrder
+    contactLastName?: SortOrderInput | SortOrder
+    contactEmail?: SortOrderInput | SortOrder
+    contactPhone?: SortOrderInput | SortOrder
+    contactTitle?: SortOrderInput | SortOrder
+    kybStatus?: SortOrderInput | SortOrder
+    kybVerifiedAt?: SortOrderInput | SortOrder
+    kybExpiresAt?: SortOrderInput | SortOrder
+    riskRating?: SortOrderInput | SortOrder
+    riskNotes?: SortOrderInput | SortOrder
+    sanctionsStatus?: SortOrderInput | SortOrder
+    sourceOfFunds?: SortOrderInput | SortOrder
+    isRegulatedEntity?: SortOrderInput | SortOrder
+    regulatoryStatus?: SortOrderInput | SortOrder
+    licenseType?: SortOrderInput | SortOrder
+    licenseNumber?: SortOrderInput | SortOrder
+    regulatoryBody?: SortOrderInput | SortOrder
+    industry?: SortOrderInput | SortOrder
+    websiteUrl?: SortOrderInput | SortOrder
+    businessDescription?: SortOrderInput | SortOrder
+    yearEstablished?: SortOrderInput | SortOrder
+    employeeCountRange?: SortOrderInput | SortOrder
+    annualRevenueRange?: SortOrderInput | SortOrder
+    expectedMonthlyVolume?: SortOrderInput | SortOrder
+    purposeOfAccount?: SortOrderInput | SortOrder
+    walletCustodyType?: SortOrderInput | SortOrder
+    custodianName?: SortOrderInput | SortOrder
+    preferredSettlementChain?: SortOrderInput | SortOrder
+    accountManagerName?: SortOrderInput | SortOrder
+    accountManagerEmail?: SortOrderInput | SortOrder
+    onboardingCompletedAt?: SortOrderInput | SortOrder
+    nextReviewDate?: SortOrderInput | SortOrder
+    referralSource?: SortOrderInput | SortOrder
+    isTestAccount?: SortOrder
+    isArchived?: SortOrder
     _count?: InstitutionClientCountOrderByAggregateInput
+    _avg?: InstitutionClientAvgOrderByAggregateInput
     _max?: InstitutionClientMaxOrderByAggregateInput
     _min?: InstitutionClientMinOrderByAggregateInput
+    _sum?: InstitutionClientSumOrderByAggregateInput
   }
 
   export type InstitutionClientScalarWhereWithAggregatesInput = {
@@ -37391,6 +39838,140 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionClient"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionClient"> | Date | string
     lastLoginAt?: DateTimeNullableWithAggregatesFilter<"InstitutionClient"> | Date | string | null
+    legalName?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    tradingName?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    registrationNumber?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    registrationCountry?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    entityType?: EnumEntityTypeNullableWithAggregatesFilter<"InstitutionClient"> | $Enums.EntityType | null
+    lei?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    taxId?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    taxCountry?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    addressLine1?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    addressLine2?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    city?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    state?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    postalCode?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    country?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    contactFirstName?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    contactLastName?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    contactEmail?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    contactPhone?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    contactTitle?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    kybStatus?: EnumKybStatusNullableWithAggregatesFilter<"InstitutionClient"> | $Enums.KybStatus | null
+    kybVerifiedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionClient"> | Date | string | null
+    kybExpiresAt?: DateTimeNullableWithAggregatesFilter<"InstitutionClient"> | Date | string | null
+    riskRating?: EnumRiskRatingNullableWithAggregatesFilter<"InstitutionClient"> | $Enums.RiskRating | null
+    riskNotes?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    sanctionsStatus?: EnumSanctionsStatusNullableWithAggregatesFilter<"InstitutionClient"> | $Enums.SanctionsStatus | null
+    sourceOfFunds?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    isRegulatedEntity?: BoolNullableWithAggregatesFilter<"InstitutionClient"> | boolean | null
+    regulatoryStatus?: EnumRegulatoryStatusNullableWithAggregatesFilter<"InstitutionClient"> | $Enums.RegulatoryStatus | null
+    licenseType?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    licenseNumber?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    regulatoryBody?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    industry?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    websiteUrl?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    businessDescription?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    yearEstablished?: IntNullableWithAggregatesFilter<"InstitutionClient"> | number | null
+    employeeCountRange?: EnumEmployeeCountRangeNullableWithAggregatesFilter<"InstitutionClient"> | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: EnumAnnualRevenueRangeNullableWithAggregatesFilter<"InstitutionClient"> | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: DecimalNullableWithAggregatesFilter<"InstitutionClient"> | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    walletCustodyType?: EnumWalletCustodyTypeNullableWithAggregatesFilter<"InstitutionClient"> | $Enums.WalletCustodyType | null
+    custodianName?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    preferredSettlementChain?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    accountManagerName?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    accountManagerEmail?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    onboardingCompletedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionClient"> | Date | string | null
+    nextReviewDate?: DateTimeNullableWithAggregatesFilter<"InstitutionClient"> | Date | string | null
+    referralSource?: StringNullableWithAggregatesFilter<"InstitutionClient"> | string | null
+    isTestAccount?: BoolWithAggregatesFilter<"InstitutionClient"> | boolean
+    isArchived?: BoolWithAggregatesFilter<"InstitutionClient"> | boolean
+  }
+
+  export type InstitutionWalletWhereInput = {
+    AND?: InstitutionWalletWhereInput | InstitutionWalletWhereInput[]
+    OR?: InstitutionWalletWhereInput[]
+    NOT?: InstitutionWalletWhereInput | InstitutionWalletWhereInput[]
+    id?: StringFilter<"InstitutionWallet"> | string
+    clientId?: StringFilter<"InstitutionWallet"> | string
+    name?: StringFilter<"InstitutionWallet"> | string
+    address?: StringFilter<"InstitutionWallet"> | string
+    chain?: StringFilter<"InstitutionWallet"> | string
+    description?: StringNullableFilter<"InstitutionWallet"> | string | null
+    provider?: StringNullableFilter<"InstitutionWallet"> | string | null
+    isPrimary?: BoolFilter<"InstitutionWallet"> | boolean
+    isSettlement?: BoolFilter<"InstitutionWallet"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }
+
+  export type InstitutionWalletOrderByWithRelationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    address?: SortOrder
+    chain?: SortOrder
+    description?: SortOrderInput | SortOrder
+    provider?: SortOrderInput | SortOrder
+    isPrimary?: SortOrder
+    isSettlement?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+  }
+
+  export type InstitutionWalletWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: InstitutionWalletWhereInput | InstitutionWalletWhereInput[]
+    OR?: InstitutionWalletWhereInput[]
+    NOT?: InstitutionWalletWhereInput | InstitutionWalletWhereInput[]
+    clientId?: StringFilter<"InstitutionWallet"> | string
+    name?: StringFilter<"InstitutionWallet"> | string
+    address?: StringFilter<"InstitutionWallet"> | string
+    chain?: StringFilter<"InstitutionWallet"> | string
+    description?: StringNullableFilter<"InstitutionWallet"> | string | null
+    provider?: StringNullableFilter<"InstitutionWallet"> | string | null
+    isPrimary?: BoolFilter<"InstitutionWallet"> | boolean
+    isSettlement?: BoolFilter<"InstitutionWallet"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }, "id">
+
+  export type InstitutionWalletOrderByWithAggregationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    address?: SortOrder
+    chain?: SortOrder
+    description?: SortOrderInput | SortOrder
+    provider?: SortOrderInput | SortOrder
+    isPrimary?: SortOrder
+    isSettlement?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InstitutionWalletCountOrderByAggregateInput
+    _max?: InstitutionWalletMaxOrderByAggregateInput
+    _min?: InstitutionWalletMinOrderByAggregateInput
+  }
+
+  export type InstitutionWalletScalarWhereWithAggregatesInput = {
+    AND?: InstitutionWalletScalarWhereWithAggregatesInput | InstitutionWalletScalarWhereWithAggregatesInput[]
+    OR?: InstitutionWalletScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionWalletScalarWhereWithAggregatesInput | InstitutionWalletScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionWallet"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionWallet"> | string
+    name?: StringWithAggregatesFilter<"InstitutionWallet"> | string
+    address?: StringWithAggregatesFilter<"InstitutionWallet"> | string
+    chain?: StringWithAggregatesFilter<"InstitutionWallet"> | string
+    description?: StringNullableWithAggregatesFilter<"InstitutionWallet"> | string | null
+    provider?: StringNullableWithAggregatesFilter<"InstitutionWallet"> | string | null
+    isPrimary?: BoolWithAggregatesFilter<"InstitutionWallet"> | boolean
+    isSettlement?: BoolWithAggregatesFilter<"InstitutionWallet"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionWallet"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionWallet"> | Date | string
   }
 
   export type InstitutionRefreshTokenWhereInput = {
@@ -40256,12 +42837,62 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateInput = {
@@ -40278,12 +42909,62 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUpdateInput = {
@@ -40300,12 +42981,62 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateInput = {
@@ -40322,12 +43053,62 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateManyInput = {
@@ -40344,6 +43125,55 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
   }
 
   export type InstitutionClientUpdateManyMutationInput = {
@@ -40360,6 +43190,55 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type InstitutionClientUncheckedUpdateManyInput = {
@@ -40376,6 +43255,152 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type InstitutionWalletCreateInput = {
+    id?: string
+    name: string
+    address: string
+    chain?: string
+    description?: string | null
+    provider?: string | null
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutWalletsInput
+  }
+
+  export type InstitutionWalletUncheckedCreateInput = {
+    id?: string
+    clientId: string
+    name: string
+    address: string
+    chain?: string
+    description?: string | null
+    provider?: string | null
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionWalletUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutWalletsNestedInput
+  }
+
+  export type InstitutionWalletUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionWalletCreateManyInput = {
+    id?: string
+    clientId: string
+    name: string
+    address: string
+    chain?: string
+    description?: string | null
+    provider?: string | null
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionWalletUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionWalletUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type InstitutionRefreshTokenCreateInput = {
@@ -43054,6 +46079,67 @@ export namespace Prisma {
     isEmpty?: boolean
   }
 
+  export type EnumEntityTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.EntityType | EnumEntityTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.EntityType[] | ListEnumEntityTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.EntityType[] | ListEnumEntityTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumEntityTypeNullableFilter<$PrismaModel> | $Enums.EntityType | null
+  }
+
+  export type EnumKybStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.KybStatus | EnumKybStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.KybStatus[] | ListEnumKybStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.KybStatus[] | ListEnumKybStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumKybStatusNullableFilter<$PrismaModel> | $Enums.KybStatus | null
+  }
+
+  export type EnumRiskRatingNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.RiskRating | EnumRiskRatingFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RiskRating[] | ListEnumRiskRatingFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RiskRating[] | ListEnumRiskRatingFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRiskRatingNullableFilter<$PrismaModel> | $Enums.RiskRating | null
+  }
+
+  export type EnumSanctionsStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.SanctionsStatus | EnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SanctionsStatus[] | ListEnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SanctionsStatus[] | ListEnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSanctionsStatusNullableFilter<$PrismaModel> | $Enums.SanctionsStatus | null
+  }
+
+  export type BoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  }
+
+  export type EnumRegulatoryStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.RegulatoryStatus | EnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RegulatoryStatus[] | ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RegulatoryStatus[] | ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRegulatoryStatusNullableFilter<$PrismaModel> | $Enums.RegulatoryStatus | null
+  }
+
+  export type EnumEmployeeCountRangeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.EmployeeCountRange | EnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.EmployeeCountRange[] | ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.EmployeeCountRange[] | ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumEmployeeCountRangeNullableFilter<$PrismaModel> | $Enums.EmployeeCountRange | null
+  }
+
+  export type EnumAnnualRevenueRangeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.AnnualRevenueRange | EnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.AnnualRevenueRange[] | ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.AnnualRevenueRange[] | ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumAnnualRevenueRangeNullableFilter<$PrismaModel> | $Enums.AnnualRevenueRange | null
+  }
+
+  export type EnumWalletCustodyTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.WalletCustodyType | EnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WalletCustodyType[] | ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WalletCustodyType[] | ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel> | $Enums.WalletCustodyType | null
+  }
+
   export type InstitutionRefreshTokenListRelationFilter = {
     every?: InstitutionRefreshTokenWhereInput
     some?: InstitutionRefreshTokenWhereInput
@@ -43089,6 +46175,12 @@ export namespace Prisma {
     none?: InstitutionFileWhereInput
   }
 
+  export type InstitutionWalletListRelationFilter = {
+    every?: InstitutionWalletWhereInput
+    some?: InstitutionWalletWhereInput
+    none?: InstitutionWalletWhereInput
+  }
+
   export type InstitutionRefreshTokenOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -43109,6 +46201,10 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type InstitutionWalletOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type InstitutionClientCountOrderByAggregateInput = {
     id?: SortOrder
     email?: SortOrder
@@ -43123,6 +46219,60 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     lastLoginAt?: SortOrder
+    legalName?: SortOrder
+    tradingName?: SortOrder
+    registrationNumber?: SortOrder
+    registrationCountry?: SortOrder
+    entityType?: SortOrder
+    lei?: SortOrder
+    taxId?: SortOrder
+    taxCountry?: SortOrder
+    addressLine1?: SortOrder
+    addressLine2?: SortOrder
+    city?: SortOrder
+    state?: SortOrder
+    postalCode?: SortOrder
+    country?: SortOrder
+    contactFirstName?: SortOrder
+    contactLastName?: SortOrder
+    contactEmail?: SortOrder
+    contactPhone?: SortOrder
+    contactTitle?: SortOrder
+    kybStatus?: SortOrder
+    kybVerifiedAt?: SortOrder
+    kybExpiresAt?: SortOrder
+    riskRating?: SortOrder
+    riskNotes?: SortOrder
+    sanctionsStatus?: SortOrder
+    sourceOfFunds?: SortOrder
+    isRegulatedEntity?: SortOrder
+    regulatoryStatus?: SortOrder
+    licenseType?: SortOrder
+    licenseNumber?: SortOrder
+    regulatoryBody?: SortOrder
+    industry?: SortOrder
+    websiteUrl?: SortOrder
+    businessDescription?: SortOrder
+    yearEstablished?: SortOrder
+    employeeCountRange?: SortOrder
+    annualRevenueRange?: SortOrder
+    expectedMonthlyVolume?: SortOrder
+    purposeOfAccount?: SortOrder
+    walletCustodyType?: SortOrder
+    custodianName?: SortOrder
+    preferredSettlementChain?: SortOrder
+    accountManagerName?: SortOrder
+    accountManagerEmail?: SortOrder
+    onboardingCompletedAt?: SortOrder
+    nextReviewDate?: SortOrder
+    referralSource?: SortOrder
+    isTestAccount?: SortOrder
+    isArchived?: SortOrder
+  }
+
+  export type InstitutionClientAvgOrderByAggregateInput = {
+    yearEstablished?: SortOrder
+    expectedMonthlyVolume?: SortOrder
   }
 
   export type InstitutionClientMaxOrderByAggregateInput = {
@@ -43138,6 +46288,55 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     lastLoginAt?: SortOrder
+    legalName?: SortOrder
+    tradingName?: SortOrder
+    registrationNumber?: SortOrder
+    registrationCountry?: SortOrder
+    entityType?: SortOrder
+    lei?: SortOrder
+    taxId?: SortOrder
+    taxCountry?: SortOrder
+    addressLine1?: SortOrder
+    addressLine2?: SortOrder
+    city?: SortOrder
+    state?: SortOrder
+    postalCode?: SortOrder
+    country?: SortOrder
+    contactFirstName?: SortOrder
+    contactLastName?: SortOrder
+    contactEmail?: SortOrder
+    contactPhone?: SortOrder
+    contactTitle?: SortOrder
+    kybStatus?: SortOrder
+    kybVerifiedAt?: SortOrder
+    kybExpiresAt?: SortOrder
+    riskRating?: SortOrder
+    riskNotes?: SortOrder
+    sanctionsStatus?: SortOrder
+    sourceOfFunds?: SortOrder
+    isRegulatedEntity?: SortOrder
+    regulatoryStatus?: SortOrder
+    licenseType?: SortOrder
+    licenseNumber?: SortOrder
+    regulatoryBody?: SortOrder
+    industry?: SortOrder
+    websiteUrl?: SortOrder
+    businessDescription?: SortOrder
+    yearEstablished?: SortOrder
+    employeeCountRange?: SortOrder
+    annualRevenueRange?: SortOrder
+    expectedMonthlyVolume?: SortOrder
+    purposeOfAccount?: SortOrder
+    walletCustodyType?: SortOrder
+    custodianName?: SortOrder
+    preferredSettlementChain?: SortOrder
+    accountManagerName?: SortOrder
+    accountManagerEmail?: SortOrder
+    onboardingCompletedAt?: SortOrder
+    nextReviewDate?: SortOrder
+    referralSource?: SortOrder
+    isTestAccount?: SortOrder
+    isArchived?: SortOrder
   }
 
   export type InstitutionClientMinOrderByAggregateInput = {
@@ -43153,6 +46352,60 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     lastLoginAt?: SortOrder
+    legalName?: SortOrder
+    tradingName?: SortOrder
+    registrationNumber?: SortOrder
+    registrationCountry?: SortOrder
+    entityType?: SortOrder
+    lei?: SortOrder
+    taxId?: SortOrder
+    taxCountry?: SortOrder
+    addressLine1?: SortOrder
+    addressLine2?: SortOrder
+    city?: SortOrder
+    state?: SortOrder
+    postalCode?: SortOrder
+    country?: SortOrder
+    contactFirstName?: SortOrder
+    contactLastName?: SortOrder
+    contactEmail?: SortOrder
+    contactPhone?: SortOrder
+    contactTitle?: SortOrder
+    kybStatus?: SortOrder
+    kybVerifiedAt?: SortOrder
+    kybExpiresAt?: SortOrder
+    riskRating?: SortOrder
+    riskNotes?: SortOrder
+    sanctionsStatus?: SortOrder
+    sourceOfFunds?: SortOrder
+    isRegulatedEntity?: SortOrder
+    regulatoryStatus?: SortOrder
+    licenseType?: SortOrder
+    licenseNumber?: SortOrder
+    regulatoryBody?: SortOrder
+    industry?: SortOrder
+    websiteUrl?: SortOrder
+    businessDescription?: SortOrder
+    yearEstablished?: SortOrder
+    employeeCountRange?: SortOrder
+    annualRevenueRange?: SortOrder
+    expectedMonthlyVolume?: SortOrder
+    purposeOfAccount?: SortOrder
+    walletCustodyType?: SortOrder
+    custodianName?: SortOrder
+    preferredSettlementChain?: SortOrder
+    accountManagerName?: SortOrder
+    accountManagerEmail?: SortOrder
+    onboardingCompletedAt?: SortOrder
+    nextReviewDate?: SortOrder
+    referralSource?: SortOrder
+    isTestAccount?: SortOrder
+    isArchived?: SortOrder
+  }
+
+  export type InstitutionClientSumOrderByAggregateInput = {
+    yearEstablished?: SortOrder
+    expectedMonthlyVolume?: SortOrder
   }
 
   export type EnumClientTierWithAggregatesFilter<$PrismaModel = never> = {
@@ -43175,9 +46428,139 @@ export namespace Prisma {
     _max?: NestedEnumClientStatusFilter<$PrismaModel>
   }
 
+  export type EnumEntityTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EntityType | EnumEntityTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.EntityType[] | ListEnumEntityTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.EntityType[] | ListEnumEntityTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumEntityTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.EntityType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumEntityTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumEntityTypeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumKybStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.KybStatus | EnumKybStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.KybStatus[] | ListEnumKybStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.KybStatus[] | ListEnumKybStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumKybStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.KybStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumKybStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumKybStatusNullableFilter<$PrismaModel>
+  }
+
+  export type EnumRiskRatingNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RiskRating | EnumRiskRatingFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RiskRating[] | ListEnumRiskRatingFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RiskRating[] | ListEnumRiskRatingFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRiskRatingNullableWithAggregatesFilter<$PrismaModel> | $Enums.RiskRating | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumRiskRatingNullableFilter<$PrismaModel>
+    _max?: NestedEnumRiskRatingNullableFilter<$PrismaModel>
+  }
+
+  export type EnumSanctionsStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SanctionsStatus | EnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SanctionsStatus[] | ListEnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SanctionsStatus[] | ListEnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSanctionsStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.SanctionsStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumSanctionsStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumSanctionsStatusNullableFilter<$PrismaModel>
+  }
+
+  export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
+  }
+
+  export type EnumRegulatoryStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RegulatoryStatus | EnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RegulatoryStatus[] | ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RegulatoryStatus[] | ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRegulatoryStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.RegulatoryStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumRegulatoryStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumRegulatoryStatusNullableFilter<$PrismaModel>
+  }
+
+  export type EnumEmployeeCountRangeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EmployeeCountRange | EnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.EmployeeCountRange[] | ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.EmployeeCountRange[] | ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumEmployeeCountRangeNullableWithAggregatesFilter<$PrismaModel> | $Enums.EmployeeCountRange | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumEmployeeCountRangeNullableFilter<$PrismaModel>
+    _max?: NestedEnumEmployeeCountRangeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumAnnualRevenueRangeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AnnualRevenueRange | EnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.AnnualRevenueRange[] | ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.AnnualRevenueRange[] | ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumAnnualRevenueRangeNullableWithAggregatesFilter<$PrismaModel> | $Enums.AnnualRevenueRange | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumAnnualRevenueRangeNullableFilter<$PrismaModel>
+    _max?: NestedEnumAnnualRevenueRangeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumWalletCustodyTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WalletCustodyType | EnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WalletCustodyType[] | ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WalletCustodyType[] | ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWalletCustodyTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.WalletCustodyType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel>
+  }
+
   export type InstitutionClientScalarRelationFilter = {
     is?: InstitutionClientWhereInput
     isNot?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionWalletCountOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    address?: SortOrder
+    chain?: SortOrder
+    description?: SortOrder
+    provider?: SortOrder
+    isPrimary?: SortOrder
+    isSettlement?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionWalletMaxOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    address?: SortOrder
+    chain?: SortOrder
+    description?: SortOrder
+    provider?: SortOrder
+    isPrimary?: SortOrder
+    isSettlement?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionWalletMinOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    address?: SortOrder
+    chain?: SortOrder
+    description?: SortOrder
+    provider?: SortOrder
+    isPrimary?: SortOrder
+    isSettlement?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type InstitutionRefreshTokenCountOrderByAggregateInput = {
@@ -44699,6 +48082,13 @@ export namespace Prisma {
     connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
   }
 
+  export type InstitutionWalletCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionWalletCreateWithoutClientInput, InstitutionWalletUncheckedCreateWithoutClientInput> | InstitutionWalletCreateWithoutClientInput[] | InstitutionWalletUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionWalletCreateOrConnectWithoutClientInput | InstitutionWalletCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionWalletCreateManyClientInputEnvelope
+    connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+  }
+
   export type InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput = {
     create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
@@ -44740,6 +48130,13 @@ export namespace Prisma {
     connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
   }
 
+  export type InstitutionWalletUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionWalletCreateWithoutClientInput, InstitutionWalletUncheckedCreateWithoutClientInput> | InstitutionWalletCreateWithoutClientInput[] | InstitutionWalletUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionWalletCreateOrConnectWithoutClientInput | InstitutionWalletCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionWalletCreateManyClientInputEnvelope
+    connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+  }
+
   export type EnumClientTierFieldUpdateOperationsInput = {
     set?: $Enums.ClientTier
   }
@@ -44751,6 +48148,42 @@ export namespace Prisma {
   export type InstitutionClientUpdatesettledWalletsInput = {
     set?: string[]
     push?: string | string[]
+  }
+
+  export type NullableEnumEntityTypeFieldUpdateOperationsInput = {
+    set?: $Enums.EntityType | null
+  }
+
+  export type NullableEnumKybStatusFieldUpdateOperationsInput = {
+    set?: $Enums.KybStatus | null
+  }
+
+  export type NullableEnumRiskRatingFieldUpdateOperationsInput = {
+    set?: $Enums.RiskRating | null
+  }
+
+  export type NullableEnumSanctionsStatusFieldUpdateOperationsInput = {
+    set?: $Enums.SanctionsStatus | null
+  }
+
+  export type NullableBoolFieldUpdateOperationsInput = {
+    set?: boolean | null
+  }
+
+  export type NullableEnumRegulatoryStatusFieldUpdateOperationsInput = {
+    set?: $Enums.RegulatoryStatus | null
+  }
+
+  export type NullableEnumEmployeeCountRangeFieldUpdateOperationsInput = {
+    set?: $Enums.EmployeeCountRange | null
+  }
+
+  export type NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput = {
+    set?: $Enums.AnnualRevenueRange | null
+  }
+
+  export type NullableEnumWalletCustodyTypeFieldUpdateOperationsInput = {
+    set?: $Enums.WalletCustodyType | null
   }
 
   export type InstitutionRefreshTokenUpdateManyWithoutClientNestedInput = {
@@ -44833,6 +48266,20 @@ export namespace Prisma {
     deleteMany?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
   }
 
+  export type InstitutionWalletUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionWalletCreateWithoutClientInput, InstitutionWalletUncheckedCreateWithoutClientInput> | InstitutionWalletCreateWithoutClientInput[] | InstitutionWalletUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionWalletCreateOrConnectWithoutClientInput | InstitutionWalletCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionWalletUpsertWithWhereUniqueWithoutClientInput | InstitutionWalletUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionWalletCreateManyClientInputEnvelope
+    set?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+    disconnect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+    delete?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+    connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+    update?: InstitutionWalletUpdateWithWhereUniqueWithoutClientInput | InstitutionWalletUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionWalletUpdateManyWithWhereWithoutClientInput | InstitutionWalletUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
+  }
+
   export type InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput = {
     create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
@@ -44911,6 +48358,34 @@ export namespace Prisma {
     update?: InstitutionFileUpdateWithWhereUniqueWithoutClientInput | InstitutionFileUpdateWithWhereUniqueWithoutClientInput[]
     updateMany?: InstitutionFileUpdateManyWithWhereWithoutClientInput | InstitutionFileUpdateManyWithWhereWithoutClientInput[]
     deleteMany?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
+  }
+
+  export type InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionWalletCreateWithoutClientInput, InstitutionWalletUncheckedCreateWithoutClientInput> | InstitutionWalletCreateWithoutClientInput[] | InstitutionWalletUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionWalletCreateOrConnectWithoutClientInput | InstitutionWalletCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionWalletUpsertWithWhereUniqueWithoutClientInput | InstitutionWalletUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionWalletCreateManyClientInputEnvelope
+    set?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+    disconnect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+    delete?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+    connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+    update?: InstitutionWalletUpdateWithWhereUniqueWithoutClientInput | InstitutionWalletUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionWalletUpdateManyWithWhereWithoutClientInput | InstitutionWalletUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutWalletsInput = {
+    create?: XOR<InstitutionClientCreateWithoutWalletsInput, InstitutionClientUncheckedCreateWithoutWalletsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutWalletsInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutWalletsNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutWalletsInput, InstitutionClientUncheckedCreateWithoutWalletsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutWalletsInput
+    upsert?: InstitutionClientUpsertWithoutWalletsInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutWalletsInput, InstitutionClientUpdateWithoutWalletsInput>, InstitutionClientUncheckedUpdateWithoutWalletsInput>
   }
 
   export type InstitutionClientCreateNestedOneWithoutRefreshTokensInput = {
@@ -45851,6 +49326,67 @@ export namespace Prisma {
     not?: NestedEnumClientStatusFilter<$PrismaModel> | $Enums.ClientStatus
   }
 
+  export type NestedEnumEntityTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.EntityType | EnumEntityTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.EntityType[] | ListEnumEntityTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.EntityType[] | ListEnumEntityTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumEntityTypeNullableFilter<$PrismaModel> | $Enums.EntityType | null
+  }
+
+  export type NestedEnumKybStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.KybStatus | EnumKybStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.KybStatus[] | ListEnumKybStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.KybStatus[] | ListEnumKybStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumKybStatusNullableFilter<$PrismaModel> | $Enums.KybStatus | null
+  }
+
+  export type NestedEnumRiskRatingNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.RiskRating | EnumRiskRatingFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RiskRating[] | ListEnumRiskRatingFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RiskRating[] | ListEnumRiskRatingFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRiskRatingNullableFilter<$PrismaModel> | $Enums.RiskRating | null
+  }
+
+  export type NestedEnumSanctionsStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.SanctionsStatus | EnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SanctionsStatus[] | ListEnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SanctionsStatus[] | ListEnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSanctionsStatusNullableFilter<$PrismaModel> | $Enums.SanctionsStatus | null
+  }
+
+  export type NestedBoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  }
+
+  export type NestedEnumRegulatoryStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.RegulatoryStatus | EnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RegulatoryStatus[] | ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RegulatoryStatus[] | ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRegulatoryStatusNullableFilter<$PrismaModel> | $Enums.RegulatoryStatus | null
+  }
+
+  export type NestedEnumEmployeeCountRangeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.EmployeeCountRange | EnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.EmployeeCountRange[] | ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.EmployeeCountRange[] | ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumEmployeeCountRangeNullableFilter<$PrismaModel> | $Enums.EmployeeCountRange | null
+  }
+
+  export type NestedEnumAnnualRevenueRangeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.AnnualRevenueRange | EnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.AnnualRevenueRange[] | ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.AnnualRevenueRange[] | ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumAnnualRevenueRangeNullableFilter<$PrismaModel> | $Enums.AnnualRevenueRange | null
+  }
+
+  export type NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.WalletCustodyType | EnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WalletCustodyType[] | ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WalletCustodyType[] | ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel> | $Enums.WalletCustodyType | null
+  }
+
   export type NestedEnumClientTierWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ClientTier | EnumClientTierFieldRefInput<$PrismaModel>
     in?: $Enums.ClientTier[] | ListEnumClientTierFieldRefInput<$PrismaModel>
@@ -45869,6 +49405,94 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumClientStatusFilter<$PrismaModel>
     _max?: NestedEnumClientStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumEntityTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EntityType | EnumEntityTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.EntityType[] | ListEnumEntityTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.EntityType[] | ListEnumEntityTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumEntityTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.EntityType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumEntityTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumEntityTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumKybStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.KybStatus | EnumKybStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.KybStatus[] | ListEnumKybStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.KybStatus[] | ListEnumKybStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumKybStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.KybStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumKybStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumKybStatusNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumRiskRatingNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RiskRating | EnumRiskRatingFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RiskRating[] | ListEnumRiskRatingFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RiskRating[] | ListEnumRiskRatingFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRiskRatingNullableWithAggregatesFilter<$PrismaModel> | $Enums.RiskRating | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumRiskRatingNullableFilter<$PrismaModel>
+    _max?: NestedEnumRiskRatingNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSanctionsStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SanctionsStatus | EnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SanctionsStatus[] | ListEnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SanctionsStatus[] | ListEnumSanctionsStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSanctionsStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.SanctionsStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumSanctionsStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumSanctionsStatusNullableFilter<$PrismaModel>
+  }
+
+  export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumRegulatoryStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RegulatoryStatus | EnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RegulatoryStatus[] | ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RegulatoryStatus[] | ListEnumRegulatoryStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRegulatoryStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.RegulatoryStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumRegulatoryStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumRegulatoryStatusNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumEmployeeCountRangeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EmployeeCountRange | EnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.EmployeeCountRange[] | ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.EmployeeCountRange[] | ListEnumEmployeeCountRangeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumEmployeeCountRangeNullableWithAggregatesFilter<$PrismaModel> | $Enums.EmployeeCountRange | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumEmployeeCountRangeNullableFilter<$PrismaModel>
+    _max?: NestedEnumEmployeeCountRangeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAnnualRevenueRangeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AnnualRevenueRange | EnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.AnnualRevenueRange[] | ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.AnnualRevenueRange[] | ListEnumAnnualRevenueRangeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumAnnualRevenueRangeNullableWithAggregatesFilter<$PrismaModel> | $Enums.AnnualRevenueRange | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumAnnualRevenueRangeNullableFilter<$PrismaModel>
+    _max?: NestedEnumAnnualRevenueRangeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWalletCustodyTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WalletCustodyType | EnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.WalletCustodyType[] | ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.WalletCustodyType[] | ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumWalletCustodyTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.WalletCustodyType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumInstitutionConditionTypeFilter<$PrismaModel = never> = {
@@ -49322,6 +52946,42 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type InstitutionWalletCreateWithoutClientInput = {
+    id?: string
+    name: string
+    address: string
+    chain?: string
+    description?: string | null
+    provider?: string | null
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionWalletUncheckedCreateWithoutClientInput = {
+    id?: string
+    name: string
+    address: string
+    chain?: string
+    description?: string | null
+    provider?: string | null
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionWalletCreateOrConnectWithoutClientInput = {
+    where: InstitutionWalletWhereUniqueInput
+    create: XOR<InstitutionWalletCreateWithoutClientInput, InstitutionWalletUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionWalletCreateManyClientInputEnvelope = {
+    data: InstitutionWalletCreateManyClientInput | InstitutionWalletCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
   export type InstitutionRefreshTokenUpsertWithWhereUniqueWithoutClientInput = {
     where: InstitutionRefreshTokenWhereUniqueInput
     update: XOR<InstitutionRefreshTokenUpdateWithoutClientInput, InstitutionRefreshTokenUncheckedUpdateWithoutClientInput>
@@ -49529,6 +53189,339 @@ export namespace Prisma {
     uploadedAt?: DateTimeFilter<"InstitutionFile"> | Date | string
   }
 
+  export type InstitutionWalletUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionWalletWhereUniqueInput
+    update: XOR<InstitutionWalletUpdateWithoutClientInput, InstitutionWalletUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionWalletCreateWithoutClientInput, InstitutionWalletUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionWalletUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionWalletWhereUniqueInput
+    data: XOR<InstitutionWalletUpdateWithoutClientInput, InstitutionWalletUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionWalletUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionWalletScalarWhereInput
+    data: XOR<InstitutionWalletUpdateManyMutationInput, InstitutionWalletUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionWalletScalarWhereInput = {
+    AND?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
+    OR?: InstitutionWalletScalarWhereInput[]
+    NOT?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
+    id?: StringFilter<"InstitutionWallet"> | string
+    clientId?: StringFilter<"InstitutionWallet"> | string
+    name?: StringFilter<"InstitutionWallet"> | string
+    address?: StringFilter<"InstitutionWallet"> | string
+    chain?: StringFilter<"InstitutionWallet"> | string
+    description?: StringNullableFilter<"InstitutionWallet"> | string | null
+    provider?: StringNullableFilter<"InstitutionWallet"> | string | null
+    isPrimary?: BoolFilter<"InstitutionWallet"> | boolean
+    isSettlement?: BoolFilter<"InstitutionWallet"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
+  }
+
+  export type InstitutionClientCreateWithoutWalletsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutWalletsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutWalletsInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutWalletsInput, InstitutionClientUncheckedCreateWithoutWalletsInput>
+  }
+
+  export type InstitutionClientUpsertWithoutWalletsInput = {
+    update: XOR<InstitutionClientUpdateWithoutWalletsInput, InstitutionClientUncheckedUpdateWithoutWalletsInput>
+    create: XOR<InstitutionClientCreateWithoutWalletsInput, InstitutionClientUncheckedCreateWithoutWalletsInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutWalletsInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutWalletsInput, InstitutionClientUncheckedUpdateWithoutWalletsInput>
+  }
+
+  export type InstitutionClientUpdateWithoutWalletsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutWalletsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+  }
+
   export type InstitutionClientCreateWithoutRefreshTokensInput = {
     id?: string
     email: string
@@ -49543,11 +53536,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutRefreshTokensInput = {
@@ -49564,11 +53607,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutRefreshTokensInput = {
@@ -49601,11 +53694,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutRefreshTokensInput = {
@@ -49622,11 +53765,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutSettingsInput = {
@@ -49643,11 +53836,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
     apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutSettingsInput = {
@@ -49664,11 +53907,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
     apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutSettingsInput = {
@@ -49701,11 +53994,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutSettingsInput = {
@@ -49722,11 +54065,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutApiKeysInput = {
@@ -49743,11 +54136,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutApiKeysInput = {
@@ -49764,11 +54207,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutApiKeysInput = {
@@ -49801,11 +54294,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutApiKeysInput = {
@@ -49822,11 +54365,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutEscrowsInput = {
@@ -49843,11 +54436,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutEscrowsInput = {
@@ -49864,11 +54507,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutEscrowsInput = {
@@ -50025,11 +54718,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutEscrowsInput = {
@@ -50046,11 +54789,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionDepositUpsertWithWhereUniqueWithoutEscrowInput = {
@@ -50355,11 +55148,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutAuditLogsInput = {
@@ -50376,11 +55219,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutAuditLogsInput = {
@@ -50482,11 +55375,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutAuditLogsInput = {
@@ -50503,11 +55446,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionEscrowCreateWithoutAiAnalysesInput = {
@@ -50656,11 +55649,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutFilesInput = {
@@ -50677,11 +55720,61 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
     settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
     apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutFilesInput = {
@@ -50777,11 +55870,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutFilesInput = {
@@ -50798,11 +55941,61 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
     refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
     settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
     apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionEscrowUpsertWithoutFilesInput = {
@@ -52087,6 +57280,19 @@ export namespace Prisma {
     uploadedAt?: Date | string
   }
 
+  export type InstitutionWalletCreateManyClientInput = {
+    id?: string
+    name: string
+    address: string
+    chain?: string
+    description?: string | null
+    provider?: string | null
+    isPrimary?: boolean
+    isSettlement?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type InstitutionRefreshTokenUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     tokenHash?: StringFieldUpdateOperationsInput | string
@@ -52297,6 +57503,45 @@ export namespace Prisma {
     sizeBytes?: IntFieldUpdateOperationsInput | number
     documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionWalletUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionWalletUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionWalletUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type InstitutionDepositCreateManyEscrowInput = {

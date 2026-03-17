@@ -65,9 +65,24 @@ export class AiAnalysisService {
     // Rate limit check
     await this.checkRateLimit(clientId);
 
-    // Verify escrow belongs to this client
+    // Verify escrow belongs to this client, and fetch non-PII client details for context
     const escrow = await this.prisma.institutionEscrow.findFirst({
       where: { escrowId, clientId },
+      select: {
+        escrowId: true,
+        clientId: true,
+        amount: true,
+        corridor: true,
+        status: true,
+        client: {
+          select: {
+            companyName: true,
+            legalName: true,
+            country: true,
+            industry: true,
+          },
+        },
+      },
     });
     if (!escrow) {
       throw new Error('Escrow not found or access denied');
@@ -94,6 +109,18 @@ export class AiAnalysisService {
 
     // Fetch file content
     const fileBuffer = await this.fetchFileBuffer(file.fileKey);
+
+    // Spreadsheet/CSV files cannot be analyzed via vision — reject with clear message
+    const unsupportedForAnalysis = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/csv',
+    ];
+    if (unsupportedForAnalysis.includes(file.mimeType)) {
+      throw new Error(
+        `AI analysis does not support ${file.mimeType} files. Please convert to PDF before analyzing.`,
+      );
+    }
 
     // Extract text from PDF or use OCR hint for images
     let documentText: string;
@@ -128,6 +155,15 @@ export class AiAnalysisService {
       return result;
     }
 
+    // Build non-PII client context for the AI prompt (no personal names/addresses)
+    const clientInfo = escrow.client;
+    const clientContext = clientInfo ? {
+      companyName: clientInfo.companyName,
+      legalName: clientInfo.legalName || undefined,
+      country: clientInfo.country || undefined,
+      industry: clientInfo.industry || undefined,
+    } : undefined;
+
     // Call Claude API
     const model = process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
     const analysisResult = await this.callClaudeApi(
@@ -136,6 +172,7 @@ export class AiAnalysisService {
       file.mimeType,
       context,
       model,
+      clientContext,
     );
 
     // Store in database
@@ -200,6 +237,12 @@ export class AiAnalysisService {
     mimeType: string,
     context?: AnalyzeDocumentParams['context'],
     model?: string,
+    clientContext?: {
+      companyName?: string;
+      legalName?: string;
+      country?: string;
+      industry?: string;
+    },
   ): Promise<AiAnalysisResult> {
     const client = this.getAnthropicClient();
 
@@ -232,9 +275,20 @@ Risk scoring guidelines:
 
 Respond with ONLY the JSON object, no additional text.`;
 
-    const contextInfo = context
-      ? `\nContext: Expected amount: ${context.expectedAmount || 'unknown'}, PO#: ${context.poNumber || 'unknown'}, Corridor: ${context.corridor || 'unknown'}`
+    let contextInfo = context
+      ? `\nEscrow Context: Expected amount: ${context.expectedAmount || 'unknown'}, PO#: ${context.poNumber || 'unknown'}, Corridor: ${context.corridor || 'unknown'}`
       : '';
+
+    if (clientContext) {
+      const parts = [];
+      if (clientContext.companyName) parts.push(`Company: ${clientContext.companyName}`);
+      if (clientContext.legalName) parts.push(`Legal Name: ${clientContext.legalName}`);
+      if (clientContext.country) parts.push(`Country: ${clientContext.country}`);
+      if (clientContext.industry) parts.push(`Industry: ${clientContext.industry}`);
+      if (parts.length > 0) {
+        contextInfo += `\nClient Details: ${parts.join(', ')}`;
+      }
+    }
 
     const contentParts: Anthropic.ContentBlockParam[] = [];
 

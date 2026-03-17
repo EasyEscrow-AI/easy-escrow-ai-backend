@@ -119,12 +119,14 @@ tags:
     description: Authentication for institution escrow clients (email/password, JWT)
   - name: Institution Settings
     description: Client settings, wallets, and API key management
+  - name: Institution Clients
+    description: Client profile lookup, search, list, and archive
   - name: Institution Files
-    description: Document uploads for compliance (PDF, images)
+    description: Document uploads for compliance (PDF, images, Excel, CSV)
   - name: Institution Escrow
     description: Cross-border USDC escrow payment lifecycle
   - name: AI Analysis
-    description: AI-powered document risk analysis
+    description: AI-powered escrow document risk analysis (renamed routes)
   - name: Institution Admin
     description: Admin operations for allowlist and corridor management
 
@@ -145,6 +147,7 @@ x-tagGroups:
       - Institution Overview
       - Institution Auth
       - Institution Settings
+      - Institution Clients
       - Institution Files
       - Institution Escrow
       - AI Analysis
@@ -1165,6 +1168,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/auth/me:
     get:
@@ -1192,6 +1199,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1241,6 +1252,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Institution Settings ───────────────────────────────────────────────
 
@@ -1270,6 +1285,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1316,6 +1335,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/settings/wallets:
     put:
@@ -1355,6 +1378,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1408,6 +1435,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     get:
       tags:
         - Institution Settings
@@ -1435,6 +1466,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1483,6 +1518,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Institution Files ──────────────────────────────────────────────────
 
@@ -1494,8 +1533,8 @@ paths:
       description: |
         Upload a document for compliance or escrow purposes.
 
-        **Accepted formats:** PDF, PNG, JPG, JPEG
-        **Max file size:** 10 MB
+        **Accepted formats:** PDF, PNG, JPG, JPEG, XLSX, XLS, CSV
+        **Max file size:** 25 MB
       security:
         - BearerAuth: []
       requestBody:
@@ -1510,7 +1549,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: Document file (PDF, PNG, JPG, JPEG; max 10 MB)
+                  description: Document file (PDF, PNG, JPG, JPEG, XLSX, XLS, CSV; max 25 MB)
                 documentType:
                   type: string
                   enum: [INVOICE, PURCHASE_ORDER, BILL_OF_LADING, CERTIFICATE, OTHER]
@@ -1540,6 +1579,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1588,6 +1631,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1629,6 +1676,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
@@ -1665,6 +1716,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1723,6 +1778,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1803,6 +1862,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1840,6 +1903,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1910,6 +1977,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '410':
           description: Escrow has expired
           content:
@@ -1971,6 +2042,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -2039,15 +2114,480 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── AI Analysis ────────────────────────────────────────────────────────
 
-  /api/v1/ai/analyze/{escrow_id}:
+  # ── Institution Clients ──────────────────────────────────────────────
+
+  /api/v1/institution/clients:
+    get:
+      tags:
+        - Institution Clients
+      summary: List clients
+      description: List institution clients (paginated). Returns public profile fields only.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Items per page
+        - in: query
+          name: includeArchived
+          schema:
+            type: boolean
+            default: false
+          description: Include archived clients
+      responses:
+        '200':
+          description: Client list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InstitutionPublicProfile'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      totalPages:
+                        type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/clients/search:
+    get:
+      tags:
+        - Institution Clients
+      summary: Search clients
+      description: Search clients by name, industry, or country. Returns public profile fields only.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Search by company name, legal name, or trading name
+        - in: query
+          name: industry
+          schema:
+            type: string
+          description: Filter by industry
+        - in: query
+          name: country
+          schema:
+            type: string
+          description: Filter by country
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InstitutionPublicProfile'
+                  count:
+                    type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/clients/{id}/profile:
+    get:
+      tags:
+        - Institution Clients
+      summary: Get client public profile
+      description: Retrieve non-sensitive public profile fields for a specific client.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Client ID
+      responses:
+        '200':
+          description: Public profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/InstitutionPublicProfile'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/institution/clients/{id}/archive:
+    put:
+      tags:
+        - Institution Clients
+      summary: Archive/unarchive client
+      description: Set or clear the archived flag on a client.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Client ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - archive
+              properties:
+                archive:
+                  type: boolean
+                  description: Set to true to archive, false to unarchive
+      responses:
+        '200':
+          description: Archive status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      companyName:
+                        type: string
+                      isArchived:
+                        type: boolean
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Wallet Management (new model) ──────────────────────────────────
+
+  /api/v1/institution/settings/wallets/manage:
+    put:
+      tags:
+        - Institution Settings
+      summary: Add or update a wallet
+      description: |
+        Add a new wallet or update an existing one. If `id` is provided, updates that wallet.
+        Setting `isPrimary` or `isSettlement` to true will unset the flag on other wallets.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionWalletInput'
+            example:
+              name: "Primary Treasury"
+              address: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+              chain: "solana"
+              description: "Main treasury wallet"
+              isPrimary: true
+      responses:
+        '200':
+          description: Wallet added/updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/InstitutionWalletRecord'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/settings/wallets/list:
+    get:
+      tags:
+        - Institution Settings
+      summary: List wallets
+      description: List all wallets for the authenticated client, ordered by primary status.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Wallet list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InstitutionWalletRecord'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/settings/wallets/{id}:
+    delete:
+      tags:
+        - Institution Settings
+      summary: Delete a wallet
+      description: Remove a wallet from the client's account.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Wallet ID
+      responses:
+        '200':
+          description: Wallet deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── AI Analysis (renamed routes) ────────────────────────────────────
+
+  /api/v1/ai/analyze-escrow-doc/{escrow_id}:
     post:
       tags:
         - AI Analysis
-      summary: Analyze document
+      summary: Analyze escrow document (primary)
       description: |
+        Trigger AI-powered analysis on an uploaded document associated with an escrow.
+        The analysis evaluates document authenticity, risk indicators, and compliance factors.
+        Client details (company name, address, industry) are included in the analysis context.
+
+        **Rate Limited**: 10 requests per minute.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrow_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID the document belongs to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAnalyzeRequest'
+            example:
+              fileId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              context:
+                expectedAmount: 50000
+                poNumber: "PO-2025-0042"
+      responses:
+        '200':
+          description: Analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AiAnalysisResult'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '503':
+          description: AI analysis service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/ai/escrow-doc-analysis/{escrow_id}:
+    get:
+      tags:
+        - AI Analysis
+      summary: Get escrow document analysis results (primary)
+      description: Retrieve all AI analysis results for a specific escrow.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrow_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID
+      responses:
+        '200':
+          description: Analysis results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AiAnalysisResult'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Legacy AI analysis routes (backward compatibility aliases)
+
+  /api/v1/ai/analyze/{escrow_id}:
+    post:
+      deprecated: true
+      tags:
+        - AI Analysis
+      summary: Analyze document (legacy alias)
+      description: |
+        **Legacy route — use `/api/v1/ai/analyze-escrow-doc/{escrow_id}` instead.**
+
         Trigger AI-powered analysis on an uploaded document associated with an escrow.
         The analysis evaluates document authenticity, risk indicators, and compliance factors.
 
@@ -2097,6 +2637,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -2110,10 +2654,14 @@ paths:
 
   /api/v1/ai/analysis/{escrow_id}:
     get:
+      deprecated: true
       tags:
         - AI Analysis
-      summary: Get analysis results
-      description: Retrieve all AI analysis results for a specific escrow.
+      summary: Get analysis results (legacy alias)
+      description: |
+        **Legacy route — use `/api/v1/ai/escrow-doc-analysis/{escrow_id}` instead.**
+
+        Retrieve all AI analysis results for a specific escrow.
       security:
         - BearerAuth: []
       parameters:
@@ -2144,6 +2692,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -3811,8 +4363,9 @@ components:
 
     InstitutionProfile:
       type: object
+      description: Full client profile returned by /auth/me (includes expanded KYB fields, settings, and wallets)
       properties:
-        clientId:
+        id:
           type: string
           format: uuid
         email:
@@ -3820,10 +4373,217 @@ components:
           format: email
         companyName:
           type: string
+        tier:
+          type: string
+          enum: [STANDARD, PREMIUM, ENTERPRISE]
         status:
           type: string
-          enum: [ACTIVE, SUSPENDED, PENDING]
+          enum: [ACTIVE, SUSPENDED, PENDING_VERIFICATION]
+        jurisdiction:
+          type: string
+          nullable: true
+        legalName:
+          type: string
+          nullable: true
+        tradingName:
+          type: string
+          nullable: true
+        registrationNumber:
+          type: string
+          nullable: true
+        registrationCountry:
+          type: string
+          nullable: true
+        entityType:
+          type: string
+          nullable: true
+          enum: [CORPORATION, LLC, PARTNERSHIP, SOLE_PROPRIETORSHIP, TRUST, FOUNDATION, COOPERATIVE, NON_PROFIT, GOVERNMENT, OTHER]
+        lei:
+          type: string
+          nullable: true
+        addressLine1:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        contactFirstName:
+          type: string
+          nullable: true
+        contactLastName:
+          type: string
+          nullable: true
+        contactEmail:
+          type: string
+          nullable: true
+        kybStatus:
+          type: string
+          nullable: true
+          enum: [NOT_STARTED, PENDING, IN_REVIEW, VERIFIED, REJECTED, EXPIRED]
+        riskRating:
+          type: string
+          nullable: true
+          enum: [LOW, MEDIUM, HIGH, CRITICAL, UNRATED]
+        sanctionsStatus:
+          type: string
+          nullable: true
+          enum: [CLEAR, FLAGGED, BLOCKED, PENDING_REVIEW]
+        regulatoryStatus:
+          type: string
+          nullable: true
+          enum: [REGULATED, UNREGULATED, EXEMPT, PENDING_LICENSE, SUSPENDED]
+        isRegulatedEntity:
+          type: boolean
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        websiteUrl:
+          type: string
+          nullable: true
+        employeeCountRange:
+          type: string
+          nullable: true
+          enum: [RANGE_1_10, RANGE_11_50, RANGE_51_200, RANGE_201_500, RANGE_501_1000, RANGE_1001_5000, RANGE_5001_PLUS]
+        annualRevenueRange:
+          type: string
+          nullable: true
+          enum: [UNDER_1M, RANGE_1M_10M, RANGE_10M_50M, RANGE_50M_100M, RANGE_100M_500M, RANGE_500M_1B, OVER_1B]
+        walletCustodyType:
+          type: string
+          nullable: true
+          enum: [SELF_CUSTODY, THIRD_PARTY, MPC, MULTISIG, EXCHANGE]
+        isArchived:
+          type: boolean
+        isTestAccount:
+          type: boolean
+        settings:
+          $ref: '#/components/schemas/InstitutionSettings'
+        wallets:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstitutionWalletRecord'
         createdAt:
+          type: string
+          format: date-time
+
+    InstitutionPublicProfile:
+      type: object
+      description: Non-sensitive public profile for search/list results
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyName:
+          type: string
+        legalName:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        jurisdiction:
+          type: string
+          nullable: true
+        entityType:
+          type: string
+          nullable: true
+        websiteUrl:
+          type: string
+          nullable: true
+        tier:
+          type: string
+          enum: [STANDARD, PREMIUM, ENTERPRISE]
+        isRegulatedEntity:
+          type: boolean
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        status:
+          type: string
+        isArchived:
+          type: boolean
+          description: Whether the client account is archived
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+
+    InstitutionWalletInput:
+      type: object
+      required:
+        - name
+        - address
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Wallet ID (if updating an existing wallet)
+        name:
+          type: string
+          description: Human-readable wallet name
+          example: "Primary Treasury"
+        address:
+          type: string
+          description: Solana wallet address
+          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+        chain:
+          type: string
+          default: solana
+          description: Blockchain network
+        description:
+          type: string
+          nullable: true
+          description: Optional description
+        provider:
+          type: string
+          nullable: true
+          description: Custody provider name
+        isPrimary:
+          type: boolean
+          default: false
+          description: Set as primary wallet (unsets other primaries)
+        isSettlement:
+          type: boolean
+          default: false
+          description: Set as settlement wallet (unsets other settlements)
+
+    InstitutionWalletRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+        chain:
+          type: string
+        description:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+        isPrimary:
+          type: boolean
+        isSettlement:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: string
           format: date-time
 

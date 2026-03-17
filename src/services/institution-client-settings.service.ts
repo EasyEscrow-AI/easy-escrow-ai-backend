@@ -1,14 +1,7 @@
 import { prisma } from '../config/database';
 import * as crypto from 'crypto';
 import type { PrismaClient } from '../generated/prisma';
-
-/**
- * Validates a Solana wallet address (base58 format, 32-44 characters)
- */
-function isValidSolanaAddress(address: string): boolean {
-  const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-  return base58Regex.test(address);
-}
+import { isValidSolanaAddress } from '../models/validators/solana.validator';
 
 // Fields allowed to be updated via updateSettings
 const ALLOWED_SETTINGS_FIELDS = [
@@ -66,7 +59,7 @@ export class InstitutionClientSettingsService {
   }
 
   /**
-   * Update wallet addresses for a client
+   * Update wallet addresses for a client (legacy flat wallet method)
    * Validates Solana address format before persisting
    */
   async updateWallets(
@@ -125,6 +118,140 @@ export class InstitutionClientSettingsService {
         include: { settings: true },
       });
     });
+  }
+
+  /**
+   * Add or update a wallet in the InstitutionWallet model
+   */
+  async addOrUpdateWallet(
+    clientId: string,
+    data: {
+      id?: string;
+      name: string;
+      address: string;
+      chain?: string;
+      description?: string;
+      provider?: string;
+      isPrimary?: boolean;
+      isSettlement?: boolean;
+    },
+  ) {
+    if (!data.name || !data.address) {
+      throw new Error('name and address are required');
+    }
+
+    if (!isValidSolanaAddress(data.address)) {
+      throw new Error(`Invalid wallet address: ${data.address}`);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // If setting as primary, unset other primaries
+      if (data.isPrimary) {
+        await tx.institutionWallet.updateMany({
+          where: { clientId, isPrimary: true },
+          data: { isPrimary: false },
+        });
+      }
+
+      // If setting as settlement, unset other settlements
+      if (data.isSettlement) {
+        await tx.institutionWallet.updateMany({
+          where: { clientId, isSettlement: true },
+          data: { isSettlement: false },
+        });
+      }
+
+      let wallet;
+      if (data.id) {
+        // Update existing wallet — preserve flags when caller omits them
+        const existing = await tx.institutionWallet.findUnique({
+          where: { id: data.id },
+        });
+        if (!existing || existing.clientId !== clientId) {
+          throw new Error('Wallet not found');
+        }
+        wallet = await tx.institutionWallet.update({
+          where: { id: data.id },
+          data: {
+            name: data.name,
+            address: data.address,
+            chain: data.chain || existing.chain,
+            description: data.description !== undefined ? data.description : existing.description,
+            provider: data.provider !== undefined ? data.provider : existing.provider,
+            isPrimary: data.isPrimary !== undefined ? data.isPrimary : existing.isPrimary,
+            isSettlement: data.isSettlement !== undefined ? data.isSettlement : existing.isSettlement,
+          },
+        });
+      } else {
+        // Create new wallet
+        wallet = await tx.institutionWallet.create({
+          data: {
+            clientId,
+            name: data.name,
+            address: data.address,
+            chain: data.chain || 'solana',
+            description: data.description,
+            provider: data.provider,
+            isPrimary: data.isPrimary ?? false,
+            isSettlement: data.isSettlement ?? false,
+          },
+        });
+      }
+
+      // Sync legacy fields to keep /auth/me consistent
+      if (wallet.isPrimary) {
+        const existingClient = await tx.institutionClient.findUnique({
+          where: { id: clientId },
+          select: { settledWallets: true },
+        });
+        const settledWallets = existingClient?.settledWallets || [];
+        const updatedSettledWallets = settledWallets.includes(wallet.address)
+          ? settledWallets
+          : [...settledWallets, wallet.address];
+        await tx.institutionClient.update({
+          where: { id: clientId },
+          data: { primaryWallet: wallet.address, settledWallets: updatedSettledWallets },
+        });
+      }
+      if (wallet.isSettlement) {
+        await tx.institutionClientSettings.upsert({
+          where: { clientId },
+          update: { settlementAuthorityWallet: wallet.address },
+          create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC', settlementAuthorityWallet: wallet.address },
+        });
+      }
+
+      return wallet;
+    });
+  }
+
+  /**
+   * List all wallets for a client
+   */
+  async listWallets(clientId: string) {
+    return this.prisma.institutionWallet.findMany({
+      where: { clientId },
+      orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  /**
+   * Delete a wallet belonging to a client
+   */
+  async deleteWallet(clientId: string, walletId: string) {
+    const wallet = await this.prisma.institutionWallet.findUnique({
+      where: { id: walletId },
+    });
+
+    if (!wallet || wallet.clientId !== clientId) {
+      throw new Error('Wallet not found');
+    }
+
+    await this.prisma.institutionWallet.delete({
+      where: { id: walletId },
+    });
+
+    return { success: true };
   }
 
   /**

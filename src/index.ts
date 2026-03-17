@@ -26,6 +26,7 @@ import {
   institutionFilesRoutes,
   institutionEscrowRoutes,
   aiAnalysisRoutes,
+  institutionClientsRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -229,7 +230,10 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.institutionSettings = '/api/v1/institution/settings';
     response.endpoints.institutionFiles = '/api/v1/institution/files';
     response.endpoints.institutionEscrow = '/api/v1/institution-escrow';
+    response.endpoints.institutionClients = '/api/v1/institution/clients';
     response.endpoints.aiAnalysis = '/api/v1/ai';
+    response.endpoints.aiAnalyzeEscrowDoc = '/api/v1/ai/analyze-escrow-doc/:escrow_id';
+    response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis/:escrow_id';
   }
 
   // Only include documentation field if OpenAPI spec loaded successfully
@@ -295,8 +299,25 @@ if (openApiDocument) {
     .redoc-wrap [class*="request-body"], .redoc-wrap [class*="parameters"] { background: #0f172a !important; }
     /* Buttons and inputs */
     .redoc-wrap input, .redoc-wrap button, .redoc-wrap select { background: #1e293b !important; color: #e2e8f0 !important; border-color: #334155 !important; }
-    /* Expand/collapse */
+    /* Expand/collapse and dropdown sections */
     .redoc-wrap [class*="expand"], .redoc-wrap [class*="collapse"] { background: transparent !important; color: #94a3b8 !important; }
+    /* Operation details / expanded dropdowns - the key fix for white-on-white */
+    .redoc-wrap [class*="operation"], .redoc-wrap [class*="Operation"] { background: #0f172a !important; }
+    .redoc-wrap [class*="callback"], .redoc-wrap [class*="Callback"] { background: #0f172a !important; }
+    .redoc-wrap [class*="container"] { background: transparent !important; }
+    .redoc-wrap [class*="react-tabs__tab-panel"] { background: #0f172a !important; }
+    .redoc-wrap [class*="tab-panel"], .redoc-wrap [role="tabpanel"] { background: #0f172a !important; }
+    .redoc-wrap [class*="security"] { background: #0f172a !important; }
+    /* Dropdown/select menus */
+    .redoc-wrap select, .redoc-wrap option { background: #1e293b !important; color: #e2e8f0 !important; }
+    .redoc-wrap [class*="dropdown"], .redoc-wrap [class*="Dropdown"] { background: #1e293b !important; color: #e2e8f0 !important; }
+    .redoc-wrap [class*="menu-content"], .redoc-wrap [class*="MenuContent"] { background: #1e293b !important; }
+    /* Enum values and oneOf selectors */
+    .redoc-wrap [class*="enum"], .redoc-wrap [class*="oneOf"] { background: #1e293b !important; color: #e2e8f0 !important; }
+    /* Any remaining white backgrounds in the middle panel */
+    .redoc-wrap div[class] { background-color: inherit; }
+    .redoc-wrap [class*="panel"] { background: #0f172a !important; }
+    .redoc-wrap [class*="content"] { background: transparent !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
     /* Search bar margin */
@@ -389,6 +410,7 @@ if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
   app.use(institutionFilesRoutes);
   app.use(institutionEscrowRoutes);
   app.use(aiAnalysisRoutes);
+  app.use(institutionClientsRoutes);
   app.use(institutionEscrowAdminRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
