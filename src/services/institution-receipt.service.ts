@@ -6,7 +6,6 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
-import { escrowWhere } from '../utils/uuid-conversion';
 import fs from 'fs';
 import path from 'path';
 
@@ -112,7 +111,7 @@ export class InstitutionReceiptService {
    */
   async getReceiptData(escrowId: string, clientId: string): Promise<ReceiptData> {
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { ...escrowWhere(escrowId), clientId },
+      where: { escrowId, clientId },
       include: {
         client: true,
         deposits: { orderBy: { createdAt: 'asc' } },
@@ -184,7 +183,7 @@ export class InstitutionReceiptService {
         }
       : null;
 
-    const receiptNumber = `${escrow.escrowCode}-${Date.now().toString(36).toUpperCase()}`;
+    const receiptNumber = `EE-INST-${escrow.escrowId.slice(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
 
     return {
       client: {
@@ -213,16 +212,16 @@ export class InstitutionReceiptService {
         licenseNumber: c.licenseNumber,
       },
       escrow: {
-        escrowId: escrow.escrowCode,
+        escrowId: escrow.escrowId,
         status: escrow.status,
-        corridor: escrow.corridor ?? 'N/A',
-        conditionType: escrow.conditionType ?? 'N/A',
+        corridor: escrow.corridor,
+        conditionType: escrow.conditionType,
         amount: amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
         platformFee: fee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
         netAmount: (amount - fee).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
         currency: 'USDC',
         payerWallet: escrow.payerWallet,
-        recipientWallet: escrow.recipientWallet ?? '',
+        recipientWallet: escrow.recipientWallet,
         settlementAuthority: escrow.settlementAuthority,
         escrowPda: escrow.escrowPda,
         vaultPda: escrow.vaultPda,
@@ -230,7 +229,7 @@ export class InstitutionReceiptService {
         createdAt: formatDate(escrow.createdAt),
         fundedAt: escrow.fundedAt ? formatDate(escrow.fundedAt) : null,
         resolvedAt: escrow.resolvedAt ? formatDate(escrow.resolvedAt) : null,
-        expiresAt: escrow.expiresAt ? formatDate(escrow.expiresAt) : 'N/A',
+        expiresAt: formatDate(escrow.expiresAt),
       },
       transactions,
       auditLogs,
@@ -761,7 +760,7 @@ function buildReceiptHTML(d: ReceiptData): string {
         <tr>
           <td>${esc(formatAction(f.name))}</td>
           <td>${(f.weight * 100).toFixed(0)}%</td>
-          <td>${esc(String(f.value))}</td>
+          <td>${esc(f.value)}</td>
         </tr>`).join('')}
       </tbody>
     </table>
