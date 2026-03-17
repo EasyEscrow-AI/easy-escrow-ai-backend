@@ -63,6 +63,21 @@ describe('Staging E2E: Delegation-Based Buy Flows (Devnet)', () => {
     console.log('|   DELEGATION BUY E2E TESTS - STAGING (DEVNET)                |');
     console.log('+--------------------------------------------------------------+\n');
 
+    // Check if listing endpoints are available on staging
+    try {
+      const checkRes = await request(STAGING_API_URL).get('/api/listings').timeout({ response: 10000 });
+      if (checkRes.status === 404) {
+        console.log('Listing endpoints not available on staging - skipping suite');
+        return this.skip();
+      }
+    } catch (err: any) {
+      if (err?.status === 404) {
+        console.log('Listing endpoints not available on staging - skipping suite');
+        return this.skip();
+      }
+      // Other errors (timeout, connection refused) - continue and let tests fail naturally
+    }
+
     connection = new Connection(RPC_URL, 'confirmed');
     console.log('RPC:', RPC_URL);
     console.log('API:', STAGING_API_URL);

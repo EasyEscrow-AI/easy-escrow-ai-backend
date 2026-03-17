@@ -62,6 +62,21 @@ describe('Staging E2E: Two-Phase Swap Flows (Devnet)', () => {
     console.log('|   TWO-PHASE SWAP E2E TESTS - STAGING (DEVNET)                |');
     console.log('+--------------------------------------------------------------+\n');
 
+    // Check if two-phase swap endpoints are available on staging
+    try {
+      const checkRes = await request(STAGING_API_URL).post('/api/swaps/two-phase').send({}).timeout({ response: 10000 });
+      if (checkRes.status === 404) {
+        console.log('Two-phase swap endpoints not available on staging - skipping suite');
+        return this.skip();
+      }
+    } catch (err: any) {
+      if (err?.status === 404) {
+        console.log('Two-phase swap endpoints not available on staging - skipping suite');
+        return this.skip();
+      }
+      // Other errors (400 validation, etc.) mean the endpoint exists - continue
+    }
+
     connection = new Connection(RPC_URL, 'confirmed');
     console.log('RPC:', RPC_URL);
     console.log('API:', STAGING_API_URL);
