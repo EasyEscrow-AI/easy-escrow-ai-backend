@@ -57,8 +57,10 @@ const cnftService = createCnftService(connection);
 const nodeEnv = process.env.NODE_ENV || 'development';
 const network = process.env.SOLANA_NETWORK || 'devnet';
 const rpcUrl = process.env.SOLANA_RPC_URL || '';
-// Use same detection as config: NODE_ENV=production OR SOLANA_NETWORK=mainnet-beta OR RPC URL contains mainnet
-const isMainnet = nodeEnv === 'production' || network === 'mainnet-beta' || rpcUrl.includes('mainnet');
+// Explicit env vars take precedence; RPC URL heuristic is only a fallback
+// NODE_ENV=staging or SOLANA_NETWORK=devnet explicitly means NOT mainnet, even if RPC URL contains 'mainnet'
+const isMainnet = nodeEnv === 'production' || (network === 'mainnet-beta' && nodeEnv !== 'staging') ||
+  (nodeEnv !== 'staging' && network !== 'devnet' && rpcUrl.includes('mainnet'));
 const networkName = isMainnet ? 'mainnet-beta' : 'devnet';
 
 // Initialize Prisma and TwoPhaseSwapLockService for lock transaction rebuilding
