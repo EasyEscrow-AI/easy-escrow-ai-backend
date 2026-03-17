@@ -177,11 +177,7 @@ describe('InstitutionTokenWhitelistService', () => {
 
 // ─── Integration: Verify seeded data in staging DB ────────────
 
-describe('AMINA Token Whitelist — Staging DB Verification', function () {
-  if (!process.env.RUN_STAGING_DB_TESTS) {
-    before(function () { this.skip(); });
-  }
-
+describe('AMINA Token Whitelist — Staging DB Verification', () => {
   const { PrismaClient } = require('../../../src/generated/prisma');
   const prisma = new PrismaClient();
 

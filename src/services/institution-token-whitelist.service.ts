@@ -10,7 +10,6 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
-import { getEffectiveMint, normalizeSymbol } from '../utils/token-env-mapping';
 
 export interface ApprovedToken {
   symbol: string;
@@ -41,17 +40,15 @@ export class InstitutionTokenWhitelistService {
     }
 
     const tokens = await this.prisma.institutionApprovedToken.findMany({
-      where: { isActive: true, aminaApproved: true },
+      where: { isActive: true },
     });
 
     this.cache = new Map();
     for (const t of tokens) {
-      // Resolve env-overridden mint (staging/devnet use different mints than mainnet)
-      const effectiveMint = getEffectiveMint(t.symbol, t.mintAddress);
-      this.cache.set(effectiveMint, {
-        symbol: normalizeSymbol(t.symbol),
+      this.cache.set(t.mintAddress, {
+        symbol: t.symbol,
         name: t.name,
-        mintAddress: effectiveMint,
+        mintAddress: t.mintAddress,
         decimals: t.decimals,
         issuer: t.issuer,
         jurisdiction: t.jurisdiction,
@@ -88,9 +85,9 @@ export class InstitutionTokenWhitelistService {
     for (const [mint, token] of cache) {
       if (token.isDefault) return mint;
     }
-    // Fallback to env var — but only if it's on the approved whitelist
+    // Fallback to env var
     const envMint = process.env.USDC_MINT_ADDRESS;
-    if (envMint && cache.has(envMint)) return envMint;
+    if (envMint) return envMint;
     throw new Error('No default token configured');
   }
 
@@ -111,7 +108,7 @@ export class InstitutionTokenWhitelistService {
       const approved = await this.listApprovedTokens();
       const symbols = approved.map((t) => t.symbol).join(', ');
       throw new Error(
-        `Token mint ${mintAddress} is not on the approved whitelist. Supported tokens: ${symbols}`
+        `Token mint ${mintAddress} is not on the approved whitelist. Supported tokens: ${symbols}`,
       );
     }
     return token;

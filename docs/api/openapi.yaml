@@ -50,11 +50,16 @@ tags:
     description: |
       ## Changelog
 
-      ### v1.1.0 — Institutional Escrow (March 2026)
+      ### v1.1.0 — Institutional Escrow
+      **Released: 17 March 2026**
+
       Cross-border stablecoin escrow payments for institutional clients.
 
+      - **AMINA-approved token whitelist** — USDC, USDT, EURC, PYUSD (active); RLUSD, USDG (pending)
+      - Public token list endpoint: `GET /api/v1/institution/tokens`
+      - Escrow creation accepts optional `tokenMint` (defaults to USDC)
       - Institution client authentication (JWT) with registration, login, and token refresh
-      - USDC escrow lifecycle: create, deposit, release, and cancel
+      - Stablecoin escrow lifecycle: create, deposit, release, and cancel
       - AI-powered document analysis for compliance risk scoring
       - Wallet whitelists and jurisdiction payment corridors
       - File uploads for escrow supporting documents (PDF, images, Excel, CSV)
@@ -64,7 +69,9 @@ tags:
       - Settlement authority pattern for release operations
       - AI data anonymisation (PII redaction before model processing)
 
-      ### v1.0.0 — Atomic Swaps (October 2025)
+      ### v1.0.0 — Atomic Swaps
+      **Released: 15 October 2025**
+
       Non-custodial peer-to-peer NFT and SOL atomic swaps on Solana.
 
       - NFT ↔ SOL, NFT ↔ NFT, and NFT + SOL ↔ NFT swap types
@@ -194,86 +201,6 @@ tags:
       6. **Release** funds (requires settlement authority) or **cancel** the escrow
       7. Optionally **analyze** uploaded documents with AI for risk scoring
 
-      ### Escrow States
-
-      Every escrow progresses through a defined set of states. Terminal states (`RELEASED`, `CANCELLED`, `EXPIRED`, `FAILED`) cannot transition further.
-
-      | State | Description |
-      |-------|-------------|
-      | `DRAFT` | Saved as draft, not yet submitted |
-      | `CREATED` | Escrow created, awaiting stablecoin deposit |
-      | `FUNDED` | Deposit confirmed on-chain, awaiting release or cancellation |
-      | `COMPLIANCE_HOLD` | Held for compliance review (medium risk score) |
-      | `RELEASING` | Release transaction in progress |
-      | `RELEASED` | Funds successfully released to recipient (terminal) |
-      | `INSUFFICIENT_FUNDS` | Payer balance too low, can retry after funding |
-      | `COMPLETE` | Settlement complete, notification sent (terminal) |
-      | `CANCELLING` | Cancellation in progress |
-      | `CANCELLED` | Escrow cancelled, funds refunded to payer (terminal) |
-      | `EXPIRED` | Escrow expired without completion (terminal) |
-      | `FAILED` | Escrow failed due to an error (terminal) |
-
-      ### State Flow
-
-      ```
-      ┌──────────┐
-      │  DRAFT   │ (save draft)
-      └────┬─────┘
-           │ submit
-           ▼
-                      ┌──────────────────────┐
-                      │    Create Escrow      │
-                      │  (compliance check)   │
-                      └──────────┬───────────┘
-                                 │
-                  ┌──────────────┼──────────────┐
-                  │              │              │
-                  ▼              ▼              ▼
-           ┌──────────┐  ┌───────────┐  (high risk)
-           │ CREATED  │  │COMPLIANCE │   → rejected
-           │          │  │   _HOLD   │
-           └────┬─────┘  └─────┬─────┘
-                │              │
-         deposit│        cancel│
-                ▼              ▼
-           ┌──────────┐  ┌───────────┐
-           │  FUNDED  │  │CANCELLING │──▶ CANCELLED
-           └────┬─────┘  └───────────┘
-                │
-         ┌──────┼──────┐
-         │      │      │
-      release cancel  expire
-         │      │      │
-         ▼      ▼      ▼
-      RELEASING CANCELLING EXPIRED
-         │      │
-         ├──▶ INSUFFICIENT_FUNDS ──▶ (retry release)
-         │
-         ▼
-      RELEASED ──▶ COMPLETE
-      ```
-
-      ### State Transitions
-
-      | From | Action | To | Notes |
-      |------|--------|----|-------|
-      | — | Save draft | `DRAFT` | Partial info, no compliance checks |
-      | `DRAFT` | Submit | `CREATED` or `COMPLIANCE_HOLD` | Validates required fields, runs compliance |
-      | — | Create (compliance passed) | `CREATED` | Ready for deposit |
-      | — | Create (medium risk) | `COMPLIANCE_HOLD` | Requires review before proceeding |
-      | — | Create (high risk ≥75) | Rejected | Error thrown, no escrow created |
-      | `CREATED` | Record deposit | `FUNDED` | On-chain tx signature stored |
-      | `CREATED` | Cancel | `CANCELLING` → `CANCELLED` | No deposit to refund |
-      | `CREATED` | Auto-expire | `EXPIRED` | `expiresAt` exceeded (default 72h) |
-      | `FUNDED` | Release funds | `RELEASING` → `RELEASED` | Requires settlement authority |
-      | `FUNDED` | Cancel | `CANCELLING` → `CANCELLED` | On-chain refund to payer |
-      | `FUNDED` | Auto-expire | `EXPIRED` | `expiresAt` exceeded |
-      | `RELEASING` | Balance too low | `INSUFFICIENT_FUNDS` | Payer can fund and retry |
-      | `INSUFFICIENT_FUNDS` | Release funds | `RELEASING` → `RELEASED` | Retry after funding |
-      | `RELEASED` | Settlement complete | `COMPLETE` | Notification sent |
-      | `COMPLIANCE_HOLD` | Cancel | `CANCELLING` → `CANCELLED` | No deposit to refund |
-      | `COMPLIANCE_HOLD` | Auto-expire | `EXPIRED` | `expiresAt` exceeded |
-
       ### Feature Gate
       This feature is gated by the `INSTITUTION_ESCROW_ENABLED` environment variable.
       When disabled, all institution escrow endpoints return `503 Service Unavailable`.
@@ -359,7 +286,6 @@ x-tagGroups:
       - Institution Auth
       - Institution Settings
       - Institution Clients
-      - Institution Accounts
       - Institution Tokens
       - Institution Files
       - Institution Escrow
@@ -1700,6 +1626,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Tokens (AMINA Whitelist) ──────────────────────────────
+
+  /api/v1/institution/tokens:
+    get:
+      tags:
+        - Institution Tokens
+      summary: List approved tokens
+      description: |
+        Returns all active AMINA-approved stablecoins available for institution escrow.
+        This is a **public endpoint** — no authentication required.
+
+        Use this to populate the token selector dropdown in the portal UI.
+        Each token includes its Solana SPL mint address, issuer, jurisdiction, and AMINA approval status.
+      responses:
+        '200':
+          description: Approved token list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovedToken'
+                  timestamp:
+                    type: string
+                    format: date-time
+              example:
+                success: true
+                data:
+                  - symbol: USDC
+                    name: USD Coin
+                    mintAddress: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+                    decimals: 6
+                    issuer: Circle
+                    jurisdiction: US
+                    chain: solana
+                    isDefault: true
+                    aminaApproved: true
+                  - symbol: USDT
+                    name: Tether USD
+                    mintAddress: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB
+                    decimals: 6
+                    issuer: Tether
+                    jurisdiction: BVI
+                    chain: solana
+                    isDefault: false
+                    aminaApproved: true
+                  - symbol: EURC
+                    name: Euro Coin
+                    mintAddress: HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr
+                    decimals: 6
+                    issuer: Circle
+                    jurisdiction: EU
+                    chain: solana
+                    isDefault: false
+                    aminaApproved: true
+                  - symbol: PYUSD
+                    name: PayPal USD
+                    mintAddress: 2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo
+                    decimals: 6
+                    issuer: Paxos (PayPal)
+                    jurisdiction: US
+                    chain: solana
+                    isDefault: false
+                    aminaApproved: true
+                timestamp: "2026-03-17T10:00:00.000Z"
 
   # ── Institution Tokens (AMINA Whitelist) ──────────────────────────────
 

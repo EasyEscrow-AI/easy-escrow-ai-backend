@@ -51,7 +51,7 @@ const AMINA_TOKENS = [
     jurisdiction: 'US',
     isDefault: false,
   },
-  // Tokens pending Solana mint deployment — tracked but not active or approved
+  // Tokens pending Solana mint deployment — placeholder addresses marked inactive
   {
     symbol: 'RLUSD',
     name: 'Ripple USD',
@@ -61,7 +61,6 @@ const AMINA_TOKENS = [
     jurisdiction: 'US',
     isDefault: false,
     isActive: false,
-    aminaApproved: false,
   },
   {
     symbol: 'USDG',
@@ -72,7 +71,6 @@ const AMINA_TOKENS = [
     jurisdiction: 'US',
     isDefault: false,
     isActive: false,
-    aminaApproved: false,
   },
 ];
 
@@ -81,7 +79,6 @@ async function main() {
 
   for (const token of AMINA_TOKENS) {
     const isActive = token.isActive !== undefined ? token.isActive : true;
-    const aminaApproved = token.aminaApproved !== undefined ? token.aminaApproved : true;
 
     await prisma.institutionApprovedToken.upsert({
       where: { symbol: token.symbol },
@@ -95,7 +92,7 @@ async function main() {
         chain: 'solana',
         isDefault: token.isDefault,
         isActive,
-        aminaApproved,
+        aminaApproved: true,
       },
       update: {
         name: token.name,
@@ -105,7 +102,7 @@ async function main() {
         jurisdiction: token.jurisdiction,
         isDefault: token.isDefault,
         isActive,
-        aminaApproved,
+        aminaApproved: true,
       },
     });
 

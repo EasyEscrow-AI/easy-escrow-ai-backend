@@ -14,12 +14,6 @@ import { redisClient } from '../config/redis';
 import { AllowlistService, getAllowlistService } from './allowlist.service';
 import { ComplianceService, getComplianceService } from './compliance.service';
 import { getTokenWhitelistService } from './institution-token-whitelist.service';
-import { getInstitutionNotificationService } from './institution-notification.service';
-import {
-  getInstitutionEscrowProgramService,
-  InstitutionEscrowProgramService,
-} from './institution-escrow-program.service';
-import type { NoncePoolManager } from './noncePoolManager';
 import crypto from 'crypto';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { config } from '../config';
@@ -38,27 +32,6 @@ export interface CreateEscrowParams {
   expiryHours?: number;
   settlementAuthority?: string;
   /** Optional token mint address. Defaults to USDC if omitted. Must be on AMINA-approved whitelist. */
-  tokenMint?: string;
-}
-
-export interface SaveDraftParams {
-  clientId: string;
-  payerWallet: string;
-  recipientWallet?: string;
-  amount?: number;
-  corridor?: string;
-  conditionType?: string;
-  settlementAuthority?: string;
-  tokenMint?: string;
-}
-
-export interface UpdateDraftParams {
-  payerWallet?: string;
-  recipientWallet?: string;
-  amount?: number;
-  corridor?: string;
-  conditionType?: string;
-  settlementAuthority?: string;
   tokenMint?: string;
 }
 
