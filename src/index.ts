@@ -232,8 +232,8 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.institutionEscrow = '/api/v1/institution-escrow';
     response.endpoints.institutionClients = '/api/v1/institution/clients';
     response.endpoints.aiAnalysis = '/api/v1/ai';
-    response.endpoints.aiAnalyzeEscrowDoc = '/api/v1/ai/analyze-escrow-doc';
-    response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis';
+    response.endpoints.aiAnalyzeEscrowDoc = '/api/v1/ai/analyze-escrow-doc/:escrow_id';
+    response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis/:escrow_id';
   }
 
   // Only include documentation field if OpenAPI spec loaded successfully

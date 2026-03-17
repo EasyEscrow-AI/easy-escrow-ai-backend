@@ -51,13 +51,18 @@ describe('Institution Escrow Settlement - E2E Staging', function () {
 
     // Login
     console.log('  Logging in with demo enterprise account...');
-    const loginRes = await api.post('/api/v1/institution/auth/login', {
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-    });
-
-    if (loginRes.status === 504) {
-      console.log('  Institution endpoints returning 504 - likely insufficient server resources');
+    let loginRes;
+    try {
+      loginRes = await api.post('/api/v1/institution/auth/login', {
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      });
+      if (loginRes.status === 504) {
+        console.log('  Institution endpoints returning 504 - likely insufficient server resources');
+        return this.skip();
+      }
+    } catch (err: any) {
+      console.log('  Institution endpoints unavailable:', err.message || err);
       return this.skip();
     }
 

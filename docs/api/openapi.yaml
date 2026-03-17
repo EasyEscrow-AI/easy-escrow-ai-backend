@@ -1168,6 +1168,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/auth/me:
     get:
@@ -1195,6 +1199,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1244,6 +1252,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Institution Settings ───────────────────────────────────────────────
 
@@ -1273,6 +1285,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1319,6 +1335,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/settings/wallets:
     put:
@@ -1358,6 +1378,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1411,6 +1435,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     get:
       tags:
         - Institution Settings
@@ -1438,6 +1466,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1482,6 +1514,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1547,6 +1583,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '415':
           description: Unsupported file type
           content:
@@ -1587,6 +1627,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1632,6 +1676,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
@@ -1668,6 +1716,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1726,6 +1778,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1806,6 +1862,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1843,6 +1903,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1913,6 +1977,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '410':
           description: Escrow has expired
           content:
@@ -1974,6 +2042,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -2042,6 +2114,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── AI Analysis ────────────────────────────────────────────────────────
 
@@ -2105,6 +2181,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/clients/search:
     get:
@@ -2151,6 +2231,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/clients/{id}/profile:
     get:
@@ -2185,6 +2269,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -2210,11 +2298,12 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - archive
               properties:
                 archive:
                   type: boolean
                   description: Set to true to archive, false to unarchive
-                  default: true
       responses:
         '200':
           description: Archive status updated
@@ -2241,6 +2330,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -2287,6 +2380,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/settings/wallets/list:
     get:
@@ -2315,6 +2412,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/settings/wallets/{id}:
     delete:
@@ -2351,6 +2452,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── AI Analysis (renamed routes) ────────────────────────────────────
 
@@ -2410,6 +2515,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -2461,6 +2570,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -2468,6 +2581,7 @@ paths:
 
   /api/v1/ai/analyze/{escrow_id}:
     post:
+      deprecated: true
       tags:
         - AI Analysis
       summary: Analyze document (legacy alias)
@@ -2523,6 +2637,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -2536,6 +2654,7 @@ paths:
 
   /api/v1/ai/analysis/{escrow_id}:
     get:
+      deprecated: true
       tags:
         - AI Analysis
       summary: Get analysis results (legacy alias)
@@ -2573,6 +2692,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -4304,6 +4427,14 @@ components:
           type: string
           nullable: true
           enum: [LOW, MEDIUM, HIGH, CRITICAL, UNRATED]
+        sanctionsStatus:
+          type: string
+          nullable: true
+          enum: [CLEAR, FLAGGED, BLOCKED, PENDING_REVIEW]
+        regulatoryStatus:
+          type: string
+          nullable: true
+          enum: [REGULATED, UNREGULATED, EXEMPT, PENDING_LICENSE, SUSPENDED]
         isRegulatedEntity:
           type: boolean
           nullable: true
@@ -4313,6 +4444,18 @@ components:
         websiteUrl:
           type: string
           nullable: true
+        employeeCountRange:
+          type: string
+          nullable: true
+          enum: [RANGE_1_10, RANGE_11_50, RANGE_51_200, RANGE_201_500, RANGE_501_1000, RANGE_1001_5000, RANGE_5001_PLUS]
+        annualRevenueRange:
+          type: string
+          nullable: true
+          enum: [UNDER_1M, RANGE_1M_10M, RANGE_10M_50M, RANGE_50M_100M, RANGE_100M_500M, RANGE_500M_1B, OVER_1B]
+        walletCustodyType:
+          type: string
+          nullable: true
+          enum: [SELF_CUSTODY, THIRD_PARTY, MPC, MULTISIG, EXCHANGE]
         isArchived:
           type: boolean
         isTestAccount:
@@ -4365,6 +4508,10 @@ components:
           nullable: true
         status:
           type: string
+        isArchived:
+          type: boolean
+          description: Whether the client account is archived
+          default: false
         createdAt:
           type: string
           format: date-time

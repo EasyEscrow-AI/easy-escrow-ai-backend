@@ -4,7 +4,7 @@
  * GET    /api/v1/institution/clients/:id/profile  → getPublicProfile
  * GET    /api/v1/institution/clients/search       → searchClients
  * GET    /api/v1/institution/clients              → listClients
- * PUT    /api/v1/institution/clients/:id/archive  → archiveClient
+ * PUT    /api/v1/institution/clients/:id/archive  → archiveClient (self-only)
  */
 
 import { Router, Response } from 'express';
@@ -39,8 +39,18 @@ const PUBLIC_PROFILE_SELECT = {
   country: true,
   city: true,
   status: true,
+  isArchived: true,
   createdAt: true,
 } as const;
+
+// Shared visibility filter: active, non-archived clients
+function getVisibilityFilter(includeArchived = false) {
+  const where: any = { status: 'ACTIVE' };
+  if (!includeArchived) {
+    where.isArchived = false;
+  }
+  return where;
+}
 
 // GET /api/v1/institution/clients/search?q=...&industry=...&country=...
 router.get(
@@ -51,10 +61,7 @@ router.get(
     try {
       const { q, industry, country } = req.query;
 
-      const where: any = {
-        isArchived: false,
-        status: 'ACTIVE',
-      };
+      const where: any = getVisibilityFilter();
 
       if (q && typeof q === 'string') {
         where.OR = [
@@ -107,10 +114,7 @@ router.get(
       const skip = (page - 1) * limit;
       const includeArchived = req.query.includeArchived === 'true';
 
-      const where: any = {};
-      if (!includeArchived) {
-        where.isArchived = false;
-      }
+      const where = getVisibilityFilter(includeArchived);
 
       const [clients, total] = await Promise.all([
         prisma.institutionClient.findMany({
@@ -151,8 +155,8 @@ router.get(
   requireInstitutionAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
-      const client = await prisma.institutionClient.findUnique({
-        where: { id: req.params.id },
+      const client = await prisma.institutionClient.findFirst({
+        where: { id: req.params.id, ...getVisibilityFilter() },
         select: PUBLIC_PROFILE_SELECT,
       });
 
@@ -180,7 +184,7 @@ router.get(
   },
 );
 
-// PUT /api/v1/institution/clients/:id/archive — Archive/unarchive a client
+// PUT /api/v1/institution/clients/:id/archive — Archive/unarchive (self-only)
 router.put(
   '/api/v1/institution/clients/:id/archive',
   standardRateLimiter,
@@ -188,7 +192,25 @@ router.put(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { archive } = req.body;
-      const isArchived = archive !== false; // default to archiving
+
+      if (typeof archive !== 'boolean') {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: 'archive (boolean) is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Self-only: clients can only archive/unarchive themselves
+      if (req.institutionClient!.clientId !== req.params.id) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'You can only archive/unarchive your own account',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
 
       const client = await prisma.institutionClient.findUnique({
         where: { id: req.params.id },
@@ -205,14 +227,14 @@ router.put(
 
       const updated = await prisma.institutionClient.update({
         where: { id: req.params.id },
-        data: { isArchived },
+        data: { isArchived: archive },
         select: { id: true, companyName: true, isArchived: true },
       });
 
       res.status(200).json({
         success: true,
         data: updated,
-        message: isArchived ? 'Client archived' : 'Client unarchived',
+        message: archive ? 'Client archived' : 'Client unarchived',
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {

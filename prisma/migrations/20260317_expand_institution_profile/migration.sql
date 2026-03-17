@@ -118,3 +118,34 @@ CREATE INDEX "institution_wallets_is_settlement_idx" ON "institution_wallets"("i
 
 -- AddForeignKey
 ALTER TABLE "institution_wallets" ADD CONSTRAINT "institution_wallets_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "institution_clients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Partial unique indexes: at most one primary and one settlement wallet per client
+CREATE UNIQUE INDEX "institution_wallets_client_id_primary_uq" ON "institution_wallets"("client_id") WHERE "is_primary" = true;
+CREATE UNIQUE INDEX "institution_wallets_client_id_settlement_uq" ON "institution_wallets"("client_id") WHERE "is_settlement" = true;
+
+-- Backfill: migrate existing wallet data into institution_wallets
+-- 1. Insert primary wallets
+INSERT INTO "institution_wallets" ("id", "client_id", "name", "address", "chain", "is_primary", "is_settlement", "created_at", "updated_at")
+SELECT gen_random_uuid(), "id", 'Primary Wallet', "primary_wallet", 'solana', true, false, NOW(), NOW()
+FROM "institution_clients"
+WHERE "primary_wallet" IS NOT NULL;
+
+-- 2. Insert settled wallets (unnest array, skip nulls and duplicates with primary)
+INSERT INTO "institution_wallets" ("id", "client_id", "name", "address", "chain", "is_primary", "is_settlement", "created_at", "updated_at")
+SELECT gen_random_uuid(), ic."id", 'Settled Wallet', sw.addr, 'solana', false, false, NOW(), NOW()
+FROM "institution_clients" ic, LATERAL unnest(ic."settled_wallets") AS sw(addr)
+WHERE sw.addr IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM "institution_wallets" iw
+    WHERE iw."client_id" = ic."id" AND iw."address" = sw.addr
+  );
+
+-- 3. Insert settlement authority wallets from settings
+INSERT INTO "institution_wallets" ("id", "client_id", "name", "address", "chain", "is_primary", "is_settlement", "created_at", "updated_at")
+SELECT gen_random_uuid(), ics."client_id", 'Settlement Wallet', ics."settlement_authority_wallet", 'solana', false, true, NOW(), NOW()
+FROM "institution_client_settings" ics
+WHERE ics."settlement_authority_wallet" IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM "institution_wallets" iw
+    WHERE iw."client_id" = ics."client_id" AND iw."address" = ics."settlement_authority_wallet"
+  );

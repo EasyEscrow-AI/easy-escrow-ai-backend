@@ -1,14 +1,7 @@
 import { prisma } from '../config/database';
 import * as crypto from 'crypto';
 import type { PrismaClient } from '../generated/prisma';
-
-/**
- * Validates a Solana wallet address (base58 format, 32-44 characters)
- */
-function isValidSolanaAddress(address: string): boolean {
-  const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-  return base58Regex.test(address);
-}
+import { isValidSolanaAddress } from '../models/validators/solana.validator';
 
 // Fields allowed to be updated via updateSettings
 const ALLOWED_SETTINGS_FIELDS = [
@@ -168,29 +161,30 @@ export class InstitutionClientSettingsService {
         });
       }
 
+      let wallet;
       if (data.id) {
-        // Update existing wallet
+        // Update existing wallet — preserve flags when caller omits them
         const existing = await tx.institutionWallet.findUnique({
           where: { id: data.id },
         });
         if (!existing || existing.clientId !== clientId) {
           throw new Error('Wallet not found');
         }
-        return tx.institutionWallet.update({
+        wallet = await tx.institutionWallet.update({
           where: { id: data.id },
           data: {
             name: data.name,
             address: data.address,
-            chain: data.chain || 'solana',
-            description: data.description,
-            provider: data.provider,
-            isPrimary: data.isPrimary ?? false,
-            isSettlement: data.isSettlement ?? false,
+            chain: data.chain || existing.chain,
+            description: data.description !== undefined ? data.description : existing.description,
+            provider: data.provider !== undefined ? data.provider : existing.provider,
+            isPrimary: data.isPrimary !== undefined ? data.isPrimary : existing.isPrimary,
+            isSettlement: data.isSettlement !== undefined ? data.isSettlement : existing.isSettlement,
           },
         });
       } else {
         // Create new wallet
-        return tx.institutionWallet.create({
+        wallet = await tx.institutionWallet.create({
           data: {
             clientId,
             name: data.name,
@@ -203,6 +197,31 @@ export class InstitutionClientSettingsService {
           },
         });
       }
+
+      // Sync legacy fields to keep /auth/me consistent
+      if (wallet.isPrimary) {
+        const existingClient = await tx.institutionClient.findUnique({
+          where: { id: clientId },
+          select: { settledWallets: true },
+        });
+        const settledWallets = existingClient?.settledWallets || [];
+        const updatedSettledWallets = settledWallets.includes(wallet.address)
+          ? settledWallets
+          : [...settledWallets, wallet.address];
+        await tx.institutionClient.update({
+          where: { id: clientId },
+          data: { primaryWallet: wallet.address, settledWallets: updatedSettledWallets },
+        });
+      }
+      if (wallet.isSettlement) {
+        await tx.institutionClientSettings.upsert({
+          where: { clientId },
+          update: { settlementAuthorityWallet: wallet.address },
+          create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC', settlementAuthorityWallet: wallet.address },
+        });
+      }
+
+      return wallet;
     });
   }
 
