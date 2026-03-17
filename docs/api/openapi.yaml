@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: EasyEscrow.ai API
-  version: 1.1.0
+  version: 1.0.0
   contact:
     name: EasyEscrow.ai Support
     email: support@easyescrow.ai
@@ -21,15 +21,14 @@ tags:
 
       EasyEscrow.ai currently supports:
 
-      ## Atomic Swaps
+      ### 1) Atomic Swaps
       Instant, non-custodial digital swaps that execute in a single transaction.
 
       **Features:**
       - Peer-to-peer settlement. Your assets are NEVER held in escrow (only leaves wallet upon instant settlement).
       - Swap happens all atomically or not at all (no partial settlement, no MEV attacks, no stuck assets).
-      - Supported assets: SPL NFT (Metaplex standard), Core NFT (Metaplex Core), cNFT (Metaplex Bubblegum), SOL (Solana native token).
 
-      ## Institutional Escrow
+      ### 2) Institution Escrow
       Programmable cross-border stablecoin escrow payments, built for institutions compliance and auditability.
 
       **Features:**
@@ -46,7 +45,10 @@ tags:
       - Escrow document uploads to secure server.
       - Supports KYC/KYB compliance integrations for clients (not activated for hackathon).
       - Supports AMINA Payment Network (APN) integrations (not activated for hackathon).
-  - name: Changelog
+
+      EasyEscrow.ai Support: support@easyescrow.ai
+  - name: Supported Swap Types
+    x-displayName: Swap Types
     description: |
       ## Changelog
 
@@ -352,7 +354,12 @@ x-tagGroups:
   - name: Documentation
     tags:
       - Introduction
-      - Changelog
+  - name: Atomic Swaps
+    tags:
+      - Supported Swap Types
+      - Blockchain Support
+      - Bundle Swaps
+      - Fees & Limits
   - name: API Reference
     tags:
       - Health
