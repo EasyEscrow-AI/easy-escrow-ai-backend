@@ -1,7 +1,8 @@
 /**
  * Institution Escrow Receipt Routes
  *
- * GET /api/v1/institution-escrow/:escrowId/receipt  → HTML receipt
+ * GET /api/v1/institution-escrow/:escrowId/receipt       → HTML or PDF receipt (?format=pdf)
+ * GET /api/v1/institution-escrow/:escrowId/receipt/data  → JSON receipt data
  */
 
 import { Router, Response } from 'express';
@@ -24,7 +25,10 @@ const receiptRateLimiter = rateLimit({
 
 /**
  * GET /api/v1/institution-escrow/:escrowId/receipt
- * Returns the escrow receipt as HTML (printable / saveable as PDF via browser)
+ *
+ * Query params:
+ *   ?format=pdf  → returns PDF (application/pdf)
+ *   ?format=html → returns HTML (default)
  */
 router.get(
   '/api/v1/institution-escrow/:escrowId/receipt',
@@ -34,11 +38,21 @@ router.get(
     try {
       const { escrowId } = req.params;
       const clientId = req.institutionClient!.clientId;
+      const format = (req.query.format as string)?.toLowerCase() || 'html';
 
       const service = getInstitutionReceiptService();
+
+      if (format === 'pdf') {
+        const { buffer, filename } = await service.generatePDF(escrowId, clientId);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+        res.setHeader('Content-Length', buffer.length.toString());
+        return res.send(buffer);
+      }
+
+      // Default: HTML
       const data = await service.getReceiptData(escrowId, clientId);
       const html = service.renderReceiptHTML(data);
-
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send(html);
     } catch (err: any) {

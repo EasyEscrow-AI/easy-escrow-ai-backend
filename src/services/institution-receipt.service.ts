@@ -246,6 +246,43 @@ export class InstitutionReceiptService {
   renderReceiptHTML(data: ReceiptData): string {
     return buildReceiptHTML(data);
   }
+
+  /**
+   * Render a receipt as a PDF buffer (on-the-fly via Puppeteer)
+   */
+  async renderReceiptPDF(data: ReceiptData): Promise<Buffer> {
+    const puppeteer = await import('puppeteer');
+    const html = buildReceiptHTML(data);
+
+    const browser = await puppeteer.default.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+
+    try {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '15mm', right: '12mm', bottom: '15mm', left: '12mm' },
+        displayHeaderFooter: false,
+      });
+      return Buffer.from(pdfBuffer);
+    } finally {
+      await browser.close();
+    }
+  }
+
+  /**
+   * Generate a PDF receipt for an escrow and return the buffer
+   */
+  async generatePDF(escrowId: string, clientId: string): Promise<{ buffer: Buffer; filename: string }> {
+    const data = await this.getReceiptData(escrowId, clientId);
+    const buffer = await this.renderReceiptPDF(data);
+    const filename = `${data.receiptNumber}.pdf`;
+    return { buffer, filename };
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
