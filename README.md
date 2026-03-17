@@ -2,23 +2,9 @@
 
 # EasyEscrow.ai Backend
 
-Non-custodial digital escrow platform on Solana. Backend API service powering institutional cross-border stablecoin escrow payments and atomic swaps.
+Non-custodial digital escrow platform on Solana. Backend API service powering atomic swaps and institutional cross-border stablecoin escrow payments.
 
----
-
-## Environments
-
-| Environment | Institutional Portal | Backend API |
-|-------------|---------------------|-------------|
-| **STAGING** | [staging-portal.easyescrow.ai](https://staging-portal.easyescrow.ai) | [staging-api.easyescrow.ai/docs](https://staging-api.easyescrow.ai/docs) |
-| **PRODUCTION** | [portal.easyescrow.ai](https://portal.easyescrow.ai) | [api.easyescrow.ai/docs](https://api.easyescrow.ai/docs) |
-
-## Solana Program
-
-| Environment | Network | Program ID | Status |
-|-------------|---------|------------|--------|
-| **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | ✅ ACTIVE |
-| **PRODUCTION** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | ✅ LIVE |
+**Live Documentation:** [staging-api.easyescrow.ai/docs](https://staging-api.easyescrow.ai/docs)
 
 ---
 
@@ -28,92 +14,35 @@ Non-custodial digital escrow platform on Solana. Backend API service powering in
 
 Cross-border stablecoin escrow payments for institutional clients.
 
-- ✅ Institution client authentication (JWT) with registration, login, and token refresh
-- ✅ USDC escrow lifecycle: create, deposit, release, and cancel
-- ✅ AI-powered document analysis for compliance risk scoring
-- ✅ Wallet whitelists and jurisdiction payment corridors
-- ✅ File uploads for escrow supporting documents (PDF, images, Excel, CSV)
-- ✅ KYB profile management and client search/discovery
-- ✅ API key management for programmatic access
-- ✅ Admin endpoints for allowlist and corridor configuration
-- ✅ Settlement authority pattern for release operations
-- ✅ AI data anonymisation (PII redaction before model processing)
-- ✅ Escrow Settlement Mode: Atomic (non-custodial proof of funds) / Escrow (full PDA escrow)
-- ✅ Escrow Release Terms: programmable release mechanisms
-- ✅ Full blockchain audit of payment escrows and downloadable compliance & audit reports
-- ✅ Supports KYC/KYB compliance integrations (not activated for hackathon)
-- ✅ Supports AMINA Payment Network (APN) integrations (not activated for hackathon)
+- Institution client authentication (JWT) with registration, login, and token refresh
+- USDC escrow lifecycle: create, deposit, release, and cancel
+- AI-powered document analysis for compliance risk scoring
+- Wallet whitelists and jurisdiction payment corridors
+- File uploads for escrow supporting documents (PDF, images, Excel, CSV)
+- KYB profile management and client search/discovery
+- API key management for programmatic access
+- Admin endpoints for allowlist and corridor configuration
+- Settlement authority pattern for release operations
+- AI data anonymisation (PII redaction before model processing)
+- Escrow Settlement Mode: Atomic (non-custodial proof of funds) / Escrow (full PDA escrow)
+- Escrow Release Terms: programmable release mechanisms
+- Full blockchain audit of payment escrows and downloadable compliance & audit reports
+- Supports KYC/KYB compliance integrations (not activated for hackathon)
+- Supports AMINA Payment Network (APN) integrations (not activated for hackathon)
 
 ### v1.0.0 — Atomic Swaps (October 2025)
 
 Non-custodial peer-to-peer NFT and SOL atomic swaps on Solana.
 
-- ✅ NFT <> SOL, NFT <> NFT, and NFT + SOL <> NFT swap types
-- ✅ Support for SPL NFTs, Core NFTs, Compressed NFTs (cNFTs), and Programmable NFTs (pNFTs)
-- ✅ Jito bundle swaps for multi-NFT transactions (up to 4 NFTs)
-- ✅ TwoPhase fallback for bundle failures
-- ✅ Compressed NFT support with Merkle proof handling via DAS API
-- ✅ Dynamic platform fee calculation (1% SOL swaps, 0.005 SOL flat for NFT-only)
-- ✅ Offer lifecycle management (create, accept, cancel, counter, expire)
-- ✅ Durable nonce pool for reliable transaction submission
-- ✅ Health monitoring and service status endpoints
-
----
-
-## Institutional Escrow
-
-Programmable cross-border stablecoin escrow payments, built for institutions compliance and auditability.
-
-### Key Features
-
-- **Client Portal Integration**: Front-end integration with EasyEscrow Institution client portal app
-- **Stablecoin Settlement**: Solana DeFi stablecoin escrow settlement using USDC
-- **AI-Assisted Compliance**: AI-powered document analysis for risk scoring (verifies only, does not automate payments)
-- **AI Data Anonymisation**: PII redaction before sending documents to AI models
-- **Wallet Whitelists**: Allowlist-based wallet management with jurisdiction payment corridors
-- **Escrow Settlement Modes**: Atomic (non-custodial proof of funds) / Escrow (full PDA escrow)
-- **Programmable Release**: Configurable release mechanisms (admin release, time lock, compliance check)
-- **Blockchain Audit Trail**: Full audit of payment escrows with downloadable compliance & audit reports
-- **Document Management**: Secure file uploads to DigitalOcean Spaces (PDF, images, Excel, CSV)
-- **KYB Profile Management**: Extended institution profiles with legal entity details, industry, and registration info
-- **API Key Management**: Programmatic access via generated API keys with configurable permissions
-- **Token Support**: Primary support for USDC and AMINA-approved whitelist only tokens
-- **KYC/KYB Integrations**: Compliance integration support (not activated for hackathon)
-- **AMINA Payment Network**: APN integration support (not activated for hackathon)
-
-### Escrow Lifecycle
-
-```text
-Create --> Deposit --> Release / Cancel
-             |
-     [Compliance Hold] --> Approve --> Release
-                       --> Reject  --> Cancel
-```
-
-1. **Register** an institution client account (email + password, JWT authentication)
-2. **Configure** wallets, API keys, and settings via the settings endpoints
-3. **Create** an escrow specifying payer/recipient wallets, USDC amount, corridor, and release conditions
-4. **Deposit** USDC on-chain and record the transaction signature
-5. **Analyze** (optional) upload documents for AI-powered compliance risk scoring
-6. **Release** funds (requires settlement authority) or **Cancel** the escrow
-
-### Institution API Endpoints
-
-| Category | Endpoints | Description |
-|----------|-----------|-------------|
-| **Auth** | register, login, refresh, logout, me, password | JWT authentication with rate limiting |
-| **Settings** | get/update settings, wallet management, API keys | Client configuration |
-| **Clients** | search, list, profile, archive | Client discovery and management |
-| **Files** | upload, list, download, delete | Document management for compliance |
-| **Escrow** | create, deposit, release, cancel, get, list | USDC escrow payment lifecycle |
-| **AI Analysis** | analyze document, get results | AI compliance risk scoring |
-| **AI Chat** | chat with AI assistant | AI-powered escrow assistant |
-| **Receipts** | get, list, download | Settlement receipt management |
-| **Admin** | allowlist CRUD, corridor configuration | Administrative operations |
-
-### Settlement Authority
-
-Release operations require a separate settlement authority API key, enforcing separation of duties between escrow creation and fund release. This is validated via the `requireSettlementAuthority` middleware.
+- NFT <> SOL, NFT <> NFT, and NFT + SOL <> NFT swap types
+- Support for SPL NFTs, Core NFTs, Compressed NFTs (cNFTs), and Programmable NFTs (pNFTs)
+- Jito bundle swaps for multi-NFT transactions (up to 4 NFTs)
+- TwoPhase fallback for bundle failures
+- Compressed NFT support with Merkle proof handling via DAS API
+- Dynamic platform fee calculation (1% SOL swaps, 0.005 SOL flat for NFT-only)
+- Offer lifecycle management (create, accept, cancel, counter, expire)
+- Durable nonce pool for reliable transaction submission
+- Health monitoring and service status endpoints
 
 ---
 
@@ -125,22 +54,22 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 
 | Type | Description | Status |
 |------|-------------|--------|
-| **NFT <> SOL** | Exchange NFT for SOL tokens | ✅ Supported |
-| **NFT <> NFT (fee)** | NFT for NFT with platform fee | ✅ Supported |
-| **NFT <> NFT + SOL** | NFT for another NFT plus SOL | ✅ Supported |
-| **cNFT <> SOL** | Compressed NFT for SOL | ✅ Supported |
-| **NFT <> cNFT** | Standard NFT for compressed NFT | ✅ Supported |
-| **Bulk Swaps** | Multiple NFTs (up to 4 total) | ✅ Supported |
+| **NFT <> SOL** | Exchange NFT for SOL tokens | LIVE |
+| **NFT <> NFT (fee)** | NFT for NFT with platform fee | LIVE |
+| **NFT <> NFT + SOL** | NFT for another NFT plus SOL | LIVE |
+| **cNFT <> SOL** | Compressed NFT for SOL | LIVE |
+| **NFT <> cNFT** | Standard NFT for compressed NFT | LIVE |
+| **Bulk Swaps** | Multiple NFTs (up to 4 total) | LIVE |
 
 ### Supported Assets
 
 | Asset | Description | Status |
 |-------|-------------|--------|
-| **SPL NFT** | Solana SPL Token NFT (Metaplex standard) | ✅ Supported |
-| **Core NFT** | Solana Metaplex Core NFT | ✅ Supported |
-| **cNFT** | Solana Compressed NFT (Metaplex Bubblegum) | ✅ Supported |
-| **pNFT** | Programmable NFT (on-chain royalty enforcement) | ✅ Supported |
-| **SOL** | Solana native token | ✅ Supported |
+| **SPL NFT** | Solana SPL Token NFT (Metaplex standard) | Supported |
+| **Core NFT** | Solana Metaplex Core NFT | Supported |
+| **cNFT** | Solana Compressed NFT (Metaplex Bubblegum) | Supported |
+| **pNFT** | Programmable NFT (on-chain royalty enforcement) | Supported |
+| **SOL** | Solana native token | Supported |
 
 ### Bulk Swap & cNFT Features
 
@@ -172,6 +101,61 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 
 ---
 
+## Institutional Escrow
+
+Programmable cross-border stablecoin escrow payments, built for institutions compliance and auditability.
+
+### Key Features
+
+- **Client Portal Integration**: Front-end integration with EasyEscrow Institution client portal app
+- **Stablecoin Settlement**: Solana DeFi stablecoin escrow settlement using USDC
+- **AI-Assisted Compliance**: AI-powered document analysis for risk scoring (verifies only, does not automate payments)
+- **AI Data Anonymisation**: PII redaction before sending documents to AI models
+- **Wallet Whitelists**: Allowlist-based wallet management with jurisdiction payment corridors
+- **Escrow Settlement Modes**: Atomic (non-custodial proof of funds) / Escrow (full PDA escrow)
+- **Programmable Release**: Configurable release mechanisms (admin release, time lock, compliance check)
+- **Blockchain Audit Trail**: Full audit of payment escrows with downloadable compliance & audit reports
+- **Document Management**: Secure file uploads to DigitalOcean Spaces (PDF, images, Excel, CSV)
+- **KYB Profile Management**: Extended institution profiles with legal entity details, industry, and registration info
+- **API Key Management**: Programmatic access via generated API keys with configurable permissions
+- **Token Support**: Primary support for USDC and AMINA-approved whitelist only tokens
+- **KYC/KYB Integrations**: Compliance integration support (not activated for hackathon)
+- **AMINA Payment Network**: APN integration support (not activated for hackathon)
+
+### Escrow Lifecycle
+
+```
+Create --> Deposit --> Release / Cancel
+             |
+     [Compliance Hold] --> Approve --> Release
+                       --> Reject  --> Cancel
+```
+
+1. **Register** an institution client account (email + password, JWT authentication)
+2. **Configure** wallets, API keys, and settings via the settings endpoints
+3. **Create** an escrow specifying payer/recipient wallets, USDC amount, corridor, and release conditions
+4. **Deposit** USDC on-chain and record the transaction signature
+5. **Analyze** (optional) upload documents for AI-powered compliance risk scoring
+6. **Release** funds (requires settlement authority) or **Cancel** the escrow
+
+### Institution API Endpoints
+
+| Category | Endpoints | Description |
+|----------|-----------|-------------|
+| **Auth** | register, login, refresh, logout, me, password | JWT authentication with rate limiting |
+| **Settings** | get/update settings, wallet management, API keys | Client configuration |
+| **Clients** | search, list, profile, archive | Client discovery and management |
+| **Files** | upload, list, download, delete | Document management for compliance |
+| **Escrow** | create, deposit, release, cancel, get, list | USDC escrow payment lifecycle |
+| **AI Analysis** | analyze document, get results | AI compliance risk scoring |
+| **Admin** | allowlist CRUD, corridor configuration | Administrative operations |
+
+### Settlement Authority
+
+Release operations require a separate settlement authority API key, enforcing separation of duties between escrow creation and fund release. This is validated via the `requireSettlementAuthority` middleware.
+
+---
+
 ## Architecture
 
 ### Tech Stack
@@ -180,7 +164,7 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 - **Database**: PostgreSQL with Prisma ORM
 - **Cache**: Redis (rate limiting, session management, caching)
 - **Blockchain**: Solana (web3.js, Anchor, SPL Token)
-- **AI**: Anthropic Claude API (document analysis, AI chat)
+- **AI**: Anthropic Claude API (document analysis)
 - **Storage**: DigitalOcean Spaces (S3-compatible, document uploads)
 - **Documentation**: OpenAPI 3.0 with Redoc
 - **Deployment**: DigitalOcean App Platform
@@ -207,9 +191,7 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 | `institution-escrow-program.service.ts` | On-chain transaction building (PDA derivation, ATA management) |
 | `institution-client-settings.service.ts` | Client settings, wallet, and API key management |
 | `institution-file.service.ts` | Document uploads to DigitalOcean Spaces |
-| `institution-receipt.service.ts` | Settlement receipt generation and management |
 | `ai-analysis.service.ts` | AI compliance analysis via Claude API |
-| `ai-chat.service.ts` | AI-powered escrow assistant |
 | `allowlist.service.ts` | Wallet allowlist management (Redis + Prisma) |
 | `compliance.service.ts` | Corridor validation, risk scoring, volume limits |
 
@@ -219,99 +201,13 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 
 **Institution Escrow**: `InstitutionClient`, `InstitutionWallet`, `InstitutionRefreshToken`, `InstitutionClientSettings`, `InstitutionApiKey`, `InstitutionEscrow`, `InstitutionDeposit`, `InstitutionAuditLog`, `InstitutionAiAnalysis`, `InstitutionCorridor`, `InstitutionFile`
 
----
+### Solana Program
 
-## Project Structure
-
-```
-/
-├── README.md
-├── CLAUDE.md
-├── docs/                      # Comprehensive documentation
-│   ├── api/                   # API documentation
-│   │   ├── openapi.yaml       # OpenAPI 3.0 specification
-│   │   └── SWAGGER_IMPLEMENTATION.md
-│   ├── architecture/          # System design
-│   │   └── SWAP_ROUTING.md    # Jito vs escrow routing logic
-│   ├── deployment/            # Deployment guides
-│   ├── environments/          # Environment configs
-│   ├── security/              # Security documentation
-│   ├── setup/                 # Installation guides
-│   └── testing/               # Testing strategies
-├── src/                       # Backend TypeScript/Node.js source
-│   ├── config/                # Configuration
-│   │   ├── index.ts           # Environment config
-│   │   ├── database.ts        # Prisma client
-│   │   ├── redis.ts           # Redis config
-│   │   ├── atomicSwap.config.ts
-│   │   └── institution-escrow.config.ts
-│   ├── generated/             # Generated code
-│   │   ├── prisma/            # Prisma client
-│   │   └── anchor/            # IDL files (staging + production)
-│   ├── middleware/             # Express middleware
-│   ├── models/                # Data models & validators
-│   │   ├── dto/               # Data Transfer Objects
-│   │   └── validators/        # Input validators
-│   ├── routes/                # API routes
-│   │   ├── offers.routes.ts           # Atomic swap endpoints
-│   │   ├── institution-auth.routes.ts # Institution authentication
-│   │   ├── institution-escrow.routes.ts # Escrow lifecycle
-│   │   ├── institution-files.routes.ts  # Document uploads
-│   │   ├── institution-settings.routes.ts # Client settings
-│   │   ├── institution-clients.routes.ts  # Client discovery
-│   │   ├── institution-receipt.routes.ts  # Receipt management
-│   │   ├── institution-tokens.routes.ts   # Token whitelist
-│   │   ├── ai-analysis.routes.ts      # AI compliance analysis
-│   │   ├── ai-chat.routes.ts          # AI chat assistant
-│   │   └── admin/                     # Admin endpoints
-│   ├── services/              # Business logic
-│   │   ├── offerManager.ts            # Atomic swap manager
-│   │   ├── assetValidator.ts          # NFT/cNFT/SOL validation
-│   │   ├── feeCalculator.ts           # Dynamic fees
-│   │   ├── transactionBuilder.ts      # Swap transactions
-│   │   ├── transactionGroupBuilder.ts # Multi-tx bundles
-│   │   ├── bulkSwapExecutor.ts        # Jito bundle execution
-│   │   ├── cnftService.ts             # DAS API / cNFT proofs
-│   │   ├── noncePoolManager.ts        # Durable transactions
-│   │   ├── institution-auth.service.ts
-│   │   ├── institution-escrow.service.ts
-│   │   ├── institution-escrow-program.service.ts
-│   │   ├── institution-client-settings.service.ts
-│   │   ├── institution-file.service.ts
-│   │   ├── institution-receipt.service.ts
-│   │   ├── ai-analysis.service.ts
-│   │   ├── ai-chat.service.ts
-│   │   ├── allowlist.service.ts
-│   │   ├── compliance.service.ts
-│   │   └── solana.service.ts          # Blockchain ops
-│   ├── data/                  # Static data & knowledgebases
-│   ├── utils/                 # Utility functions
-│   ├── public/                # Static assets (Swagger UI)
-│   └── index.ts               # Application entry point
-├── prisma/                    # Database
-│   ├── schema.prisma          # Database schema
-│   └── migrations/            # Migration files
-├── programs/                  # Solana programs
-│   └── escrow/                # Atomic swap smart contract
-│       └── src/lib.rs         # Program logic
-├── tests/                     # Test suites
-│   ├── unit/                  # Unit tests
-│   │   ├── institution-client/  # Institution auth & settings tests
-│   │   ├── institution-escrow/  # Escrow, compliance, AI tests
-│   │   └── admin/               # Admin auth tests
-│   ├── integration/           # Integration tests
-│   ├── staging/e2e/           # Staging E2E tests
-│   └── production/            # Production smoke & E2E tests
-│       ├── smoke/             # Health & connectivity checks
-│       └── e2e/               # Full production E2E tests
-├── scripts/                   # Utility scripts
-│   ├── deployment/            # Deployment automation
-│   ├── development/           # Dev utilities
-│   └── testing/               # Test helpers
-├── docker-compose.yml         # Docker services
-├── Dockerfile                 # Production Docker image
-└── package.json               # Node.js dependencies
-```
+| Environment | Network | Program ID | Status |
+|-------------|---------|------------|--------|
+| **DEV** | Devnet | `4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd` | Active |
+| **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | Active |
+| **PROD** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | LIVE |
 
 ---
 
@@ -360,7 +256,7 @@ npm run docker:fresh
 npm run docker:logs
 ```
 
-**Important**: Always use Docker compose commands for restarts. Never use process-killing commands (`pkill`, `taskkill`) with Dockerized services.
+**Important**: Always use Docker compose commands for restarts. Never use process killing commands (`pkill`, `taskkill`) with Dockerized services.
 
 ---
 
@@ -371,41 +267,23 @@ npm run docker:logs
 | Unit tests | `npm run test:unit` | 10s |
 | Single test file | `npx cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/YOUR_TEST.test.ts --timeout 10000` | 10s |
 | Integration tests | `npm run test:integration` | 20s |
-| Staging E2E (atomic) | `npm run test:staging:e2e:atomic:all` | 180s |
-| Staging E2E (institution) | Individual test files (`20-` through `26-`) | 180s |
+| Staging E2E | `npm run test:staging:e2e:atomic:all` | 180s |
 | Production smoke | `npm run test:production:smoke:all` | 180s |
-| Production E2E | `npm run test:production:e2e:01-nft-for-sol` | 180s |
 
 ### Test Coverage
 
 | Area | Files | Tests |
 |------|-------|-------|
-| **Atomic Swaps** | | |
-| Swap Routing | `swapFlowRouterIntegration`, `swapMethodSelection`, `apiDelegationRouting` | 98 |
-| **Institution Client** | | |
-| Auth | `institutionAuthService`, `institutionJwtMiddleware` | 35 |
-| Client Settings | `institutionClientSettings` | 18 |
-| **Institution Escrow** | | |
-| Escrow Service | `institutionEscrowService`, `institutionEscrowStateMachine` | 51 |
-| Escrow Validation | `institutionEscrowValidation` | 57 |
-| Escrow Program | `institutionEscrowProgramService` | 28 |
-| Compliance & Allowlist | `complianceService`, `allowlistService` | 32 |
-| AI Analysis | `aiAnalysisService` | 37 |
-| File Service | `institutionFileService` | 57 |
-| Receipt Service | `institutionReceiptService` | 34 |
-| Token Whitelist | `institutionTokenWhitelist` | 19 |
-| Data Anonymizer | `dataAnonymizer` | 26 |
-| Solana Validators | `solanaValidator` | 49 |
-| **Admin** | | |
-| Admin Auth | `adminAuthService` | 17 |
-| **Staging E2E** | | |
-| Atomic Swaps | `01-atomic-nft-for-sol`, `03-atomic-nft-for-nft`, `06-admin-cancel`, `09-api-key-zero-fee` | 4 suites |
-| Institution Auth | `20-institution-auth-registration` | 1 suite |
-| Institution Escrow | `21-create-deposit`, `22-settlement`, `23-cancellation-refund`, `25-primary-path` | 4 suites |
-| Institution AI | `24-institution-escrow-ai-analysis`, `26-ai-chat-guardrails` | 2 suites |
-| **Production** | | |
-| Smoke Tests | `01-health`, `02-api-health`, `03-database-redis`, `04-service-initialization` | 4 suites |
-| E2E Tests | `01` through `14` (NFT, cNFT, Core NFT, bulk, admin) | 14 suites |
+| Atomic Swap Routing | `swapFlowRouterIntegration`, `swapMethodSelection`, `apiDelegationRouting` | 50+ |
+| Institution Auth | `institutionAuthService`, `institutionJwtMiddleware` | 40+ |
+| Institution Escrow | `institutionEscrowService`, `institutionEscrowStateMachine` | 40+ |
+| Institution Settings | `institutionClientSettings` | 25+ |
+| Compliance & Allowlist | `complianceService`, `allowlistService` | 30+ |
+| AI Analysis | `aiAnalysisService` | 22 |
+| File Service | `institutionFileService` | 32 |
+| Program Service | `institutionEscrowProgramService` | 28 |
+| Validators | `solanaValidator` | 48 |
+| Validation Middleware | `institutionEscrowValidation` | 57 |
 
 ---
 
@@ -416,61 +294,37 @@ npm run docker:logs
 ```env
 PORT=3000
 NODE_ENV=development
-DATABASE_URL=                          # PostgreSQL connection string
-SOLANA_RPC_URL=
-SOLANA_RPC_URL_FALLBACK=               # Optional fallback RPC
-SOLANA_NETWORK=devnet
-ESCROW_PROGRAM_ID=
-REDIS_URL=
-JWT_SECRET=                            # Min 32 chars
-API_KEY_SECRET=
-ALLOWED_DOMAINS=easyescrow.ai,*.easyescrow.ai
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/easyescrow_dev?schema=public"
+SOLANA_RPC_URL=https://api.devnet.solana.com
+ESCROW_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=your_jwt_secret_min_32_chars
 ```
 
 ### Atomic Swaps
 
 ```env
-ENABLE_JITO_BUNDLES=true
-JITO_TIP_LAMPORTS=1000000             # 0.001 SOL default tip
-JITO_AUTH_UUID=                        # Optional, 5 rps with UUID vs 1 rps without
+JITO_BUNDLES_ENABLED=true
+JITO_AUTH_UUID=                         # Optional, 5 rps with UUID vs 1 rps without
 PLATFORM_FEE_BPS=250
-PLATFORM_FEE_COLLECTOR_ADDRESS=
-FEE_COLLECTOR_PRIVATE_KEY=
-ADMIN_PRIVATE_KEY=
-WEBHOOK_SECRET=
-WEBHOOK_MAX_RETRIES=5
-WEBHOOK_RETRY_DELAY_MS=1000
-```
-
-### cNFT / DAS API
-
-```env
-CNFT_STALE_PROOF_MAX_RETRIES=3
-CNFT_STALE_OWNERSHIP_MAX_RETRIES=3
-CNFT_STABILITY_MAX_CHECKS=3
-CNFT_STABILITY_CHECK_INTERVAL=1000
-CNFT_STABILITY_REQUIRED_CHECKS=2
-DAS_RATE_LIMIT_INTERVAL_MS=750
+PLATFORM_FEE_COLLECTOR_ADDRESS=your_fee_collector_address
 ```
 
 ### Institution Escrow (required when `INSTITUTION_ESCROW_ENABLED=true`)
 
 ```env
-INSTITUTION_ESCROW_ENABLED=false       # Feature flag
-USDC_MINT_ADDRESS=
-INSTITUTION_ESCROW_MIN_USDC=100        # $100 minimum
-INSTITUTION_ESCROW_MAX_USDC=1000000    # $1,000,000 maximum
-INSTITUTION_ESCROW_DEFAULT_EXPIRY_HOURS=72
-JWT_ACCESS_TOKEN_EXPIRY=15m
-JWT_REFRESH_TOKEN_EXPIRY=7d
-ANTHROPIC_API_KEY=                     # AI compliance analysis
+INSTITUTION_ESCROW_ENABLED=false        # Feature flag
+USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+INSTITUTION_ESCROW_MIN_USDC=1           # $1 minimum
+INSTITUTION_ESCROW_MAX_USDC=3000        # $3,000 maximum
+ANTHROPIC_API_KEY=your_claude_api_key   # AI compliance analysis
 AI_ANALYSIS_MODEL=claude-sonnet-4-20250514
-SETTLEMENT_AUTHORITY_API_KEY=
-DO_SPACES_KEY=
-DO_SPACES_SECRET=
-DO_SPACES_ENDPOINT=
-DO_SPACES_BUCKET=
-DO_SPACES_REGION=
+SETTLEMENT_AUTHORITY_API_KEY=your_settlement_key
+DO_SPACES_ENDPOINT=nyc3.digitaloceanspaces.com
+DO_SPACES_REGION=nyc3
+DO_SPACES_BUCKET=your_bucket_name
+DO_SPACES_KEY=your_spaces_key
+DO_SPACES_SECRET=your_spaces_secret
 ```
 
 See `.env.example` for the complete list of all configuration options.
@@ -517,28 +371,13 @@ Interactive API docs are available at `/docs` on each environment:
 
 ## Documentation
 
-### API Documentation
-
 - [OpenAPI Specification](docs/api/openapi.yaml) — Complete API spec
 - [Swagger Implementation](docs/api/SWAGGER_IMPLEMENTATION.md) — Docs setup guide
-- [Interactive Swagger UI](https://api.easyescrow.ai/docs) — Live API explorer
-
-### Architecture & Design
-
-- [Swap Routing](docs/architecture/SWAP_ROUTING.md) — Jito vs escrow routing logic
 - [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) — Multi-NFT swap design
-
-### Deployment
-
+- [Swap Routing](docs/architecture/SWAP_ROUTING.md) — Jito vs escrow routing logic
 - [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) — Full deployment instructions
 - [Docker Guide](docs/DOCKER_DEPLOYMENT.md) — Docker deployment
-
-### Testing
-
 - [Testing Strategy](docs/testing/TESTING_STRATEGY.md) — Test approach and best practices
-
-### Security
-
 - [Secrets Management](docs/security/SECRETS_MANAGEMENT.md) — Secrets handling guide
 
 ---
@@ -549,10 +388,4 @@ For issues or questions: support@easyescrow.ai
 
 ## License
 
-Copyright (c) 2025-2026 EasyEscrow.ai. All rights reserved.
-
-This software and associated documentation files (the "Software") are proprietary and confidential. No part of this Software may be reproduced, distributed, transmitted, sublicensed, or otherwise made available to any third party, in any form or by any means, without the prior written permission of EasyEscrow.ai.
-
-Unauthorized copying, modification, merging, publishing, distribution, sublicensing, selling, or any other use of this Software is strictly prohibited.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+All rights reserved.
