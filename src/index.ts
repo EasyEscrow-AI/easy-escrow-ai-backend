@@ -427,25 +427,56 @@ if (openApiDocument) {
     .redoc-wrap [class*="enum"], .redoc-wrap [class*="oneOf"] { background: #1e293b !important; color: #e2e8f0 !important; }
     /* Any remaining white backgrounds in the middle panel */
     .redoc-wrap [class*="panel"] { background: #0f172a !important; }
-    .redoc-wrap [class*="content"] { background: transparent !important; }
-    .redoc-wrap [role="search"] [class*="content"] { background: #1e293b !important; }
+    .redoc-wrap [class*="content"]:not([class*="search"]):not([class*="Search"]) { background: transparent !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
-    /* Hide Redoc's built-in sidebar search (we have the topbar instead) */
-    .redoc-wrap [role="search"] { display: none !important; }
-    /* Topbar search highlight */
-    .topbar-search-highlight {
-      outline: 2px solid #818cf8 !important;
-      outline-offset: 4px !important;
-      border-radius: 4px !important;
-      animation: search-pulse 1.5s ease-out !important;
+    /* Search bar */
+    .redoc-wrap [class*="search"], .redoc-wrap [role="search"] { margin-top: 20px !important; padding: 0 10px !important; }
+    .redoc-wrap [role="search"] input[type="text"],
+    .redoc-wrap [class*="search"] input {
+      width: 100% !important;
+      min-height: 38px !important;
+      padding: 8px 12px !important;
+      font-size: 14px !important;
+      border-radius: 6px !important;
+      border: 1px solid #475569 !important;
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      box-sizing: border-box !important;
+      outline: none !important;
     }
-    @keyframes search-pulse {
-      0% { outline-color: #818cf8; box-shadow: 0 0 0 0 rgba(129,140,248,0.5); }
-      50% { box-shadow: 0 0 12px 4px rgba(129,140,248,0.3); }
-      100% { outline-color: #818cf8; box-shadow: none; }
+    .redoc-wrap [role="search"] input:focus,
+    .redoc-wrap [class*="search"] input:focus {
+      border-color: #818cf8 !important;
+      box-shadow: 0 0 0 2px rgba(129,140,248,0.2) !important;
     }
-    /* (search-count styles are in topbar block) */
+    /* Search results dropdown */
+    .redoc-wrap [class*="search-results"],
+    .redoc-wrap [class*="SearchResults"],
+    .redoc-wrap [role="search"] ul,
+    .redoc-wrap [role="search"] [class*="menu"] {
+      background: #1e293b !important;
+      border: 1px solid #475569 !important;
+      border-radius: 6px !important;
+      color: #e2e8f0 !important;
+      z-index: 100 !important;
+      max-height: 400px !important;
+      overflow-y: auto !important;
+    }
+    .redoc-wrap [role="search"] li,
+    .redoc-wrap [class*="search-results"] li,
+    .redoc-wrap [class*="SearchResults"] li {
+      padding: 8px 12px !important;
+      color: #e2e8f0 !important;
+      background: transparent !important;
+      cursor: pointer !important;
+    }
+    .redoc-wrap [role="search"] li:hover,
+    .redoc-wrap [role="search"] li[class*="active"],
+    .redoc-wrap [class*="search-results"] li:hover {
+      background: #334155 !important;
+    }
+    .redoc-wrap [role="search"] label { display: none !important; }
     /* Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
