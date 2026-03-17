@@ -892,6 +892,7 @@ model InstitutionClient {
   auditLogs       InstitutionAuditLog[]
   files           InstitutionFile[]
   wallets         InstitutionWallet[]
+  aiAnalyses      InstitutionAiAnalysis[] @relation("ClientAiAnalyses")
 
   @@index([email])
   @@index([status])
@@ -1080,26 +1081,38 @@ model InstitutionAuditLog {
   @@map("institution_audit_logs")
 }
 
-// AI analysis results
+// AI analysis results (document, escrow-level, and client-level)
 model InstitutionAiAnalysis {
-  id              String    @id @default(uuid())
-  escrowId        String    @map("escrow_id")
-  fileId          String?   @map("file_id")
-  documentHash    String?   @map("document_hash")
-  riskScore       Int       @map("risk_score") // 0-100
-  factors         Json      @default("[]") // Array of {name, weight, value}
-  recommendation  String    // APPROVE, REVIEW, REJECT
-  extractedFields Json      @default("{}") @map("extracted_fields")
-  model           String    // AI model used
-  createdAt       DateTime  @default(now()) @map("created_at")
+  id              String          @id @default(uuid())
+  analysisType    AiAnalysisType  @default(DOCUMENT) @map("analysis_type")
+  escrowId        String?         @map("escrow_id")
+  clientId        String?         @map("client_id")
+  fileId          String?         @map("file_id")
+  documentHash    String?         @map("document_hash")
+  riskScore       Int             @map("risk_score") // 0-100
+  factors         Json            @default("[]") // Array of {name, weight, value}
+  recommendation  String          // APPROVE, REVIEW, REJECT
+  extractedFields Json            @default("{}") @map("extracted_fields")
+  summary         String?         // Human-readable analysis summary
+  model           String          // AI model used
+  createdAt       DateTime        @default(now()) @map("created_at")
 
-  escrow          InstitutionEscrow @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  escrow          InstitutionEscrow?  @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  client          InstitutionClient?  @relation("ClientAiAnalyses", fields: [clientId], references: [id], onDelete: Cascade)
 
+  @@index([analysisType])
   @@index([escrowId])
+  @@index([clientId])
   @@index([riskScore])
   @@index([recommendation])
   @@index([createdAt])
   @@map("institution_ai_analyses")
+}
+
+enum AiAnalysisType {
+  DOCUMENT
+  ESCROW
+  CLIENT
 }
 
 // Corridor configuration
