@@ -36,7 +36,7 @@ export const createTestApp = (): Application => {
   app.get('/', (_req: Request, res: Response) => {
     res.status(200).json({
       message: 'EasyEscrow.ai Backend API - Test Mode',
-      version: '1.0.0',
+      version: '1.1.0',
       endpoints: {
         health: '/health',
         offers: '/api/swaps/offers',

@@ -210,7 +210,7 @@ try {
 app.get('/', (_req: Request, res: Response) => {
   const response: any = {
     message: 'EasyEscrow.ai Backend API',
-    version: '1.0.0',
+    version: '1.1.0',
     endpoints: {
       health: '/health',
       assets: '/api/assets',
