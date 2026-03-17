@@ -556,7 +556,16 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global error handler
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  // Handle malformed JSON body (body-parser SyntaxError)
+  if (err.type === 'entity.parse.failed' && err instanceof SyntaxError) {
+    return res.status(400).json({
+      error: 'Invalid JSON',
+      message: 'Request body contains invalid JSON. Check for unescaped special characters.',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   console.error('Error:', err);
   res.status(500).json({
     error: 'Internal Server Error',
