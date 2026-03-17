@@ -13,6 +13,7 @@ import { PrismaClient, InstitutionEscrowStatus } from '../generated/prisma';
 import { redisClient } from '../config/redis';
 import { AllowlistService, getAllowlistService } from './allowlist.service';
 import { ComplianceService, getComplianceService } from './compliance.service';
+import { getTokenWhitelistService } from './institution-token-whitelist.service';
 import crypto from 'crypto';
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
@@ -27,6 +28,8 @@ export interface CreateEscrowParams {
   conditionType: string;
   expiryHours?: number;
   settlementAuthority?: string;
+  /** Optional token mint address. Defaults to USDC if omitted. Must be on AMINA-approved whitelist. */
+  tokenMint?: string;
 }
 
 export interface CreateEscrowResult {
@@ -66,6 +69,7 @@ export class InstitutionEscrowService {
       conditionType,
       expiryHours = 72,
       settlementAuthority,
+      tokenMint,
     } = params;
 
     // 1. Validate client is verified
@@ -104,10 +108,14 @@ export class InstitutionEscrowService {
     // 3. Generate escrow ID
     const escrowId = crypto.randomUUID();
 
-    // 4. Determine USDC mint
-    const usdcMint = process.env.USDC_MINT_ADDRESS || '';
-    if (!usdcMint) {
-      throw new Error('USDC_MINT_ADDRESS not configured');
+    // 4. Resolve and validate token mint against AMINA-approved whitelist
+    const tokenWhitelist = getTokenWhitelistService();
+    let resolvedMint: string;
+    if (tokenMint) {
+      await tokenWhitelist.validateMint(tokenMint);
+      resolvedMint = tokenMint;
+    } else {
+      resolvedMint = await tokenWhitelist.getDefaultMint();
     }
 
     // 5. Calculate platform fee (basis points from config, default 50 bps = 0.5%)
@@ -134,7 +142,7 @@ export class InstitutionEscrowService {
         clientId,
         payerWallet,
         recipientWallet,
-        usdcMint,
+        usdcMint: resolvedMint,
         amount,
         platformFee,
         corridor,
