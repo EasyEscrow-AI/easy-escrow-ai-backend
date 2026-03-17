@@ -188,6 +188,273 @@ describe('AiAnalysisService', () => {
       expect(result.anonymizedText).to.include('Invoice');
       expect(result.anonymizedText).to.include('Widget Supply Co.');
     });
+
+    it('should mask US postal addresses with ZIP codes', () => {
+      const text = 'Ship to: 123 Main Street Suite 200 New York 10001';
+
+      const result = (service as any).anonymizePii(text);
+
+      expect(result.anonymizedText).to.not.include('123 Main Street');
+      expect(result.anonymizedText).to.include('[ADDRESS_');
+    });
+
+    it('should return empty piiMap when no PII present', () => {
+      const text = 'This is a simple document with no personal info.';
+
+      const result = (service as any).anonymizePii(text);
+
+      expect(result.anonymizedText).to.equal(text);
+      expect(result.piiMap.size).to.equal(0);
+    });
+
+    it('should handle empty text', () => {
+      const result = (service as any).anonymizePii('');
+
+      expect(result.anonymizedText).to.equal('');
+      expect(result.piiMap.size).to.equal(0);
+    });
+
+    it('should mask phone numbers with 7+ digits', () => {
+      const text = 'Call us at +1-555-867-5309 for inquiries.';
+
+      const result = (service as any).anonymizePii(text);
+
+      // The raw phone digits should be replaced
+      expect(result.anonymizedText).to.not.include('555-867-5309');
+    });
+  });
+
+  // ─── analyzeDocument - additional scenarios ──────────────────
+
+  describe('analyzeDocument - escrow validation', () => {
+    it('should reject when escrow not found', async () => {
+      prismaStub.institutionEscrow.findFirst.resolves(null);
+
+      try {
+        await service.analyzeDocument({
+          escrowId: ESCROW_ID,
+          fileId: FILE_ID,
+          clientId: 'wrong-client',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('Escrow not found or access denied');
+      }
+    });
+
+    it('should reject unsupported file types for AI analysis', async () => {
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        clientId: CLIENT_ID,
+        amount: 5000,
+        corridor: 'US-MX',
+        status: 'FUNDED',
+        client: { companyName: 'Test Corp' },
+      });
+      prismaStub.institutionFile.findFirst.resolves({
+        id: FILE_ID,
+        clientId: CLIENT_ID,
+        fileKey: 'uploads/spreadsheet.xlsx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      prismaStub.institutionAiAnalysis.findFirst.resolves(null);
+
+      // Stub fetchFileBuffer
+      sandbox.stub(service as any, 'fetchFileBuffer').resolves(Buffer.from('xlsx content'));
+
+      try {
+        await service.analyzeDocument({
+          escrowId: ESCROW_ID,
+          fileId: FILE_ID,
+          clientId: CLIENT_ID,
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('AI analysis does not support');
+        expect(err.message).to.include('convert to PDF');
+      }
+    });
+
+    it('should reject CSV files for AI analysis', async () => {
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        clientId: CLIENT_ID,
+        amount: 5000,
+        corridor: 'US-MX',
+        status: 'FUNDED',
+        client: { companyName: 'Test Corp' },
+      });
+      prismaStub.institutionFile.findFirst.resolves({
+        id: FILE_ID,
+        clientId: CLIENT_ID,
+        fileKey: 'uploads/data.csv',
+        mimeType: 'text/csv',
+      });
+      prismaStub.institutionAiAnalysis.findFirst.resolves(null);
+
+      sandbox.stub(service as any, 'fetchFileBuffer').resolves(Buffer.from('csv content'));
+
+      try {
+        await service.analyzeDocument({
+          escrowId: ESCROW_ID,
+          fileId: FILE_ID,
+          clientId: CLIENT_ID,
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('AI analysis does not support');
+      }
+    });
+
+    it('should return existing analysis for duplicate document hash', async () => {
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        clientId: CLIENT_ID,
+        amount: 5000,
+        corridor: 'US-MX',
+        status: 'FUNDED',
+        client: { companyName: 'Test Corp' },
+      });
+      prismaStub.institutionFile.findFirst.resolves({
+        id: FILE_ID,
+        clientId: CLIENT_ID,
+        fileKey: 'uploads/test.pdf',
+        mimeType: 'application/pdf',
+      });
+
+      // Return existing analysis for this document hash
+      prismaStub.institutionAiAnalysis.findFirst.resolves({
+        riskScore: 20,
+        extractedFields: { document_type: 'invoice' },
+        factors: [{ name: 'doc_validity', weight: 0.5, value: 20 }],
+        recommendation: 'APPROVE',
+      });
+
+      sandbox.stub(service as any, 'fetchFileBuffer').resolves(Buffer.from('pdf content'));
+      sandbox.stub(service as any, 'extractPdfText').resolves('Invoice text');
+
+      const result = await service.analyzeDocument({
+        escrowId: ESCROW_ID,
+        fileId: FILE_ID,
+        clientId: CLIENT_ID,
+      });
+
+      expect(result.riskScore).to.equal(20);
+      expect(result.details).to.include('Previously analyzed');
+    });
+
+    it('should reject when file not found', async () => {
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        clientId: CLIENT_ID,
+        amount: 5000,
+        corridor: 'US-MX',
+        status: 'FUNDED',
+        client: { companyName: 'Test Corp' },
+      });
+      prismaStub.institutionFile.findFirst.resolves(null);
+      prismaStub.institutionAiAnalysis.findFirst.resolves(null);
+
+      try {
+        await service.analyzeDocument({
+          escrowId: ESCROW_ID,
+          fileId: FILE_ID,
+          clientId: CLIENT_ID,
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('File not found');
+      }
+    });
+  });
+
+  describe('analyzeDocument - rate limiting', () => {
+    it('should allow requests within rate limit', async () => {
+      // incr returns 3 (under limit of 5)
+      redisStub.incr.resolves(3);
+
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        clientId: CLIENT_ID,
+        amount: 5000,
+        corridor: 'US-MX',
+        status: 'FUNDED',
+        client: { companyName: 'Test Corp' },
+      });
+
+      // Return cached to short-circuit the rest of the pipeline
+      redisStub.get.resolves(JSON.stringify({
+        riskScore: 25,
+        extractedFields: {},
+        factors: [],
+        recommendation: 'APPROVE',
+        details: 'test',
+      }));
+
+      const result = await service.analyzeDocument({
+        escrowId: ESCROW_ID,
+        fileId: FILE_ID,
+        clientId: CLIENT_ID,
+      });
+
+      expect(result.riskScore).to.equal(25);
+    });
+
+    it('should set TTL on first rate limit increment', async () => {
+      redisStub.incr.resolves(1);
+
+      // Return cached to short-circuit
+      redisStub.get.resolves(JSON.stringify({
+        riskScore: 25,
+        extractedFields: {},
+        factors: [],
+        recommendation: 'APPROVE',
+        details: 'test',
+      }));
+
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        clientId: CLIENT_ID,
+        client: {},
+      });
+
+      await service.analyzeDocument({
+        escrowId: ESCROW_ID,
+        fileId: FILE_ID,
+        clientId: CLIENT_ID,
+      });
+
+      expect(redisStub.expire.calledOnce).to.be.true;
+      expect(redisStub.expire.firstCall.args[1]).to.equal(60);
+    });
+
+    it('should allow request when Redis errors on rate limit check', async () => {
+      redisStub.incr.rejects(new Error('Redis connection lost'));
+
+      // Return cached to short-circuit
+      redisStub.get.resolves(JSON.stringify({
+        riskScore: 25,
+        extractedFields: {},
+        factors: [],
+        recommendation: 'APPROVE',
+        details: 'test',
+      }));
+
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        clientId: CLIENT_ID,
+        client: {},
+      });
+
+      // Should not throw - Redis failures are non-fatal for rate limiting
+      const result = await service.analyzeDocument({
+        escrowId: ESCROW_ID,
+        fileId: FILE_ID,
+        clientId: CLIENT_ID,
+      });
+
+      expect(result).to.have.property('riskScore');
+    });
   });
 
   // ─── getAnalysisResults ────────────────────────────────────
