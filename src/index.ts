@@ -28,6 +28,7 @@ import {
   aiAnalysisRoutes,
   institutionClientsRoutes,
   adminAuthRoutes,
+  institutionReceiptRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -518,6 +519,7 @@ if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
   app.use(aiAnalysisRoutes);
   app.use(institutionClientsRoutes);
   app.use(institutionEscrowAdminRoutes);
+  app.use(institutionReceiptRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled
