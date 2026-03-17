@@ -110,9 +110,11 @@ export class InstitutionFileService {
     // Sanitize filename
     const sanitizedFileName = sanitizeFileName(file.originalname);
 
-    // Generate S3 key
+    // Generate structured S3 key: institution/{clientId}/{YYYY-MM-DD}/{escrowId|general}/{timestamp}_{filename}
+    const date = new Date();
+    const dateFolder = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
     const folder = escrowId || 'general';
-    const key = `institution/${clientId}/${folder}/${Date.now()}_${sanitizedFileName}`;
+    const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${sanitizedFileName}`;
 
     // Upload to S3
     await this.s3Client.send(
