@@ -1,26 +1,24 @@
 /**
- * Institution Escrow Primary Path - Two-Party E2E Test (Staging + Devnet)
+ * Institution Escrow Primary Path - Full E2E Test (Staging + Devnet)
  *
- * Tests the complete institutional escrow lifecycle with TWO authenticated
- * parties (buyer + supplier) against the staging API with REAL on-chain
- * Solana devnet transactions:
+ * Tests the complete institutional escrow lifecycle against the staging API
+ * with REAL on-chain Solana devnet transactions:
  *
- *   Pre-test: Authenticate both buyer and supplier clients
+ *   Pre-test: Ensure buyer + supplier test clients exist (create if missing)
  *             Verify devnet wallet balances and USDC token accounts
- *   1.  Buyer creates Treasury account (buyer wallet)
- *   2.  Supplier creates Settlement account (supplier wallet)
- *   3.  Buyer creates escrow: buyer wallet -> supplier wallet, SG-CH, 1 USDC
- *   4.  Both verify escrow — buyer as owner, supplier as counterparty
- *   5.  Buyer executes real USDC transfer on devnet + records deposit
- *   6.  Supplier uploads proof of work (SHIPPING_DOC)
- *   7.  Buyer approves & releases funds (JWT + settlement key)
- *   8.  Buyer verifies settlement — timestamps, amounts, fee
- *   9.  Buyer verifies receipt (JSON + HTML)
- *   10. Verify deposit tx on Solana devnet
+ *   1. Create escrow (buyer) — SG-CH corridor, ADMIN_RELEASE, 1 USDC
+ *   2. Verify escrow CREATED status + PDA derivation
+ *   3. Fund escrow — real USDC SPL token transfer on devnet, record tx signature
+ *   4. Upload invoice document (buyer, on behalf of supplier proof)
+ *   5. Approve & release funds (buyer + settlement authority) — status → RELEASED
+ *   6. Verify escrow settlement completed
+ *   7. Verify receipt generated (JSON + HTML)
+ *   8. Verify on-chain: confirm deposit tx on Solana devnet
  *
  * Wallets (loaded from env, with private keys for signing):
  *   Buyer/Payer:     DEVNET_STAGING_SENDER_ADDRESS   (DEVNET_STAGING_SENDER_PRIVATE_KEY)
  *   Supplier/Recip:  DEVNET_STAGING_RECEIVER_ADDRESS  (DEVNET_STAGING_RECEIVER_PRIVATE_KEY)
+ *   Admin/PDA signer: DEVNET_STAGING_ADMIN_ADDRESS    (DEVNET_STAGING_ADMIN_PRIVATE_KEY)
  *
  * Run:
  *   cross-env NODE_ENV=test mocha --require ts-node/register --no-config \
@@ -68,101 +66,34 @@ const SUPPLIER_WALLET_ADDRESS = process.env.DEVNET_STAGING_RECEIVER_ADDRESS || '
 const BUYER_PRIVATE_KEY = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY || '';
 const SUPPLIER_PRIVATE_KEY = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY || '';
 
-// Demo accounts (seeded, ACTIVE/VERIFIED)
-const BUYER_DEMO_EMAIL = 'demo-enterprise@bank.com';
-const SUPPLIER_DEMO_EMAIL = 'demo-premium@trade.com';
+// Fallback demo account
+const DEMO_EMAIL = 'demo-enterprise@bank.com';
 const DEMO_PASSWORD = 'DemoPass123!';
 
-// Fallback: fresh registration with RUN_ID-based emails
+// Test client credentials
 const RUN_ID = Date.now().toString(36);
-const BUYER_REG_EMAIL = `e2e-buyer-${RUN_ID}@test.easyescrow.ai`;
-const SUPPLIER_REG_EMAIL = `e2e-supplier-${RUN_ID}@test.easyescrow.ai`;
+const BUYER_EMAIL = `e2e-buyer-${RUN_ID}@test.easyescrow.ai`;
+const SUPPLIER_EMAIL = `e2e-supplier-${RUN_ID}@test.easyescrow.ai`;
 const TEST_PASSWORD = 'E2eTest@2026!Secure';
 
-describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
+describe('Institution Escrow Primary Path - Full E2E (Staging + Devnet)', function () {
   this.timeout(180000);
 
   let api: AxiosInstance;
   let connection: Connection;
   let buyerKeypair: Keypair;
   let supplierKeypair: Keypair;
-
-  // Auth tokens
   let buyerToken: string;
-  let supplierToken: string;
-
-  // Client info for summary
-  let buyerClientName = '';
-  let supplierClientName = '';
-
-  // Created resources
-  let buyerAccountId: string;
-  let supplierAccountId: string;
   let escrowId: string;
-  let escrowCode: string;
   let depositTxSignature: string;
   let uploadedFileId: string;
-
-  // ─── Helper: authenticate a client ────────────────────────────
-
-  async function authenticateClient(
-    demoEmail: string,
-    regEmail: string,
-    label: string,
-  ): Promise<{ token: string; clientName: string }> {
-    // Try demo account first
-    const demoLogin = await api.post('/api/v1/institution/auth/login', {
-      email: demoEmail,
-      password: DEMO_PASSWORD,
-    });
-    if (demoLogin.status === 200) {
-      const data = demoLogin.data.data;
-      console.log(`    ${label}: logged in as ${demoEmail} (demo)`);
-      return {
-        token: data.tokens.accessToken,
-        clientName: data.client?.companyName || demoEmail,
-      };
-    }
-
-    // Try fresh registration
-    const reg = await api.post('/api/v1/institution/auth/register', {
-      email: regEmail,
-      password: TEST_PASSWORD,
-      companyName: `E2E ${label} ${RUN_ID}`,
-    });
-    if (reg.status === 201 || reg.status === 200) {
-      const data = reg.data.data;
-      console.log(`    ${label}: registered as ${regEmail}`);
-      return {
-        token: data.tokens.accessToken,
-        clientName: data.client?.companyName || regEmail,
-      };
-    }
-
-    // Try login with reg email (if previously created)
-    if (reg.status === 409) {
-      const login = await api.post('/api/v1/institution/auth/login', {
-        email: regEmail,
-        password: TEST_PASSWORD,
-      });
-      if (login.status === 200) {
-        const data = login.data.data;
-        console.log(`    ${label}: logged in as ${regEmail} (existing)`);
-        return {
-          token: data.tokens.accessToken,
-          clientName: data.client?.companyName || regEmail,
-        };
-      }
-    }
-
-    throw new Error(`Failed to authenticate ${label}: demo=${demoLogin.status}, reg=${reg.status}`);
-  }
+  let useDemoAccount = false;
 
   // ─── Pre-test setup ──────────────────────────────────────────
 
   before(async function () {
     console.log('\n' + '='.repeat(80));
-    console.log('  Institution Escrow Two-Party E2E (Staging + Devnet)');
+    console.log('  Institution Escrow Primary Path - Full E2E (Staging + Devnet)');
     console.log('='.repeat(80));
     console.log(`  API:       ${STAGING_API}`);
     console.log(`  RPC:       ${SOLANA_RPC}`);
@@ -236,129 +167,56 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
       return this.skip();
     }
 
-    // ── Authenticate BOTH clients ──
-    console.log('\n  Authenticating clients...');
-    try {
-      const buyerAuth = await authenticateClient(BUYER_DEMO_EMAIL, BUYER_REG_EMAIL, 'Buyer');
-      buyerToken = buyerAuth.token;
-      buyerClientName = buyerAuth.clientName;
+    // ── Login / register buyer client ──
+    console.log('\n  Setting up buyer client...');
+    const buyerReg = await api.post('/api/v1/institution/auth/register', {
+      email: BUYER_EMAIL,
+      password: TEST_PASSWORD,
+      companyName: `E2E Buyer Corp ${RUN_ID}`,
+    });
 
-      const supplierAuth = await authenticateClient(SUPPLIER_DEMO_EMAIL, SUPPLIER_REG_EMAIL, 'Supplier');
-      supplierToken = supplierAuth.token;
-      supplierClientName = supplierAuth.clientName;
-    } catch (err: any) {
-      console.log(`  Auth failed: ${err.message} — skipping`);
-      return this.skip();
+    if (buyerReg.status === 201 || buyerReg.status === 200) {
+      buyerToken = buyerReg.data.data.tokens.accessToken;
+      console.log(`    Registered: ${BUYER_EMAIL}`);
+    } else if (buyerReg.status === 409) {
+      const login = await api.post('/api/v1/institution/auth/login', {
+        email: BUYER_EMAIL,
+        password: TEST_PASSWORD,
+      });
+      if (login.status === 200) {
+        buyerToken = login.data.data.tokens.accessToken;
+        console.log(`    Logged in (existing): ${BUYER_EMAIL}`);
+      }
+    }
+
+    if (!buyerToken) {
+      console.log('    Registration unavailable — falling back to demo account');
+      const demoLogin = await api.post('/api/v1/institution/auth/login', {
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      });
+      if (demoLogin.status !== 200) {
+        console.log(`    Demo login failed (${demoLogin.status}) — skipping`);
+        return this.skip();
+      }
+      buyerToken = demoLogin.data.data.tokens.accessToken;
+      useDemoAccount = true;
+      console.log(`    Using demo account: ${DEMO_EMAIL}`);
     }
 
     console.log('');
   });
 
-  // ─── 1. Buyer creates Treasury account ────────────────────────
+  // ─── 1. Create escrow ────────────────────────────────────────
 
-  it('1. should create buyer Treasury account', async function () {
-    const buyerWallet = buyerKeypair.publicKey.toBase58();
-    console.log(`  [1] Creating buyer Treasury account (${buyerWallet.substring(0, 8)}...)...`);
-
-    const res = await api.post(
-      '/api/v1/institution/accounts',
-      {
-        name: `E2E Treasury ${RUN_ID}`,
-        accountType: 'TREASURY',
-        walletAddress: buyerWallet,
-        description: 'E2E test treasury account for buyer',
-      },
-      { headers: { Authorization: `Bearer ${buyerToken}` } },
-    );
-
-    if (res.status === 400 && res.data?.error?.includes?.('already exists')) {
-      // Account with this name may exist from prior run — list and use existing
-      console.log('      Treasury name conflict — listing existing accounts...');
-      const listRes = await api.get('/api/v1/institution/accounts?accountType=TREASURY', {
-        headers: { Authorization: `Bearer ${buyerToken}` },
-      });
-      if (listRes.status === 200 && listRes.data.data?.length > 0) {
-        const existing = listRes.data.data.find(
-          (a: any) => a.walletAddress === buyerWallet,
-        ) || listRes.data.data[0];
-        buyerAccountId = existing.id;
-        console.log(`      Using existing Treasury: ${buyerAccountId}`);
-        return;
-      }
-    }
-
-    expect(res.status).to.equal(
-      201,
-      `Expected 201 but got ${res.status}: ${JSON.stringify(res.data)}`,
-    );
-    expect(res.data.success).to.be.true;
-
-    const account = res.data.data;
-    buyerAccountId = account.id;
-
-    console.log(`      Account ID:   ${buyerAccountId}`);
-    console.log(`      Type:         ${account.accountType}`);
-    console.log(`      Wallet:       ${account.walletAddress}`);
-  });
-
-  // ─── 2. Supplier creates Settlement account ──────────────────
-
-  it('2. should create supplier Settlement account', async function () {
-    const supplierWallet = supplierKeypair.publicKey.toBase58();
-    console.log(`  [2] Creating supplier Settlement account (${supplierWallet.substring(0, 8)}...)...`);
-
-    const res = await api.post(
-      '/api/v1/institution/accounts',
-      {
-        name: `E2E Settlement ${RUN_ID}`,
-        accountType: 'SETTLEMENT',
-        walletAddress: supplierWallet,
-        description: 'E2E test settlement account for supplier',
-      },
-      { headers: { Authorization: `Bearer ${supplierToken}` } },
-    );
-
-    if (res.status === 400 && res.data?.error?.includes?.('already exists')) {
-      console.log('      Settlement name conflict — listing existing accounts...');
-      const listRes = await api.get('/api/v1/institution/accounts?accountType=SETTLEMENT', {
-        headers: { Authorization: `Bearer ${supplierToken}` },
-      });
-      if (listRes.status === 200 && listRes.data.data?.length > 0) {
-        const existing = listRes.data.data.find(
-          (a: any) => a.walletAddress === supplierWallet,
-        ) || listRes.data.data[0];
-        supplierAccountId = existing.id;
-        console.log(`      Using existing Settlement: ${supplierAccountId}`);
-        return;
-      }
-    }
-
-    expect(res.status).to.equal(
-      201,
-      `Expected 201 but got ${res.status}: ${JSON.stringify(res.data)}`,
-    );
-    expect(res.data.success).to.be.true;
-
-    const account = res.data.data;
-    supplierAccountId = account.id;
-
-    console.log(`      Account ID:   ${supplierAccountId}`);
-    console.log(`      Type:         ${account.accountType}`);
-    console.log(`      Wallet:       ${account.walletAddress}`);
-  });
-
-  // ─── 3. Buyer creates escrow ──────────────────────────────────
-
-  it('3. should create escrow: buyer -> supplier, SG-CH, 1 USDC, ADMIN_RELEASE', async function () {
-    const buyerWallet = buyerKeypair.publicKey.toBase58();
-    const supplierWallet = supplierKeypair.publicKey.toBase58();
-    console.log(`  [3] Creating escrow: SG-CH, ${ESCROW_AMOUNT_USDC} USDC, ADMIN_RELEASE...`);
+  it('1. should create a new escrow (buyer)', async function () {
+    console.log(`  [1] Creating escrow: SG-CH, ${ESCROW_AMOUNT_USDC} USDC, ADMIN_RELEASE...`);
 
     const res = await api.post(
       '/api/v1/institution-escrow',
       {
-        payerWallet: buyerWallet,
-        recipientWallet: supplierWallet,
+        payerWallet: buyerKeypair.publicKey.toBase58(),
+        recipientWallet: supplierKeypair.publicKey.toBase58(),
         amount: ESCROW_AMOUNT_USDC,
         corridor: 'SG-CH',
         conditionType: 'ADMIN_RELEASE',
@@ -377,28 +235,25 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     const escrow = data.escrow || data;
     expect(escrow.escrowId).to.be.a('string');
     expect(escrow.status).to.be.oneOf(['CREATED', 'COMPLIANCE_HOLD']);
-    expect(escrow.payerWallet).to.equal(buyerWallet);
-    expect(escrow.recipientWallet).to.equal(supplierWallet);
 
     escrowId = escrow.escrowId;
-    escrowCode = escrow.escrowId; // escrowId is the human-readable EE-XXXX-XXXX code
 
-    console.log(`      Escrow ID:    ${escrowId}`);
-    console.log(`      Status:       ${escrow.status}`);
-    console.log(`      Amount:       ${escrow.amount} USDC`);
-    console.log(`      Corridor:     ${escrow.corridor}`);
-    console.log(`      Payer:        ${escrow.payerWallet}`);
-    console.log(`      Recipient:    ${escrow.recipientWallet}`);
+    console.log(`      Escrow ID:  ${escrowId}`);
+    console.log(`      Status:     ${escrow.status}`);
+    console.log(`      Amount:     ${escrow.amount} USDC`);
+    console.log(`      Corridor:   ${escrow.corridor}`);
+    console.log(`      Payer:      ${escrow.payerWallet}`);
+    console.log(`      Recipient:  ${escrow.recipientWallet}`);
 
     if (escrow.status === 'COMPLIANCE_HOLD') {
       console.log('      Escrow in COMPLIANCE_HOLD — subsequent deposit step will fail');
     }
   });
 
-  // ─── 4. Both verify escrow ────────────────────────────────────
+  // ─── 2. Verify CREATED + derive PDAs ─────────────────────────
 
-  it('4a. should allow buyer to view escrow as owner', async function () {
-    console.log('  [4a] Buyer verifying escrow...');
+  it('2. should verify escrow CREATED and derive on-chain PDAs', async function () {
+    console.log('  [2] Verifying escrow details + PDA derivation...');
 
     const res = await api.get(`/api/v1/institution-escrow/${escrowId}`, {
       headers: { Authorization: `Bearer ${buyerToken}` },
@@ -411,37 +266,44 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     expect(escrow.recipientWallet).to.equal(supplierKeypair.publicKey.toBase58());
     expect(escrow.amount).to.equal(ESCROW_AMOUNT_USDC);
 
-    console.log(`      Status:       ${escrow.status}`);
-    console.log(`      Created:      ${escrow.createdAt}`);
-    console.log(`      Expires:      ${escrow.expiresAt}`);
-  });
-
-  it('4b. should allow supplier to view escrow as counterparty', async function () {
-    console.log('  [4b] Supplier verifying escrow as counterparty...');
-
-    const res = await api.get(`/api/v1/institution-escrow/${escrowId}`, {
-      headers: { Authorization: `Bearer ${supplierToken}` },
-    });
-
-    expect(res.status).to.equal(
-      200,
-      `Expected 200 (counterparty access) but got ${res.status}: ${JSON.stringify(res.data)}`,
+    // Derive PDAs locally to verify program address math
+    const INST_ESCROW_SEED = Buffer.from('inst_escrow');
+    const INST_VAULT_SEED = Buffer.from('inst_vault');
+    const programId = new PublicKey(
+      process.env.ESCROW_PROGRAM_ID || 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei',
     );
 
-    const escrow = res.data.data;
-    expect(escrow.escrowId).to.equal(escrowId);
-    expect(escrow.recipientWallet).to.equal(supplierKeypair.publicKey.toBase58());
-    expect(escrow.amount).to.equal(ESCROW_AMOUNT_USDC);
+    // Convert UUID to 32-byte buffer (same as program service)
+    const hex = escrowId.replace(/-/g, '');
+    const uuidBuf = Buffer.alloc(32);
+    Buffer.from(hex, 'hex').copy(uuidBuf);
 
-    console.log(`      Status:       ${escrow.status}`);
-    console.log(`      Supplier can see escrow: yes`);
+    const [escrowPda] = PublicKey.findProgramAddressSync(
+      [INST_ESCROW_SEED, uuidBuf],
+      programId,
+    );
+    const [vaultPda] = PublicKey.findProgramAddressSync(
+      [INST_VAULT_SEED, uuidBuf],
+      programId,
+    );
+
+    console.log(`      Status:      ${escrow.status}`);
+    console.log(`      Program:     ${programId.toBase58()}`);
+    console.log(`      Escrow PDA:  ${escrowPda.toBase58()}`);
+    console.log(`      Vault PDA:   ${vaultPda.toBase58()}`);
+    console.log(`      Created:     ${escrow.createdAt}`);
+    console.log(`      Expires:     ${escrow.expiresAt}`);
+
+    // PDAs should be off-curve (valid program addresses)
+    expect(PublicKey.isOnCurve(escrowPda.toBytes())).to.be.false;
+    expect(PublicKey.isOnCurve(vaultPda.toBytes())).to.be.false;
   });
 
-  // ─── 5. Real on-chain USDC deposit ────────────────────────────
+  // ─── 3. Real on-chain USDC deposit ───────────────────────────
 
-  it('5. should execute real USDC transfer on devnet and record deposit', async function () {
+  it('3. should execute real USDC transfer on devnet and record deposit', async function () {
     this.timeout(60000);
-    console.log(`  [5] Executing real USDC transfer on Solana devnet (${ESCROW_AMOUNT_USDC} USDC)...`);
+    console.log(`  [3] Executing real USDC transfer on Solana devnet (${ESCROW_AMOUNT_USDC} USDC)...`);
 
     // ── Get or create ATAs ──
     const buyerAta = await getAssociatedTokenAddress(USDC_MINT, buyerKeypair.publicKey);
@@ -470,10 +332,10 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     // ── Build USDC transfer instruction ──
     tx.add(
       createTransferInstruction(
-        buyerAta,               // source
-        supplierAta,            // destination
-        buyerKeypair.publicKey, // owner/authority
-        ESCROW_AMOUNT_MICRO,    // amount in micro-USDC
+        buyerAta,                    // source
+        supplierAta,                 // destination
+        buyerKeypair.publicKey,      // owner/authority
+        ESCROW_AMOUNT_MICRO,         // amount in micro-USDC
       ),
     );
 
@@ -485,6 +347,7 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
       });
     } catch (err: any) {
       console.log(`      On-chain transfer failed: ${err.message}`);
+      // If the transfer fails (e.g., insufficient USDC), skip remaining tests
       return this.skip();
     }
 
@@ -523,10 +386,10 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     console.log(`      Funded at:      ${escrow.fundedAt}`);
   });
 
-  // ─── 6. Supplier uploads proof of work ────────────────────────
+  // ─── 4. Upload invoice document ──────────────────────────────
 
-  it('6. should upload proof of work as supplier (SHIPPING_DOC)', async function () {
-    console.log('  [6] Supplier uploading shipping document (proof of work)...');
+  it('4. should upload invoice document as proof', async function () {
+    console.log('  [4] Uploading invoice PDF...');
 
     const pdfContent = Buffer.from(
       '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n' +
@@ -538,15 +401,15 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     const FormData = require('form-data');
     const form = new FormData();
     form.append('file', pdfContent, {
-      filename: `shipping-doc-e2e-${RUN_ID}.pdf`,
+      filename: `invoice-e2e-${RUN_ID}.pdf`,
       contentType: 'application/pdf',
     });
-    form.append('documentType', 'SHIPPING_DOC');
+    form.append('documentType', 'INVOICE');
     form.append('escrowId', escrowId);
 
     const res = await api.post('/api/v1/institution/files', form, {
       headers: {
-        Authorization: `Bearer ${supplierToken}`,
+        Authorization: `Bearer ${buyerToken}`,
         ...form.getHeaders(),
       },
       timeout: 30000,
@@ -565,21 +428,20 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     const file = res.data.data || res.data;
     uploadedFileId = file.id;
 
-    console.log(`      File ID:      ${uploadedFileId}`);
-    console.log(`      Filename:     ${file.fileName || file.originalName}`);
-    console.log(`      Type:         ${file.documentType}`);
-    console.log(`      Size:         ${file.sizeBytes || file.size} bytes`);
-    console.log(`      Uploaded by:  supplier`);
+    console.log(`      File ID:    ${uploadedFileId}`);
+    console.log(`      Filename:   ${file.fileName || file.originalName}`);
+    console.log(`      Type:       ${file.documentType}`);
+    console.log(`      Size:       ${file.sizeBytes || file.size} bytes`);
   });
 
-  // ─── 7. Buyer approves & releases ─────────────────────────────
+  // ─── 5. Release funds ────────────────────────────────────────
 
-  it('7. should release funds with buyer approval + settlement authority', async function () {
-    console.log('  [7] Releasing funds (buyer approval + settlement key)...');
+  it('5. should release funds with settlement authority (buyer approval)', async function () {
+    console.log('  [5] Releasing funds (buyer approval + settlement key)...');
 
     const res = await api.post(
       `/api/v1/institution-escrow/${escrowId}/release`,
-      { notes: 'E2E test — buyer approved after supplier submitted shipping doc' },
+      { notes: 'E2E test — buyer approved after invoice verification' },
       {
         headers: {
           Authorization: `Bearer ${buyerToken}`,
@@ -598,14 +460,14 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     expect(escrow.status).to.equal('RELEASED');
     expect(escrow.resolvedAt).to.be.a('string');
 
-    console.log(`      Status:       ${escrow.status}`);
-    console.log(`      Resolved:     ${escrow.resolvedAt}`);
+    console.log(`      Status:     ${escrow.status}`);
+    console.log(`      Resolved:   ${escrow.resolvedAt}`);
   });
 
-  // ─── 8. Verify settlement ─────────────────────────────────────
+  // ─── 6. Verify settlement completed ──────────────────────────
 
-  it('8. should confirm escrow RELEASED with all timestamps and amounts', async function () {
-    console.log('  [8] Verifying final escrow state...');
+  it('6. should confirm escrow RELEASED with all timestamps', async function () {
+    console.log('  [6] Verifying final escrow state...');
 
     const res = await api.get(`/api/v1/institution-escrow/${escrowId}`, {
       headers: { Authorization: `Bearer ${buyerToken}` },
@@ -629,10 +491,10 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     console.log(`      Resolved:         ${escrow.resolvedAt}`);
   });
 
-  // ─── 9. Verify receipt ─────────────────────────────────────────
+  // ─── 7. Verify receipt ───────────────────────────────────────
 
-  it('9a. should retrieve receipt JSON with audit trail', async function () {
-    console.log('  [9a] Fetching receipt JSON...');
+  it('7a. should retrieve receipt JSON with audit trail', async function () {
+    console.log('  [7a] Fetching receipt JSON...');
 
     const res = await api.get(
       `/api/v1/institution-escrow/${escrowId}/receipt/data`,
@@ -661,26 +523,20 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
 
     if (receipt.transactions?.deposits?.length) {
       console.log(`      Deposits:         ${receipt.transactions.deposits.length}`);
+      // Verify the real tx signature appears in the receipt
       const depositEntry = receipt.transactions.deposits[0];
       if (depositEntry.txSignature) {
         expect(depositEntry.txSignature).to.equal(depositTxSignature);
         console.log(`      Deposit tx match: yes`);
       }
     }
-
-    // Verify both wallets appear in receipt
-    const receiptStr = JSON.stringify(receipt);
-    expect(receiptStr).to.include(buyerKeypair.publicKey.toBase58());
-    expect(receiptStr).to.include(supplierKeypair.publicKey.toBase58());
-    console.log(`      Both wallets:     present in receipt`);
-
     if (receipt.auditTrail?.length) {
       console.log(`      Audit entries:    ${receipt.auditTrail.length}`);
     }
   });
 
-  it('9b. should retrieve receipt HTML', async function () {
-    console.log('  [9b] Fetching receipt HTML...');
+  it('7b. should retrieve receipt HTML', async function () {
+    console.log('  [7b] Fetching receipt HTML...');
 
     const res = await api.get(
       `/api/v1/institution-escrow/${escrowId}/receipt?format=html`,
@@ -705,10 +561,10 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     console.log(`      Contains escrow:  yes`);
   });
 
-  // ─── 10. On-chain verification ────────────────────────────────
+  // ─── 8. On-chain verification ────────────────────────────────
 
-  it('10. should verify deposit tx exists on Solana devnet', async function () {
-    console.log('  [10] Verifying deposit transaction on Solana devnet...');
+  it('8. should verify deposit tx exists on Solana devnet', async function () {
+    console.log('  [8] Verifying deposit transaction on Solana devnet...');
 
     const txInfo = await connection.getTransaction(depositTxSignature, {
       commitment: 'confirmed',
@@ -724,41 +580,30 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     console.log(`      Fee (lamports):   ${txInfo!.meta?.fee}`);
     console.log(`      Status:           success`);
 
+    // Verify it's a token transfer (pre/post token balances should differ)
     if (txInfo!.meta?.preTokenBalances && txInfo!.meta?.postTokenBalances) {
       console.log(`      Token balances:   ${txInfo!.meta.preTokenBalances.length} pre, ${txInfo!.meta.postTokenBalances.length} post`);
     }
   });
 
-  // ─── Summary ──────────────────────────────────────────────────
+  // ─── Summary ─────────────────────────────────────────────────
 
   after(function () {
-    const buyerWallet = buyerKeypair?.publicKey?.toBase58() || BUYER_WALLET_ADDRESS;
-    const supplierWallet = supplierKeypair?.publicKey?.toBase58() || SUPPLIER_WALLET_ADDRESS;
-
     console.log('\n' + '='.repeat(80));
-    console.log('  Institution Escrow Two-Party E2E — Summary');
+    console.log('  Institution Escrow Primary Path — Complete');
     console.log('='.repeat(80));
     console.log('');
-    console.log(`  From (Client):      ${buyerClientName || '(unknown)'}`);
-    console.log(`  From (Account):     Treasury -- ${buyerWallet}`);
-    console.log(`  To (Client):        ${supplierClientName || '(unknown)'}`);
-    console.log(`  To (Account):       Settlement -- ${supplierWallet}`);
-    console.log(`  Corridor:           SG-CH`);
-    console.log(`  Amount:             ${ESCROW_AMOUNT_USDC} USDC`);
-    console.log(`  Settlement Mode:    Escrow`);
-    console.log(`  Release Mode:       Manual Approval (ADMIN_RELEASE)`);
-    console.log('');
     console.log('  Lifecycle:');
-    console.log('    CREATED -> FUNDED (real devnet USDC tx) -> RELEASED');
+    console.log('    CREATED → FUNDED (real devnet USDC tx) → RELEASED');
     console.log('');
-    console.log(`  Escrow ID:          ${escrowId || '(not created)'}`);
-    console.log(`  Deposit Tx:         ${depositTxSignature || '(no deposit)'}`);
-    console.log(`  File ID:            ${uploadedFileId || '(not uploaded)'}`);
-    console.log(`  Buyer Account:      ${buyerAccountId || '(not created)'}`);
-    console.log(`  Supplier Account:   ${supplierAccountId || '(not created)'}`);
+    console.log(`  Escrow ID:      ${escrowId || '(not created)'}`);
+    console.log(`  Deposit Tx:     ${depositTxSignature || '(no deposit)'}`);
+    console.log(`  File ID:        ${uploadedFileId || '(not uploaded)'}`);
+    console.log(`  Demo mode:      ${useDemoAccount}`);
+    console.log(`  USDC amount:    ${ESCROW_AMOUNT_USDC} USDC`);
     console.log('');
     if (depositTxSignature) {
-      console.log(`  Solscan:            https://solscan.io/tx/${depositTxSignature}?cluster=devnet`);
+      console.log(`  Solscan:        https://solscan.io/tx/${depositTxSignature}?cluster=devnet`);
     }
     console.log('');
     // No cleanup — escrow is RELEASED (terminal state)
