@@ -1,12 +1,8 @@
 /**
  * AI Analysis Routes
  *
- * POST   /api/v1/ai/analyze-escrow-doc/:escrow_id    → analyzeDocument (primary)
- * GET    /api/v1/ai/escrow-doc-analysis/:escrow_id   → getAnalysisResults (primary)
- *
- * Legacy aliases (backward compatibility):
- * POST   /api/v1/ai/analyze/:escrow_id               → analyzeDocument
- * GET    /api/v1/ai/analysis/:escrow_id              → getAnalysisResults
+ * POST   /api/v1/ai/analyze-escrow-doc/:escrow_id    → analyzeDocument
+ * GET    /api/v1/ai/escrow-doc-analysis/:escrow_id   → getAnalysisResults
  */
 
 import { Router, Response } from 'express';
@@ -126,23 +122,6 @@ router.post(
 
 router.get(
   '/api/v1/ai/escrow-doc-analysis/:escrow_id',
-  standardRateLimiter,
-  requireInstitutionAuth,
-  validateEscrowIdParam,
-  handleGetAnalysis,
-);
-
-// Legacy aliases (backward compatibility)
-router.post(
-  '/api/v1/ai/analyze/:escrow_id',
-  strictRateLimiter,
-  requireInstitutionAuth,
-  validateAiAnalysis,
-  handleAnalyzeDocument,
-);
-
-router.get(
-  '/api/v1/ai/analysis/:escrow_id',
   standardRateLimiter,
   requireInstitutionAuth,
   validateEscrowIdParam,

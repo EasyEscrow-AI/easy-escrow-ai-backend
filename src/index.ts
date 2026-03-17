@@ -329,7 +329,7 @@ if (openApiDocument) {
     /* Any remaining white backgrounds in the middle panel */
     .redoc-wrap div[class] { background-color: inherit; }
     .redoc-wrap [class*="panel"] { background: #0f172a !important; }
-    .redoc-wrap [class*="content"] { background: transparent !important; }
+    .redoc-wrap [class*="content"]:not([class*="search"]):not([class*="Search"]) { background: transparent !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
     /* Search (relocated to topbar via JS) */
