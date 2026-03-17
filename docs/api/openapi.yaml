@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: EasyEscrow.ai API
-  version: 1.1.0
+  version: 1.0.0
   contact:
     name: EasyEscrow.ai Support
     email: support@easyescrow.ai
@@ -21,15 +21,14 @@ tags:
 
       EasyEscrow.ai currently supports:
 
-      ## Atomic Swaps
+      ### 1) Atomic Swaps
       Instant, non-custodial digital swaps that execute in a single transaction.
 
       **Features:**
       - Peer-to-peer settlement. Your assets are NEVER held in escrow (only leaves wallet upon instant settlement).
       - Swap happens all atomically or not at all (no partial settlement, no MEV attacks, no stuck assets).
-      - Supported assets: SPL NFT (Metaplex standard), Core NFT (Metaplex Core), cNFT (Metaplex Bubblegum), SOL (Solana native token).
 
-      ## Institutional Escrow
+      ### 2) Institution Escrow
       Programmable cross-border stablecoin escrow payments, built for institutions compliance and auditability.
 
       **Features:**
@@ -46,97 +45,40 @@ tags:
       - Escrow document uploads to secure server.
       - Supports KYC/KYB compliance integrations for clients (not activated for hackathon).
       - Supports AMINA Payment Network (APN) integrations (not activated for hackathon).
-  - name: Changelog
+
+      EasyEscrow.ai Support: support@easyescrow.ai
+  - name: Supported Swap Types
+    x-displayName: Swap Types
     description: |
-      ## Changelog
-
-      ### v1.1.0 — Institutional Escrow
-      **Released: 17 March 2026**
-
-      Cross-border stablecoin escrow payments for institutional clients.
-
-      - **AMINA-approved token whitelist** — USDC, USDT, EURC, PYUSD (active); RLUSD, USDG (pending)
-      - Public token list endpoint: `GET /api/v1/institution/tokens`
-      - Escrow creation accepts optional `tokenMint` (defaults to USDC)
-      - Institution client authentication (JWT) with registration, login, and token refresh
-      - Stablecoin escrow lifecycle: create, deposit, release, and cancel
-      - AI-powered document analysis for compliance risk scoring
-      - Wallet whitelists and jurisdiction payment corridors
-      - File uploads for escrow supporting documents (PDF, images, Excel, CSV)
-      - KYB profile management and client search/discovery
-      - API key management for programmatic access
-      - Admin endpoints for allowlist and corridor configuration
-      - Settlement authority pattern for release operations
-      - AI data anonymisation (PII redaction before model processing)
-
-      ### v1.0.0 — Atomic Swaps
-      **Released: 15 October 2025**
-
-      Non-custodial peer-to-peer NFT and SOL atomic swaps on Solana.
-
-      - NFT ↔ SOL, NFT ↔ NFT, and NFT + SOL ↔ NFT swap types
-      - Support for SPL NFTs, Core NFTs, Compressed NFTs (cNFTs), and Programmable NFTs (pNFTs)
-      - Jito bundle swaps for multi-NFT transactions (up to 4 NFTs)
-      - TwoPhase fallback for bundle failures
-      - Compressed NFT support with Merkle proof handling via DAS API
-      - Dynamic platform fee calculation (1% SOL swaps, 0.005 SOL flat for NFT-only)
-      - Offer lifecycle management (create, accept, cancel, counter, expire)
-      - Durable nonce pool for reliable transaction submission
-      - Health monitoring and service status endpoints
-  - name: Atomic Swaps Overview
-    description: |
-      ## Non-Custodial Atomic Swaps
-
-      EasyEscrow.ai atomic swaps are instant, non-custodial digital exchanges that execute in a single transaction on Solana.
-
-      ### Key Features
-      - **Peer-to-peer settlement** — your assets are NEVER held in escrow (only leave wallet upon instant settlement)
-      - **Atomic execution** — swap happens all at once or not at all (no partial settlement, no MEV attacks, no stuck assets)
-      - **Multiple asset types** — SPL NFTs, Core NFTs, cNFTs, and SOL
-      - **Bundle swaps** — up to 4 NFTs per swap via Jito bundles
-
-      ### How It Works
-      1. **Create** an offer specifying maker/taker assets
-      2. **Share** the offer with the counterparty
-      3. **Accept** — both sides sign and the swap settles atomically on-chain
-      4. If either side fails, the entire transaction reverts — no assets are lost
-
-      ---
-
-      ### Swap Types
-
       EasyEscrow.ai currently supports **three types of escrow swaps** on the **Solana blockchain**:
 
-      #### 1. NFT ↔ SOL
+      ### 1. NFT ↔ SOL
       Direct exchange of an NFT for SOL payment.
       - **Seller provides:** NFT (Traditional NFT)
       - **Buyer provides:** SOL
       - **Platform fee:** 1% (100 basis points) - deducted from seller's proceeds
       - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
 
-      #### 2. NFT ↔ NFT (with SOL fee)
+      ### 2. NFT ↔ NFT (with SOL fee)
       Exchange of two NFTs with a flat SOL platform fee.
       - **Seller provides:** NFT A (Traditional NFT)
       - **Buyer provides:** NFT B (Traditional NFT) + 0.005 SOL platform fee
       - **Platform fee:** 0.005 SOL flat fee (paid by taker/buyer by default)
 
-      #### 3. NFT + SOL ↔ NFT
+      ### 3. NFT + SOL ↔ NFT
       Exchange of an NFT plus SOL payment for another NFT.
       - **Seller provides:** NFT A (Traditional NFT) + SOL
       - **Buyer provides:** NFT B (Traditional NFT)
       - **Platform fee:** 1% (100 basis points) - deducted from SOL amount
-
-      ---
-
-      ### Blockchain Support
-
+  - name: Blockchain Support
+    description: |
       - ✅ **Solana blockchain** (Devnet, Mainnet)
       - ✅ **Traditional NFTs** (Metaplex standard)
       - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
       - ✅ **Metaplex Core NFTs**
       - ✅ **Programmable NFTs (pNFTs)**
 
-      #### NFT Types Reference
+      ### NFT Types Reference
 
       | Type | Full Name | Description | Status |
       |------|-----------|-------------|--------|
@@ -144,32 +86,26 @@ tags:
       | **CORE** | Metaplex CORE | Metaplex Core standard NFTs with improved functionality | ✅ Supported |
       | **pNFT** | Programmable NFT | Metaplex programmable NFTs with on-chain royalty enforcement | ✅ Supported |
       | **OTHER** | Other NFTs | Standard SPL NFTs, Semi-Fungible Tokens (SFT), and legacy formats | ✅ Supported |
-
-      ---
-
-      ### Bundle Swaps
-
+  - name: Bundle Swaps
+    description: |
       Bundle swaps of up to **4 NFTs total** (across both sides) are supported via Jito bundles.
 
       This limit exists because Jito bundles support a maximum of 5 transactions (1 for SOL/fee transfers + up to 4 for NFT transfers).
 
-      #### cNFT-Specific Features
+      ### cNFT-Specific Features
       - **Direct Bubblegum transfers** - cNFTs transfer directly without escrow custody
       - **Merkle proof handling** - Automatic proof fetching from DAS API
       - **Full canopy tree support** - Eliminates stale proof issues
       - **Rate-limited DAS API** - Built-in rate limiting, batching, and caching
-
-      ---
-
-      ### Fees & Limits
-
-      #### Platform Fees
+  - name: Fees & Limits
+    description: |
+      ### Platform Fees
       - **NFT-only swaps**: 0.005 SOL flat fee (paid by taker)
       - **Swaps with SOL**: 1% of total SOL amount (paid by taker)
       - **Minimum fee**: 0.001 SOL
       - **Maximum fee**: 0.5 SOL (fee cap)
 
-      #### Limits
+      ### Limits
       - **Min SOL**: 0.1 SOL minimum
       - **Max SOL**: 15 SOL maximum (up to $5,000 AUD limit)
       - **Max NFTs**: 4 NFTs total per swap (Jito bundle limit)
@@ -182,89 +118,22 @@ tags:
     description: |
       ## Cross-Border Institutional Escrow
 
-      The Institution Escrow system enables **cross-border stablecoin payments on Solana** for
-      institutional clients. Supports AMINA-approved stablecoins including USDC, USDT, EURC, and PYUSD.
+      The Institution Escrow system enables **cross-border stablecoin (USDC) payments on Solana** for
+      institutional clients.
 
       ### Key Features
-      - **Multi-token support** — AMINA-approved stablecoins (USDC default, plus USDT, EURC, PYUSD)
       - **Authenticated accounts** via email + password with JWT tokens
       - **Compliance checks** with allowlists and corridor-based limits
       - **AI-powered document analysis** for risk assessment
-      - **Multi-step escrow lifecycle** with 9 distinct states
+      - **Multi-step escrow lifecycle**: create → deposit → release/cancel
 
       ### How It Works
       1. **Register** an institution client account
       2. **Configure** wallets and API keys via settings
-      3. **List approved tokens** via `/api/v1/institution/tokens`
-      4. **Create** an escrow with payer/recipient wallets, amount, corridor, and optional `tokenMint`
-      5. **Deposit** stablecoins on-chain and record the transaction signature
-      6. **Release** funds (requires settlement authority) or **cancel** the escrow
-      7. Optionally **analyze** uploaded documents with AI for risk scoring
-
-      ### Escrow States
-
-      Every escrow progresses through a defined set of states. Terminal states (`RELEASED`, `CANCELLED`, `EXPIRED`, `FAILED`) cannot transition further.
-
-      | State | Description |
-      |-------|-------------|
-      | `CREATED` | Escrow created, awaiting stablecoin deposit |
-      | `FUNDED` | Deposit confirmed on-chain, awaiting release or cancellation |
-      | `COMPLIANCE_HOLD` | Held for compliance review (medium risk score) |
-      | `RELEASING` | Release transaction in progress |
-      | `RELEASED` | Funds successfully released to recipient (terminal) |
-      | `CANCELLING` | Cancellation in progress |
-      | `CANCELLED` | Escrow cancelled, funds refunded to payer (terminal) |
-      | `EXPIRED` | Escrow expired without completion (terminal) |
-      | `FAILED` | Escrow failed due to an error (terminal) |
-
-      ### State Flow
-
-      ```
-                      ┌──────────────────────┐
-                      │    Create Escrow      │
-                      │  (compliance check)   │
-                      └──────────┬───────────┘
-                                 │
-                  ┌──────────────┼──────────────┐
-                  │              │              │
-                  ▼              ▼              ▼
-           ┌──────────┐  ┌───────────┐  (high risk)
-           │ CREATED  │  │COMPLIANCE │   → rejected
-           │          │  │   _HOLD   │
-           └────┬─────┘  └─────┬─────┘
-                │              │
-         deposit│        cancel│
-                ▼              ▼
-           ┌──────────┐  ┌───────────┐
-           │  FUNDED  │  │CANCELLING │──▶ CANCELLED
-           └────┬─────┘  └───────────┘
-                │
-         ┌──────┼──────┐
-         │      │      │
-      release cancel  expire
-         │      │      │
-         ▼      ▼      ▼
-      RELEASING CANCELLING EXPIRED
-         │      │
-         ▼      ▼
-      RELEASED CANCELLED
-      ```
-
-      ### State Transitions
-
-      | From | Action | To | Notes |
-      |------|--------|----|-------|
-      | — | Create (compliance passed) | `CREATED` | Ready for deposit |
-      | — | Create (medium risk) | `COMPLIANCE_HOLD` | Requires review before proceeding |
-      | — | Create (high risk ≥75) | Rejected | Error thrown, no escrow created |
-      | `CREATED` | Record deposit | `FUNDED` | On-chain tx signature stored |
-      | `CREATED` | Cancel | `CANCELLING` → `CANCELLED` | No deposit to refund |
-      | `CREATED` | Auto-expire | `EXPIRED` | `expiresAt` exceeded (default 72h) |
-      | `FUNDED` | Release funds | `RELEASING` → `RELEASED` | Requires settlement authority |
-      | `FUNDED` | Cancel | `CANCELLING` → `CANCELLED` | On-chain refund to payer |
-      | `FUNDED` | Auto-expire | `EXPIRED` | `expiresAt` exceeded |
-      | `COMPLIANCE_HOLD` | Cancel | `CANCELLING` → `CANCELLED` | No deposit to refund |
-      | `COMPLIANCE_HOLD` | Auto-expire | `EXPIRED` | `expiresAt` exceeded |
+      3. **Create** an escrow with payer/recipient wallets, amount, and corridor
+      4. **Deposit** USDC on-chain and record the transaction signature
+      5. **Release** funds (requires settlement authority) or **cancel** the escrow
+      6. Optionally **analyze** uploaded documents with AI for risk scoring
 
       ### Feature Gate
       This feature is gated by the `INSTITUTION_ESCROW_ENABLED` environment variable.
@@ -277,59 +146,10 @@ tags:
     description: Client profile lookup, search, list, and archive
   - name: Institution Files
     description: Document uploads for compliance (PDF, images, Excel, CSV)
-  - name: Institution Tokens
-    description: AMINA-approved stablecoin whitelist (public endpoint, no auth required)
   - name: Institution Escrow
-    description: Cross-border stablecoin escrow payment lifecycle
+    description: Cross-border USDC escrow payment lifecycle
   - name: AI Analysis
-    description: |
-      ## EasyEscrow AI
-
-      AI-powered analysis helpers for the institutional escrow portal, using Claude (claude-sonnet-4-20250514).
-
-      ### Analysis Types
-      - **Escrow Analysis** — full AI review of escrow details (amounts, corridor, wallets, risk, client context)
-      - **Document Analysis** — single file/document matched against an existing escrow (names, addresses, amounts)
-      - **Client Analysis** — AI review of institution client profile & compliance posture
-
-      ### Data Anonymization
-      All analysis endpoints support `?anonymize=true` (default) which tokenizes sensitive data
-      (company names, wallet addresses, PII) before sending to the AI model, then de-anonymizes
-      the response. Use `?anonymize=false` to send raw data (for testing/internal use).
-  - name: Institution Accounts
-    description: |
-      ## Institutional Accounts
-
-      Manage Solana wallet accounts linked to your institution for escrow operations.
-
-      ### Account Types
-      - **TREASURY** — Primary treasury wallet for institutional funds
-      - **OPERATIONS** — Day-to-day operations wallet
-      - **SETTLEMENT** — Dedicated wallet for escrow settlements
-      - **COLLATERAL** — Collateral/reserve wallet
-      - **GENERAL** — General-purpose wallet
-
-      ### Verification
-      Accounts go through verification: `PENDING` → `VERIFIED` / `SUSPENDED` / `REJECTED`.
-      Only verified accounts can be used for escrow operations.
-
-      Each institution can set one account as the **default** for new escrow creation.
-  - name: AI Chat
-    description: |
-      ## EasyEscrow AI Assistant
-
-      Conversational AI assistant for institutional escrow users, powered by Claude.
-
-      ### Features
-      - Natural language questions about escrow operations, compliance, and platform usage
-      - Context-aware responses based on the authenticated client's institution
-      - PII anonymization pipeline — sensitive data is tokenized before reaching the AI model
-      - Conversation history support for multi-turn interactions
-
-      ### Data Privacy
-      All messages pass through an anonymization pipeline that redacts PII (names, addresses,
-      wallet keys, amounts) before sending to the AI model. Responses are then de-anonymized
-      before returning to the client.
+    description: AI-powered escrow document risk analysis (renamed routes)
   - name: Institution Admin
     description: Admin operations for allowlist and corridor management
 
@@ -337,13 +157,15 @@ x-tagGroups:
   - name: Documentation
     tags:
       - Introduction
-      - Changelog
+  - name: Atomic Swaps
+    tags:
+      - Supported Swap Types
+      - Blockchain Support
+      - Bundle Swaps
+      - Fees & Limits
   - name: API Reference
     tags:
       - Health
-  - name: Atomic Swaps
-    tags:
-      - Atomic Swaps Overview
       - Atomic Swaps
   - name: Institution Escrow
     tags:
@@ -351,15 +173,9 @@ x-tagGroups:
       - Institution Auth
       - Institution Settings
       - Institution Clients
-      - Institution Accounts
-      - Institution Tokens
       - Institution Files
       - Institution Escrow
-      - Institution Accounts
-      - Institution Tokens
-      - Institution Receipts
       - AI Analysis
-      - AI Chat
       - Institution Admin
 
 paths:
@@ -1377,6 +1193,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/auth/me:
     get:
@@ -1404,6 +1224,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1453,6 +1277,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Institution Settings ───────────────────────────────────────────────
 
@@ -1482,6 +1310,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1528,6 +1360,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution/settings/wallets:
     put:
@@ -1567,6 +1403,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1620,6 +1460,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     get:
       tags:
         - Institution Settings
@@ -1647,6 +1491,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1695,78 +1543,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
-  # ── Institution Tokens (AMINA Whitelist) ──────────────────────────────
-
-  /api/v1/institution/tokens:
-    get:
-      tags:
-        - Institution Tokens
-      summary: List approved tokens
-      description: |
-        Returns all active AMINA-approved stablecoins available for institution escrow.
-        This is a **public endpoint** — no authentication required.
-
-        Use this to populate the token selector dropdown in the portal UI.
-        Each token includes its Solana SPL mint address, issuer, jurisdiction, and AMINA approval status.
-      responses:
-        '200':
-          description: Approved token list
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ApprovedToken'
-                  timestamp:
-                    type: string
-                    format: date-time
-              example:
-                success: true
-                data:
-                  - symbol: USDC
-                    name: USD Coin
-                    mintAddress: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-                    decimals: 6
-                    issuer: Circle
-                    jurisdiction: US
-                    chain: solana
-                    isDefault: true
-                    aminaApproved: true
-                  - symbol: USDT
-                    name: Tether USD
-                    mintAddress: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB
-                    decimals: 6
-                    issuer: Tether
-                    jurisdiction: BVI
-                    chain: solana
-                    isDefault: false
-                    aminaApproved: true
-                  - symbol: EURC
-                    name: Euro Coin
-                    mintAddress: HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr
-                    decimals: 6
-                    issuer: Circle
-                    jurisdiction: EU
-                    chain: solana
-                    isDefault: false
-                    aminaApproved: true
-                  - symbol: PYUSD
-                    name: PayPal USD
-                    mintAddress: 2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo
-                    decimals: 6
-                    issuer: Paxos (PayPal)
-                    jurisdiction: US
-                    chain: solana
-                    isDefault: false
-                    aminaApproved: true
-                timestamp: "2026-03-17T10:00:00.000Z"
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Institution Files ──────────────────────────────────────────────────
 
@@ -1828,6 +1608,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '415':
           description: Unsupported file type
           content:
@@ -1868,6 +1652,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -1913,6 +1701,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
@@ -1949,6 +1741,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -2011,6 +1807,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Compliance check failed
           content:
@@ -2031,7 +1831,7 @@ paths:
           name: status
           schema:
             type: string
-            enum: [DRAFT, CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, INSUFFICIENT_FUNDS, COMPLETE, CANCELLING, CANCELLED, EXPIRED, FAILED]
+            enum: [CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, CANCELLING, CANCELLED, EXPIRED, FAILED]
           description: Filter by escrow status
         - in: query
           name: corridor
@@ -2087,181 +1887,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  /api/v1/institution-escrow/draft:
-    post:
-      tags:
-        - Institution Escrow
-      summary: Save escrow as draft
-      description: |
-        Save an escrow as a draft with partial information. Only `payerWallet` is required;
-        all other fields can be filled in later via the update draft endpoint.
-
-        Drafts are created in `DRAFT` status. No compliance checks, nonce assignment, or
-        expiry timers are set. The draft can be updated multiple times before submission.
-
-        Use `POST /api/v1/institution-escrow/{id}/submit` to validate and submit the draft.
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InstitutionEscrowDraftRequest'
-            example:
-              payerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-              amount: 50000
-              corridor: "SG-CH"
-      responses:
-        '201':
-          description: Draft saved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionEscrowDetail'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-
-  /api/v1/institution-escrow/{id}/draft:
-    put:
-      tags:
-        - Institution Escrow
-      summary: Update draft
-      description: |
-        Update fields on a `DRAFT` escrow. Only escrows in `DRAFT` status can be updated.
-        All fields are optional — only provided fields will be changed.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Escrow ID (UUID)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InstitutionEscrowDraftUpdateRequest'
-            example:
-              recipientWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
-              amount: 75000
-              conditionType: "ADMIN_RELEASE"
-      responses:
-        '200':
-          description: Draft updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionEscrowDetail'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/institution-escrow/{id}/submit:
-    post:
-      tags:
-        - Institution Escrow
-      summary: Submit draft
-      description: |
-        Submit a `DRAFT` escrow for processing. Validates that all required fields are present
-        (`recipientWallet`, `amount > 0`, `corridor`, `conditionType`), runs compliance checks,
-        assigns a durable nonce, and transitions the escrow to `CREATED` (or `COMPLIANCE_HOLD`).
-
-        After submission, the escrow follows the normal lifecycle: deposit → release → complete.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Escrow ID (UUID)
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                expiryHours:
-                  type: integer
-                  minimum: 1
-                  maximum: 2160
-                  description: Escrow expiry in hours (default 72)
-                  example: 72
-      responses:
-        '200':
-          description: Draft submitted and escrow created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionEscrowDetail'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          description: Missing required fields or invalid data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: Compliance check failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution-escrow/{id}:
     get:
@@ -2297,6 +1928,10 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -2367,6 +2002,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '410':
           description: Escrow has expired
           content:
@@ -2432,6 +2071,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Missing or invalid settlement authority key
           content:
@@ -2492,6 +2135,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
           content:
             application/json:
               schema:
@@ -2835,117 +2482,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # ── AI Analysis — Escrow Analysis ───────────────────────────────────
-
-  /api/v1/ai/analyze-escrow/{escrow_id}:
-    post:
-      tags:
-        - AI Analysis
-      summary: Analyze escrow
-      description: |
-        Run a full AI analysis on an escrow's details including amounts, corridor risk,
-        client tier, KYC/KYB status, deposit status, and supporting documents.
-
-        Returns a risk score, recommendation, and human-readable summary.
-
-        **Data Anonymization**: Sensitive fields (company names, wallet addresses) are
-        tokenized before sending to AI and de-anonymized in the response by default.
-
-        **Rate Limited**: 10 requests per minute.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: escrow_id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Escrow ID to analyze
-        - in: query
-          name: anonymize
-          required: false
-          schema:
-            type: boolean
-            default: true
-          description: Tokenize sensitive data before AI analysis (default true)
-      responses:
-        '200':
-          description: Escrow analysis completed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/AiAnalysisResultWithSummary'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-        '503':
-          description: AI analysis service not configured (ANTHROPIC_API_KEY missing)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/ai/escrow-analysis/{escrow_id}:
-    get:
-      tags:
-        - AI Analysis
-      summary: Get escrow analysis results
-      description: Retrieve all stored AI escrow-level analysis results for a specific escrow.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: escrow_id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Escrow ID
-      responses:
-        '200':
-          description: Escrow analysis results retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AiAnalysisResultWithSummary'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ── AI Analysis — Document Analysis ────────────────────────────────
+  # ── AI Analysis (renamed routes) ────────────────────────────────────
 
   /api/v1/ai/analyze-escrow-doc/{escrow_id}:
     post:
@@ -3003,6 +2540,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -3054,38 +2595,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
 
-  # ── AI Analysis — Client Analysis ───────────────────────────────────
+  # Legacy AI analysis routes (backward compatibility aliases)
 
-  /api/v1/ai/analyze-client:
+  /api/v1/ai/analyze/{escrow_id}:
     post:
+      deprecated: true
       tags:
         - AI Analysis
-      summary: Analyze client
+      summary: Analyze document (legacy alias)
       description: |
-        Run AI analysis on the authenticated institution client's profile and compliance posture.
-        Evaluates KYC/KYB status, sanctions screening, entity type, jurisdiction risk,
-        transaction history, wallet configuration, and regulatory status.
+        **Legacy route — use `/api/v1/ai/analyze-escrow-doc/{escrow_id}` instead.**
 
-        **Data Anonymization**: PII (names, emails, addresses, tax IDs) is tokenized
-        before sending to AI by default.
+        Trigger AI-powered analysis on an uploaded document associated with an escrow.
+        The analysis evaluates document authenticity, risk indicators, and compliance factors.
 
         **Rate Limited**: 10 requests per minute.
       security:
         - BearerAuth: []
       parameters:
-        - in: query
-          name: anonymize
-          required: false
+        - in: path
+          name: escrow_id
+          required: true
           schema:
-            type: boolean
-            default: true
-          description: Tokenize sensitive data before AI analysis (default true)
+            type: string
+            format: uuid
+          description: Escrow ID the document belongs to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAnalyzeRequest'
+            example:
+              fileId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              context:
+                expectedAmount: 50000
+                poNumber: "PO-2025-0042"
       responses:
         '200':
-          description: Client analysis completed
+          description: Analysis completed
           content:
             application/json:
               schema:
@@ -3095,16 +2650,24 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    $ref: '#/components/schemas/AiAnalysisResultWithSummary'
+                    $ref: '#/components/schemas/AiAnalysisResult'
                   timestamp:
                     type: string
                     format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           description: Not authenticated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/RateLimitExceeded'
         '503':
@@ -3114,443 +2677,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/ai/client-analysis:
+  /api/v1/ai/analysis/{escrow_id}:
     get:
+      deprecated: true
       tags:
         - AI Analysis
-      summary: Get client analysis results
-      description: Retrieve all stored AI client-level analysis results for the authenticated client.
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Client analysis results retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AiAnalysisResultWithSummary'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  # ── Institution Accounts ─────────────────────────────────────────────
-
-  /api/v1/institution/accounts:
-    post:
-      tags:
-        - Institution Accounts
-      summary: Create account
-      description: Register a new Solana wallet account for your institution.
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - walletAddress
-                - accountType
-                - label
-              properties:
-                walletAddress:
-                  type: string
-                  description: Solana wallet public key
-                  example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-                accountType:
-                  type: string
-                  enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
-                  description: Purpose of the account
-                  example: "TREASURY"
-                label:
-                  type: string
-                  description: Human-readable label for the account
-                  example: "Main Treasury"
-                isDefault:
-                  type: boolean
-                  description: Set as default account for new escrows
-                  example: false
-      responses:
-        '201':
-          description: Account created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionAccount'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-
-    get:
-      tags:
-        - Institution Accounts
-      summary: List accounts
-      description: List all wallet accounts for your institution with optional filters.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: query
-          name: accountType
-          schema:
-            type: string
-            enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
-          description: Filter by account type
-        - in: query
-          name: verificationStatus
-          schema:
-            type: string
-            enum: [PENDING, VERIFIED, SUSPENDED, REJECTED]
-          description: Filter by verification status
-        - in: query
-          name: isActive
-          schema:
-            type: boolean
-          description: Filter by active status
-      responses:
-        '200':
-          description: Accounts retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/InstitutionAccount'
-                  count:
-                    type: integer
-                    example: 3
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-
-  /api/v1/institution/accounts/{id}:
-    get:
-      tags:
-        - Institution Accounts
-      summary: Get account
-      description: Get a specific account with its current balance.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Account ID
-      responses:
-        '200':
-          description: Account retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionAccount'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags:
-        - Institution Accounts
-      summary: Update account
-      description: Update account label, type, or other mutable fields.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Account ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                label:
-                  type: string
-                  description: Updated human-readable label
-                  example: "Primary Treasury"
-                accountType:
-                  type: string
-                  enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
-                  description: Updated account type
-      responses:
-        '200':
-          description: Account updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionAccount'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - Institution Accounts
-      summary: Deactivate account
-      description: Soft-delete (deactivate) an account. The account is not permanently removed.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Account ID
-      responses:
-        '200':
-          description: Account deactivated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Account deactivated"
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/institution/accounts/{id}/default:
-    put:
-      tags:
-        - Institution Accounts
-      summary: Set as default account
-      description: Set this account as the default for new escrow creation. Unsets any previously default account.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Account ID
-      responses:
-        '200':
-          description: Default account updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionAccount'
-                  message:
-                    type: string
-                    example: "Default account updated"
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/institution/accounts/{id}/balance:
-    get:
-      tags:
-        - Institution Accounts
-      summary: Get live balance
-      description: Get the current on-chain balance for this account's wallet address.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Account ID
-      responses:
-        '200':
-          description: Balance retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    description: Balance information for the account
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ── AI Chat ─────────────────────────────────────────────────────────
-
-  /api/v1/ai/chat:
-    post:
-      tags:
-        - AI Chat
-      summary: Chat with AI assistant
+      summary: Get analysis results (legacy alias)
       description: |
-        Send a message to the EasyEscrow AI assistant. Supports multi-turn conversations
-        via the `history` parameter.
+        **Legacy route — use `/api/v1/ai/escrow-doc-analysis/{escrow_id}` instead.**
 
-        All messages are processed through a PII anonymization pipeline before reaching
-        the AI model. Responses are de-anonymized before returning.
-
-        **Rate limit:** 30 requests per minute per client.
+        Retrieve all AI analysis results for a specific escrow.
       security:
         - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - message
-              properties:
-                message:
-                  type: string
-                  minLength: 1
-                  maxLength: 4000
-                  description: The message to send to the AI assistant
-                  example: "What are the compliance requirements for a cross-border escrow between Singapore and the EU?"
-                history:
-                  type: array
-                  maxItems: 50
-                  description: Previous conversation messages for multi-turn context
-                  items:
-                    type: object
-                    required:
-                      - role
-                      - content
-                    properties:
-                      role:
-                        type: string
-                        enum: [user, assistant]
-                        description: Who sent the message
-                      content:
-                        type: string
-                        minLength: 1
-                        maxLength: 4000
-                        description: Message content
-                  example:
-                    - role: "user"
-                      content: "What tokens are supported?"
-                    - role: "assistant"
-                      content: "EasyEscrow supports USDC as the primary stablecoin..."
+      parameters:
+        - in: path
+          name: escrow_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID
       responses:
         '200':
-          description: AI response generated
+          description: Analysis results retrieved
           content:
             application/json:
               schema:
@@ -3560,43 +2709,24 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    type: object
-                    properties:
-                      response:
-                        type: string
-                        description: AI assistant's response
-                        example: "For cross-border escrow between Singapore and the EU, the key compliance requirements include..."
-                      anonymized:
-                        type: boolean
-                        description: Whether PII anonymization was applied
-                        example: true
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AiAnalysisResult'
                   timestamp:
                     type: string
                     format: date-time
-        '400':
-          description: Validation error (message too long, invalid history format)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Not authenticated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          description: Rate limit exceeded or AI service rate limited
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '503':
-          description: AI service not configured
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # ── Institution Admin ──────────────────────────────────────────────────
 
@@ -3807,505 +2937,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # ── Institution Accounts ──────────────────────────────────
-
-  /api/v1/institution/accounts:
-    post:
-      tags:
-        - Institution Accounts
-      summary: Create account
-      description: Create a new institution account with a Solana wallet address. Each client can have up to 10 accounts.
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InstitutionAccountCreate'
-            example:
-              name: "Treasury"
-              label: "Main treasury wallet"
-              accountType: "TREASURY"
-              walletAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-              walletProvider: "Phantom"
-              custodyType: "self-custody"
-      responses:
-        '201':
-          description: Account created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionAccount'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Missing or invalid JWT
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-    get:
-      tags:
-        - Institution Accounts
-      summary: List accounts
-      description: List all accounts for the authenticated client, with optional filters.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: query
-          name: accountType
-          schema:
-            type: string
-            enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
-          description: Filter by account type
-        - in: query
-          name: verificationStatus
-          schema:
-            type: string
-            enum: [PENDING, VERIFIED, SUSPENDED, REJECTED]
-          description: Filter by verification status
-        - in: query
-          name: isActive
-          schema:
-            type: boolean
-          description: Filter by active status
-      responses:
-        '200':
-          description: Accounts listed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/InstitutionAccount'
-                  count:
-                    type: integer
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Missing or invalid JWT
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-
-  /api/v1/institution/accounts/{id}:
-    get:
-      tags:
-        - Institution Accounts
-      summary: Get account
-      description: Get account details including live Solana balance (SOL, USDC, approved tokens).
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Account ID
-      responses:
-        '200':
-          description: Account details with balance
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    allOf:
-                      - $ref: '#/components/schemas/InstitutionAccount'
-                      - type: object
-                        properties:
-                          balance:
-                            $ref: '#/components/schemas/AccountBalance'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '401':
-          description: Missing or invalid JWT
-    put:
-      tags:
-        - Institution Accounts
-      summary: Update account
-      description: Update account settings such as label, limits, notifications, and approval mode.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Account ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InstitutionAccountUpdate'
-      responses:
-        '200':
-          description: Account updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionAccount'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '401':
-          description: Missing or invalid JWT
-    delete:
-      tags:
-        - Institution Accounts
-      summary: Deactivate account
-      description: Soft-delete (deactivate) an institution account.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Account ID
-      responses:
-        '200':
-          description: Account deactivated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Account deactivated
-                  timestamp:
-                    type: string
-                    format: date-time
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '401':
-          description: Missing or invalid JWT
-
-  /api/v1/institution/accounts/{id}/default:
-    put:
-      tags:
-        - Institution Accounts
-      summary: Set default account
-      description: Set an account as the default for the client.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Account ID
-      responses:
-        '200':
-          description: Default account updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionAccount'
-                  message:
-                    type: string
-                    example: Default account updated
-                  timestamp:
-                    type: string
-                    format: date-time
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '401':
-          description: Missing or invalid JWT
-
-  /api/v1/institution/accounts/{id}/balance:
-    get:
-      tags:
-        - Institution Accounts
-      summary: Get live balance
-      description: |
-        Fetch live Solana balance for an account (SOL + USDC + AMINA-approved tokens).
-        Results are cached in Redis with a 30-second TTL.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Account ID
-      responses:
-        '200':
-          description: Live balance
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/AccountBalance'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '401':
-          description: Missing or invalid JWT
-
-  # ── Institution Tokens ──────────────────────────────────
-
-  /api/v1/institution/tokens:
-    get:
-      tags:
-        - Institution Tokens
-      summary: List approved tokens
-      description: |
-        Public endpoint — lists all active AMINA-approved tokens for the institution portal.
-        Returns token metadata (symbol, name, mint address, decimals, issuer, jurisdiction).
-      responses:
-        '200':
-          description: Approved tokens listed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ApprovedToken'
-                  timestamp:
-                    type: string
-                    format: date-time
-              example:
-                success: true
-                data:
-                  - symbol: USDC
-                    name: USD Coin
-                    mintAddress: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-                    decimals: 6
-                    issuer: Circle
-                    jurisdiction: US
-                    chain: solana
-                    isDefault: true
-                    aminaApproved: true
-                  - symbol: EURC
-                    name: Euro Coin
-                    mintAddress: HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr
-                    decimals: 6
-                    issuer: Circle
-                    jurisdiction: EU
-                    chain: solana
-                    isDefault: false
-                    aminaApproved: true
-                timestamp: "2026-03-18T12:00:00.000Z"
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-
-  # ── Institution Receipts ──────────────────────────────────
-
-  /api/v1/institution-escrow/{escrowId}/receipt:
-    get:
-      tags:
-        - Institution Receipts
-      summary: Get escrow receipt
-      description: |
-        Generate an escrow receipt in HTML or PDF format.
-        Use `?format=pdf` for PDF output, defaults to HTML.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: escrowId
-          required: true
-          schema:
-            type: string
-          description: Escrow ID
-        - in: query
-          name: format
-          schema:
-            type: string
-            enum: [html, pdf]
-            default: html
-          description: Receipt format (html or pdf)
-      responses:
-        '200':
-          description: Receipt generated
-          content:
-            text/html:
-              schema:
-                type: string
-                description: HTML receipt
-            application/pdf:
-              schema:
-                type: string
-                format: binary
-                description: PDF receipt
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '401':
-          description: Missing or invalid JWT
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-
-  /api/v1/institution-escrow/{escrowId}/receipt/data:
-    get:
-      tags:
-        - Institution Receipts
-      summary: Get receipt data (JSON)
-      description: Returns the raw receipt data as JSON for custom rendering. Logo base64 is stripped to keep the payload small.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: escrowId
-          required: true
-          schema:
-            type: string
-          description: Escrow ID
-      responses:
-        '200':
-          description: Receipt data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  escrowId:
-                    type: string
-                  escrowCode:
-                    type: string
-                  status:
-                    type: string
-                  amount:
-                    type: number
-                  currency:
-                    type: string
-                  payer:
-                    type: object
-                  recipient:
-                    type: object
-                  timeline:
-                    type: array
-                    items:
-                      type: object
-                  createdAt:
-                    type: string
-                    format: date-time
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '401':
-          description: Missing or invalid JWT
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-
-  # ── AI Chat ──────────────────────────────────
-
-  /api/v1/ai/chat:
-    post:
-      tags:
-        - AI Chat
-      summary: Chat with AI assistant
-      description: |
-        Send a message to the EasyEscrow AI assistant. Supports conversation history
-        for multi-turn interactions. Uses an anonymization pipeline to protect PII
-        before sending to the AI model.
-
-        Rate limit: 30 requests per 60 seconds.
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AiChatRequest'
-            example:
-              message: "What documents are needed for a Singapore to Switzerland corridor?"
-              history:
-                - role: user
-                  content: "How does escrow work?"
-                - role: assistant
-                  content: "An escrow holds funds securely until conditions are met..."
-      responses:
-        '200':
-          description: AI response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/AiChatResponse'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Missing or invalid JWT
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-        '503':
-          description: AI service not configured
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   parameters:
@@ -5735,57 +4366,6 @@ components:
           minLength: 8
           description: New password (minimum 8 characters)
 
-    ApprovedToken:
-      type: object
-      description: An AMINA-approved stablecoin available for institution escrow
-      properties:
-        symbol:
-          type: string
-          description: Token ticker symbol
-          example: USDC
-        name:
-          type: string
-          description: Full token name
-          example: USD Coin
-        mintAddress:
-          type: string
-          description: Solana SPL token mint address
-          example: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-        decimals:
-          type: integer
-          description: Token decimal precision
-          example: 6
-        issuer:
-          type: string
-          description: Token issuing organization
-          example: Circle
-        jurisdiction:
-          type: string
-          nullable: true
-          description: Issuer regulatory jurisdiction (ISO country code)
-          example: US
-        chain:
-          type: string
-          description: Blockchain network
-          example: solana
-        isDefault:
-          type: boolean
-          description: Whether this is the default token (USDC)
-          example: true
-        aminaApproved:
-          type: boolean
-          description: AMINA Bank approved asset
-          example: true
-      required:
-        - symbol
-        - name
-        - mintAddress
-        - decimals
-        - issuer
-        - chain
-        - isDefault
-        - aminaApproved
-
     InstitutionAuthTokens:
       type: object
       properties:
@@ -6214,7 +4794,7 @@ components:
           type: number
           minimum: 1
           maximum: 10000000
-          description: Stablecoin amount (1 to 10,000,000)
+          description: USDC amount (1 to 10,000,000)
           example: 50000
         corridor:
           type: string
@@ -6240,12 +4820,6 @@ components:
           type: string
           description: Optional Solana wallet address of the settlement authority
           example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        tokenMint:
-          type: string
-          description: |
-            Optional SPL token mint address. Must be on the AMINA-approved whitelist.
-            Defaults to USDC if omitted. Use `GET /api/v1/institution/tokens` to list available tokens.
-          example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
     InstitutionEscrowDetail:
       type: object
@@ -6260,39 +4834,26 @@ components:
           type: string
         recipientWallet:
           type: string
-          nullable: true
-          description: Null when escrow is in DRAFT status
         amount:
           type: number
           description: USDC amount
           example: 50000
-        tokenMint:
-          type: string
-          nullable: true
-          description: SPL token mint address used for this escrow. Null defaults to USDC.
-          example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
         corridor:
           type: string
-          nullable: true
           example: "SG-CH"
-          description: Null when escrow is in DRAFT status
         conditionType:
           type: string
-          nullable: true
           enum: [ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK]
         status:
           type: string
-          enum: [DRAFT, CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, INSUFFICIENT_FUNDS, COMPLETE, CANCELLING, CANCELLED, EXPIRED, FAILED]
+          enum: [CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, CANCELLING, CANCELLED, EXPIRED, FAILED]
           description: |
             Escrow lifecycle status:
-            - **DRAFT**: Saved as draft, not yet submitted
             - **CREATED**: Escrow created, awaiting deposit
             - **FUNDED**: USDC deposited and verified
             - **COMPLIANCE_HOLD**: Held for compliance review
             - **RELEASING**: Release in progress
             - **RELEASED**: Funds released to recipient
-            - **INSUFFICIENT_FUNDS**: Payer balance too low, can retry after funding
-            - **COMPLETE**: Settlement complete, notification sent
             - **CANCELLING**: Cancellation in progress
             - **CANCELLED**: Escrow cancelled, funds refunded
             - **EXPIRED**: Escrow expired without completion
@@ -6314,80 +4875,12 @@ components:
         expiresAt:
           type: string
           format: date-time
-          nullable: true
-          description: Null when escrow is in DRAFT status (set on submit)
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-
-    InstitutionEscrowDraftRequest:
-      type: object
-      required:
-        - payerWallet
-      properties:
-        payerWallet:
-          type: string
-          description: Solana wallet address of the payer (base58, 32-44 chars)
-          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-        recipientWallet:
-          type: string
-          description: Solana wallet address of the recipient (optional for drafts)
-          example: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
-        amount:
-          type: number
-          minimum: 0
-          maximum: 10000000
-          description: Stablecoin amount (optional for drafts, defaults to 0)
-          example: 50000
-        corridor:
-          type: string
-          pattern: '^[A-Z]{2}-[A-Z]{2}$'
-          description: Payment corridor (optional for drafts)
-          example: "SG-CH"
-        conditionType:
-          type: string
-          enum: [ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK]
-          description: Release condition type (optional for drafts)
-          example: "ADMIN_RELEASE"
-        settlementAuthority:
-          type: string
-          description: Optional settlement authority wallet address
-          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        tokenMint:
-          type: string
-          description: Optional SPL token mint address (defaults to USDC)
-
-    InstitutionEscrowDraftUpdateRequest:
-      type: object
-      properties:
-        payerWallet:
-          type: string
-          description: Solana wallet address of the payer
-        recipientWallet:
-          type: string
-          description: Solana wallet address of the recipient
-        amount:
-          type: number
-          minimum: 0
-          maximum: 10000000
-          description: Stablecoin amount
-        corridor:
-          type: string
-          pattern: '^[A-Z]{2}-[A-Z]{2}$'
-          description: Payment corridor
-        conditionType:
-          type: string
-          enum: [ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK]
-          description: Release condition type
-        settlementAuthority:
-          type: string
-          description: Settlement authority wallet address
-        tokenMint:
-          type: string
-          description: SPL token mint address
 
     # ── AI Analysis Schemas ─────────────────────────────────────────────
 
@@ -6458,105 +4951,6 @@ components:
           description: Human-readable summary of the analysis
           example: "Document passes all checks with low risk indicators"
         analyzedAt:
-          type: string
-          format: date-time
-
-    AiAnalysisResultWithSummary:
-      type: object
-      properties:
-        riskScore:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: Risk score from 0 (low risk) to 100 (high risk)
-          example: 15
-        recommendation:
-          type: string
-          enum: [APPROVE, REVIEW, REJECT]
-          description: AI recommendation based on analysis
-          example: "APPROVE"
-        summary:
-          type: string
-          description: Human-readable 2-4 sentence summary of the analysis
-          example: "Low risk institution with verified KYC/KYB status operating in a standard corridor."
-        extractedFields:
-          type: object
-          description: Key fields extracted and evaluated by the AI
-          example:
-            escrow_status: "CREATED"
-            amount_usd: 1000
-            corridor: "SG-CH"
-            kyc_verified: true
-        factors:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                example: "corridor_risk"
-              weight:
-                type: number
-                minimum: 0
-                maximum: 1
-                example: 0.3
-              value:
-                type: number
-                minimum: 0
-                maximum: 100
-                example: 10
-          description: Individual risk factors with weights
-        details:
-          type: string
-          description: Brief explanation of risk factors
-          example: "SG-CH corridor is low risk with standard documentation requirements."
-
-    InstitutionAccount:
-      type: object
-      description: A Solana wallet account linked to an institution
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique account identifier
-          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-        clientId:
-          type: string
-          format: uuid
-          description: Owning institution client ID
-        walletAddress:
-          type: string
-          description: Solana wallet public key
-          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-        accountType:
-          type: string
-          enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
-          description: Purpose classification
-          example: "TREASURY"
-        label:
-          type: string
-          description: Human-readable label
-          example: "Main Treasury"
-        isDefault:
-          type: boolean
-          description: Whether this is the default account for new escrows
-          example: true
-        isActive:
-          type: boolean
-          description: Whether the account is active
-          example: true
-        verificationStatus:
-          type: string
-          enum: [PENDING, VERIFIED, SUSPENDED, REJECTED]
-          description: Account verification status
-          example: "VERIFIED"
-        balance:
-          type: object
-          description: Current balance information (included when fetched)
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
           type: string
           format: date-time
 
@@ -6686,230 +5080,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
-    # ── Institution Account Schemas ──────────────────────────
-
-    InstitutionAccountCreate:
-      type: object
-      required:
-        - name
-        - walletAddress
-      properties:
-        name:
-          type: string
-          example: Treasury
-        label:
-          type: string
-          example: Main treasury wallet
-        accountType:
-          type: string
-          enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
-          default: GENERAL
-        description:
-          type: string
-        walletAddress:
-          type: string
-          example: 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU
-        chain:
-          type: string
-          default: solana
-        walletProvider:
-          type: string
-          example: Phantom
-        custodyType:
-          type: string
-          example: self-custody
-        notificationEmail:
-          type: string
-          format: email
-        webhookUrl:
-          type: string
-          format: uri
-
-    InstitutionAccountUpdate:
-      type: object
-      properties:
-        label:
-          type: string
-        description:
-          type: string
-        walletProvider:
-          type: string
-        custodyType:
-          type: string
-        maxTransactionAmount:
-          type: number
-        minTransactionAmount:
-          type: number
-        dailyVolumeLimit:
-          type: number
-        monthlyVolumeLimit:
-          type: number
-        dailyTransactionCountLimit:
-          type: integer
-        monthlyTransactionCountLimit:
-          type: integer
-        approvalMode:
-          type: string
-          enum: [AUTO, MANUAL, THRESHOLD]
-        approvalThreshold:
-          type: number
-        whitelistedAddresses:
-          type: array
-          items:
-            type: string
-        whitelistEnforced:
-          type: boolean
-        notificationEmail:
-          type: string
-          format: email
-        webhookUrl:
-          type: string
-          format: uri
-        notifyOnEscrowCreated:
-          type: boolean
-        notifyOnEscrowFunded:
-          type: boolean
-        notifyOnEscrowReleased:
-          type: boolean
-        notifyOnComplianceAlert:
-          type: boolean
-
-    InstitutionAccount:
-      type: object
-      properties:
-        id:
-          type: string
-        clientId:
-          type: string
-        name:
-          type: string
-        label:
-          type: string
-        accountType:
-          type: string
-          enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
-        walletAddress:
-          type: string
-        chain:
-          type: string
-        walletProvider:
-          type: string
-        custodyType:
-          type: string
-        verificationStatus:
-          type: string
-          enum: [PENDING, VERIFIED, SUSPENDED, REJECTED]
-        isActive:
-          type: boolean
-        isDefault:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    AccountBalance:
-      type: object
-      properties:
-        sol:
-          type: number
-          example: 1.5
-        usdc:
-          type: number
-          example: 1000.0
-        tokens:
-          type: array
-          items:
-            type: object
-            properties:
-              symbol:
-                type: string
-                example: EURC
-              name:
-                type: string
-                example: Euro Coin
-              balance:
-                type: number
-                example: 500.0
-              mintAddress:
-                type: string
-        lastUpdated:
-          type: string
-          format: date-time
-
-    # ── Approved Token Schema ──────────────────────────
-
-    ApprovedToken:
-      type: object
-      properties:
-        symbol:
-          type: string
-          example: USDC
-        name:
-          type: string
-          example: USD Coin
-        mintAddress:
-          type: string
-          example: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-        decimals:
-          type: integer
-          example: 6
-        issuer:
-          type: string
-          example: Circle
-        jurisdiction:
-          type: string
-          example: US
-        chain:
-          type: string
-          example: solana
-        isDefault:
-          type: boolean
-        aminaApproved:
-          type: boolean
-
-    # ── AI Chat Schemas ──────────────────────────
-
-    AiChatRequest:
-      type: object
-      required:
-        - message
-      properties:
-        message:
-          type: string
-          minLength: 1
-          maxLength: 4000
-          description: User message to the AI assistant
-        history:
-          type: array
-          maxItems: 50
-          description: Previous conversation messages for context
-          items:
-            type: object
-            required:
-              - role
-              - content
-            properties:
-              role:
-                type: string
-                enum: [user, assistant]
-              content:
-                type: string
-                minLength: 1
-                maxLength: 4000
-
-    AiChatResponse:
-      type: object
-      properties:
-        response:
-          type: string
-          description: AI assistant reply
-        model:
-          type: string
-          description: AI model used
 
     ErrorResponse:
       type: object
