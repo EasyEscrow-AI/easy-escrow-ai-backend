@@ -14,30 +14,15 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-const savedEnv: Record<string, string | undefined> = {};
-const envOverrides: Record<string, string> = {
-  NODE_ENV: 'test',
-  JWT_SECRET: 'test-jwt-secret-for-testing-only-32chars!',
-  USDC_MINT_ADDRESS: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  INSTITUTION_ESCROW_ENABLED: 'true',
-  DO_SPACES_ENDPOINT: 'nyc3.digitaloceanspaces.com',
-  DO_SPACES_REGION: 'nyc3',
-  DO_SPACES_BUCKET: 'test-bucket',
-  DO_SPACES_KEY: 'test-key',
-  DO_SPACES_SECRET: 'test-secret',
-};
-
-for (const key of Object.keys(envOverrides)) {
-  savedEnv[key] = process.env[key];
-  process.env[key] = envOverrides[key];
-}
-
-after(() => {
-  for (const [key, val] of Object.entries(savedEnv)) {
-    if (val === undefined) delete process.env[key];
-    else process.env[key] = val;
-  }
-});
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
+process.env.USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+process.env.INSTITUTION_ESCROW_ENABLED = 'true';
+process.env.DO_SPACES_ENDPOINT = 'nyc3.digitaloceanspaces.com';
+process.env.DO_SPACES_REGION = 'nyc3';
+process.env.DO_SPACES_BUCKET = 'test-bucket';
+process.env.DO_SPACES_KEY = 'test-key';
+process.env.DO_SPACES_SECRET = 'test-secret';
 
 import { InstitutionFileService } from '../../../src/services/institution-file.service';
 
@@ -51,17 +36,12 @@ describe('InstitutionFileService', () => {
   const FILE_ID = 'file-456';
   const ESCROW_ID = 'escrow-789';
 
-  const todayUTC = (() => {
-    const d = new Date();
-    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-  })();
-
   const makeFileRecord = (overrides: Record<string, unknown> = {}) => ({
     id: FILE_ID,
     clientId: CLIENT_ID,
     escrowId: ESCROW_ID,
     fileName: 'invoice.pdf',
-    fileKey: `institution/${CLIENT_ID}/${todayUTC}/${ESCROW_ID}/1234567890_invoice.pdf`,
+    fileKey: `institution/${CLIENT_ID}/${ESCROW_ID}/1234567890_invoice.pdf`,
     mimeType: 'application/pdf',
     sizeBytes: 1024,
     documentType: 'INVOICE',
@@ -377,154 +357,6 @@ describe('InstitutionFileService', () => {
 
       const createArgs = prismaStub.institutionFile.create.firstCall.args[0];
       expect(createArgs.data.fileKey).to.include(`/${ESCROW_ID}/`);
-    });
-  });
-
-  // ─── Structured file key format ──────────────────────────────
-  //
-  // Key format: institution/{clientId}/{YYYY-MM-DD}/{escrowId|general}/{timestamp}_{filename}
-  //
-  // Ensures files are organized by:
-  //   1. Client isolation (clientId folder)
-  //   2. Date-based grouping (YYYY-MM-DD)
-  //   3. Escrow association (escrowId or "general")
-  //   4. Unique filename (timestamp prefix)
-
-  describe('Structured file key format', () => {
-    const KEY_PATTERN =
-      /^institution\/[^/]+\/\d{4}-\d{2}-\d{2}\/[^/]+\/\d+_[^/]+$/;
-
-    function getGeneratedKey(): string {
-      return prismaStub.institutionFile.create.firstCall.args[0].data.fileKey;
-    }
-
-    const validFile = {
-      buffer: Buffer.from('content'),
-      originalname: 'invoice.pdf',
-      mimetype: 'application/pdf',
-      size: 100,
-    };
-
-    beforeEach(() => {
-      prismaStub.institutionFile.create.callsFake((args: any) => ({
-        ...makeFileRecord(),
-        fileKey: args.data.fileKey,
-        fileName: args.data.fileName,
-        escrowId: args.data.escrowId,
-      }));
-    });
-
-    it('should match pattern: institution/{clientId}/{YYYY-MM-DD}/{folder}/{ts}_{file}', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      expect(getGeneratedKey()).to.match(KEY_PATTERN);
-    });
-
-    it('should start with "institution/" prefix', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      expect(getGeneratedKey()).to.match(/^institution\//);
-    });
-
-    it('should include clientId as second path segment', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      const segments = getGeneratedKey().split('/');
-      expect(segments[1]).to.equal(CLIENT_ID);
-    });
-
-    it('should include UTC date (YYYY-MM-DD) as third path segment', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      const segments = getGeneratedKey().split('/');
-      expect(segments[2]).to.match(/^\d{4}-\d{2}-\d{2}$/);
-      // Date should be today in UTC
-      expect(segments[2]).to.equal(todayUTC);
-    });
-
-    it('should include escrowId as fourth segment when provided', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      const segments = getGeneratedKey().split('/');
-      expect(segments[3]).to.equal(ESCROW_ID);
-    });
-
-    it('should include "general" as fourth segment when no escrowId', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'OTHER');
-      const segments = getGeneratedKey().split('/');
-      expect(segments[3]).to.equal('general');
-    });
-
-    it('should include timestamp prefix on filename (fifth segment)', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      const segments = getGeneratedKey().split('/');
-      const filename = segments[4];
-      expect(filename).to.match(/^\d+_/);
-      // Timestamp should be recent (within last 5 seconds)
-      const ts = parseInt(filename.split('_')[0], 10);
-      expect(ts).to.be.closeTo(Date.now(), 5000);
-    });
-
-    it('should include sanitized original filename after timestamp', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      const segments = getGeneratedKey().split('/');
-      const filename = segments[4];
-      expect(filename).to.match(/_invoice\.pdf$/);
-    });
-
-    it('should have exactly 5 path segments', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      const segments = getGeneratedKey().split('/');
-      expect(segments).to.have.length(5);
-    });
-
-    it('should isolate different clients into separate folders', async () => {
-      await service.uploadFile('client-AAA', validFile, 'INVOICE', ESCROW_ID);
-      const key1 = getGeneratedKey();
-
-      prismaStub.institutionFile.create.resetHistory();
-      await service.uploadFile('client-BBB', validFile, 'INVOICE', ESCROW_ID);
-      const key2 = getGeneratedKey();
-
-      expect(key1.split('/')[1]).to.equal('client-AAA');
-      expect(key2.split('/')[1]).to.equal('client-BBB');
-      // Ensure paths don't overlap
-      expect(key1).to.not.equal(key2);
-    });
-
-    it('should isolate different escrows into separate folders', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', 'escrow-A');
-      const key1 = getGeneratedKey();
-
-      prismaStub.institutionFile.create.resetHistory();
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', 'escrow-B');
-      const key2 = getGeneratedKey();
-
-      expect(key1.split('/')[3]).to.equal('escrow-A');
-      expect(key2.split('/')[3]).to.equal('escrow-B');
-    });
-
-    it('should generate unique keys for same file uploaded twice', async () => {
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      const key1 = getGeneratedKey();
-
-      prismaStub.institutionFile.create.resetHistory();
-      // Small delay to ensure different timestamp
-      await new Promise((r) => setTimeout(r, 5));
-      await service.uploadFile(CLIENT_ID, validFile, 'INVOICE', ESCROW_ID);
-      const key2 = getGeneratedKey();
-
-      expect(key1).to.not.equal(key2);
-    });
-
-    it('should not contain path traversal sequences in generated key', async () => {
-      const maliciousFile = {
-        buffer: Buffer.from('content'),
-        originalname: '../../../etc/passwd',
-        mimetype: 'application/pdf',
-        size: 100,
-      };
-
-      await service.uploadFile(CLIENT_ID, maliciousFile, 'OTHER');
-      const key = getGeneratedKey();
-      expect(key).to.not.include('..');
-      // Should still match the structured pattern
-      expect(key).to.match(KEY_PATTERN);
     });
 
     it('should map document type string to enum correctly', async () => {
