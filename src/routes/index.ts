@@ -24,6 +24,7 @@ import institutionFilesRoutes from './institution-files.routes';
 import institutionEscrowRoutes from './institution-escrow.routes';
 import aiAnalysisRoutes from './ai-analysis.routes';
 import institutionClientsRoutes from './institution-clients.routes';
+import institutionReceiptRoutes from './institution-receipt.routes';
 
 export {
   expiryCancellationRoutes,
@@ -45,4 +46,5 @@ export {
   institutionEscrowRoutes,
   aiAnalysisRoutes,
   institutionClientsRoutes,
+  institutionReceiptRoutes,
 };
