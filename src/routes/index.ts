@@ -24,18 +24,7 @@ import institutionFilesRoutes from './institution-files.routes';
 import institutionEscrowRoutes from './institution-escrow.routes';
 import aiAnalysisRoutes from './ai-analysis.routes';
 import institutionClientsRoutes from './institution-clients.routes';
-import adminAuthRoutes from './admin/admin-auth.routes';
 import institutionReceiptRoutes from './institution-receipt.routes';
-import institutionTokensRoutes from './institution-tokens.routes';
-import aiChatRoutes from './ai-chat.routes';
-import institutionAccountRoutes from './institution-account.routes';
-import institutionNotificationRoutes from './institution-notification.routes';
-import institutionDashboardRoutes from './institution-dashboard.routes';
-import institutionBranchRoutes from './institution-branch.routes';
-import institutionReportsRoutes from './institution-reports.routes';
-import institutionDirectPaymentRoutes from './institution-direct-payment.routes';
-import institutionReferenceRoutes from './institution-reference.routes';
-import institutionSearchRoutes from './institution-search.routes';
 
 export {
   expiryCancellationRoutes,
@@ -57,16 +46,5 @@ export {
   institutionEscrowRoutes,
   aiAnalysisRoutes,
   institutionClientsRoutes,
-  adminAuthRoutes,
   institutionReceiptRoutes,
-  institutionTokensRoutes,
-  aiChatRoutes,
-  institutionAccountRoutes,
-  institutionNotificationRoutes,
-  institutionDashboardRoutes,
-  institutionBranchRoutes,
-  institutionReportsRoutes,
-  institutionDirectPaymentRoutes,
-  institutionReferenceRoutes,
-  institutionSearchRoutes,
 };

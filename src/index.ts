@@ -28,16 +28,6 @@ import {
   aiAnalysisRoutes,
   institutionClientsRoutes,
   institutionReceiptRoutes,
-  institutionTokensRoutes,
-  aiChatRoutes,
-  institutionAccountRoutes,
-  institutionNotificationRoutes,
-  institutionDashboardRoutes,
-  institutionBranchRoutes,
-  institutionReportsRoutes,
-  institutionDirectPaymentRoutes,
-  institutionReferenceRoutes,
-  institutionSearchRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -763,16 +753,6 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionClientsRoutes);
   app.use(institutionEscrowAdminRoutes);
   app.use(institutionReceiptRoutes);
-  app.use(institutionTokensRoutes);
-  app.use(aiChatRoutes);
-  app.use(institutionAccountRoutes);
-  app.use(institutionNotificationRoutes);
-  app.use(institutionDashboardRoutes);
-  app.use(institutionBranchRoutes);
-  app.use(institutionReportsRoutes);
-  app.use(institutionDirectPaymentRoutes);
-  app.use(institutionReferenceRoutes);
-  app.use(institutionSearchRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled
