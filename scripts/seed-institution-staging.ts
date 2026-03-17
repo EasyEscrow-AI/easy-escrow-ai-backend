@@ -60,12 +60,8 @@ function hoursFromNow(n: number): Date {
   return new Date(Date.now() + n * 3600000);
 }
 
-// Staging USDC mint — must be set explicitly for staging/devnet
-const USDC_MINT = process.env.USDC_MINT_ADDRESS;
-if (!USDC_MINT) {
-  console.error('ERROR: USDC_MINT_ADDRESS environment variable is required for staging seeder');
-  process.exit(1);
-}
+// Staging USDC mint (devnet/staging)
+const USDC_MINT = process.env.USDC_MINT_ADDRESS || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 // ---------------------------------------------------------------------------
 // Corridor data
@@ -349,56 +345,54 @@ const clients: ClientDef[] = [
     referralSource: 'MAS FinTech Festival',
   },
   {
-    email: 'admin@aminagroup.com',
-    companyName: 'AMINA Bank AG',
-    tier: 'ENTERPRISE',
+    email: 'admin@blockvault-assets.com',
+    companyName: 'BlockVault Digital Assets LLC',
+    tier: 'STANDARD',
     status: 'ACTIVE',
     kycStatus: 'VERIFIED',
-    jurisdiction: 'CH',
-    primaryWallet: fakeWallet('amina-primary'),
-    legalName: 'AMINA Bank AG',
-    tradingName: 'AMINA',
-    registrationNumber: 'CHE-395.686.339',
-    registrationCountry: 'CH',
-    entityType: 'CORPORATION',
-    lei: '506700GE1N983WUND067',
-    taxId: 'CHE-395.686.339 MWST',
-    taxCountry: 'CH',
-    addressLine1: 'Kolinplatz 15',
-    city: 'Zug',
-    state: 'ZG',
-    postalCode: '6300',
-    country: 'CH',
-    contactFirstName: 'Admin',
-    contactLastName: 'Admin',
-    contactEmail: 'admin@aminagroup.com',
-    contactPhone: '+41-41-710-0100',
-    contactTitle: 'Platform Administrator',
+    jurisdiction: 'US',
+    primaryWallet: fakeWallet('blockvault-primary'),
+    legalName: 'BlockVault Digital Assets LLC',
+    tradingName: 'BlockVault',
+    registrationNumber: 'LLC-US-7890123',
+    registrationCountry: 'US',
+    entityType: 'LLC',
+    taxId: '47-7890123',
+    taxCountry: 'US',
+    addressLine1: '200 West Street, Floor 12',
+    city: 'New York',
+    state: 'NY',
+    postalCode: '10282',
+    country: 'US',
+    contactFirstName: 'James',
+    contactLastName: 'Rivera',
+    contactEmail: 'james.rivera@blockvault-assets.com',
+    contactPhone: '+1-212-555-0505',
+    contactTitle: 'Fund Manager',
     kybStatus: 'VERIFIED',
     kybVerifiedAt: daysAgo(30),
     kybExpiresAt: hoursFromNow(24 * 335),
     riskRating: 'LOW',
     sanctionsStatus: 'CLEAR',
-    sourceOfFunds: 'Licensed banking operations, institutional custody, and digital asset trading',
+    sourceOfFunds: 'Fund subscriptions and digital asset trading profits',
     isRegulatedEntity: true,
     regulatoryStatus: 'REGULATED',
-    licenseType: 'Banking & Securities Dealer License',
-    licenseNumber: 'FINMA-2018-BL-0091',
-    regulatoryBody: 'FINMA',
-    industry: 'Digital Asset Banking',
-    websiteUrl: 'https://aminagroup.com',
-    businessDescription: 'FINMA-regulated crypto bank providing institutional custody, trading, and tokenization services across digital assets',
-    yearEstablished: 2018,
-    employeeCountRange: 'RANGE_201_500',
-    annualRevenueRange: 'RANGE_100M_500M',
-    expectedMonthlyVolume: 50_000_000,
-    purposeOfAccount: 'Institutional custody settlement, cross-border USDC transfers, and platform administration',
-    walletCustodyType: 'MPC',
-    custodianName: 'AMINA Custody',
+    licenseType: 'Investment Adviser',
+    licenseNumber: 'SEC-IA-2024-0789',
+    regulatoryBody: 'SEC',
+    industry: 'Digital Asset Fund Management',
+    websiteUrl: 'https://blockvault-assets.example.com',
+    businessDescription: 'SEC-registered digital asset fund managing institutional portfolios across DeFi and CeFi strategies',
+    yearEstablished: 2023,
+    employeeCountRange: 'RANGE_11_50',
+    annualRevenueRange: 'RANGE_1M_10M',
+    expectedMonthlyVolume: 2_000_000,
+    purposeOfAccount: 'Fund settlement and OTC USDC transfers',
+    walletCustodyType: 'SELF_CUSTODY',
     preferredSettlementChain: 'solana',
-    accountManagerName: 'David Chen',
-    accountManagerEmail: 'david.chen@easyescrow.example',
-    referralSource: 'Platform admin',
+    accountManagerName: 'Lisa Park',
+    accountManagerEmail: 'lisa.park@easyescrow.example',
+    referralSource: 'Web signup',
   },
 
   // ── Traditional finance / trade finance ─────────────────────────────
@@ -577,6 +571,49 @@ const clients: ClientDef[] = [
     referralSource: 'DeFi London meetup',
   },
 
+  // ── Suspended (compliance issue) ────────────────────────────────────
+  {
+    email: 'admin@frontier-exchange.ch',
+    companyName: 'Frontier Crypto Exchange AG',
+    tier: 'STANDARD',
+    status: 'SUSPENDED',
+    kycStatus: 'VERIFIED',
+    jurisdiction: 'CH',
+    primaryWallet: fakeWallet('frontier-primary'),
+    legalName: 'Frontier Crypto Exchange AG',
+    registrationNumber: 'CHE-444.555.666',
+    registrationCountry: 'CH',
+    entityType: 'CORPORATION',
+    country: 'CH',
+    city: 'Zug',
+    postalCode: '6300',
+    addressLine1: 'Baarerstrasse 78',
+    contactFirstName: 'Klaus',
+    contactLastName: 'Richter',
+    contactEmail: 'klaus.richter@frontier-exchange.ch',
+    contactPhone: '+41-41-555-1010',
+    contactTitle: 'General Manager',
+    kybStatus: 'VERIFIED',
+    kybVerifiedAt: daysAgo(200),
+    kybExpiresAt: daysAgo(10), // expired KYB
+    riskRating: 'HIGH',
+    riskNotes: 'Sanctions screening flagged potential indirect exposure to restricted jurisdiction. Account suspended pending enhanced due diligence review.',
+    sanctionsStatus: 'FLAGGED',
+    sourceOfFunds: 'Exchange trading fees',
+    isRegulatedEntity: true,
+    regulatoryStatus: 'SUSPENDED',
+    licenseType: 'VQF SRO Membership',
+    licenseNumber: 'VQF-2022-0199',
+    regulatoryBody: 'VQF (SRO)',
+    industry: 'Crypto Exchange',
+    businessDescription: 'Swiss crypto exchange — currently suspended due to compliance review',
+    yearEstablished: 2022,
+    employeeCountRange: 'RANGE_11_50',
+    annualRevenueRange: 'RANGE_1M_10M',
+    walletCustodyType: 'SELF_CUSTODY',
+    preferredSettlementChain: 'solana',
+    referralSource: 'Crypto Valley directory',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -763,7 +800,7 @@ const escrows: EscrowDef[] = [
 
   // CANCELLING — cancellation in progress
   {
-    clientEmail: 'admin@aminagroup.com',
+    clientEmail: 'admin@blockvault-assets.com',
     status: 'CANCELLING',
     amount: 30_000,
     platformFee: 150,
@@ -827,7 +864,7 @@ const escrows: EscrowDef[] = [
     isResolved: true,
   },
   {
-    clientEmail: 'admin@aminagroup.com',
+    clientEmail: 'admin@blockvault-assets.com',
     status: 'EXPIRED',
     amount: 10_000,
     platformFee: 50,
@@ -865,12 +902,6 @@ const escrows: EscrowDef[] = [
 // ---------------------------------------------------------------------------
 
 async function main() {
-  // Fail-fast: only run on staging
-  if (process.env.NODE_ENV !== 'staging' && !process.argv.includes('--staging')) {
-    console.error('ERROR: Staging seeder requires NODE_ENV=staging or --staging flag');
-    process.exit(1);
-  }
-
   console.log('=== Institution Staging Data Seeder ===\n');
 
   // ── 1. Corridors ─────────────────────────────────────────────────
@@ -968,11 +999,12 @@ async function main() {
     { email: 'treasury@alpine-custody.ch', corridor: 'CH-US', timezone: 'Europe/Zurich', autoApprove: 25_000 },
     { email: 'finance@satoshi-bridge.io', corridor: 'US-MX', timezone: 'America/Los_Angeles', autoApprove: 100_000 },
     { email: 'ops@chainflow-remit.sg', corridor: 'SG-CH', timezone: 'Asia/Singapore', autoApprove: 50_000 },
-    { email: 'admin@aminagroup.com', corridor: 'CH-SG', timezone: 'Europe/Zurich', autoApprove: 500_000 },
+    { email: 'admin@blockvault-assets.com', corridor: 'US-PH', timezone: 'America/New_York' },
     { email: 'treasury@meridian-trade.co.uk', corridor: 'EU-UK', timezone: 'Europe/London', autoApprove: 200_000 },
     { email: 'finance@pacificrim-exports.sg', corridor: 'SG-US', timezone: 'Asia/Singapore', autoApprove: 75_000 },
     { email: 'onboarding@nova-payments.ch', corridor: null, timezone: 'Europe/Zurich' },
     { email: 'compliance@defi-connect.co.uk', corridor: 'EU-UK', timezone: 'Europe/London' },
+    { email: 'admin@frontier-exchange.ch', corridor: 'CH-SG', timezone: 'Europe/Zurich' },
   ];
 
   for (const s of settingsData) {
@@ -1182,10 +1214,10 @@ async function main() {
           escrowId,
           riskScore: e.riskScore,
           factors: [
-            { name: 'corridor_risk', weight: 0.3, value: e.corridor.includes('US') ? 50 : 20 },
-            { name: 'amount_threshold', weight: 0.25, value: e.amount > 100_000 ? 80 : 30 },
-            { name: 'client_history', weight: 0.25, value: 70 },
-            { name: 'sanctions_screening', weight: 0.2, value: 10 },
+            { name: 'corridor_risk', weight: 0.3, value: e.corridor.includes('US') ? 'medium' : 'low' },
+            { name: 'amount_threshold', weight: 0.25, value: e.amount > 100_000 ? 'high' : 'standard' },
+            { name: 'client_history', weight: 0.25, value: 'established' },
+            { name: 'sanctions_screening', weight: 0.2, value: 'clear' },
           ],
           recommendation,
           extractedFields: {

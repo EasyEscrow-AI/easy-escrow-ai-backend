@@ -30,7 +30,7 @@ Last updated: 2026-01-03
 
 | Mistake | Wrong | Right |
 |---------|-------|-------|
-| Using --draft flag | `gh pr create --draft --title "..."` | `gh pr create --title "..."` |
+| Draft PRs | `gh pr create --draft --title "..."` | `gh pr create --title "..."` |
 | Push without rebase | Push with conflicts | `git fetch origin master && git rebase origin/master` |
 | PR merge conflicts | Create PR with conflicts | Rebase and resolve before creating PR |
 
