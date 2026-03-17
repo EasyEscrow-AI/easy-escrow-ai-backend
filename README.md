@@ -2,158 +2,226 @@
 
 # EasyEscrow.ai Backend
 
-🚀 **Production-Ready Atomic Swap Platform** - Trustless peer-to-peer NFT and SOL swaps on Solana blockchain.
+Non-custodial digital escrow platform on Solana. Backend API service powering atomic swaps and institutional cross-border stablecoin escrow payments.
 
-## 🎯 Current Focus: Atomic Swaps
+**Live Documentation:** [staging-api.easyescrow.ai/docs](https://staging-api.easyescrow.ai/docs)
 
-EasyEscrow.ai is a **100% Atomic Swap platform** enabling instant, trustless exchanges of NFTs, SOL, and compressed NFTs on Solana mainnet.
+---
 
-### Why Atomic Swaps?
+## Changelog
 
-✅ **Instant**: Single transaction execution—no waiting  
-✅ **Trustless**: No escrow deposits, no backend coordination  
-✅ **Secure**: All-or-nothing atomic execution  
-✅ **Low Cost**: Minimal transaction fees  
-✅ **Simple**: One transaction, instant settlement  
+### v1.1.0 — Institutional Escrow (March 2026)
+
+Cross-border stablecoin escrow payments for institutional clients.
+
+- Institution client authentication (JWT) with registration, login, and token refresh
+- USDC escrow lifecycle: create, deposit, release, and cancel
+- AI-powered document analysis for compliance risk scoring
+- Wallet whitelists and jurisdiction payment corridors
+- File uploads for escrow supporting documents (PDF, images, Excel, CSV)
+- KYB profile management and client search/discovery
+- API key management for programmatic access
+- Admin endpoints for allowlist and corridor configuration
+- Settlement authority pattern for release operations
+- AI data anonymisation (PII redaction before model processing)
+- Escrow Settlement Mode: Atomic (non-custodial proof of funds) / Escrow (full PDA escrow)
+- Escrow Release Terms: programmable release mechanisms
+- Full blockchain audit of payment escrows and downloadable compliance & audit reports
+- Supports KYC/KYB compliance integrations (not activated for hackathon)
+- Supports AMINA Payment Network (APN) integrations (not activated for hackathon)
+
+### v1.0.0 — Atomic Swaps (October 2025)
+
+Non-custodial peer-to-peer NFT and SOL atomic swaps on Solana.
+
+- NFT <> SOL, NFT <> NFT, and NFT + SOL <> NFT swap types
+- Support for SPL NFTs, Core NFTs, Compressed NFTs (cNFTs), and Programmable NFTs (pNFTs)
+- Jito bundle swaps for multi-NFT transactions (up to 4 NFTs)
+- TwoPhase fallback for bundle failures
+- Compressed NFT support with Merkle proof handling via DAS API
+- Dynamic platform fee calculation (1% SOL swaps, 0.005 SOL flat for NFT-only)
+- Offer lifecycle management (create, accept, cancel, counter, expire)
+- Durable nonce pool for reliable transaction submission
+- Health monitoring and service status endpoints
+
+---
+
+## Atomic Swaps
+
+Instant, non-custodial digital swaps that execute in a single transaction. Your assets are NEVER held in escrow — they only leave your wallet upon instant settlement. The swap happens atomically or not at all (no partial settlement, no MEV attacks, no stuck assets).
 
 ### Supported Swap Types
 
 | Type | Description | Status |
 |------|-------------|--------|
-| **NFT ↔ SOL** | Exchange NFT for SOL tokens | ✅ **LIVE** |
-| **NFT ↔ NFT (fee)** | NFT for NFT with platform fee | ✅ **LIVE** |
-| **NFT ↔ NFT + SOL** | NFT for another NFT plus SOL | ✅ **LIVE** |
-| **cNFT ↔ SOL** | Compressed NFT for SOL | ✅ **LIVE** |
-| **NFT ↔ cNFT** | Standard NFT for compressed NFT | ✅ **LIVE** |
-| **Bulk Swaps** | Multiple NFTs (up to 4 total) | ✅ **LIVE** |
+| **NFT <> SOL** | Exchange NFT for SOL tokens | LIVE |
+| **NFT <> NFT (fee)** | NFT for NFT with platform fee | LIVE |
+| **NFT <> NFT + SOL** | NFT for another NFT plus SOL | LIVE |
+| **cNFT <> SOL** | Compressed NFT for SOL | LIVE |
+| **NFT <> cNFT** | Standard NFT for compressed NFT | LIVE |
+| **Bulk Swaps** | Multiple NFTs (up to 4 total) | LIVE |
 
-**Note:** Bulk swap functionality supports up to 4 NFTs total per swap (Jito bundle transaction limit). Any combination of cNFTs, standard NFTs, Core NFTs, and SOL. Multi-transaction swaps automatically use Jito bundles for atomic execution. See [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) for details.
+### Supported Assets
 
-### cNFT & Bulk Swap Capabilities
+| Asset | Description | Status |
+|-------|-------------|--------|
+| **SPL NFT** | Solana SPL Token NFT (Metaplex standard) | Supported |
+| **Core NFT** | Solana Metaplex Core NFT | Supported |
+| **cNFT** | Solana Compressed NFT (Metaplex Bubblegum) | Supported |
+| **pNFT** | Programmable NFT (on-chain royalty enforcement) | Supported |
+| **SOL** | Solana native token | Supported |
 
-#### Compressed NFT (cNFT) Support
-- ✅ **Full cNFT Integration**: Direct Bubblegum program transfers with Merkle proof handling
-- ✅ **Stale Proof Handling**: Automatic retry with fresh proofs (up to 3 attempts with progressive delays)
-- ✅ **Canopy Optimization**: Automatic proof trimming based on on-chain canopy depth
-- ✅ **DAS API Integration**: Rate-limited, cached proof fetching with tree sequence monitoring
-- ✅ **Production Ready**: Deployed and tested on Solana mainnet
+### Bulk Swap & cNFT Features
 
-#### Bulk Swap Features
-- ✅ **Multi-Asset Swaps**: Up to 4 NFTs total per swap (any combination of SPL NFT, Core NFT, cNFT, SOL)
-- ✅ **Jito Bundle Atomicity**: Multi-transaction swaps automatically use Jito bundles for all-or-nothing execution
-- ✅ **Transaction Splitting**: Intelligent splitting based on asset types and transaction size limits
-- ✅ **Address Lookup Tables**: Automatic ALT usage for transaction size optimization
-- ✅ **Smart Ordering**: Optimal transaction sequencing (fee first, tip last)
+- **Multi-Asset Swaps**: Up to 4 NFTs total per swap via Jito bundles for atomic execution
+- **Direct Bubblegum transfers**: cNFTs transfer directly without escrow custody
+- **Merkle proof handling**: Automatic proof fetching from DAS API with stale proof retry
+- **Canopy optimization**: Automatic proof trimming based on on-chain canopy depth
+- **Address Lookup Tables**: Automatic ALT usage for transaction size optimization
 
-#### Enhanced Offer Management
-- ✅ **Private Sales**: Restrict offers to specific taker wallets
-- ✅ **Counter-Offers**: Full counter-offer chain support with asset modification
-- ✅ **Offer Updates**: Update SOL amounts via `PUT /api/offers/:id`
-- ✅ **Offer Cancellation**: Maker and admin cancellation with nonce advancement
+### Platform Fees & Limits
 
-For detailed technical information, see:
-- [Bulk cNFT Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) - Complete architecture documentation
-- [cNFT Testing Guide](docs/CNFT_TESTING_GUIDE.md) - Testing and setup guide
-- [cNFT Implementation Plan](docs/cnft-plan.md) - Implementation history and status
+| Parameter | Value |
+|-----------|-------|
+| NFT-only swaps | 0.005 SOL flat fee |
+| Swaps with SOL | 1% of total SOL amount |
+| Minimum fee | 0.001 SOL |
+| Maximum fee | 0.5 SOL (fee cap) |
+| Min SOL | 0.1 SOL |
+| Max SOL | 15 SOL (~$5,000 AUD limit) |
+| Max NFTs per swap | 4 (Jito bundle limit) |
+| Offer expiry | 1 hour to 30 days (default: 7 days) |
+
+### Offer Management
+
+- **Private Sales**: Restrict offers to specific taker wallets
+- **Counter-Offers**: Full counter-offer chain support with asset modification
+- **Offer Updates**: Update SOL amounts via `PUT /api/offers/:id`
+- **Offer Cancellation**: Maker and admin cancellation with nonce advancement
 
 ---
 
-## 📌 Strategic Update
+## Institutional Escrow
 
-⚠️ **The legacy escrow system (multi-step deposits, settlement workflows) has been parked.** The platform now focuses exclusively on atomic swaps for superior UX and reduced complexity. See [Strategic Pivot Documentation](docs/STRATEGIC_PIVOT_ATOMIC_SWAPS.md).
+Programmable cross-border stablecoin escrow payments, built for institutions compliance and auditability.
+
+### Key Features
+
+- **Client Portal Integration**: Front-end integration with EasyEscrow Institution client portal app
+- **Stablecoin Settlement**: Solana DeFi stablecoin escrow settlement using USDC
+- **AI-Assisted Compliance**: AI-powered document analysis for risk scoring (verifies only, does not automate payments)
+- **AI Data Anonymisation**: PII redaction before sending documents to AI models
+- **Wallet Whitelists**: Allowlist-based wallet management with jurisdiction payment corridors
+- **Escrow Settlement Modes**: Atomic (non-custodial proof of funds) / Escrow (full PDA escrow)
+- **Programmable Release**: Configurable release mechanisms (admin release, time lock, compliance check)
+- **Blockchain Audit Trail**: Full audit of payment escrows with downloadable compliance & audit reports
+- **Document Management**: Secure file uploads to DigitalOcean Spaces (PDF, images, Excel, CSV)
+- **KYB Profile Management**: Extended institution profiles with legal entity details, industry, and registration info
+- **API Key Management**: Programmatic access via generated API keys with configurable permissions
+- **Token Support**: Primary support for USDC and AMINA-approved whitelist only tokens
+- **KYC/KYB Integrations**: Compliance integration support (not activated for hackathon)
+- **AMINA Payment Network**: APN integration support (not activated for hackathon)
+
+### Escrow Lifecycle
+
+```
+Create --> Deposit --> Release / Cancel
+             |
+     [Compliance Hold] --> Approve --> Release
+                       --> Reject  --> Cancel
+```
+
+1. **Register** an institution client account (email + password, JWT authentication)
+2. **Configure** wallets, API keys, and settings via the settings endpoints
+3. **Create** an escrow specifying payer/recipient wallets, USDC amount, corridor, and release conditions
+4. **Deposit** USDC on-chain and record the transaction signature
+5. **Analyze** (optional) upload documents for AI-powered compliance risk scoring
+6. **Release** funds (requires settlement authority) or **Cancel** the escrow
+
+### Institution API Endpoints
+
+| Category | Endpoints | Description |
+|----------|-----------|-------------|
+| **Auth** | register, login, refresh, logout, me, password | JWT authentication with rate limiting |
+| **Settings** | get/update settings, wallet management, API keys | Client configuration |
+| **Clients** | search, list, profile, archive | Client discovery and management |
+| **Files** | upload, list, download, delete | Document management for compliance |
+| **Escrow** | create, deposit, release, cancel, get, list | USDC escrow payment lifecycle |
+| **AI Analysis** | analyze document, get results | AI compliance risk scoring |
+| **Admin** | allowlist CRUD, corridor configuration | Administrative operations |
+
+### Settlement Authority
+
+Release operations require a separate settlement authority API key, enforcing separation of duties between escrow creation and fund release. This is validated via the `requireSettlementAuthority` middleware.
 
 ---
 
-## Overview
+## Architecture
 
-EasyEscrow.ai is a production-ready atomic swap platform built on Solana blockchain, featuring:
+### Tech Stack
 
-- **⚡ Atomic Swaps**: Instant, trustless peer-to-peer asset exchanges
-- **🔐 Nonce-Based Transactions**: Durable transactions with automatic retry logic
-- **🎨 NFT Support**: Standard NFTs (Metaplex), compressed NFTs (cNFTs), and Core NFTs
-- **📦 Bulk Swaps**: Up to 4 NFTs total with automatic Jito bundle execution
-- **🌿 cNFT Features**: Full Merkle proof handling, stale proof retry, canopy optimization
-- **💸 SOL Integration**: Native SOL token transfers in swaps
-- **🌐 Multi-Environment**: Separate deployments for development, staging, and production
-- **📡 RESTful API**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
-- **🔒 Security First**: Rate limiting, validation, and comprehensive error handling
-- **☁️ Production Infrastructure**: Deployed on DigitalOcean with PostgreSQL, Redis, and Helius RPC
-- **💰 Flexible Fees**: Dynamic platform fees (percentage or flat-rate)
+- **Runtime**: Node.js + Express + TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Cache**: Redis (rate limiting, session management, caching)
+- **Blockchain**: Solana (web3.js, Anchor, SPL Token)
+- **AI**: Anthropic Claude API (document analysis)
+- **Storage**: DigitalOcean Spaces (S3-compatible, document uploads)
+- **Documentation**: OpenAPI 3.0 with Redoc
+- **Deployment**: DigitalOcean App Platform
 
-## Project Structure
+### Core Services
 
-```
-/
-├── README.md
-├── SECURITY.md
-├── docs/                      # 📚 Comprehensive documentation
-│   ├── STRATEGIC_PIVOT_ATOMIC_SWAPS.md  # 🎯 Current focus & roadmap
-│   ├── ATOMIC_SWAP_TESTING.md           # Atomic swap test guide
-│   ├── api/                  # API documentation
-│   │   ├── openapi.yaml      # OpenAPI 3.0 specification
-│   │   └── README.md         # API overview
-│   ├── architecture/         # System design
-│   ├── deployment/           # Deployment guides
-│   ├── environments/         # Environment configs
-│   ├── security/             # Security documentation
-│   ├── setup/                # Installation guides
-│   └── testing/              # Testing strategies
-├── src/                       # Backend TypeScript/Node.js source
-│   ├── config/               # Configuration
-│   │   ├── database.ts       # Prisma client
-│   │   └── index.ts          # Environment config
-│   ├── generated/            # Generated Prisma client
-│   ├── middleware/           # Express middleware
-│   ├── models/               # Data models & validators
-│   │   ├── dto/              # Data Transfer Objects
-│   │   └── validators/       # Input validators
-│   ├── routes/               # API routes
-│   │   ├── offers.routes.ts  # ✅ Atomic swap endpoints (ACTIVE)
-│   │   └── index.ts
-│   ├── services/             # Business logic
-│   │   ├── offerManager.ts          # ✅ Atomic swap manager (ACTIVE)
-│   │   ├── assetValidator.ts        # ✅ NFT/cNFT/SOL validation (ACTIVE)
-│   │   ├── feeCalculator.ts         # ✅ Dynamic fees (ACTIVE)
-│   │   ├── transactionBuilder.ts    # ✅ Swap transactions (ACTIVE)
-│   │   ├── noncePoolManager.ts      # ✅ Durable transactions (ACTIVE)
-│   │   └── solana.service.ts        # ✅ Blockchain ops (ACTIVE)
-│   ├── utils/                # Utility functions
-│   │   └── swap-type-validator.ts   # ✅ Swap logic (ACTIVE)
-│   ├── public/               # Static assets (Swagger UI)
-│   └── index.ts              # Application entry point
-├── prisma/                    # Database
-│   ├── schema.prisma         # Database schema (atomic swaps)
-│   ├── migrations/           # Migration files
-│   └── seed.ts               # Dev seed data
-├── programs/                  # Solana programs
-│   └── escrow/               # Atomic swap smart contract
-│       ├── src/lib.rs        # Program logic
-│       ├── Cargo.toml
-│       └── README.md
-├── tests/                     # Test suites
-│   ├── unit/                 # Unit tests
-│   │   ├── atomic-swap-*.test.ts    # ✅ Atomic swap tests (ACTIVE)
-│   │   └── nonce-pool-*.test.ts     # ✅ Nonce tests (ACTIVE)
-│   ├── integration/          # Integration tests
-│   ├── staging/e2e/          # Staging E2E tests
-│   │   └── 01-atomic-nft-for-sol-happy-path.test.ts  # ✅ Primary E2E (ACTIVE)
-│   ├── legacy/               # ⏸️ Legacy escrow tests (PARKED)
-│   └── helpers/              # Test utilities
-├── scripts/                   # Utility scripts
-│   ├── deployment/           # Deployment automation
-│   ├── development/          # Dev utilities
-│   └── testing/              # Test helpers
-├── Anchor.toml               # Dev Anchor config
-├── Anchor.staging.toml       # Staging Anchor config
-├── Anchor.mainnet.toml       # Production Anchor config
-├── docker-compose.yml        # Docker services
-├── Dockerfile                # Production Docker image
-└── package.json              # Node.js dependencies
-```
+| Service | Purpose |
+|---------|---------|
+| `offerManager.ts` | Atomic swap offer lifecycle (create/accept/cancel) |
+| `transactionBuilder.ts` | Builds swap transaction instructions |
+| `transactionGroupBuilder.ts` | Multi-transaction bundles for bulk swaps |
+| `bulkSwapExecutor.ts` | Jito bundle execution with TwoPhase fallback |
+| `assetValidator.ts` | NFT/cNFT/SOL ownership and metadata validation |
+| `cnftService.ts` | DAS API integration for cNFT Merkle proofs |
+| `feeCalculator.ts` | Dynamic platform fee calculation |
+| `noncePoolManager.ts` | Durable nonce account management |
+
+### Institution Escrow Services
+
+| Service | Purpose |
+|---------|---------|
+| `institution-auth.service.ts` | JWT authentication (access + refresh tokens) |
+| `institution-escrow.service.ts` | USDC escrow lifecycle (create/fund/release/cancel) |
+| `institution-escrow-program.service.ts` | On-chain transaction building (PDA derivation, ATA management) |
+| `institution-client-settings.service.ts` | Client settings, wallet, and API key management |
+| `institution-file.service.ts` | Document uploads to DigitalOcean Spaces |
+| `ai-analysis.service.ts` | AI compliance analysis via Claude API |
+| `allowlist.service.ts` | Wallet allowlist management (Redis + Prisma) |
+| `compliance.service.ts` | Corridor validation, risk scoring, volume limits |
+
+### Database Models
+
+**Atomic Swaps**: `Agreement`, `SwapOffer`, `NoncePoolEntry`, `Receipt`
+
+**Institution Escrow**: `InstitutionClient`, `InstitutionWallet`, `InstitutionRefreshToken`, `InstitutionClientSettings`, `InstitutionApiKey`, `InstitutionEscrow`, `InstitutionDeposit`, `InstitutionAuditLog`, `InstitutionAiAnalysis`, `InstitutionCorridor`, `InstitutionFile`
+
+### Solana Program
+
+| Environment | Network | Program ID | Status |
+|-------------|---------|------------|--------|
+| **DEV** | Devnet | `4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd` | Active |
+| **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | Active |
+| **PROD** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | LIVE |
+
+---
 
 ## Quick Start
 
-### Backend Development
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL 14+
+- Redis 6+
+- Solana CLI (for program development)
+- Anchor Framework (for program development)
+
+### Development
 
 ```bash
 # Install dependencies
@@ -169,549 +237,155 @@ npm run dev
 npm run build
 ```
 
-For detailed database setup instructions, see [DATABASE_SETUP.md](docs/setup/DATABASE_SETUP.md).
+### Docker
 
-### Solana Program Development
-
-**Prerequisites:**
-- Rust
-- Solana CLI
-- Anchor Framework
-
-See [SOLANA_SETUP.md](docs/setup/SOLANA_SETUP.md) for detailed installation instructions.
-
-```bash
-# Build the Solana program
-anchor build
-
-# Run tests
-anchor test
-
-# Deploy to devnet
-anchor deploy
-```
-
-## Solana Escrow Program
-
-The escrow program facilitates trustless transactions between buyers and sellers across multiple environments.
-
-### Multi-Environment Deployment
-
-| Environment | Network | Program ID | Status | Explorer |
-|-------------|---------|------------|--------|----------|
-| **DEV** | Devnet | `4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd` | ✅ Active | [View](https://explorer.solana.com/address/4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd?cluster=devnet) |
-| **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | ✅ Active | [View](https://explorer.solana.com/address/AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei?cluster=devnet) |
-| **PROD** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | ✅ LIVE | [View](https://solscan.io/account/2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx) |
-
-See [PROGRAM_IDS.md](docs/environments/PROGRAM_IDS.md) for complete program ID registry.
-
-### Features
-- **NFT & USDC Escrow**: Non-custodial on-chain secure holding of NFTs and USDC during transactions
-- **Automated Settlement**: Exchange assets when both parties fulfill obligations
-- **Time-based Expiry**: Automatic cancellation after deadline
-- **Admin Controls**: Emergency cancellation capability
-- **PDA Security**: Program Derived Addresses ensure secure asset custody
-- **Fee Collection**: Configurable platform fees with optional royalty support
-
-### Instructions
-- `init_agreement` - Create a new escrow
-- `deposit_usdc` - Buyer deposits USDC
-- `deposit_nft` - Seller deposits NFT
-- `settle` - Complete the exchange
-- `cancel_if_expired` - Cancel expired escrow
-- `admin_cancel` - Emergency cancellation
-
-For detailed program documentation, see [programs/escrow/README.md](programs/escrow/README.md).
-
-## Backend API Features
-
-### 🔌 Interactive API Documentation
-
-**Swagger UI** is available at `/docs` for interactive API exploration:
-
-- **Local**: http://localhost:3000/docs
-- **Staging**: https://api-staging.easyescrow.ai/docs
-- **Production**: https://api.easyescrow.ai/docs
-
-Features:
-- Try out API endpoints directly from your browser
-- Complete request/response schemas with examples
-- Authentication testing interface
-- Error code reference
-
-See [SWAGGER_IMPLEMENTATION.md](docs/api/SWAGGER_IMPLEMENTATION.md) for details.
-
-### Agreement Management
-Complete CRUD operations for escrow agreements:
-- **Create Agreement**: Initialize new escrow with NFT and USDC terms
-- **Get Agreement**: Retrieve agreement details by ID
-- **List Agreements**: Query agreements with filters (status, buyer, seller, NFT)
-- **Update Status**: Modify agreement status through lifecycle
-- **Delete Agreement**: Remove agreements (admin only)
-
-**Key Endpoints:**
-- `POST /v1/agreements` - Create new agreement
-- `GET /v1/agreements/:id` - Get agreement details
-- `GET /v1/agreements` - List agreements with filters
-- `PUT /v1/agreements/:id/status` - Update agreement status
-- `DELETE /v1/agreements/:id` - Delete agreement
-
-### Real-Time Deposit Monitoring
-Automatic monitoring and processing of deposits:
-- **USDC Deposit Monitoring**: Real-time detection of USDC transfers
-- **NFT Deposit Monitoring**: Automatic NFT ownership verification
-- **WebSocket Subscriptions**: Live monitoring of deposit addresses
-- **Status Updates**: Automatic agreement status transitions
-- **Event Emission**: Webhooks for deposit events
-
-**Features:**
-- Background service monitoring all active agreements
-- Automatic restart on failures with exponential backoff
-- Health checks and metrics collection
-- Comprehensive error handling and logging
-
-See [DEPOSIT_MONITORING.md](docs/architecture/DEPOSIT_MONITORING.md) for details.
-
-### Expiry & Cancellation Management
-Automated lifecycle management for agreements:
-- **Expiry Checking**: Background service monitoring agreement deadlines
-- **Refund Processing**: Automatic refund calculation and execution for partial deposits
-- **Admin Cancellation**: Multisig approval workflow for emergency cancellations
-- **Status Engine**: Rule-based automatic status transitions
-- **Orchestration**: Unified service coordinating all expiry/cancellation operations
-
-**Key Endpoints:**
-- `GET /api/expiry-cancellation/status` - Get orchestrator status
-- `POST /api/expiry-cancellation/check-expired` - Manual expiry check
-- `GET /api/expiry-cancellation/expiring-soon` - Get agreements about to expire
-- `POST /api/expiry-cancellation/refund/process/:id` - Process refunds
-
-### Settlement Receipts
-Cryptographically signed receipts for completed transactions:
-- **Receipt Generation**: Automatic creation on settlement
-- **Digital Signatures**: Ed25519 signatures for verification
-- **Receipt Verification**: Public API for signature validation
-- **Transaction Logs**: Complete audit trail of all operations
-
-**Key Endpoints:**
-- `GET /v1/receipts` - List receipts
-- `GET /v1/receipts/{id}` - Get receipt by ID
-- `GET /v1/receipts/agreement/{id}` - Get receipt by agreement
-- `POST /v1/receipts/{id}/verify` - Verify receipt signature
-
-### Webhook System
-Real-time event notifications for all escrow lifecycle events:
-- **Event Types**: ESCROW_FUNDED, ESCROW_ASSET_LOCKED, ESCROW_SETTLED, ESCROW_EXPIRED, ESCROW_REFUNDED
-- **Retry Logic**: Automatic retry with exponential backoff
-- **Signature Verification**: HMAC-SHA256 webhook signatures
-- **Delivery Tracking**: Monitor webhook delivery status
-
-**Management Endpoints:**
-- `GET /api/webhooks/{agreementId}` - Get webhooks for agreement
-- `GET /api/webhooks/status/{webhookId}` - Get webhook delivery status
-- `POST /api/webhooks/retry/{webhookId}` - Retry webhook delivery
-
-See [WEBHOOK_EVENTS.md](docs/api/WEBHOOK_EVENTS.md) and [WEBHOOK_SYSTEM.md](docs/architecture/WEBHOOK_SYSTEM.md) for complete documentation.
-
-## Development Workflow
-
-### Setting Up Solana Environment (First Time)
-
-1. Follow the complete setup guide in [SOLANA_SETUP.md](SOLANA_SETUP.md)
-2. Install Rust, Solana CLI, and Anchor Framework
-3. Configure for devnet and get test SOL
-4. Build and test the program
-
-### Making Changes to the Smart Contract
-
-1. Edit `programs/escrow/src/lib.rs`
-2. Run `anchor build` to compile
-3. Run `anchor test` to verify functionality
-4. Deploy with `anchor deploy` when ready
-
-### Backend Integration
-
-The backend will integrate with the deployed Solana program via:
-- Anchor TypeScript client
-- Web3.js for transaction signing
-- WebSocket subscriptions for real-time updates
-
-## Testing
-
-### Test Coverage
-
-The project includes comprehensive test coverage across multiple levels:
-
-| Test Type | Location | Coverage | Purpose |
-|-----------|----------|----------|---------|
-| **Unit Tests** | `tests/unit/` | 80%+ | Service logic, utilities, validators |
-| **Integration Tests** | `tests/integration/` | All endpoints | API routes, database operations |
-| **E2E Tests** | `tests/staging/` | Critical paths | End-to-end workflows on devnet |
-| **On-Chain Tests** | `tests/escrow.ts` | All instructions | Solana program security & functionality |
-
-### Running Tests
-
-#### Backend Tests
-```bash
-# Run all tests
-npm test
-
-# Unit tests only
-npm run test:unit
-
-# Integration tests only
-npm run test:integration
-
-# Watch mode (auto-rerun on changes)
-npm run test:watch
-
-# Validation suite (types, lint, tests)
-npm run validate
-```
-
-#### On-Chain Tests - Localnet (Recommended)
-Fast, free, and deterministic testing on local validator:
-
-```bash
-# Terminal 1: Start local validator
-npm run localnet:start
-
-# Terminal 2: Setup and run tests
-npm run localnet:setup
-anchor build && anchor deploy
-npm run test:localnet
-```
-
-See [LOCALNET_SETUP.md](docs/setup/LOCALNET_SETUP.md) for complete setup guide.
-
-#### On-Chain Tests - Devnet
-```bash
-anchor test
-anchor test -- --show-logs  # With detailed logs
-```
-
-#### E2E Tests - Staging Environment
-```bash
-# Run staging E2E tests
-npm run test:staging
-
-# Run production smoke tests
-npm run test:production
-```
-
-### Test Documentation
-
-- **[TESTING_STRATEGY.md](docs/testing/TESTING_STRATEGY.md)** - Complete testing strategy and best practices
-- **[QUICK_START_E2E_TESTING.md](docs/testing/QUICK_START_E2E_TESTING.md)** - E2E testing guide
-- **[TEST_COVERAGE_SUMMARY.md](docs/testing/TEST_COVERAGE_SUMMARY.md)** - Coverage reports
-
-## Deployment
-
-### Solana Program Deployment
-
-⚠️ **CRITICAL:** We use **STATIC program IDs**. Always verify you're upgrading existing programs, not creating new ones!
-
-**Staging (Devnet):**
-```bash
-# Build for staging
-npm run solana:build:staging
-
-# Deploy (script includes safety checks)
-./scripts/deployment/staging/deploy-to-staging.ps1
-```
-
-**Production (Mainnet):**
-```bash
-# Build for mainnet
-npm run solana:build:mainnet
-
-# Deploy (script includes safety checks)
-./scripts/deployment/production/deploy-to-production.ps1
-```
-
-**Safety Checks:**
-- Scripts validate program ID before deployment
-- Blocks accidental new program creation
-- See [PROGRAM_DEPLOYMENT_SAFETY.md](docs/deployment/PROGRAM_DEPLOYMENT_SAFETY.md) for details
-
-### Backend Deployment
-
-**Production (DigitalOcean App Platform - Singapore Region):**
-
-Infrastructure deployed in **Singapore (sgp1)** for optimal Asia-Pacific performance:
-
-**Monthly Costs (USD/AUD):**
-- **Digital Ocean App Servers:**
-  - Dev: $5/m USD (~$8/m AUD)
-  - Staging: $5/m USD (~$8/m AUD)
-  - Production: $15/m USD (~$23/m AUD)
-- **Digital Ocean Droplet Servers:**
-  - Production: $6/m USD (~$9/m AUD)
-- **Digital Ocean PostgreSQL Databases:**
-  - Dev: FREE
-  - Staging: $15/m USD (~$23/m AUD)
-  - Production: $15/m USD (~$23/m AUD)
-- **Digital Ocean Spaces (Object Storage):**
-  - Test storage: $5/m USD (~$8/m AUD)
-  - Production storage: $5/m USD (~$8/m AUD)
-- **Redis Cloud:**
-  - Staging: FREE
-  - Production: $25/m USD (~$39/m AUD)
-- **QuickNode RPC:** $49/m USD (~$75/m AUD)
-
-**Note:** Private VPC (Virtual Private Cloud) is planned for future implementation but not yet deployed.
-
-Quick Deploy:
-```bash
-# Deploy to DEV (FREE database)
-doctl apps create --spec .do/app-dev.yaml
-
-# Deploy to STAGING  
-doctl apps create --spec .do/app-staging.yaml
-
-# Deploy to PROD
-doctl apps create --spec .do/app.yaml
-```
-
-**Deployment Documentation:**
-- **[Deployment Scripts Guide](docs/DEPLOYMENT_SCRIPTS_GUIDE.md)** - Automated deployment with devnet secrets ⭐ NEW
-- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment instructions ⭐
-- **[Devnet Deployment Guide](docs/DEVNET_DEPLOYMENT_GUIDE.md)** - E2E testing on devnet ⭐ NEW
-- **[Deployment Summary](docs/DEPLOYMENT_SUMMARY.md)** - Quick reference with credentials
-- [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure details
-- [Redis Infrastructure](docs/setup/REDIS_INFRASTRUCTURE.md) - Redis Cloud configuration
-- [Spaces Setup](docs/SPACES_SETUP.md) - Object storage setup
-
-**Environment References:**
-- **[STAGING Reference](docs/STAGING_REFERENCE.md)** - Complete STAGING environment reference (program IDs, wallets, infrastructure) ⭐ NEW
-- [Program IDs](docs/PROGRAM_IDS.md) - Program IDs across all environments
-- [STAGING Wallets](docs/STAGING_WALLETS.md) - STAGING wallet addresses and management
-
-**Docker (Local/Testing):**
-
-Using npm scripts (recommended):
 ```bash
 # Start all services (backend, PostgreSQL, Redis)
 npm run docker:start
 
-# Restart services (graceful)
-npm run docker:restart                # All services
-npm run docker:restart:backend        # Backend only
-npm run docker:restart:db             # Database only
-npm run docker:restart:redis          # Redis only
+# Graceful restart
+npm run docker:restart
 
-# Rebuild and restart (after code changes)
-npm run docker:rebuild                # All services
-npm run docker:rebuild:backend        # Backend only
+# Rebuild after code changes
+npm run docker:rebuild
 
-# Fresh start (eliminate all cache issues)
-npm run docker:fresh                  # Complete fresh build (removes all data)
-npm run docker:fresh:keep-data        # Fresh build but keep database/Redis data
-npm run docker:fresh:seed             # Fresh build with sample data
+# Fresh start (removes all data)
+npm run docker:fresh
 
 # View logs
-npm run docker:logs                   # All services
-npm run docker:logs:backend           # Backend only
-npm run docker:logs:db                # Database only
-npm run docker:logs:redis             # Redis only
-
-# Check service health
-npm run docker:ps                     # Service status
-npm run docker:health                 # Health check
-
-# Stop all services
-npm run docker:stop
+npm run docker:logs
 ```
 
-Or using Docker Compose directly:
-```bash
-# Build the Docker image
-docker build -t easyescrow-backend:latest .
+**Important**: Always use Docker compose commands for restarts. Never use process killing commands (`pkill`, `taskkill`) with Dockerized services.
 
-# Run with Docker Compose (includes PostgreSQL and Redis)
-docker compose up -d
+---
 
-# Graceful restart (ALWAYS use this instead of killing processes)
-docker compose restart backend
+## Testing
 
-# Check logs
-docker compose logs -f backend
+| Test Type | Command | Timeout |
+|-----------|---------|---------|
+| Unit tests | `npm run test:unit` | 10s |
+| Single test file | `npx cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/YOUR_TEST.test.ts --timeout 10000` | 10s |
+| Integration tests | `npm run test:integration` | 20s |
+| Staging E2E | `npm run test:staging:e2e:atomic:all` | 180s |
+| Production smoke | `npm run test:production:smoke:all` | 180s |
 
-# Health check (PowerShell)
-Invoke-WebRequest -Uri "http://localhost:3000/health" -Method GET
-```
+### Test Coverage
 
-**Important:** Always use Docker commands for graceful restarts. Never use process killing commands (`pkill`, `taskkill`) with Dockerized services. See [DOCKER_GRACEFUL_RESTART.md](docs/DOCKER_GRACEFUL_RESTART.md) for complete guide.
+| Area | Files | Tests |
+|------|-------|-------|
+| Atomic Swap Routing | `swapFlowRouterIntegration`, `swapMethodSelection`, `apiDelegationRouting` | 50+ |
+| Institution Auth | `institutionAuthService`, `institutionJwtMiddleware` | 40+ |
+| Institution Escrow | `institutionEscrowService`, `institutionEscrowStateMachine` | 40+ |
+| Institution Settings | `institutionClientSettings` | 25+ |
+| Compliance & Allowlist | `complianceService`, `allowlistService` | 30+ |
+| AI Analysis | `aiAnalysisService` | 22 |
+| File Service | `institutionFileService` | 32 |
+| Program Service | `institutionEscrowProgramService` | 28 |
+| Validators | `solanaValidator` | 48 |
+| Validation Middleware | `institutionEscrowValidation` | 57 |
 
-**Cache Issues?** If you're experiencing Docker cache issues (old code, stale configs, outdated IDLs), use the fresh start script to completely rebuild everything. See [DOCKER_CACHE_ELIMINATION.md](docs/DOCKER_CACHE_ELIMINATION.md) for details.
-
-See [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) for complete Docker guide including:
-- Docker Compose setup
-- Production deployment best practices
-- Kubernetes deployment examples
-- Environment variable configuration
-- Graceful restart strategies
-
-**Manual Deployment:**
-```bash
-# Build the application
-npm run build
-
-# Run database migrations
-npm run db:migrate:deploy
-
-# Start the production server
-npm start
-```
+---
 
 ## Environment Variables
 
-Create a `.env` file in the project root. See [ENV_TEMPLATE.md](docs/ENV_TEMPLATE.md) for complete template with all variables and devnet wallet configuration.
+### Core
 
 ```env
-# Server Configuration
 PORT=3000
 NODE_ENV=development
-
-# Database
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/easyescrow_dev?schema=public"
-
-# Solana
-SOLANA_NETWORK=devnet
 SOLANA_RPC_URL=https://api.devnet.solana.com
-ESCROW_PROGRAM_ID=
-
-# Wallet Configuration (Required)
-# Admin Wallet (for settlement operations)
-DEVNET_ADMIN_PRIVATE_KEY=your_admin_private_key_base58
-DEVNET_ADMIN_ADDRESS=your_admin_public_key
-
-# Fee Collector Wallet (for platform fees)
-DEVNET_FEE_COLLECTOR_PRIVATE_KEY=your_fee_collector_private_key_base58
-DEVNET_FEE_COLLECTOR_ADDRESS=your_fee_collector_public_key
-
-# Platform Fee Collector Address
-PLATFORM_FEE_COLLECTOR_ADDRESS=your_platform_fee_collector_address
-
-# Security
-JWT_SECRET=your_jwt_secret
-API_KEY_SECRET=your_api_key_secret
-
-# Redis
+ESCROW_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
 REDIS_URL=redis://localhost:6379
-
-# Platform
-PLATFORM_FEE_BPS=250
+JWT_SECRET=your_jwt_secret_min_32_chars
 ```
 
-**Important:** Replace wallet private keys and addresses with your actual values. Never commit these to version control.
+### Atomic Swaps
 
-See `.env.example` for complete configuration options.
+```env
+JITO_BUNDLES_ENABLED=true
+JITO_AUTH_UUID=                         # Optional, 5 rps with UUID vs 1 rps without
+PLATFORM_FEE_BPS=250
+PLATFORM_FEE_COLLECTOR_ADDRESS=your_fee_collector_address
+```
+
+### Institution Escrow (required when `INSTITUTION_ESCROW_ENABLED=true`)
+
+```env
+INSTITUTION_ESCROW_ENABLED=false        # Feature flag
+USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+INSTITUTION_ESCROW_MIN_USDC=1           # $1 minimum
+INSTITUTION_ESCROW_MAX_USDC=3000        # $3,000 maximum
+ANTHROPIC_API_KEY=your_claude_api_key   # AI compliance analysis
+AI_ANALYSIS_MODEL=claude-sonnet-4-20250514
+SETTLEMENT_AUTHORITY_API_KEY=your_settlement_key
+DO_SPACES_ENDPOINT=nyc3.digitaloceanspaces.com
+DO_SPACES_REGION=nyc3
+DO_SPACES_BUCKET=your_bucket_name
+DO_SPACES_KEY=your_spaces_key
+DO_SPACES_SECRET=your_spaces_secret
+```
+
+See `.env.example` for the complete list of all configuration options.
+
+---
+
+## Deployment
+
+### DigitalOcean App Platform (Production)
+
+Infrastructure deployed in **Singapore (sgp1)** for optimal Asia-Pacific performance.
+
+```bash
+# Deploy to staging
+doctl apps create --spec .do/app-staging.yaml
+
+# Deploy to production
+doctl apps create --spec .do/app.yaml
+```
+
+### API Documentation
+
+Interactive API docs are available at `/docs` on each environment:
+
+- **Local**: http://localhost:3000/docs
+- **Staging**: https://staging-api.easyescrow.ai/docs
+- **Production**: https://api.easyescrow.ai/docs
+
+---
 
 ## Security
 
-EasyEscrow.ai implements comprehensive security measures across all layers:
+- **Rate Limiting**: Per-endpoint rate limits (5/15min for auth, 30/min standard, 10/min for sensitive operations)
+- **JWT Authentication**: Access + refresh token pattern for institution clients
+- **Settlement Authority**: Separate API key required for fund release operations
+- **PDA Security**: Program Derived Addresses for on-chain asset custody
+- **Input Validation**: Express-validator chains on all endpoints
+- **AI Data Anonymisation**: PII redacted before document analysis
+- **File Upload Security**: Mime type validation, size limits, filename sanitisation
+- **CORS & Helmet**: Security headers and origin whitelisting
+- **Constant-Time Comparison**: Timing-safe token verification
 
-### Secrets Management
-- **No Hardcoded Secrets**: All sensitive data loaded from environment variables
-- **Pre-commit Scanning**: Automatic detection of accidentally committed secrets
-- **Secure Storage**: Integration with DigitalOcean secrets, AWS Secrets Manager, Kubernetes secrets
-- **Keypair Formats**: Support for JSON array, Base58, and Base64 formats
-- **Automatic Validation**: Startup validation of all required secrets
-
-See [SECRETS_MANAGEMENT.md](docs/security/SECRETS_MANAGEMENT.md) for complete guide.
-
-### API Security
-- **Rate Limiting**: 100 requests per 15 minutes (standard), 10 requests per 15 minutes (strict endpoints)
-- **CORS Protection**: Configurable origin whitelist
-- **Helmet.js**: Security headers (CSP, HSTS, X-Frame-Options, etc.)
-- **Input Validation**: Comprehensive DTO validation with Joi
-- **Idempotency Keys**: Prevent duplicate transaction processing
-- **Request Signing**: HMAC-SHA256 webhook signatures
-
-### On-Chain Security
-- **PDA Security**: Program Derived Addresses prevent unauthorized access
-- **Account Validation**: Strict validation of all account ownership and data
-- **Amount Verification**: Precise lamport-level amount checking
-- **Double-Spend Prevention**: State checks prevent duplicate deposits/settlements
-- **Time-Lock Protection**: Expiry-based automatic cancellation
-- **Admin Controls**: Multi-signature emergency cancellation (planned for mainnet)
-
-### Infrastructure Security
-- **Private VPC**: Planned for future implementation (not yet deployed)
-- **Encrypted Secrets**: All secrets encrypted at rest in DigitalOcean
-- **TLS/SSL**: HTTPS enforced for all API endpoints
-- **Database Security**: SSL-required PostgreSQL connections
-- **Redis Security**: Password-protected Redis instances
-- **Audit Logging**: Complete transaction logs for all operations
-
-### Security Documentation
-- [SECRETS_MANAGEMENT.md](docs/security/SECRETS_MANAGEMENT.md) - Comprehensive secrets management guide
-- [SECURITY_POLICY.md](docs/security/SECURITY_POLICY.md) - Security policy and reporting
-- [DIGITALOCEAN_SECRETS_CONFIGURATION.md](docs/DIGITALOCEAN_SECRETS_CONFIGURATION.md) - Platform secrets setup
+---
 
 ## Documentation
 
-📚 **Complete documentation available in [docs/](docs/) directory**
+- [OpenAPI Specification](docs/api/openapi.yaml) — Complete API spec
+- [Swagger Implementation](docs/api/SWAGGER_IMPLEMENTATION.md) — Docs setup guide
+- [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) — Multi-NFT swap design
+- [Swap Routing](docs/architecture/SWAP_ROUTING.md) — Jito vs escrow routing logic
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) — Full deployment instructions
+- [Docker Guide](docs/DOCKER_DEPLOYMENT.md) — Docker deployment
+- [Testing Strategy](docs/testing/TESTING_STRATEGY.md) — Test approach and best practices
+- [Secrets Management](docs/security/SECRETS_MANAGEMENT.md) — Secrets handling guide
 
-### Quick Links
-
-#### API Documentation
-- **[API Overview](docs/api/README.md)** - Complete API reference
-- **[OpenAPI Specification](docs/api/openapi.yaml)** - OpenAPI 3.0 spec
-- **[Swagger UI](http://localhost:3000/docs)** - Interactive API documentation
-- **[Integration Guide](docs/api/INTEGRATION_GUIDE.md)** - Step-by-step integration
-- **[Webhook Events](docs/api/WEBHOOK_EVENTS.md)** - Real-time event notifications
-- **[Error Codes](docs/api/ERROR_CODES.md)** - Complete error reference
-
-#### Setup & Getting Started
-- [Setup Instructions](docs/setup/SETUP_INSTRUCTIONS.md) - Complete setup guide
-- [Solana Setup](docs/setup/SOLANA_SETUP.md) - Solana development setup
-- [Database Setup](docs/setup/DATABASE_SETUP.md) - Database configuration
-- [Localnet Setup](docs/setup/LOCALNET_SETUP.md) - Local validator testing
-- [Environment Variables](docs/environments/ENVIRONMENT_VARIABLES.md) - Configuration reference
-
-#### Testing
-- [Testing Strategy](docs/testing/TESTING_STRATEGY.md) - Complete testing approach
-- [Quick Start E2E Testing](docs/testing/QUICK_START_E2E_TESTING.md) - E2E test guide
-- [Test Coverage Summary](docs/testing/TEST_COVERAGE_SUMMARY.md) - Coverage reports
-
-#### Architecture & Design
-- [Deposit Monitoring](docs/architecture/DEPOSIT_MONITORING.md) - Real-time monitoring system
-- [Webhook System](docs/architecture/WEBHOOK_SYSTEM.md) - Event notification architecture
-- [IDL Management](docs/architecture/IDL_MANAGEMENT.md) - Solana IDL handling
-- [Idempotency Implementation](docs/architecture/IDEMPOTENCY_IMPLEMENTATION.md) - Duplicate prevention
-
-#### Deployment
-- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Complete deployment instructions
-- [Docker Deployment](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
-- [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure setup
-- [Environment Setup](docs/environments/ENVIRONMENT_SETUP.md) - Multi-environment configuration
-
-#### Security
-- **[Secrets Management](docs/security/SECRETS_MANAGEMENT.md)** - Comprehensive secrets guide
-- [Security Policy](docs/security/SECURITY_POLICY.md) - Security policy and reporting
-- [DigitalOcean Secrets](docs/DIGITALOCEAN_SECRETS_CONFIGURATION.md) - Platform secrets setup
-
-#### Environments
-- [Program IDs](docs/environments/PROGRAM_IDS.md) - Program IDs across environments
-- [Environment Variables](docs/environments/ENVIRONMENT_VARIABLES.md) - Configuration reference
-- [Staging Strategy](docs/architecture/STAGING_STRATEGY.md) - Staging environment approach
-
-### External Resources
-- [Anchor Documentation](https://www.anchor-lang.com/)
-- [Solana Documentation](https://docs.solana.com/)
-- [Solana Cookbook](https://solanacookbook.com/)
-- [SPL Token Guide](https://spl.solana.com/token)
+---
 
 ## Support
 
-For issues or questions:
-- Check existing documentation
-- Review Anchor/Solana resources
-- Open an issue in this repository
+For issues or questions: support@easyescrow.ai
 
 ## License
 
 All rights reserved.
-
