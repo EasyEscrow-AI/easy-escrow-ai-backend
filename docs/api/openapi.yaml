@@ -217,7 +217,20 @@ tags:
   - name: Institution Escrow
     description: Cross-border stablecoin escrow payment lifecycle
   - name: AI Analysis
-    description: AI-powered escrow document risk analysis (renamed routes)
+    description: |
+      ## EasyEscrow AI
+
+      AI-powered analysis helpers for the institutional escrow portal, using Claude (claude-sonnet-4-20250514).
+
+      ### Analysis Types
+      - **Escrow Analysis** — full AI review of escrow details (amounts, corridor, wallets, risk, client context)
+      - **Document Analysis** — single file/document matched against an existing escrow (names, addresses, amounts)
+      - **Client Analysis** — AI review of institution client profile & compliance posture
+
+      ### Data Anonymization
+      All analysis endpoints support `?anonymize=true` (default) which tokenizes sensitive data
+      (company names, wallet addresses, PII) before sending to the AI model, then de-anonymizes
+      the response. Use `?anonymize=false` to send raw data (for testing/internal use).
   - name: Institution Admin
     description: Admin operations for allowlist and corridor management
 
@@ -2621,7 +2634,117 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # ── AI Analysis (renamed routes) ────────────────────────────────────
+  # ── AI Analysis — Escrow Analysis ───────────────────────────────────
+
+  /api/v1/ai/analyze-escrow/{escrow_id}:
+    post:
+      tags:
+        - AI Analysis
+      summary: Analyze escrow
+      description: |
+        Run a full AI analysis on an escrow's details including amounts, corridor risk,
+        client tier, KYC/KYB status, deposit status, and supporting documents.
+
+        Returns a risk score, recommendation, and human-readable summary.
+
+        **Data Anonymization**: Sensitive fields (company names, wallet addresses) are
+        tokenized before sending to AI and de-anonymized in the response by default.
+
+        **Rate Limited**: 10 requests per minute.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrow_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID to analyze
+        - in: query
+          name: anonymize
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Tokenize sensitive data before AI analysis (default true)
+      responses:
+        '200':
+          description: Escrow analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AiAnalysisResultWithSummary'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '503':
+          description: AI analysis service not configured (ANTHROPIC_API_KEY missing)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/ai/escrow-analysis/{escrow_id}:
+    get:
+      tags:
+        - AI Analysis
+      summary: Get escrow analysis results
+      description: Retrieve all stored AI escrow-level analysis results for a specific escrow.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrow_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID
+      responses:
+        '200':
+          description: Escrow analysis results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AiAnalysisResultWithSummary'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── AI Analysis — Document Analysis ────────────────────────────────
 
   /api/v1/ai/analyze-escrow-doc/{escrow_id}:
     post:
@@ -2740,6 +2863,96 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+
+  # ── AI Analysis — Client Analysis ───────────────────────────────────
+
+  /api/v1/ai/analyze-client:
+    post:
+      tags:
+        - AI Analysis
+      summary: Analyze client
+      description: |
+        Run AI analysis on the authenticated institution client's profile and compliance posture.
+        Evaluates KYC/KYB status, sanctions screening, entity type, jurisdiction risk,
+        transaction history, wallet configuration, and regulatory status.
+
+        **Data Anonymization**: PII (names, emails, addresses, tax IDs) is tokenized
+        before sending to AI by default.
+
+        **Rate Limited**: 10 requests per minute.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: anonymize
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Tokenize sensitive data before AI analysis (default true)
+      responses:
+        '200':
+          description: Client analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AiAnalysisResultWithSummary'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '503':
+          description: AI analysis service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/ai/client-analysis:
+    get:
+      tags:
+        - AI Analysis
+      summary: Get client analysis results
+      description: Retrieve all stored AI client-level analysis results for the authenticated client.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Client analysis results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AiAnalysisResultWithSummary'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── Institution Admin ──────────────────────────────────────────────────
 
@@ -5023,6 +5236,56 @@ components:
         analyzedAt:
           type: string
           format: date-time
+
+    AiAnalysisResultWithSummary:
+      type: object
+      properties:
+        riskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Risk score from 0 (low risk) to 100 (high risk)
+          example: 15
+        recommendation:
+          type: string
+          enum: [APPROVE, REVIEW, REJECT]
+          description: AI recommendation based on analysis
+          example: "APPROVE"
+        summary:
+          type: string
+          description: Human-readable 2-4 sentence summary of the analysis
+          example: "Low risk institution with verified KYC/KYB status operating in a standard corridor."
+        extractedFields:
+          type: object
+          description: Key fields extracted and evaluated by the AI
+          example:
+            escrow_status: "CREATED"
+            amount_usd: 1000
+            corridor: "SG-CH"
+            kyc_verified: true
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "corridor_risk"
+              weight:
+                type: number
+                minimum: 0
+                maximum: 1
+                example: 0.3
+              value:
+                type: number
+                minimum: 0
+                maximum: 100
+                example: 10
+          description: Individual risk factors with weights
+        details:
+          type: string
+          description: Brief explanation of risk factors
+          example: "SG-CH corridor is low risk with standard documentation requirements."
 
     # ── Institution Admin Schemas ───────────────────────────────────────
 

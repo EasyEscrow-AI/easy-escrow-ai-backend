@@ -41,7 +41,6 @@ export const ESCROW_SENSITIVE_FIELDS: SensitiveFieldMap = {
   'settlementAuthority': 'WALLET',
   'escrowPda': 'WALLET',
   'vaultPda': 'WALLET',
-  'nonceAccount': 'WALLET',
   'depositTxSignature': 'REFERENCE',
   'releaseTxSignature': 'REFERENCE',
 };
@@ -100,7 +99,7 @@ export class DataAnonymizer {
    * Returns a deep copy — original object is not modified.
    */
   anonymizeObject(data: Record<string, unknown>, sensitiveFields: SensitiveFieldMap): Record<string, unknown> {
-    const copy = structuredClone(data);
+    const copy = JSON.parse(JSON.stringify(data));
 
     for (const [fieldPath, category] of Object.entries(sensitiveFields)) {
       const value = getNestedValue(copy, fieldPath);
