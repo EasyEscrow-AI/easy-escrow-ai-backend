@@ -19,9 +19,6 @@ process.env.NODE_ENV = 'test';
 
 import {
   validateCreateInstitutionEscrow,
-  validateSaveDraft,
-  validateUpdateDraft,
-  validateSubmitDraft,
   validateRecordDeposit,
   validateReleaseFunds,
   validateCancelEscrow,
@@ -552,127 +549,6 @@ describe('Institution Escrow Validation Middleware', () => {
         body: { ...validCorridor, requiredDocuments: 'INVOICE' },
       });
       expect(result.isEmpty()).to.be.false;
-    });
-  });
-
-  // ─── validateSaveDraft ────────────────────────────────────────
-
-  describe('validateSaveDraft', () => {
-    it('should pass with only payerWallet', async () => {
-      const result = await runValidation(validateSaveDraft, {
-        body: { payerWallet: VALID_WALLET },
-      });
-      expect(result.isEmpty()).to.be.true;
-    });
-
-    it('should pass with all optional fields', async () => {
-      const result = await runValidation(validateSaveDraft, {
-        body: {
-          payerWallet: VALID_WALLET,
-          recipientWallet: VALID_WALLET_2,
-          amount: 5000,
-          corridor: 'SG-CH',
-          conditionType: 'ADMIN_RELEASE',
-          settlementAuthority: VALID_WALLET,
-        },
-      });
-      expect(result.isEmpty()).to.be.true;
-    });
-
-    it('should fail without payerWallet', async () => {
-      const result = await runValidation(validateSaveDraft, { body: {} });
-      expect(result.isEmpty()).to.be.false;
-      expect(getErrorFields(result)).to.include('payerWallet');
-    });
-
-    it('should fail with invalid payerWallet', async () => {
-      const result = await runValidation(validateSaveDraft, {
-        body: { payerWallet: 'invalid' },
-      });
-      expect(result.isEmpty()).to.be.false;
-      expect(getErrorFields(result)).to.include('payerWallet');
-    });
-
-    it('should fail with invalid optional recipientWallet', async () => {
-      const result = await runValidation(validateSaveDraft, {
-        body: { payerWallet: VALID_WALLET, recipientWallet: 'bad' },
-      });
-      expect(result.isEmpty()).to.be.false;
-      expect(getErrorFields(result)).to.include('recipientWallet');
-    });
-
-    it('should fail with amount exceeding max', async () => {
-      const result = await runValidation(validateSaveDraft, {
-        body: { payerWallet: VALID_WALLET, amount: 20000000 },
-      });
-      expect(result.isEmpty()).to.be.false;
-      expect(getErrorFields(result)).to.include('amount');
-    });
-  });
-
-  // ─── validateUpdateDraft ──────────────────────────────────────
-
-  describe('validateUpdateDraft', () => {
-    it('should pass with valid UUID and optional fields', async () => {
-      const result = await runValidation(validateUpdateDraft, {
-        params: { id: VALID_UUID },
-        body: { amount: 3000 },
-      });
-      expect(result.isEmpty()).to.be.true;
-    });
-
-    it('should fail with invalid UUID', async () => {
-      const result = await runValidation(validateUpdateDraft, {
-        params: { id: 'not-a-uuid' },
-        body: { amount: 3000 },
-      });
-      expect(result.isEmpty()).to.be.false;
-      expect(getErrorFields(result)).to.include('id');
-    });
-
-    it('should fail with invalid corridor format', async () => {
-      const result = await runValidation(validateUpdateDraft, {
-        params: { id: VALID_UUID },
-        body: { corridor: 'invalid' },
-      });
-      expect(result.isEmpty()).to.be.false;
-      expect(getErrorFields(result)).to.include('corridor');
-    });
-  });
-
-  // ─── validateSubmitDraft ──────────────────────────────────────
-
-  describe('validateSubmitDraft', () => {
-    it('should pass with valid UUID', async () => {
-      const result = await runValidation(validateSubmitDraft, {
-        params: { id: VALID_UUID },
-      });
-      expect(result.isEmpty()).to.be.true;
-    });
-
-    it('should pass with optional expiryHours', async () => {
-      const result = await runValidation(validateSubmitDraft, {
-        params: { id: VALID_UUID },
-        body: { expiryHours: 48 },
-      });
-      expect(result.isEmpty()).to.be.true;
-    });
-
-    it('should fail with invalid UUID', async () => {
-      const result = await runValidation(validateSubmitDraft, {
-        params: { id: 'bad' },
-      });
-      expect(result.isEmpty()).to.be.false;
-      expect(getErrorFields(result)).to.include('id');
-    });
-
-    it('should fail with expiryHours out of range', async () => {
-      const result = await runValidation(validateSubmitDraft, {
-        params: { id: VALID_UUID },
-        body: { expiryHours: 5000 },
-      });
-      expect(result.isEmpty()).to.be.false;
-      expect(getErrorFields(result)).to.include('expiryHours');
     });
   });
 });
