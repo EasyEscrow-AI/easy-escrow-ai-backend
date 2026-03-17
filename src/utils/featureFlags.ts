@@ -40,9 +40,10 @@ export function isJitoBundlesEnabled(): boolean {
   const network = process.env.SOLANA_NETWORK || 'devnet';
   const rpcUrl = process.env.SOLANA_RPC_URL || '';
 
+  // Explicit env vars take precedence; RPC URL heuristic is only a fallback
   const isMainnet = nodeEnv === 'production' ||
-                    network === 'mainnet-beta' ||
-                    rpcUrl.includes('mainnet');
+                    (network === 'mainnet-beta' && nodeEnv !== 'staging') ||
+                    (nodeEnv !== 'staging' && network !== 'devnet' && rpcUrl.includes('mainnet'));
 
   return isMainnet;
 }

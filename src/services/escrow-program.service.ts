@@ -29,30 +29,35 @@ import { loadAdminKeypair } from '../utils/loadAdminKeypair';
  * @returns true if mainnet-beta, false if devnet/testnet
  */
 function isMainnetNetwork(connection: Connection): boolean {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const network = process.env.SOLANA_NETWORK || 'devnet';
+
+  // Explicit env vars take precedence over RPC URL heuristic
+  if (nodeEnv === 'production') {
+    console.log(`[EscrowProgramService] Network detection: mainnet-beta (NODE_ENV=production)`);
+    return true;
+  }
+  if (nodeEnv === 'staging' || network === 'devnet') {
+    console.log(`[EscrowProgramService] Network detection: devnet (NODE_ENV=${nodeEnv}, SOLANA_NETWORK=${network})`);
+    return false;
+  }
+
+  // Fallback: RPC URL heuristic for development/unknown environments
   const rpcUrl = connection.rpcEndpoint.toLowerCase();
-  
-  // CRITICAL: Check for devnet/testnet FIRST to avoid false positives
-  // This prevents URLs like "devnet-mainnet-test.com" from being detected as mainnet
+
   if (rpcUrl.includes('devnet') || rpcUrl.includes('testnet')) {
     console.log(`[EscrowProgramService] Network detection: devnet/testnet (RPC: ${connection.rpcEndpoint})`);
     return false;
   }
-  
-  // Then check for mainnet-beta indicators
-  // Use specific patterns to avoid false positives
-  const isMainnet = 
-    rpcUrl.includes('mainnet-beta') || 
-    rpcUrl.includes('mainnet.beta') ||
-    rpcUrl.includes('api.mainnet') ||
-    // Fallback: check for "mainnet" but only if devnet/testnet already excluded above
-    rpcUrl.includes('mainnet');
-  
+
+  const isMainnet = rpcUrl.includes('mainnet');
+
   console.log(
     `[EscrowProgramService] Network detection: ${
       isMainnet ? 'mainnet-beta' : 'unknown (assuming devnet)'
     } (RPC: ${connection.rpcEndpoint})`
   );
-  
+
   return isMainnet;
 }
 

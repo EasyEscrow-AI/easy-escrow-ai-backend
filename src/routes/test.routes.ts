@@ -118,8 +118,10 @@ router.get('/api/test/config', (_req: Request, res: Response) => {
   const network = process.env.SOLANA_NETWORK || 'devnet';
   const rpcUrl = process.env.SOLANA_RPC_URL || '';
   
-  // Unified mainnet detection: NODE_ENV=production OR SOLANA_NETWORK=mainnet-beta OR RPC URL contains mainnet
-  const isMainnet = nodeEnv === 'production' || network === 'mainnet-beta' || rpcUrl.includes('mainnet');
+  // Explicit env vars take precedence; RPC URL heuristic is only a fallback
+  // NODE_ENV=staging or SOLANA_NETWORK=devnet explicitly means NOT mainnet, even if RPC URL contains 'mainnet'
+  const isMainnet = nodeEnv === 'production' || (network === 'mainnet-beta' && nodeEnv !== 'staging') ||
+    (nodeEnv !== 'staging' && network !== 'devnet' && rpcUrl.includes('mainnet'));
   
   let makerAddress: string | undefined;
   let takerAddress: string | undefined;
