@@ -2,12 +2,9 @@ openapi: 3.0.3
 info:
   title: EasyEscrow.ai API
   version: 1.0.0
-  description: Non-custodial atomic swap platform for NFTs and SOL on Solana, plus institutional cross-border USDC escrow payments. Browse the Documentation section for guides, or jump to API Reference for endpoint details.
   contact:
     name: EasyEscrow.ai Support
     email: support@easyescrow.ai
-  license:
-    name: ISC
     
 servers:
   - url: http://localhost:3000
@@ -20,10 +17,36 @@ servers:
 tags:
   - name: Introduction
     description: |
-      Backend API service for EasyEscrow.ai - Non-custodial atomic swap platform for NFTs and SOL on Solana.
+      Backend API service for EasyEscrow.ai - Non-custodial digital escrow platform on Solana.
 
-      EasyEscrow.ai uses **atomic swaps** - instant, non-custodial exchanges that execute in a single transaction.
-      Your assets are NEVER held in escrow. The swap happens atomically or not at all.
+      EasyEscrow.ai currently supports:
+
+      ### 1) Atomic Swaps
+      Instant, non-custodial digital swaps that execute in a single transaction.
+
+      **Features:**
+      - Peer-to-peer settlement. Your assets are NEVER held in escrow (only leaves wallet upon instant settlement).
+      - Swap happens all atomically or not at all (no partial settlement, no MEV attacks, no stuck assets).
+
+      ### 2) Institution Escrow
+      Programmable cross-border stablecoin escrow payments, built for institutions compliance and auditability.
+
+      **Features:**
+      - Front-end integration with EasyEscrow Institution client portal app.
+      - Solana DeFi stablecoin escrow settlement.
+      - Primary support for USDC and AMINA-approved whitelist only tokens.
+      - Primary support for Solana blockchain only.
+      - AI-assisted payments (the AI only verifies, does not automate payments).
+      - Escrow Settlement Mode: Atomic (non-custodial proof of funds) / Escrow (full PDA escrow).
+      - Escrow Release Terms: programmable release mechanisms.
+      - AI data anonymisation to keep sensitive data private from models.
+      - Wallet whitelists and jurisdiction payment corridors.
+      - Full blockchain audit of payment escrows and downloadable compliance & audit reports.
+      - Escrow document uploads to secure server.
+      - Supports KYC/KYB compliance integrations for clients (not activated for hackathon).
+      - Supports AMINA Payment Network (APN) integrations (not activated for hackathon).
+
+      EasyEscrow.ai Support: support@easyescrow.ai
   - name: Supported Swap Types
     x-displayName: Swap Types
     description: |
@@ -134,6 +157,8 @@ x-tagGroups:
   - name: Documentation
     tags:
       - Introduction
+  - name: Atomic Swaps
+    tags:
       - Supported Swap Types
       - Blockchain Support
       - Bundle Swaps
