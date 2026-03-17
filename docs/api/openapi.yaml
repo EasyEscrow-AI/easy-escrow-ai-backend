@@ -231,40 +231,6 @@ tags:
       All analysis endpoints support `?anonymize=true` (default) which tokenizes sensitive data
       (company names, wallet addresses, PII) before sending to the AI model, then de-anonymizes
       the response. Use `?anonymize=false` to send raw data (for testing/internal use).
-  - name: Institution Accounts
-    description: |
-      ## Institutional Accounts
-
-      Manage Solana wallet accounts linked to your institution for escrow operations.
-
-      ### Account Types
-      - **TREASURY** — Primary treasury wallet for institutional funds
-      - **OPERATIONS** — Day-to-day operations wallet
-      - **SETTLEMENT** — Dedicated wallet for escrow settlements
-      - **COLLATERAL** — Collateral/reserve wallet
-      - **GENERAL** — General-purpose wallet
-
-      ### Verification
-      Accounts go through verification: `PENDING` → `VERIFIED` / `SUSPENDED` / `REJECTED`.
-      Only verified accounts can be used for escrow operations.
-
-      Each institution can set one account as the **default** for new escrow creation.
-  - name: AI Chat
-    description: |
-      ## EasyEscrow AI Assistant
-
-      Conversational AI assistant for institutional escrow users, powered by Claude.
-
-      ### Features
-      - Natural language questions about escrow operations, compliance, and platform usage
-      - Context-aware responses based on the authenticated client's institution
-      - PII anonymization pipeline — sensitive data is tokenized before reaching the AI model
-      - Conversation history support for multi-turn interactions
-
-      ### Data Privacy
-      All messages pass through an anonymization pipeline that redacts PII (names, addresses,
-      wallet keys, amounts) before sending to the AI model. Responses are then de-anonymized
-      before returning to the client.
   - name: Institution Admin
     description: Admin operations for allowlist and corridor management
 
@@ -3060,6 +3026,96 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # ── AI Analysis — Client Analysis ───────────────────────────────────
+
+  /api/v1/ai/analyze-client:
+    post:
+      tags:
+        - AI Analysis
+      summary: Analyze client
+      description: |
+        Run AI analysis on the authenticated institution client's profile and compliance posture.
+        Evaluates KYC/KYB status, sanctions screening, entity type, jurisdiction risk,
+        transaction history, wallet configuration, and regulatory status.
+
+        **Data Anonymization**: PII (names, emails, addresses, tax IDs) is tokenized
+        before sending to AI by default.
+
+        **Rate Limited**: 10 requests per minute.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: anonymize
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Tokenize sensitive data before AI analysis (default true)
+      responses:
+        '200':
+          description: Client analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AiAnalysisResultWithSummary'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '503':
+          description: AI analysis service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/ai/client-analysis:
+    get:
+      tags:
+        - AI Analysis
+      summary: Get client analysis results
+      description: Retrieve all stored AI client-level analysis results for the authenticated client.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Client analysis results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AiAnalysisResultWithSummary'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ── Institution Admin ──────────────────────────────────────────────────
 
   /api/admin/institution-escrow/allowlist:
@@ -5474,55 +5530,6 @@ components:
           type: string
           description: Brief explanation of risk factors
           example: "SG-CH corridor is low risk with standard documentation requirements."
-
-    InstitutionAccount:
-      type: object
-      description: A Solana wallet account linked to an institution
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique account identifier
-          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-        clientId:
-          type: string
-          format: uuid
-          description: Owning institution client ID
-        walletAddress:
-          type: string
-          description: Solana wallet public key
-          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-        accountType:
-          type: string
-          enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
-          description: Purpose classification
-          example: "TREASURY"
-        label:
-          type: string
-          description: Human-readable label
-          example: "Main Treasury"
-        isDefault:
-          type: boolean
-          description: Whether this is the default account for new escrows
-          example: true
-        isActive:
-          type: boolean
-          description: Whether the account is active
-          example: true
-        verificationStatus:
-          type: string
-          enum: [PENDING, VERIFIED, SUSPENDED, REJECTED]
-          description: Account verification status
-          example: "VERIFIED"
-        balance:
-          type: object
-          description: Current balance information (included when fetched)
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
 
     # ── Institution Admin Schemas ───────────────────────────────────────
 

@@ -21,7 +21,6 @@ import {
   ESCROW_SENSITIVE_FIELDS,
   CLIENT_SENSITIVE_FIELDS,
 } from '../utils/data-anonymizer';
-import { escrowWhere } from '../utils/uuid-conversion';
 
 const AI_RATE_LIMIT_KEY_PREFIX = 'institution:ai:ratelimit:';
 const AI_RATE_LIMIT_MAX = 5; // 5 requests per minute per client
@@ -192,7 +191,7 @@ export class AiAnalysisService {
     await this.prisma.institutionAiAnalysis.create({
       data: {
         analysisType: 'DOCUMENT',
-        escrowId: resolvedEscrowId,
+        escrowId,
         clientId,
         fileId,
         documentHash,
@@ -230,7 +229,7 @@ export class AiAnalysisService {
     }
 
     const analyses = await this.prisma.institutionAiAnalysis.findMany({
-      where: { escrowId: escrow.escrowId, analysisType: 'DOCUMENT' },
+      where: { escrowId, analysisType: 'DOCUMENT' },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -258,7 +257,7 @@ export class AiAnalysisService {
     await this.checkRateLimit(clientId);
 
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { ...escrowWhere(escrowId), clientId },
+      where: { escrowId, clientId },
       include: {
         client: {
           select: {
@@ -280,10 +279,9 @@ export class AiAnalysisService {
     if (!escrow) {
       throw new Error('Escrow not found or access denied');
     }
-    const resolvedEscrowId = escrow.escrowId;
 
     // Check cache
-    const cacheKey = `${AI_CACHE_PREFIX}escrow:${resolvedEscrowId}`;
+    const cacheKey = `${AI_CACHE_PREFIX}escrow:${escrowId}`;
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) return JSON.parse(cached);
@@ -291,7 +289,7 @@ export class AiAnalysisService {
 
     // Check for existing analysis of same escrow (dedup by type)
     const existing = await this.prisma.institutionAiAnalysis.findFirst({
-      where: { escrowId: resolvedEscrowId, analysisType: 'ESCROW' },
+      where: { escrowId, analysisType: 'ESCROW' },
       orderBy: { createdAt: 'desc' },
     });
     // Re-analyze if escrow status changed since last analysis
@@ -327,7 +325,7 @@ export class AiAnalysisService {
       depositCount: escrow.deposits.length,
       fileCount: escrow.files.length,
       fileTypes: escrow.files.map(f => f.documentType),
-      expiresAt: escrow.expiresAt?.toISOString() ?? null,
+      expiresAt: escrow.expiresAt.toISOString(),
       createdAt: escrow.createdAt.toISOString(),
       fundedAt: escrow.fundedAt?.toISOString() || null,
       resolvedAt: escrow.resolvedAt?.toISOString() || null,
@@ -430,7 +428,7 @@ Respond with ONLY the JSON object, no additional text.`;
     await this.prisma.institutionAiAnalysis.create({
       data: {
         analysisType: 'ESCROW',
-        escrowId: resolvedEscrowId,
+        escrowId,
         clientId,
         riskScore: result.riskScore,
         factors: result.factors,
@@ -456,14 +454,14 @@ Respond with ONLY the JSON object, no additional text.`;
     clientId: string,
   ): Promise<Array<AiAnalysisResult & { summary: string }>> {
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { ...escrowWhere(escrowId), clientId },
+      where: { escrowId, clientId },
     });
     if (!escrow) {
       throw new Error('Escrow not found or access denied');
     }
 
     const analyses = await this.prisma.institutionAiAnalysis.findMany({
-      where: { escrowId: escrow.escrowId, analysisType: 'ESCROW' },
+      where: { escrowId, analysisType: 'ESCROW' },
       orderBy: { createdAt: 'desc' },
     });
 

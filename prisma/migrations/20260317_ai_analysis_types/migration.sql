@@ -7,17 +7,6 @@ ALTER TABLE "institution_ai_analyses"
   ADD COLUMN "client_id" TEXT,
   ADD COLUMN "summary" TEXT;
 
--- Backfill client_id from escrow's client for existing rows
-UPDATE "institution_ai_analyses" a
-  SET "client_id" = e."client_id"
-  FROM "institution_escrows" e
-  WHERE a."escrow_id" = e."escrow_id" AND a."client_id" IS NULL;
-
--- Ensure at least one of escrow_id or client_id is present
-ALTER TABLE "institution_ai_analyses"
-  ADD CONSTRAINT "institution_ai_analyses_ownership_chk"
-  CHECK ("escrow_id" IS NOT NULL OR "client_id" IS NOT NULL);
-
 -- Make escrow_id nullable (was required, now optional for CLIENT analyses)
 ALTER TABLE "institution_ai_analyses"
   ALTER COLUMN "escrow_id" DROP NOT NULL;

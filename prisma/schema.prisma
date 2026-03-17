@@ -916,11 +916,7 @@ model InstitutionClient {
   auditLogs       InstitutionAuditLog[]
   files           InstitutionFile[]
   wallets         InstitutionWallet[]
-  accounts        InstitutionAccount[]
   aiAnalyses      InstitutionAiAnalysis[] @relation("ClientAiAnalyses")
-  notifications   InstitutionNotification[]
-  branches        InstitutionBranch[]
-  directPayments  DirectPayment[]
 
   @@index([email])
   @@index([status])
