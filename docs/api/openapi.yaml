@@ -50,7 +50,9 @@ tags:
     description: |
       ## Changelog
 
-      ### v1.1.0 — Institutional Escrow (March 2026)
+      ### v1.1.0 — Institutional Escrow
+      **Released: 17 March 2026**
+
       Cross-border stablecoin escrow payments for institutional clients.
 
       - Institution client authentication (JWT) with registration, login, and token refresh
@@ -64,7 +66,9 @@ tags:
       - Settlement authority pattern for release operations
       - AI data anonymisation (PII redaction before model processing)
 
-      ### v1.0.0 — Atomic Swaps (October 2025)
+      ### v1.0.0 — Atomic Swaps
+      **Released: 15 October 2025**
+
       Non-custodial peer-to-peer NFT and SOL atomic swaps on Solana.
 
       - NFT ↔ SOL, NFT ↔ NFT, and NFT + SOL ↔ NFT swap types
