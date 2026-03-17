@@ -18,7 +18,7 @@ import axios, { AxiosInstance } from 'axios';
 import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { PrismaClient } from '../../src/generated/prisma';
+import { PrismaClient } from '../../../src/generated/prisma';
 
 // Test configuration
 const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
@@ -370,7 +370,7 @@ describe('🔑 API Key Zero-Fee Authorization E2E Tests (Staging)', () => {
         });
         
         console.log(`📊 Found ${apps.length} authorized app(s):`);
-        apps.forEach((app) => {
+        apps.forEach((app: any) => {
           console.log(`   - ${app.name}`);
           console.log(`     ID: ${app.id}`);
           console.log(`     Zero-fee enabled: ${app.zeroFeeEnabled}`);
