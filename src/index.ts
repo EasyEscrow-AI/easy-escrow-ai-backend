@@ -319,11 +319,56 @@ if (openApiDocument) {
     /* Any remaining white backgrounds in the middle panel */
     .redoc-wrap div[class] { background-color: inherit; }
     .redoc-wrap [class*="panel"] { background: #0f172a !important; }
-    .redoc-wrap [class*="content"] { background: transparent !important; }
+    .redoc-wrap [class*="content"]:not([class*="search"]):not([class*="Search"]) { background: transparent !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
-    /* Search bar margin */
-    .redoc-wrap [class*="search"], .redoc-wrap [role="search"] { margin-top: 20px !important; }
+    /* Search bar */
+    .redoc-wrap [class*="search"], .redoc-wrap [role="search"] { margin-top: 20px !important; padding: 0 10px !important; }
+    .redoc-wrap [role="search"] input[type="text"],
+    .redoc-wrap [class*="search"] input {
+      width: 100% !important;
+      min-height: 38px !important;
+      padding: 8px 12px !important;
+      font-size: 14px !important;
+      border-radius: 6px !important;
+      border: 1px solid #475569 !important;
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      box-sizing: border-box !important;
+      outline: none !important;
+    }
+    .redoc-wrap [role="search"] input:focus,
+    .redoc-wrap [class*="search"] input:focus {
+      border-color: #818cf8 !important;
+      box-shadow: 0 0 0 2px rgba(129,140,248,0.2) !important;
+    }
+    /* Search results dropdown */
+    .redoc-wrap [class*="search-results"],
+    .redoc-wrap [class*="SearchResults"],
+    .redoc-wrap [role="search"] ul,
+    .redoc-wrap [role="search"] [class*="menu"] {
+      background: #1e293b !important;
+      border: 1px solid #475569 !important;
+      border-radius: 6px !important;
+      color: #e2e8f0 !important;
+      z-index: 100 !important;
+      max-height: 400px !important;
+      overflow-y: auto !important;
+    }
+    .redoc-wrap [role="search"] li,
+    .redoc-wrap [class*="search-results"] li,
+    .redoc-wrap [class*="SearchResults"] li {
+      padding: 8px 12px !important;
+      color: #e2e8f0 !important;
+      background: transparent !important;
+      cursor: pointer !important;
+    }
+    .redoc-wrap [role="search"] li:hover,
+    .redoc-wrap [role="search"] li[class*="active"],
+    .redoc-wrap [class*="search-results"] li:hover {
+      background: #334155 !important;
+    }
+    .redoc-wrap [role="search"] label { display: none !important; }
     /* Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -363,6 +408,7 @@ if (openApiDocument) {
         spacing: { sectionVertical: 16 }
       },
       hideDownloadButton: true,
+      disableSearch: false,
       expandResponses: '200,201',
       pathInMiddlePanel: true,
       sortPropsAlphabetically: false,
