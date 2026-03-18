@@ -575,13 +575,16 @@ exports.Prisma.InstitutionAuditLogScalarFieldEnum = {
 
 exports.Prisma.InstitutionAiAnalysisScalarFieldEnum = {
   id: 'id',
+  analysisType: 'analysisType',
   escrowId: 'escrowId',
+  clientId: 'clientId',
   fileId: 'fileId',
   documentHash: 'documentHash',
   riskScore: 'riskScore',
   factors: 'factors',
   recommendation: 'recommendation',
   extractedFields: 'extractedFields',
+  summary: 'summary',
   model: 'model',
   createdAt: 'createdAt'
 };
@@ -599,6 +602,22 @@ exports.Prisma.InstitutionCorridorScalarFieldEnum = {
   riskLevel: 'riskLevel',
   status: 'status',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InstitutionApprovedTokenScalarFieldEnum = {
+  id: 'id',
+  symbol: 'symbol',
+  name: 'name',
+  mintAddress: 'mintAddress',
+  decimals: 'decimals',
+  issuer: 'issuer',
+  jurisdiction: 'jurisdiction',
+  chain: 'chain',
+  isDefault: 'isDefault',
+  isActive: 'isActive',
+  aminaApproved: 'aminaApproved',
+  addedAt: 'addedAt',
   updatedAt: 'updatedAt'
 };
 
@@ -852,6 +871,12 @@ exports.InstitutionEscrowStatus = exports.$Enums.InstitutionEscrowStatus = {
   FAILED: 'FAILED'
 };
 
+exports.AiAnalysisType = exports.$Enums.AiAnalysisType = {
+  DOCUMENT: 'DOCUMENT',
+  ESCROW: 'ESCROW',
+  CLIENT: 'CLIENT'
+};
+
 exports.CorridorStatus = exports.$Enums.CorridorStatus = {
   ACTIVE: 'ACTIVE',
   SUSPENDED: 'SUSPENDED',
@@ -892,6 +917,7 @@ exports.Prisma.ModelName = {
   InstitutionAuditLog: 'InstitutionAuditLog',
   InstitutionAiAnalysis: 'InstitutionAiAnalysis',
   InstitutionCorridor: 'InstitutionCorridor',
+  InstitutionApprovedToken: 'InstitutionApprovedToken',
   InstitutionFile: 'InstitutionFile'
 };
 

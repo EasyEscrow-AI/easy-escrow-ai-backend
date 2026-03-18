@@ -54,7 +54,7 @@ export interface InstitutionEscrowConfig {
  * Load institution escrow configuration from environment variables
  */
 export function loadInstitutionEscrowConfig(): InstitutionEscrowConfig {
-  const enabled = process.env.INSTITUTION_ESCROW_ENABLED === 'true';
+  const enabled = process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true';
 
   return {
     enabled,

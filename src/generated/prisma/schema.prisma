@@ -892,6 +892,7 @@ model InstitutionClient {
   auditLogs     InstitutionAuditLog[]
   files         InstitutionFile[]
   wallets       InstitutionWallet[]
+  aiAnalyses    InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
 
   @@index([email])
   @@index([status])
@@ -1080,26 +1081,38 @@ model InstitutionAuditLog {
   @@map("institution_audit_logs")
 }
 
-// AI analysis results
+// AI analysis results (document, escrow-level, and client-level)
 model InstitutionAiAnalysis {
-  id              String   @id @default(uuid())
-  escrowId        String   @map("escrow_id")
-  fileId          String?  @map("file_id")
-  documentHash    String?  @map("document_hash")
-  riskScore       Int      @map("risk_score") // 0-100
-  factors         Json     @default("[]") // Array of {name, weight, value}
+  id              String         @id @default(uuid())
+  analysisType    AiAnalysisType @default(DOCUMENT) @map("analysis_type")
+  escrowId        String?        @map("escrow_id")
+  clientId        String?        @map("client_id")
+  fileId          String?        @map("file_id")
+  documentHash    String?        @map("document_hash")
+  riskScore       Int            @map("risk_score") // 0-100
+  factors         Json           @default("[]") // Array of {name, weight, value}
   recommendation  String // APPROVE, REVIEW, REJECT
-  extractedFields Json     @default("{}") @map("extracted_fields")
+  extractedFields Json           @default("{}") @map("extracted_fields")
+  summary         String? // Human-readable analysis summary
   model           String // AI model used
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
 
-  escrow InstitutionEscrow @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  escrow InstitutionEscrow? @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  client InstitutionClient? @relation("ClientAiAnalyses", fields: [clientId], references: [id], onDelete: Cascade)
 
+  @@index([analysisType])
   @@index([escrowId])
+  @@index([clientId])
   @@index([riskScore])
   @@index([recommendation])
   @@index([createdAt])
   @@map("institution_ai_analyses")
+}
+
+enum AiAnalysisType {
+  DOCUMENT
+  ESCROW
+  CLIENT
 }
 
 // Corridor configuration
@@ -1122,6 +1135,33 @@ model InstitutionCorridor {
   @@index([status])
   @@index([sourceCountry, destCountry], name: "idx_corridor_countries")
   @@map("institution_corridors")
+}
+
+// ============================================
+// APPROVED TOKEN WHITELIST
+// ============================================
+
+// AMINA-approved stablecoin tokens for institution escrow
+model InstitutionApprovedToken {
+  id            String   @id @default(uuid())
+  symbol        String   @unique // e.g. "USDC", "USDT", "EURC"
+  name          String // e.g. "USD Coin"
+  mintAddress   String   @unique @map("mint_address") // Solana SPL token mint
+  decimals      Int      @default(6)
+  issuer        String // e.g. "Circle", "Tether", "Ripple"
+  jurisdiction  String? // e.g. "US", "EU", "SG"
+  chain         String   @default("solana")
+  isDefault     Boolean  @default(false) @map("is_default") // USDC = default
+  isActive      Boolean  @default(true) @map("is_active")
+  aminaApproved Boolean  @default(true) @map("amina_approved")
+  addedAt       DateTime @default(now()) @map("added_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([symbol])
+  @@index([mintAddress])
+  @@index([isActive])
+  @@index([aminaApproved])
+  @@map("institution_approved_tokens")
 }
 
 // ============================================
