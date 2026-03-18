@@ -19,6 +19,7 @@ const getAllowedOrigins = (): string[] => {
       'https://www.easyescrow.ai',
       'https://app.easyescrow.ai',
       'https://api.easyescrow.ai', // Allow API to call itself (for /test page)
+      'https://portal.easyescrow.ai',
     ];
   }
   
@@ -34,6 +35,8 @@ const getAllowedOrigins = (): string[] => {
     'https://www.easyescrow.ai',
     'https://app.easyescrow.ai',
     'https://staging-api.easyescrow.ai',
+    'https://portal.easyescrow.ai',
+    'https://staging-portal.easyescrow.ai',
   ];
 };
 
