@@ -691,6 +691,20 @@ exports.Prisma.InstitutionFileScalarFieldEnum = {
   uploadedAt: 'uploadedAt'
 };
 
+exports.Prisma.InstitutionNotificationScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  escrowId: 'escrowId',
+  type: 'type',
+  priority: 'priority',
+  title: 'title',
+  message: 'message',
+  metadata: 'metadata',
+  isRead: 'isRead',
+  readAt: 'readAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -974,6 +988,40 @@ exports.DocumentType = exports.$Enums.DocumentType = {
   OTHER: 'OTHER'
 };
 
+exports.NotificationType = exports.$Enums.NotificationType = {
+  ESCROW_CREATED: 'ESCROW_CREATED',
+  ESCROW_FUNDED: 'ESCROW_FUNDED',
+  ESCROW_RELEASED: 'ESCROW_RELEASED',
+  ESCROW_CANCELLED: 'ESCROW_CANCELLED',
+  ESCROW_EXPIRED: 'ESCROW_EXPIRED',
+  ESCROW_COMPLIANCE_HOLD: 'ESCROW_COMPLIANCE_HOLD',
+  KYC_APPROVED: 'KYC_APPROVED',
+  KYC_REJECTED: 'KYC_REJECTED',
+  KYC_EXPIRING: 'KYC_EXPIRING',
+  KYB_VERIFIED: 'KYB_VERIFIED',
+  KYB_REJECTED: 'KYB_REJECTED',
+  KYB_EXPIRING: 'KYB_EXPIRING',
+  WALLET_WHITELISTED: 'WALLET_WHITELISTED',
+  WALLET_REMOVED: 'WALLET_REMOVED',
+  WALLET_VERIFICATION_PENDING: 'WALLET_VERIFICATION_PENDING',
+  COMPLIANCE_CHECK_PASSED: 'COMPLIANCE_CHECK_PASSED',
+  COMPLIANCE_CHECK_FAILED: 'COMPLIANCE_CHECK_FAILED',
+  COMPLIANCE_REVIEW_REQUIRED: 'COMPLIANCE_REVIEW_REQUIRED',
+  ACCOUNT_VERIFIED: 'ACCOUNT_VERIFIED',
+  ACCOUNT_SUSPENDED: 'ACCOUNT_SUSPENDED',
+  DEPOSIT_CONFIRMED: 'DEPOSIT_CONFIRMED',
+  SETTLEMENT_COMPLETE: 'SETTLEMENT_COMPLETE',
+  SYSTEM_MAINTENANCE: 'SYSTEM_MAINTENANCE',
+  SECURITY_ALERT: 'SECURITY_ALERT'
+};
+
+exports.NotificationPriority = exports.$Enums.NotificationPriority = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL'
+};
+
 exports.Prisma.ModelName = {
   Agreement: 'Agreement',
   Deposit: 'Deposit',
@@ -1004,7 +1052,8 @@ exports.Prisma.ModelName = {
   InstitutionApprovedToken: 'InstitutionApprovedToken',
   AdminUser: 'AdminUser',
   AdminRefreshToken: 'AdminRefreshToken',
-  InstitutionFile: 'InstitutionFile'
+  InstitutionFile: 'InstitutionFile',
+  InstitutionNotification: 'InstitutionNotification'
 };
 
 /**
