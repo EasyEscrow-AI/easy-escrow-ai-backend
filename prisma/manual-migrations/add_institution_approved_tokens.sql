@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "institution_approved_tokens" (
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "amina_approved" BOOLEAN NOT NULL DEFAULT true,
     "added_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "institution_approved_tokens_pkey" PRIMARY KEY ("id")
 );
@@ -22,9 +22,6 @@ CREATE TABLE IF NOT EXISTS "institution_approved_tokens" (
 -- Unique constraints
 CREATE UNIQUE INDEX IF NOT EXISTS "institution_approved_tokens_symbol_key" ON "institution_approved_tokens"("symbol");
 CREATE UNIQUE INDEX IF NOT EXISTS "institution_approved_tokens_mint_address_key" ON "institution_approved_tokens"("mint_address");
-
--- Enforce at most one default token
-CREATE UNIQUE INDEX IF NOT EXISTS "institution_approved_tokens_one_default_idx" ON "institution_approved_tokens"("is_default") WHERE "is_default" IS TRUE;
 
 -- Performance indexes (symbol and mint_address already covered by unique indexes above)
 CREATE INDEX IF NOT EXISTS "institution_approved_tokens_is_active_idx" ON "institution_approved_tokens"("is_active");

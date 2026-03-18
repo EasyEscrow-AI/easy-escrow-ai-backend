@@ -2935,94 +2935,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/ai/chat:
-    post:
-      tags:
-        - AI Analysis
-      summary: AI Chat — conversational assistant
-      description: |
-        Send a message to the EasyEscrow AI Assistant. Requires institution JWT.
-        The assistant can answer questions about the escrow platform, cross-border
-        stablecoin payments, and the client's escrow data (anonymized via PII pipeline).
-      operationId: postAiChat
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - message
-              properties:
-                message:
-                  type: string
-                  minLength: 1
-                  maxLength: 4000
-                  description: The user's chat message
-                  example: "What is the status of my latest escrow?"
-                history:
-                  type: array
-                  maxItems: 50
-                  description: Previous conversation messages for context
-                  items:
-                    type: object
-                    required:
-                      - role
-                      - content
-                    properties:
-                      role:
-                        type: string
-                        enum: [user, assistant]
-                      content:
-                        type: string
-                        minLength: 1
-                        maxLength: 4000
-      responses:
-        '200':
-          description: Chat response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      response:
-                        type: string
-                        description: The AI assistant's response
-                      tokensUsed:
-                        type: integer
-                        description: Token count for this interaction
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          description: Rate limit exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '503':
-          description: AI service not configured
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ── Institution Admin ──────────────────────────────────────────────────
 
   /api/admin/institution-escrow/allowlist:
@@ -5188,11 +5100,12 @@ components:
           type: string
         amount:
           type: number
-          description: Escrow amount in the selected stablecoin
+          description: USDC amount
           example: 50000
         tokenMint:
           type: string
-          description: SPL token mint address (from AMINA-approved whitelist, defaults to USDC)
+          nullable: true
+          description: SPL token mint address used for this escrow. Null defaults to USDC.
           example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
         corridor:
           type: string
