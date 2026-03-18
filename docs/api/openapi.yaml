@@ -125,8 +125,16 @@ tags:
     description: Document uploads for compliance (PDF, images, Excel, CSV)
   - name: Institution Escrow
     description: Cross-border USDC escrow payment lifecycle
+  - name: Institution Accounts
+    description: Multi-account management with live Solana balance (SOL, USDC, approved tokens)
+  - name: Institution Tokens
+    description: AMINA-approved token whitelist for institution escrow
+  - name: Institution Receipts
+    description: Escrow receipt generation (HTML and PDF)
   - name: AI Analysis
     description: AI-powered escrow document risk analysis (renamed routes)
+  - name: AI Chat
+    description: Conversational AI assistant for escrow guidance and compliance questions
   - name: Institution Admin
     description: Admin operations for allowlist and corridor management
 
@@ -150,7 +158,11 @@ x-tagGroups:
       - Institution Clients
       - Institution Files
       - Institution Escrow
+      - Institution Accounts
+      - Institution Tokens
+      - Institution Receipts
       - AI Analysis
+      - AI Chat
       - Institution Admin
 
 paths:
@@ -2913,6 +2925,505 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  # ── Institution Accounts ──────────────────────────────────
+
+  /api/v1/institution/accounts:
+    post:
+      tags:
+        - Institution Accounts
+      summary: Create account
+      description: Create a new institution account with a Solana wallet address. Each client can have up to 10 accounts.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionAccountCreate'
+            example:
+              name: "Treasury"
+              label: "Main treasury wallet"
+              accountType: "TREASURY"
+              walletAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+              walletProvider: "Phantom"
+              custodyType: "self-custody"
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionAccount'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Missing or invalid JWT
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+    get:
+      tags:
+        - Institution Accounts
+      summary: List accounts
+      description: List all accounts for the authenticated client, with optional filters.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: accountType
+          schema:
+            type: string
+            enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
+          description: Filter by account type
+        - in: query
+          name: verificationStatus
+          schema:
+            type: string
+            enum: [PENDING, VERIFIED, SUSPENDED, REJECTED]
+          description: Filter by verification status
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+          description: Filter by active status
+      responses:
+        '200':
+          description: Accounts listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InstitutionAccount'
+                  count:
+                    type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Missing or invalid JWT
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution/accounts/{id}:
+    get:
+      tags:
+        - Institution Accounts
+      summary: Get account
+      description: Get account details including live Solana balance (SOL, USDC, approved tokens).
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      responses:
+        '200':
+          description: Account details with balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/InstitutionAccount'
+                      - type: object
+                        properties:
+                          balance:
+                            $ref: '#/components/schemas/AccountBalance'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          description: Missing or invalid JWT
+    put:
+      tags:
+        - Institution Accounts
+      summary: Update account
+      description: Update account settings such as label, limits, notifications, and approval mode.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionAccountUpdate'
+      responses:
+        '200':
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionAccount'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          description: Missing or invalid JWT
+    delete:
+      tags:
+        - Institution Accounts
+      summary: Deactivate account
+      description: Soft-delete (deactivate) an institution account.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      responses:
+        '200':
+          description: Account deactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Account deactivated
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          description: Missing or invalid JWT
+
+  /api/v1/institution/accounts/{id}/default:
+    put:
+      tags:
+        - Institution Accounts
+      summary: Set default account
+      description: Set an account as the default for the client.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      responses:
+        '200':
+          description: Default account updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionAccount'
+                  message:
+                    type: string
+                    example: Default account updated
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          description: Missing or invalid JWT
+
+  /api/v1/institution/accounts/{id}/balance:
+    get:
+      tags:
+        - Institution Accounts
+      summary: Get live balance
+      description: |
+        Fetch live Solana balance for an account (SOL + USDC + AMINA-approved tokens).
+        Results are cached in Redis with a 30-second TTL.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Account ID
+      responses:
+        '200':
+          description: Live balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AccountBalance'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          description: Missing or invalid JWT
+
+  # ── Institution Tokens ──────────────────────────────────
+
+  /api/v1/institution/tokens:
+    get:
+      tags:
+        - Institution Tokens
+      summary: List approved tokens
+      description: |
+        Public endpoint — lists all active AMINA-approved tokens for the institution portal.
+        Returns token metadata (symbol, name, mint address, decimals, issuer, jurisdiction).
+      responses:
+        '200':
+          description: Approved tokens listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovedToken'
+                  timestamp:
+                    type: string
+                    format: date-time
+              example:
+                success: true
+                data:
+                  - symbol: USDC
+                    name: USD Coin
+                    mintAddress: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+                    decimals: 6
+                    issuer: Circle
+                    jurisdiction: US
+                    chain: solana
+                    isDefault: true
+                    aminaApproved: true
+                  - symbol: EURC
+                    name: Euro Coin
+                    mintAddress: HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr
+                    decimals: 6
+                    issuer: Circle
+                    jurisdiction: EU
+                    chain: solana
+                    isDefault: false
+                    aminaApproved: true
+                timestamp: "2026-03-18T12:00:00.000Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  # ── Institution Receipts ──────────────────────────────────
+
+  /api/v1/institution-escrow/{escrowId}/receipt:
+    get:
+      tags:
+        - Institution Receipts
+      summary: Get escrow receipt
+      description: |
+        Generate an escrow receipt in HTML or PDF format.
+        Use `?format=pdf` for PDF output, defaults to HTML.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrowId
+          required: true
+          schema:
+            type: string
+          description: Escrow ID
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [html, pdf]
+            default: html
+          description: Receipt format (html or pdf)
+      responses:
+        '200':
+          description: Receipt generated
+          content:
+            text/html:
+              schema:
+                type: string
+                description: HTML receipt
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+                description: PDF receipt
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          description: Missing or invalid JWT
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution-escrow/{escrowId}/receipt/data:
+    get:
+      tags:
+        - Institution Receipts
+      summary: Get receipt data (JSON)
+      description: Returns the raw receipt data as JSON for custom rendering. Logo base64 is stripped to keep the payload small.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrowId
+          required: true
+          schema:
+            type: string
+          description: Escrow ID
+      responses:
+        '200':
+          description: Receipt data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  escrowId:
+                    type: string
+                  escrowCode:
+                    type: string
+                  status:
+                    type: string
+                  amount:
+                    type: number
+                  currency:
+                    type: string
+                  payer:
+                    type: object
+                  recipient:
+                    type: object
+                  timeline:
+                    type: array
+                    items:
+                      type: object
+                  createdAt:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          description: Missing or invalid JWT
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  # ── AI Chat ──────────────────────────────────
+
+  /api/v1/ai/chat:
+    post:
+      tags:
+        - AI Chat
+      summary: Chat with AI assistant
+      description: |
+        Send a message to the EasyEscrow AI assistant. Supports conversation history
+        for multi-turn interactions. Uses an anonymization pipeline to protect PII
+        before sending to the AI model.
+
+        Rate limit: 30 requests per 60 seconds.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiChatRequest'
+            example:
+              message: "What documents are needed for a Singapore to Switzerland corridor?"
+              history:
+                - role: user
+                  content: "How does escrow work?"
+                - role: assistant
+                  content: "An escrow holds funds securely until conditions are met..."
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AiChatResponse'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Missing or invalid JWT
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '503':
+          description: AI service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   parameters:
     OfferId:
@@ -5055,6 +5566,230 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    # ── Institution Account Schemas ──────────────────────────
+
+    InstitutionAccountCreate:
+      type: object
+      required:
+        - name
+        - walletAddress
+      properties:
+        name:
+          type: string
+          example: Treasury
+        label:
+          type: string
+          example: Main treasury wallet
+        accountType:
+          type: string
+          enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
+          default: GENERAL
+        description:
+          type: string
+        walletAddress:
+          type: string
+          example: 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU
+        chain:
+          type: string
+          default: solana
+        walletProvider:
+          type: string
+          example: Phantom
+        custodyType:
+          type: string
+          example: self-custody
+        notificationEmail:
+          type: string
+          format: email
+        webhookUrl:
+          type: string
+          format: uri
+
+    InstitutionAccountUpdate:
+      type: object
+      properties:
+        label:
+          type: string
+        description:
+          type: string
+        walletProvider:
+          type: string
+        custodyType:
+          type: string
+        maxTransactionAmount:
+          type: number
+        minTransactionAmount:
+          type: number
+        dailyVolumeLimit:
+          type: number
+        monthlyVolumeLimit:
+          type: number
+        dailyTransactionCountLimit:
+          type: integer
+        monthlyTransactionCountLimit:
+          type: integer
+        approvalMode:
+          type: string
+          enum: [AUTO, MANUAL, THRESHOLD]
+        approvalThreshold:
+          type: number
+        whitelistedAddresses:
+          type: array
+          items:
+            type: string
+        whitelistEnforced:
+          type: boolean
+        notificationEmail:
+          type: string
+          format: email
+        webhookUrl:
+          type: string
+          format: uri
+        notifyOnEscrowCreated:
+          type: boolean
+        notifyOnEscrowFunded:
+          type: boolean
+        notifyOnEscrowReleased:
+          type: boolean
+        notifyOnComplianceAlert:
+          type: boolean
+
+    InstitutionAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        name:
+          type: string
+        label:
+          type: string
+        accountType:
+          type: string
+          enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL]
+        walletAddress:
+          type: string
+        chain:
+          type: string
+        walletProvider:
+          type: string
+        custodyType:
+          type: string
+        verificationStatus:
+          type: string
+          enum: [PENDING, VERIFIED, SUSPENDED, REJECTED]
+        isActive:
+          type: boolean
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AccountBalance:
+      type: object
+      properties:
+        sol:
+          type: number
+          example: 1.5
+        usdc:
+          type: number
+          example: 1000.0
+        tokens:
+          type: array
+          items:
+            type: object
+            properties:
+              symbol:
+                type: string
+                example: EURC
+              name:
+                type: string
+                example: Euro Coin
+              balance:
+                type: number
+                example: 500.0
+              mintAddress:
+                type: string
+        lastUpdated:
+          type: string
+          format: date-time
+
+    # ── Approved Token Schema ──────────────────────────
+
+    ApprovedToken:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: USDC
+        name:
+          type: string
+          example: USD Coin
+        mintAddress:
+          type: string
+          example: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+        decimals:
+          type: integer
+          example: 6
+        issuer:
+          type: string
+          example: Circle
+        jurisdiction:
+          type: string
+          example: US
+        chain:
+          type: string
+          example: solana
+        isDefault:
+          type: boolean
+        aminaApproved:
+          type: boolean
+
+    # ── AI Chat Schemas ──────────────────────────
+
+    AiChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          description: User message to the AI assistant
+        history:
+          type: array
+          maxItems: 50
+          description: Previous conversation messages for context
+          items:
+            type: object
+            required:
+              - role
+              - content
+            properties:
+              role:
+                type: string
+                enum: [user, assistant]
+              content:
+                type: string
+                minLength: 1
+                maxLength: 4000
+
+    AiChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: AI assistant reply
+        model:
+          type: string
+          description: AI model used
 
     ErrorResponse:
       type: object
