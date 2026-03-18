@@ -602,6 +602,43 @@ exports.Prisma.InstitutionCorridorScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.InstitutionApprovedTokenScalarFieldEnum = {
+  id: 'id',
+  symbol: 'symbol',
+  name: 'name',
+  mintAddress: 'mintAddress',
+  decimals: 'decimals',
+  issuer: 'issuer',
+  jurisdiction: 'jurisdiction',
+  chain: 'chain',
+  isDefault: 'isDefault',
+  isActive: 'isActive',
+  aminaApproved: 'aminaApproved',
+  addedAt: 'addedAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AdminUserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  name: 'name',
+  role: 'role',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastLoginAt: 'lastLoginAt'
+};
+
+exports.Prisma.AdminRefreshTokenScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  adminId: 'adminId',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.InstitutionFileScalarFieldEnum = {
   id: 'id',
   clientId: 'clientId',
@@ -858,6 +895,10 @@ exports.CorridorStatus = exports.$Enums.CorridorStatus = {
   DEPRECATED: 'DEPRECATED'
 };
 
+exports.AdminRole = exports.$Enums.AdminRole = {
+  SUPER_ADMIN: 'SUPER_ADMIN'
+};
+
 exports.DocumentType = exports.$Enums.DocumentType = {
   INVOICE: 'INVOICE',
   CONTRACT: 'CONTRACT',
@@ -892,6 +933,9 @@ exports.Prisma.ModelName = {
   InstitutionAuditLog: 'InstitutionAuditLog',
   InstitutionAiAnalysis: 'InstitutionAiAnalysis',
   InstitutionCorridor: 'InstitutionCorridor',
+  InstitutionApprovedToken: 'InstitutionApprovedToken',
+  AdminUser: 'AdminUser',
+  AdminRefreshToken: 'AdminRefreshToken',
   InstitutionFile: 'InstitutionFile'
 };
 

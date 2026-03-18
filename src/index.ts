@@ -27,6 +27,7 @@ import {
   institutionEscrowRoutes,
   aiAnalysisRoutes,
   institutionClientsRoutes,
+  adminAuthRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -398,6 +399,7 @@ app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
 app.use('/metrics', metricsRoutes); // Prometheus metrics endpoint
+app.use(adminAuthRoutes); // Admin login/auth endpoints
 app.use(authorizedAppsRoutes); // Admin endpoints for zero-fee API key management
 app.use('/admin/nonce-pool', noncePoolAdminRoutes); // Admin endpoints for nonce pool management
 app.use(testRoutes);

@@ -259,6 +259,8 @@
     "test:integration:institution": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/integration/institution/*.test.ts' --timeout 20000 --exit",
     "test:staging:e2e:institution": "mocha --no-config --require ts-node/register 'tests/staging/e2e/2[0-4]-institution-*.test.ts' --timeout 180000 --reporter spec --colors",
     "test:staging:e2e:institution:auth": "mocha --no-config --require ts-node/register tests/staging/e2e/20-institution-auth-registration.test.ts --timeout 180000 --reporter spec --colors",
+    "seed:admin": "ts-node scripts/seed-admin.ts",
+    "test:unit:admin": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/admin/*.test.ts' --timeout 10000 --exit",
     "prepare": "husky"
   },
   "keywords": [
