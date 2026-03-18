@@ -261,6 +261,7 @@ if (openApiDocument) {
   <title>EasyEscrow.ai API Documentation</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700&display=swap" rel="stylesheet">
   <style>
     /* Base dark mode */
@@ -271,8 +272,9 @@ if (openApiDocument) {
     .redoc-wrap > div > div:nth-child(2) { background: #0f172a !important; }
     [class*="api-content"], [class*="middle-panel"], [data-section-id] { background: #0f172a !important; }
     /* All text white/light */
-    .redoc-wrap h1 { color: #f1f5f9 !important; font-size: 40px !important; }
-    .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h4, .redoc-wrap h5, .redoc-wrap h6 { color: #f1f5f9 !important; }
+    .redoc-wrap h1 { color: #f1f5f9 !important; font-size: 40px !important; font-weight: 700 !important; margin-top: 32px !important; margin-bottom: 16px !important; letter-spacing: -0.5px !important; }
+    .redoc-wrap h2 { color: #f1f5f9 !important; margin-top: 24px !important; }
+    .redoc-wrap h3, .redoc-wrap h4, .redoc-wrap h5, .redoc-wrap h6 { color: #f1f5f9 !important; }
     .redoc-wrap p, .redoc-wrap span, .redoc-wrap li, .redoc-wrap td, .redoc-wrap th, .redoc-wrap label { color: #e2e8f0 !important; }
     .redoc-wrap div { color: #e2e8f0; }
     .redoc-wrap a { color: #818cf8 !important; }
@@ -428,7 +430,7 @@ if (openApiDocument) {
           textColor: '#e2e8f0'
         },
         schema: { nestedBackground: '#1e293b' },
-        spacing: { sectionVertical: 16 }
+        spacing: { sectionVertical: 24 }
       },
       hideDownloadButton: true,
       disableSearch: false,
