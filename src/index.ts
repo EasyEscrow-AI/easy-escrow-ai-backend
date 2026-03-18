@@ -261,6 +261,7 @@ if (openApiDocument) {
   <title>EasyEscrow.ai API Documentation</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700&display=swap" rel="stylesheet">
   <style>
     /* Base dark mode */
@@ -271,8 +272,9 @@ if (openApiDocument) {
     .redoc-wrap > div > div:nth-child(2) { background: #0f172a !important; }
     [class*="api-content"], [class*="middle-panel"], [data-section-id] { background: #0f172a !important; }
     /* All text white/light */
-    .redoc-wrap h1 { color: #f1f5f9 !important; font-size: 40px !important; }
-    .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h4, .redoc-wrap h5, .redoc-wrap h6 { color: #f1f5f9 !important; }
+    .redoc-wrap h1 { color: #f1f5f9 !important; font-size: 40px !important; font-weight: 700 !important; margin-top: 32px !important; margin-bottom: 16px !important; letter-spacing: -0.5px !important; }
+    .redoc-wrap h2 { color: #f1f5f9 !important; margin-top: 24px !important; }
+    .redoc-wrap h3, .redoc-wrap h4, .redoc-wrap h5, .redoc-wrap h6 { color: #f1f5f9 !important; }
     .redoc-wrap p, .redoc-wrap span, .redoc-wrap li, .redoc-wrap td, .redoc-wrap th, .redoc-wrap label { color: #e2e8f0 !important; }
     .redoc-wrap div { color: #e2e8f0; }
     .redoc-wrap a { color: #818cf8 !important; }
@@ -307,6 +309,7 @@ if (openApiDocument) {
     .redoc-wrap [class*="operation"], .redoc-wrap [class*="Operation"] { background: #0f172a !important; }
     .redoc-wrap [class*="callback"], .redoc-wrap [class*="Callback"] { background: #0f172a !important; }
     .redoc-wrap [class*="container"] { background: transparent !important; }
+    .redoc-wrap [role="search"] [class*="container"] { background: #1e293b !important; }
     .redoc-wrap [class*="react-tabs__tab-panel"] { background: #0f172a !important; }
     .redoc-wrap [class*="tab-panel"], .redoc-wrap [role="tabpanel"] { background: #0f172a !important; }
     .redoc-wrap [class*="security"] { background: #0f172a !important; }
@@ -317,56 +320,78 @@ if (openApiDocument) {
     /* Enum values and oneOf selectors */
     .redoc-wrap [class*="enum"], .redoc-wrap [class*="oneOf"] { background: #1e293b !important; color: #e2e8f0 !important; }
     /* Any remaining white backgrounds in the middle panel */
-    .redoc-wrap div[class] { background-color: inherit; }
     .redoc-wrap [class*="panel"] { background: #0f172a !important; }
-    .redoc-wrap [class*="content"]:not([class*="search"]):not([class*="Search"]) { background: transparent !important; }
+    .redoc-wrap [class*="content"] { background: transparent !important; }
+    .redoc-wrap [role="search"] [class*="content"] { background: #1e293b !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
-    /* Search bar */
-    .redoc-wrap [class*="search"], .redoc-wrap [role="search"] { margin-top: 20px !important; padding: 0 10px !important; }
+    /* Search container */
+    .redoc-wrap [role="search"] { margin-top: 20px !important; padding: 0 10px !important; }
+    /* Search input */
     .redoc-wrap [role="search"] input[type="text"],
-    .redoc-wrap [class*="search"] input {
+    .redoc-wrap [role="search"] input[type="search"],
+    .redoc-wrap [role="search"] input:not([type]) {
       width: 100% !important;
-      min-height: 38px !important;
-      padding: 8px 12px !important;
+      min-height: 44px !important;
+      padding: 12px 16px !important;
       font-size: 14px !important;
-      border-radius: 6px !important;
+      border-radius: 8px !important;
       border: 1px solid #475569 !important;
       background: #1e293b !important;
       color: #e2e8f0 !important;
       box-sizing: border-box !important;
       outline: none !important;
+      transition: border-color 0.2s, box-shadow 0.2s !important;
     }
-    .redoc-wrap [role="search"] input:focus,
-    .redoc-wrap [class*="search"] input:focus {
+    .redoc-wrap [role="search"] input::placeholder {
+      color: #64748b !important;
+    }
+    .redoc-wrap [role="search"] input:focus {
       border-color: #818cf8 !important;
-      box-shadow: 0 0 0 2px rgba(129,140,248,0.2) !important;
+      box-shadow: 0 0 0 3px rgba(129,140,248,0.25) !important;
     }
     /* Search results dropdown */
-    .redoc-wrap [class*="search-results"],
-    .redoc-wrap [class*="SearchResults"],
+    .redoc-wrap [role="search"] > div:not(:first-child),
     .redoc-wrap [role="search"] ul,
+    .redoc-wrap [role="search"] [class*="results"],
     .redoc-wrap [role="search"] [class*="menu"] {
       background: #1e293b !important;
       border: 1px solid #475569 !important;
-      border-radius: 6px !important;
+      border-radius: 8px !important;
+      margin-top: 4px !important;
       color: #e2e8f0 !important;
-      z-index: 100 !important;
+      z-index: 200 !important;
       max-height: 400px !important;
       overflow-y: auto !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
     }
+    /* Search result items */
     .redoc-wrap [role="search"] li,
-    .redoc-wrap [class*="search-results"] li,
-    .redoc-wrap [class*="SearchResults"] li {
-      padding: 8px 12px !important;
+    .redoc-wrap [role="search"] [class*="result"] {
+      padding: 10px 14px !important;
       color: #e2e8f0 !important;
       background: transparent !important;
       cursor: pointer !important;
+      border-bottom: 1px solid rgba(51,65,85,0.5) !important;
+    }
+    .redoc-wrap [role="search"] li:last-child {
+      border-bottom: none !important;
     }
     .redoc-wrap [role="search"] li:hover,
     .redoc-wrap [role="search"] li[class*="active"],
-    .redoc-wrap [class*="search-results"] li:hover {
+    .redoc-wrap [role="search"] [class*="result"]:hover {
       background: #334155 !important;
+    }
+    /* Search result text highlights */
+    .redoc-wrap [role="search"] mark,
+    .redoc-wrap [role="search"] [class*="highlight"],
+    .redoc-wrap [role="search"] em,
+    .redoc-wrap mark {
+      background: rgba(129,140,248,0.3) !important;
+      color: #c7d2fe !important;
+      padding: 1px 3px !important;
+      border-radius: 2px !important;
+      font-style: normal !important;
     }
     .redoc-wrap [role="search"] label { display: none !important; }
     /* Scrollbars */
@@ -405,7 +430,7 @@ if (openApiDocument) {
           textColor: '#e2e8f0'
         },
         schema: { nestedBackground: '#1e293b' },
-        spacing: { sectionVertical: 16 }
+        spacing: { sectionVertical: 24 }
       },
       hideDownloadButton: true,
       disableSearch: false,
