@@ -682,14 +682,11 @@ model TwoPhaseSwap {
 
 // Enums for institution escrow
 enum InstitutionEscrowStatus {
-  DRAFT
   CREATED
   FUNDED
   COMPLIANCE_HOLD
   RELEASING
   RELEASED
-  INSUFFICIENT_FUNDS
-  COMPLETE
   CANCELLING
   CANCELLED
   EXPIRED
@@ -780,27 +777,6 @@ enum WalletCustodyType {
   MPC
   MULTISIG
   EXCHANGE
-}
-
-enum InstitutionAccountType {
-  TREASURY
-  OPERATIONS
-  SETTLEMENT
-  COLLATERAL
-  GENERAL
-}
-
-enum AccountVerificationStatus {
-  PENDING
-  VERIFIED
-  SUSPENDED
-  REJECTED
-}
-
-enum ApprovalMode {
-  AUTO
-  SINGLE_APPROVAL
-  MULTI_APPROVAL
 }
 
 enum EmployeeCountRange {
@@ -916,9 +892,7 @@ model InstitutionClient {
   auditLogs     InstitutionAuditLog[]
   files         InstitutionFile[]
   wallets       InstitutionWallet[]
-  accounts      InstitutionAccount[]
   aiAnalyses    InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
-  notifications InstitutionNotification[]
 
   @@index([email])
   @@index([status])
@@ -953,72 +927,6 @@ model InstitutionWallet {
   @@index([isPrimary])
   @@index([isSettlement])
   @@map("institution_wallets")
-}
-
-// Institution multi-account system (Treasury, Operations, Settlement, etc.)
-model InstitutionAccount {
-  id       String @id @default(uuid())
-  clientId String @map("client_id")
-
-  // Identity
-  name        String
-  label       String?
-  accountType InstitutionAccountType @default(GENERAL) @map("account_type")
-  description String?
-
-  // Wallet
-  walletAddress  String             @map("wallet_address")
-  chain          String             @default("solana")
-  walletProvider String?            @map("wallet_provider")
-  custodyType    WalletCustodyType? @map("custody_type")
-
-  // Verification (per-account, separate from client KYB)
-  verificationStatus AccountVerificationStatus @default(PENDING) @map("verification_status")
-  verifiedAt         DateTime?                 @map("verified_at")
-  verificationNotes  String?                   @map("verification_notes")
-
-  // Transaction limits (per-account overrides)
-  maxTransactionAmount         Decimal? @map("max_transaction_amount") @db.Decimal(20, 6)
-  minTransactionAmount         Decimal? @map("min_transaction_amount") @db.Decimal(20, 6)
-  dailyVolumeLimit             Decimal? @map("daily_volume_limit") @db.Decimal(20, 6)
-  monthlyVolumeLimit           Decimal? @map("monthly_volume_limit") @db.Decimal(20, 6)
-  dailyTransactionCountLimit   Int?     @map("daily_transaction_count_limit")
-  monthlyTransactionCountLimit Int?     @map("monthly_transaction_count_limit")
-
-  // Approval settings
-  approvalMode      ApprovalMode @default(AUTO) @map("approval_mode")
-  approvalThreshold Decimal?     @map("approval_threshold") @db.Decimal(20, 6)
-
-  // Security
-  whitelistedAddresses String[] @default([]) @map("whitelisted_addresses")
-  whitelistEnforced    Boolean  @default(false) @map("whitelist_enforced")
-
-  // Notifications
-  notificationEmail       String? @map("notification_email")
-  webhookUrl              String? @map("webhook_url")
-  notifyOnEscrowCreated   Boolean @default(true) @map("notify_on_escrow_created")
-  notifyOnEscrowFunded    Boolean @default(true) @map("notify_on_escrow_funded")
-  notifyOnEscrowReleased  Boolean @default(true) @map("notify_on_escrow_released")
-  notifyOnComplianceAlert Boolean @default(true) @map("notify_on_compliance_alert")
-
-  // Status
-  isDefault Boolean @default(false) @map("is_default")
-  isActive  Boolean @default(true) @map("is_active")
-
-  // Timestamps
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@unique([clientId, name])
-  @@index([clientId])
-  @@index([walletAddress])
-  @@index([accountType])
-  @@index([verificationStatus])
-  @@index([isActive])
-  @@map("institution_accounts")
 }
 
 // Refresh token storage (hashed)
@@ -1087,31 +995,29 @@ model InstitutionApiKey {
 
 // Core institution escrow record
 model InstitutionEscrow {
-  id                  String                    @id @default(uuid())
-  escrowId            String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
-  escrowCode          String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
-  clientId            String                    @map("client_id")
-  payerWallet         String                    @map("payer_wallet")
-  recipientWallet     String?                   @map("recipient_wallet")
-  usdcMint            String                    @map("usdc_mint")
-  amount              Decimal                   @db.Decimal(20, 6) // USDC amount (6 decimal precision)
-  platformFee         Decimal                   @map("platform_fee") @db.Decimal(20, 6)
-  corridor            String? // e.g. 'SG-CH'
-  conditionType       InstitutionConditionType? @map("condition_type")
-  status              InstitutionEscrowStatus   @default(CREATED)
-  settlementAuthority String                    @map("settlement_authority")
-  riskScore           Int?                      @map("risk_score")
+  id                  String                   @id @default(uuid())
+  escrowId            String                   @unique @map("escrow_id") // UUID for on-chain PDA derivation
+  clientId            String                   @map("client_id")
+  payerWallet         String                   @map("payer_wallet")
+  recipientWallet     String                   @map("recipient_wallet")
+  usdcMint            String                   @map("usdc_mint")
+  amount              Decimal                  @db.Decimal(20, 6) // USDC amount (6 decimal precision)
+  platformFee         Decimal                  @map("platform_fee") @db.Decimal(20, 6)
+  corridor            String // e.g. 'SG-CH'
+  conditionType       InstitutionConditionType @map("condition_type")
+  status              InstitutionEscrowStatus  @default(CREATED)
+  settlementAuthority String                   @map("settlement_authority")
+  riskScore           Int?                     @map("risk_score")
 
   // On-chain references
   escrowPda          String? @map("escrow_pda")
   vaultPda           String? @map("vault_pda")
-  nonceAccount       String? @map("nonce_account")
   depositTxSignature String? @map("deposit_tx_signature")
   releaseTxSignature String? @map("release_tx_signature")
   cancelTxSignature  String? @map("cancel_tx_signature")
 
   // Timestamps
-  expiresAt  DateTime? @map("expires_at")
+  expiresAt  DateTime  @map("expires_at")
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
   resolvedAt DateTime? @map("resolved_at")
@@ -1126,7 +1032,6 @@ model InstitutionEscrow {
 
   @@index([clientId])
   @@index([escrowId])
-  @@index([escrowCode])
   @@index([status])
   @@index([corridor])
   @@index([payerWallet])
@@ -1260,50 +1165,6 @@ model InstitutionApprovedToken {
 }
 
 // ============================================
-// ADMIN USER SYSTEM
-// ============================================
-
-enum AdminRole {
-  SUPER_ADMIN
-}
-
-// Admin user account (seed-only, no public registration)
-model AdminUser {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  name         String
-  role         AdminRole @default(SUPER_ADMIN)
-  isActive     Boolean   @default(true) @map("is_active")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  lastLoginAt  DateTime? @map("last_login_at")
-
-  refreshTokens AdminRefreshToken[]
-
-  @@index([email])
-  @@index([isActive])
-  @@map("admin_users")
-}
-
-// Admin refresh token storage (hashed)
-model AdminRefreshToken {
-  id        String    @id @default(uuid())
-  tokenHash String    @unique @map("token_hash")
-  adminId   String    @map("admin_id")
-  expiresAt DateTime  @map("expires_at")
-  revokedAt DateTime? @map("revoked_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-
-  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
-
-  @@index([adminId])
-  @@index([expiresAt])
-  @@index([tokenHash])
-  @@map("admin_refresh_tokens")
-}
-
-// ============================================
 // FILE MODEL
 // ============================================
 
@@ -1327,80 +1188,4 @@ model InstitutionFile {
   @@index([documentType])
   @@index([uploadedAt])
   @@map("institution_files")
-}
-
-// ============================================
-// NOTIFICATION MODEL
-// ============================================
-
-enum NotificationType {
-  ESCROW_CREATED
-  ESCROW_FUNDED
-  ESCROW_RELEASED
-  ESCROW_CANCELLED
-  ESCROW_EXPIRED
-  ESCROW_COMPLIANCE_HOLD
-  KYC_APPROVED
-  KYC_REJECTED
-  KYC_EXPIRING
-  KYB_VERIFIED
-  KYB_REJECTED
-  KYB_EXPIRING
-  WALLET_WHITELISTED
-  WALLET_REMOVED
-  WALLET_VERIFICATION_PENDING
-  COMPLIANCE_CHECK_PASSED
-  COMPLIANCE_CHECK_FAILED
-  COMPLIANCE_REVIEW_REQUIRED
-  ACCOUNT_VERIFIED
-  ACCOUNT_SUSPENDED
-  DEPOSIT_CONFIRMED
-  SETTLEMENT_COMPLETE
-  SYSTEM_MAINTENANCE
-  SECURITY_ALERT
-}
-
-enum NotificationPriority {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-// Institution notifications (in-app notification center)
-model InstitutionNotification {
-  id        String               @id @default(uuid())
-  clientId  String               @map("client_id")
-  escrowId  String?              @map("escrow_id")
-  type      NotificationType
-  priority  NotificationPriority @default(MEDIUM)
-  title     String
-  message   String
-  metadata  Json                 @default("{}")
-  isRead    Boolean              @default(false) @map("is_read")
-  readAt    DateTime?            @map("read_at")
-  createdAt DateTime             @default(now()) @map("created_at")
-
-  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@index([clientId])
-  @@index([clientId, isRead])
-  @@index([type])
-  @@index([createdAt])
-  @@map("institution_notifications")
-}
-
-// ============================================
-// SYSTEM SETTINGS
-// ============================================
-
-// Key-value store for runtime system settings (e.g., pause state)
-model SystemSetting {
-  key       String   @id
-  value     Json     @default("{}")
-  updatedBy String?  @map("updated_by")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("system_settings")
 }
