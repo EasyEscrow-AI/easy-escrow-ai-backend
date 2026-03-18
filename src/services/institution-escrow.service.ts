@@ -57,6 +57,21 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Generate a human-readable escrow code in EE-XXXX-XXXX format.
+   * Uses uppercase alphanumeric characters (excludes ambiguous: 0/O, 1/I/L).
+   */
+  private generateEscrowCode(): string {
+    const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; // 30 chars
+    const bytes = crypto.randomBytes(8);
+    let code = 'EE-';
+    for (let i = 0; i < 8; i++) {
+      if (i === 4) code += '-';
+      code += chars[bytes[i] % chars.length];
+    }
+    return code;
+  }
+
+  /**
    * Create a new institution escrow
    */
   async createEscrow(params: CreateEscrowParams): Promise<CreateEscrowResult> {
@@ -105,8 +120,9 @@ export class InstitutionEscrowService {
       // For medium risk, create with COMPLIANCE_HOLD status
     }
 
-    // 3. Generate escrow ID
+    // 3. Generate escrow ID and human-readable code
     const escrowId = crypto.randomUUID();
+    const escrowCode = this.generateEscrowCode();
 
     // 4. Resolve and validate token mint against AMINA-approved whitelist
     const tokenWhitelist = getTokenWhitelistService();
@@ -139,6 +155,7 @@ export class InstitutionEscrowService {
     const escrow = await this.prisma.institutionEscrow.create({
       data: {
         escrowId,
+        escrowCode,
         clientId,
         payerWallet,
         recipientWallet,
@@ -184,10 +201,11 @@ export class InstitutionEscrowService {
    */
   async recordDeposit(
     clientId: string,
-    escrowId: string,
+    idOrCode: string,
     txSignature: string,
   ): Promise<Record<string, unknown>> {
-    const escrow = await this.getEscrowInternal(clientId, escrowId);
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
 
     if (escrow.status !== 'CREATED') {
       throw new Error(
@@ -239,10 +257,11 @@ export class InstitutionEscrowService {
    */
   async releaseFunds(
     clientId: string,
-    escrowId: string,
+    idOrCode: string,
     notes?: string,
   ): Promise<Record<string, unknown>> {
-    const escrow = await this.getEscrowInternal(clientId, escrowId);
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
 
     if (escrow.status !== 'FUNDED') {
       throw new Error(
@@ -285,10 +304,11 @@ export class InstitutionEscrowService {
    */
   async cancelEscrow(
     clientId: string,
-    escrowId: string,
+    idOrCode: string,
     reason?: string,
   ): Promise<Record<string, unknown>> {
-    const escrow = await this.getEscrowInternal(clientId, escrowId);
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
 
     const cancellableStatuses: InstitutionEscrowStatus[] = [
       'CREATED',
@@ -328,15 +348,15 @@ export class InstitutionEscrowService {
   }
 
   /**
-   * Get a single escrow by ID (scoped to client)
+   * Get a single escrow by code or ID (scoped to client)
    */
   async getEscrow(
     clientId: string,
-    escrowId: string,
+    idOrCode: string,
   ): Promise<Record<string, unknown>> {
-    // Try Redis cache first
+    // Try Redis cache first (cache keyed by escrowCode)
     try {
-      const cached = await redisClient.get(`${ESCROW_CACHE_PREFIX}${escrowId}`);
+      const cached = await redisClient.get(`${ESCROW_CACHE_PREFIX}${idOrCode}`);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed.clientId === clientId) {
@@ -347,7 +367,7 @@ export class InstitutionEscrowService {
       // Cache miss
     }
 
-    const escrow = await this.getEscrowInternal(clientId, escrowId);
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
     return this.formatEscrow(escrow);
   }
 
@@ -385,15 +405,17 @@ export class InstitutionEscrowService {
   }
 
   /**
-   * Internal: Get escrow with client ownership check
+   * Internal: Get escrow with client ownership check.
+   * Accepts either escrowCode (EE-XXXX-XXXX) or escrowId (UUID).
    */
-  private async getEscrowInternal(clientId: string, escrowId: string) {
+  private async getEscrowInternal(clientId: string, idOrCode: string) {
+    const isCode = idOrCode.startsWith('EE-');
     const escrow = await this.prisma.institutionEscrow.findUnique({
-      where: { escrowId },
+      where: isCode ? { escrowCode: idOrCode } : { escrowId: idOrCode },
     });
 
     if (!escrow) {
-      throw new Error(`Escrow not found: ${escrowId}`);
+      throw new Error(`Escrow not found: ${idOrCode}`);
     }
 
     if (escrow.clientId !== clientId) {
@@ -431,12 +453,16 @@ export class InstitutionEscrowService {
   }
 
   /**
-   * Cache escrow record in Redis
+   * Cache escrow record in Redis (keyed by both escrowCode and escrowId)
    */
   private async cacheEscrow(escrow: Record<string, unknown>): Promise<void> {
     try {
-      const key = `${ESCROW_CACHE_PREFIX}${(escrow as any).escrowId}`;
-      await redisClient.set(key, JSON.stringify(escrow), 'EX', ESCROW_CACHE_TTL);
+      const data = JSON.stringify(escrow);
+      const e = escrow as any;
+      await Promise.all([
+        redisClient.set(`${ESCROW_CACHE_PREFIX}${e.escrowCode}`, data, 'EX', ESCROW_CACHE_TTL),
+        redisClient.set(`${ESCROW_CACHE_PREFIX}${e.escrowId}`, data, 'EX', ESCROW_CACHE_TTL),
+      ]);
     } catch {
       // Cache write failure is non-critical
     }
@@ -448,8 +474,9 @@ export class InstitutionEscrowService {
   private formatEscrow(escrow: Record<string, unknown>): Record<string, unknown> {
     const e = escrow as any;
     return {
-      id: e.id,
-      escrowId: e.escrowId,
+      id: e.escrowCode,
+      escrowId: e.escrowCode,
+      internalId: e.escrowId,
       clientId: e.clientId,
       payerWallet: e.payerWallet,
       recipientWallet: e.recipientWallet,
