@@ -6,25 +6,17 @@
  * GET    /api/admin/institution-escrow/allowlist           → listAllowlist
  * POST   /api/admin/institution-escrow/corridors           → configureCorridor
  * GET    /api/admin/institution-escrow/corridors            → listCorridors
- * POST   /api/admin/institution-escrow/pause               → pauseEscrowOperations
- * POST   /api/admin/institution-escrow/unpause             → unpauseEscrowOperations
- * GET    /api/admin/institution-escrow/pause               → getPauseStatus
  */
 
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { validationResult } from 'express-validator';
-import {
-  requireAdminOrApiKey,
-  AdminAuthenticatedRequest,
-} from '../../middleware/admin-jwt.middleware';
+import { requireAdminOrApiKey } from '../../middleware/admin-jwt.middleware';
 import { getAllowlistService } from '../../services/allowlist.service';
 import {
   validateAddToAllowlist,
   validateConfigureCorridor,
-  validatePauseEscrow,
 } from '../../middleware/institution-escrow-validation.middleware';
-import { getInstitutionEscrowPauseService } from '../../services/institution-escrow-pause.service';
 import { PrismaClient } from '../../generated/prisma';
 
 const router = Router();
@@ -71,7 +63,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  }
+  },
 );
 
 // DELETE /api/admin/institution-escrow/allowlist/:wallet
@@ -96,7 +88,7 @@ router.delete(
         timestamp: new Date().toISOString(),
       });
     }
-  }
+  },
 );
 
 // GET /api/admin/institution-escrow/allowlist
@@ -122,7 +114,7 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     }
-  }
+  },
 );
 
 // POST /api/admin/institution-escrow/corridors
@@ -180,7 +172,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  }
+  },
 );
 
 // GET /api/admin/institution-escrow/corridors
@@ -207,117 +199,7 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     }
-  }
-);
-
-// POST /api/admin/institution-escrow/pause
-router.post(
-  '/api/admin/institution-escrow/pause',
-  standardRateLimiter,
-  requireAdminOrApiKey,
-  validatePauseEscrow,
-  async (req: Request, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({
-        error: 'Validation Error',
-        details: errors.array(),
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
-
-    try {
-      const pauseService = getInstitutionEscrowPauseService();
-      const adminIdentifier =
-        (req as AdminAuthenticatedRequest).adminUser?.email ||
-        (req as AdminAuthenticatedRequest).apiKeyFingerprint ||
-        'unknown';
-      const state = await pauseService.pause(req.body.reason, adminIdentifier);
-
-      res.status(201).json({
-        success: true,
-        data: state,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      if (error.code === 'ALREADY_PAUSED') {
-        res.status(409).json({
-          error: 'Already Paused',
-          message: error.message,
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      }
-      res.status(500).json({
-        error: 'Internal Error',
-        message: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
-);
-
-// POST /api/admin/institution-escrow/unpause
-router.post(
-  '/api/admin/institution-escrow/unpause',
-  standardRateLimiter,
-  requireAdminOrApiKey,
-  async (req: Request, res: Response) => {
-    try {
-      const pauseService = getInstitutionEscrowPauseService();
-      const adminIdentifier =
-        (req as AdminAuthenticatedRequest).adminUser?.email ||
-        (req as AdminAuthenticatedRequest).apiKeyFingerprint ||
-        'unknown';
-      await pauseService.unpause(adminIdentifier);
-
-      res.status(200).json({
-        success: true,
-        message: 'Institution escrow operations resumed',
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      if (error.code === 'NOT_PAUSED') {
-        res.status(409).json({
-          error: 'Not Paused',
-          message: error.message,
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      }
-      res.status(500).json({
-        error: 'Internal Error',
-        message: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
-);
-
-// GET /api/admin/institution-escrow/pause
-router.get(
-  '/api/admin/institution-escrow/pause',
-  standardRateLimiter,
-  requireAdminOrApiKey,
-  async (_req: Request, res: Response) => {
-    try {
-      const pauseService = getInstitutionEscrowPauseService();
-      const state = await pauseService.getStatus();
-
-      res.status(200).json({
-        success: true,
-        data: state,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      res.status(500).json({
-        error: 'Internal Error',
-        message: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
+  },
 );
 
 export default router;

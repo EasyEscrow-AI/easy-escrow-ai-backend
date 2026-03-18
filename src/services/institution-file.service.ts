@@ -9,6 +9,7 @@ import { PrismaClient, DocumentType } from '../generated/prisma';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 import multer from 'multer';
 import { Readable } from 'stream';
+import { randomUUID } from 'crypto';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -114,7 +115,7 @@ export class InstitutionFileService {
     const date = new Date();
     const dateFolder = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
     const folder = escrowId || 'general';
-    const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${sanitizedFileName}`;
+    const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${randomUUID().slice(0, 8)}_${sanitizedFileName}`;
 
     // Upload to S3
     await this.s3Client.send(

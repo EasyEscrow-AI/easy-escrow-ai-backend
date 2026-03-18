@@ -69,17 +69,9 @@ interface ListAccountsFilters {
   isActive?: boolean;
 }
 
-interface TokenBalance {
-  symbol: string;
-  name: string;
-  balance: number;
-  mintAddress: string;
-}
-
 interface AccountBalance {
   sol: number;
   usdc: number;
-  tokens: TokenBalance[];
   lastUpdated: string;
 }
 
@@ -279,7 +271,6 @@ export class InstitutionAccountService {
 
     let solBalance = 0;
     let usdcBalance = 0;
-    const tokens: TokenBalance[] = [];
 
     try {
       const solanaService = getSolanaService();
@@ -290,58 +281,34 @@ export class InstitutionAccountService {
       const lamports = await connection.getBalance(pubkey);
       solBalance = lamports / 1e9; // lamports to SOL
 
-      // Fetch all approved token balances
-      const approvedTokens = await this.prisma.institutionApprovedToken.findMany({
-        where: { isActive: true },
-        select: { symbol: true, name: true, mintAddress: true, decimals: true },
-      });
-
-      for (const token of approvedTokens) {
-        // Skip tokens with pending/placeholder mint addresses
-        if (!isValidSolanaAddress(token.mintAddress)) continue;
-
+      // Fetch USDC balance
+      const escrowConfig = getInstitutionEscrowConfig();
+      if (escrowConfig.usdcMintAddress) {
         try {
-          const mint = new PublicKey(token.mintAddress);
-          const tokenAccounts = await connection.getTokenAccountsByOwner(pubkey, { mint });
+          const usdcMint = new PublicKey(escrowConfig.usdcMintAddress);
+          const tokenAccounts = await connection.getTokenAccountsByOwner(pubkey, {
+            mint: usdcMint,
+          });
 
-          let tokenBalance = 0;
           for (const { account } of tokenAccounts.value) {
             // Token account data layout: first 32 bytes mint, next 32 bytes owner,
             // then 8 bytes amount (u64 little-endian)
             const data = account.data;
             const amount = data.readBigUInt64LE(64);
-            tokenBalance += Number(amount) / 10 ** token.decimals;
-          }
-
-          if (tokenBalance > 0) {
-            tokens.push({
-              symbol: token.symbol,
-              name: token.name,
-              balance: tokenBalance,
-              mintAddress: token.mintAddress,
-            });
-          }
-
-          // Keep USDC in the top-level field for backwards compatibility
-          if (token.symbol === 'USDC') {
-            usdcBalance = tokenBalance;
+            usdcBalance += Number(amount) / 1e6; // USDC has 6 decimals
           }
         } catch {
-          // Token account may not exist for this wallet — skip
+          // USDC token account may not exist for this wallet — that's fine
         }
       }
     } catch (err) {
-      console.error(
-        `Balance fetch RPC error for ${walletAddress}:`,
-        err instanceof Error ? err.message : err
-      );
+      console.error(`Balance fetch RPC error for ${walletAddress}:`, err instanceof Error ? err.message : err);
       // Return zeros — caller sees stale/empty balance rather than a hard failure
     }
 
     const balance: AccountBalance = {
       sol: solBalance,
       usdc: usdcBalance,
-      tokens,
       lastUpdated: new Date().toISOString(),
     };
 

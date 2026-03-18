@@ -124,7 +124,7 @@ Programmable cross-border stablecoin escrow payments, built for institutions com
 
 ### Escrow Lifecycle
 
-```
+```text
 Create --> Deposit --> Release / Cancel
              |
      [Compliance Hold] --> Approve --> Release
@@ -256,7 +256,7 @@ npm run docker:fresh
 npm run docker:logs
 ```
 
-**Important**: Always use Docker compose commands for restarts. Never use process killing commands (`pkill`, `taskkill`) with Dockerized services.
+**Important**: Always use Docker compose commands for restarts. Never use process-killing commands (`pkill`, `taskkill`) with Dockerized services.
 
 ---
 

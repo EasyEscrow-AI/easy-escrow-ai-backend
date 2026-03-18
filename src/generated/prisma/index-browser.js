@@ -487,6 +487,42 @@ exports.Prisma.InstitutionWalletScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.InstitutionAccountScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  name: 'name',
+  label: 'label',
+  accountType: 'accountType',
+  description: 'description',
+  walletAddress: 'walletAddress',
+  chain: 'chain',
+  walletProvider: 'walletProvider',
+  custodyType: 'custodyType',
+  verificationStatus: 'verificationStatus',
+  verifiedAt: 'verifiedAt',
+  verificationNotes: 'verificationNotes',
+  maxTransactionAmount: 'maxTransactionAmount',
+  minTransactionAmount: 'minTransactionAmount',
+  dailyVolumeLimit: 'dailyVolumeLimit',
+  monthlyVolumeLimit: 'monthlyVolumeLimit',
+  dailyTransactionCountLimit: 'dailyTransactionCountLimit',
+  monthlyTransactionCountLimit: 'monthlyTransactionCountLimit',
+  approvalMode: 'approvalMode',
+  approvalThreshold: 'approvalThreshold',
+  whitelistedAddresses: 'whitelistedAddresses',
+  whitelistEnforced: 'whitelistEnforced',
+  notificationEmail: 'notificationEmail',
+  webhookUrl: 'webhookUrl',
+  notifyOnEscrowCreated: 'notifyOnEscrowCreated',
+  notifyOnEscrowFunded: 'notifyOnEscrowFunded',
+  notifyOnEscrowReleased: 'notifyOnEscrowReleased',
+  notifyOnComplianceAlert: 'notifyOnComplianceAlert',
+  isDefault: 'isDefault',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.InstitutionRefreshTokenScalarFieldEnum = {
   id: 'id',
   tokenHash: 'tokenHash',
@@ -619,6 +655,27 @@ exports.Prisma.InstitutionApprovedTokenScalarFieldEnum = {
   aminaApproved: 'aminaApproved',
   addedAt: 'addedAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AdminUserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  name: 'name',
+  role: 'role',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastLoginAt: 'lastLoginAt'
+};
+
+exports.Prisma.AdminRefreshTokenScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  adminId: 'adminId',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.InstitutionFileScalarFieldEnum = {
@@ -853,6 +910,27 @@ exports.WalletCustodyType = exports.$Enums.WalletCustodyType = {
   EXCHANGE: 'EXCHANGE'
 };
 
+exports.InstitutionAccountType = exports.$Enums.InstitutionAccountType = {
+  TREASURY: 'TREASURY',
+  OPERATIONS: 'OPERATIONS',
+  SETTLEMENT: 'SETTLEMENT',
+  COLLATERAL: 'COLLATERAL',
+  GENERAL: 'GENERAL'
+};
+
+exports.AccountVerificationStatus = exports.$Enums.AccountVerificationStatus = {
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  SUSPENDED: 'SUSPENDED',
+  REJECTED: 'REJECTED'
+};
+
+exports.ApprovalMode = exports.$Enums.ApprovalMode = {
+  AUTO: 'AUTO',
+  SINGLE_APPROVAL: 'SINGLE_APPROVAL',
+  MULTI_APPROVAL: 'MULTI_APPROVAL'
+};
+
 exports.InstitutionConditionType = exports.$Enums.InstitutionConditionType = {
   ADMIN_RELEASE: 'ADMIN_RELEASE',
   TIME_LOCK: 'TIME_LOCK',
@@ -883,6 +961,10 @@ exports.CorridorStatus = exports.$Enums.CorridorStatus = {
   DEPRECATED: 'DEPRECATED'
 };
 
+exports.AdminRole = exports.$Enums.AdminRole = {
+  SUPER_ADMIN: 'SUPER_ADMIN'
+};
+
 exports.DocumentType = exports.$Enums.DocumentType = {
   INVOICE: 'INVOICE',
   CONTRACT: 'CONTRACT',
@@ -909,6 +991,7 @@ exports.Prisma.ModelName = {
   TwoPhaseSwap: 'TwoPhaseSwap',
   InstitutionClient: 'InstitutionClient',
   InstitutionWallet: 'InstitutionWallet',
+  InstitutionAccount: 'InstitutionAccount',
   InstitutionRefreshToken: 'InstitutionRefreshToken',
   InstitutionClientSettings: 'InstitutionClientSettings',
   InstitutionApiKey: 'InstitutionApiKey',
@@ -918,6 +1001,8 @@ exports.Prisma.ModelName = {
   InstitutionAiAnalysis: 'InstitutionAiAnalysis',
   InstitutionCorridor: 'InstitutionCorridor',
   InstitutionApprovedToken: 'InstitutionApprovedToken',
+  AdminUser: 'AdminUser',
+  AdminRefreshToken: 'AdminRefreshToken',
   InstitutionFile: 'InstitutionFile'
 };
 
