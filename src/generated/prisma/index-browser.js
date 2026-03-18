@@ -706,14 +706,6 @@ exports.Prisma.InstitutionNotificationScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.SystemSettingScalarFieldEnum = {
-  key: 'key',
-  value: 'value',
-  updatedBy: 'updatedBy',
-  updatedAt: 'updatedAt',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1064,7 +1056,8 @@ exports.Prisma.ModelName = {
   InstitutionApprovedToken: 'InstitutionApprovedToken',
   AdminUser: 'AdminUser',
   AdminRefreshToken: 'AdminRefreshToken',
-  InstitutionFile: 'InstitutionFile'
+  InstitutionFile: 'InstitutionFile',
+  InstitutionNotification: 'InstitutionNotification'
 };
 
 /**
