@@ -427,54 +427,77 @@ if (openApiDocument) {
     .redoc-wrap [class*="enum"], .redoc-wrap [class*="oneOf"] { background: #1e293b !important; color: #e2e8f0 !important; }
     /* Any remaining white backgrounds in the middle panel */
     .redoc-wrap [class*="panel"] { background: #0f172a !important; }
-    .redoc-wrap [class*="content"]:not([class*="search"]):not([class*="Search"]) { background: transparent !important; }
+    .redoc-wrap [class*="content"] { background: transparent !important; }
+    .redoc-wrap [role="search"] [class*="content"] { background: #1e293b !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
-    /* Search bar */
-    .redoc-wrap [class*="search"], .redoc-wrap [role="search"] { margin-top: 20px !important; padding: 0 10px !important; }
+    /* Search container */
+    .redoc-wrap [role="search"] { margin-top: 20px !important; padding: 0 10px !important; }
+    /* Search input */
     .redoc-wrap [role="search"] input[type="text"],
-    .redoc-wrap [class*="search"] input {
+    .redoc-wrap [role="search"] input[type="search"],
+    .redoc-wrap [role="search"] input:not([type]) {
       width: 100% !important;
-      min-height: 38px !important;
-      padding: 8px 12px !important;
+      min-height: 44px !important;
+      padding: 12px 16px !important;
       font-size: 14px !important;
-      border-radius: 6px !important;
+      border-radius: 8px !important;
       border: 1px solid #475569 !important;
       background: #1e293b !important;
       color: #e2e8f0 !important;
       box-sizing: border-box !important;
       outline: none !important;
+      transition: border-color 0.2s, box-shadow 0.2s !important;
     }
-    .redoc-wrap [role="search"] input:focus,
-    .redoc-wrap [class*="search"] input:focus {
+    .redoc-wrap [role="search"] input::placeholder {
+      color: #64748b !important;
+    }
+    .redoc-wrap [role="search"] input:focus {
       border-color: #818cf8 !important;
-      box-shadow: 0 0 0 2px rgba(129,140,248,0.2) !important;
+      box-shadow: 0 0 0 3px rgba(129,140,248,0.25) !important;
     }
     /* Search results dropdown */
-    .redoc-wrap [class*="search-results"],
-    .redoc-wrap [class*="SearchResults"],
+    .redoc-wrap [role="search"] > div:not(:first-child),
     .redoc-wrap [role="search"] ul,
+    .redoc-wrap [role="search"] [class*="results"],
     .redoc-wrap [role="search"] [class*="menu"] {
       background: #1e293b !important;
       border: 1px solid #475569 !important;
-      border-radius: 6px !important;
+      border-radius: 8px !important;
+      margin-top: 4px !important;
       color: #e2e8f0 !important;
-      z-index: 100 !important;
+      z-index: 200 !important;
       max-height: 400px !important;
       overflow-y: auto !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
     }
+    /* Search result items */
     .redoc-wrap [role="search"] li,
-    .redoc-wrap [class*="search-results"] li,
-    .redoc-wrap [class*="SearchResults"] li {
-      padding: 8px 12px !important;
+    .redoc-wrap [role="search"] [class*="result"] {
+      padding: 10px 14px !important;
       color: #e2e8f0 !important;
       background: transparent !important;
       cursor: pointer !important;
+      border-bottom: 1px solid rgba(51,65,85,0.5) !important;
+    }
+    .redoc-wrap [role="search"] li:last-child {
+      border-bottom: none !important;
     }
     .redoc-wrap [role="search"] li:hover,
     .redoc-wrap [role="search"] li[class*="active"],
-    .redoc-wrap [class*="search-results"] li:hover {
+    .redoc-wrap [role="search"] [class*="result"]:hover {
       background: #334155 !important;
+    }
+    /* Search result text highlights */
+    .redoc-wrap [role="search"] mark,
+    .redoc-wrap [role="search"] [class*="highlight"],
+    .redoc-wrap [role="search"] em,
+    .redoc-wrap mark {
+      background: rgba(129,140,248,0.3) !important;
+      color: #c7d2fe !important;
+      padding: 1px 3px !important;
+      border-radius: 2px !important;
+      font-style: normal !important;
     }
     .redoc-wrap [role="search"] label { display: none !important; }
     /* Scrollbars */
