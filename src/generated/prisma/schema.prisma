@@ -915,6 +915,7 @@ model InstitutionClient {
   wallets       InstitutionWallet[]
   accounts      InstitutionAccount[]
   aiAnalyses    InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
+  notifications InstitutionNotification[]
 
   @@index([email])
   @@index([status])
@@ -1322,4 +1323,65 @@ model InstitutionFile {
   @@index([documentType])
   @@index([uploadedAt])
   @@map("institution_files")
+}
+
+// ============================================
+// NOTIFICATION MODEL
+// ============================================
+
+enum NotificationType {
+  ESCROW_CREATED
+  ESCROW_FUNDED
+  ESCROW_RELEASED
+  ESCROW_CANCELLED
+  ESCROW_EXPIRED
+  ESCROW_COMPLIANCE_HOLD
+  KYC_APPROVED
+  KYC_REJECTED
+  KYC_EXPIRING
+  KYB_VERIFIED
+  KYB_REJECTED
+  KYB_EXPIRING
+  WALLET_WHITELISTED
+  WALLET_REMOVED
+  WALLET_VERIFICATION_PENDING
+  COMPLIANCE_CHECK_PASSED
+  COMPLIANCE_CHECK_FAILED
+  COMPLIANCE_REVIEW_REQUIRED
+  ACCOUNT_VERIFIED
+  ACCOUNT_SUSPENDED
+  DEPOSIT_CONFIRMED
+  SETTLEMENT_COMPLETE
+  SYSTEM_MAINTENANCE
+  SECURITY_ALERT
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// Institution notifications (in-app notification center)
+model InstitutionNotification {
+  id        String               @id @default(uuid())
+  clientId  String               @map("client_id")
+  escrowId  String?              @map("escrow_id")
+  type      NotificationType
+  priority  NotificationPriority @default(MEDIUM)
+  title     String
+  message   String
+  metadata  Json                 @default("{}")
+  isRead    Boolean              @default(false) @map("is_read")
+  readAt    DateTime?            @map("read_at")
+  createdAt DateTime             @default(now()) @map("created_at")
+
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([clientId, isRead])
+  @@index([type])
+  @@index([createdAt])
+  @@map("institution_notifications")
 }
