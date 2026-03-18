@@ -1,8 +1,7 @@
 /**
  * AI Chat Routes — "EasyEscrow AI Assistant"
  *
- * POST /api/v1/ai/chat        — Send a message (JSON response, backward compatible)
- * POST /api/v1/ai/chat/stream — Send a message with SSE streaming response
+ * POST /api/v1/ai/chat — Send a message to the AI assistant
  *
  * Requires institution JWT authentication.
  * Uses the anonymization pipeline to protect PII before sending to Claude.
@@ -48,7 +47,7 @@ const validateChatMessage = [
     .withMessage('Each history message content must be between 1 and 4000 characters'),
 ];
 
-// POST /api/v1/ai/chat — conversational AI assistant (JSON response)
+// POST /api/v1/ai/chat — conversational AI assistant
 router.post(
   '/api/v1/ai/chat',
   chatRateLimiter,
@@ -92,75 +91,6 @@ router.post(
         message: status === 500 ? 'An internal error occurred' : message,
         timestamp: new Date().toISOString(),
       });
-    }
-  },
-);
-
-// POST /api/v1/ai/chat/stream — SSE streaming response
-//
-// Response is a text/event-stream with these events:
-//   event: text        data: {"delta":"..."}           — text chunk
-//   event: tool_start  data: {"tool":"search_escrows"} — tool invocation started
-//   event: tool_end    data: {"tool":"search_escrows"} — tool invocation done
-//   event: done        data: {"usage":{...}}           — stream finished
-//   event: error       data: {"message":"..."}         — error
-router.post(
-  '/api/v1/ai/chat/stream',
-  chatRateLimiter,
-  requireInstitutionAuth,
-  validateChatMessage,
-  async (req: InstitutionAuthenticatedRequest, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({
-        error: 'Validation Error',
-        details: errors.array(),
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
-
-    // Set SSE headers
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no', // Disable nginx buffering
-    });
-
-    // Handle client disconnect — abort controller propagates to service
-    const abortController = new AbortController();
-    let aborted = false;
-    req.on('close', () => {
-      aborted = true;
-      abortController.abort();
-    });
-
-    try {
-      const service = getAiChatService();
-      await service.chatStream(
-        req.institutionClient!.clientId,
-        {
-          message: req.body.message,
-          history: req.body.history,
-        },
-        res,
-        abortController.signal,
-      );
-    } catch (error: unknown) {
-      if (!aborted) {
-        const errObj = error as Record<string, unknown>;
-        const status = typeof errObj?.status === 'number' ? errObj.status
-          : typeof errObj?.statusCode === 'number' ? errObj.statusCode
-          : 500;
-        const raw = error instanceof Error ? error.message : String(error);
-        const message = status >= 500 ? 'An internal error occurred' : raw;
-        res.write(`event: error\ndata: ${JSON.stringify({ message })}\n\n`);
-      }
-    } finally {
-      if (!aborted) {
-        res.end();
-      }
     }
   },
 );

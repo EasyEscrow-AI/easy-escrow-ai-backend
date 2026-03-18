@@ -13,7 +13,11 @@ import { PrismaClient } from '../../src/generated/prisma';
 
 const prisma = new PrismaClient();
 
-describe('Institution Staging Seed Data Verification', () => {
+describe('Institution Staging Seed Data Verification', function () {
+  if (!process.env.RUN_STAGING_DB_TESTS) {
+    before(function () { this.skip(); });
+  }
+
   after(async () => {
     await prisma.$disconnect();
   });
@@ -97,16 +101,17 @@ describe('Institution Staging Seed Data Verification', () => {
       expect(client!.walletCustodyType).to.equal('MPC');
     });
 
-    // Suspended client with high risk
-    it('should have Frontier Exchange (suspended, high risk, flagged sanctions)', async () => {
+    // Admin user — AMINA Bank
+    it('should have AMINA Bank admin (enterprise, active, FINMA-regulated)', async () => {
       const client = await prisma.institutionClient.findUnique({
-        where: { email: 'admin@frontier-exchange.ch' },
+        where: { email: 'admin@aminagroup.com' },
       });
       expect(client).to.not.be.null;
-      expect(client!.status).to.equal('SUSPENDED');
-      expect(client!.riskRating).to.equal('HIGH');
-      expect(client!.sanctionsStatus).to.equal('FLAGGED');
-      expect(client!.regulatoryStatus).to.equal('SUSPENDED');
+      expect(client!.tier).to.equal('ENTERPRISE');
+      expect(client!.status).to.equal('ACTIVE');
+      expect(client!.riskRating).to.equal('LOW');
+      expect(client!.sanctionsStatus).to.equal('CLEAR');
+      expect(client!.regulatoryBody).to.equal('FINMA');
     });
 
     // Full KYB profile populated

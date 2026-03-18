@@ -1665,78 +1665,6 @@ paths:
                     aminaApproved: true
                 timestamp: "2026-03-17T10:00:00.000Z"
 
-  # ── Institution Tokens (AMINA Whitelist) ──────────────────────────────
-
-  /api/v1/institution/tokens:
-    get:
-      tags:
-        - Institution Tokens
-      summary: List approved tokens
-      description: |
-        Returns all active AMINA-approved stablecoins available for institution escrow.
-        This is a **public endpoint** — no authentication required.
-
-        Use this to populate the token selector dropdown in the portal UI.
-        Each token includes its Solana SPL mint address, issuer, jurisdiction, and AMINA approval status.
-      responses:
-        '200':
-          description: Approved token list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ApprovedToken'
-                  timestamp:
-                    type: string
-                    format: date-time
-              example:
-                success: true
-                data:
-                  - symbol: USDC
-                    name: USD Coin
-                    mintAddress: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-                    decimals: 6
-                    issuer: Circle
-                    jurisdiction: US
-                    chain: solana
-                    isDefault: true
-                    aminaApproved: true
-                  - symbol: USDT
-                    name: Tether USD
-                    mintAddress: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB
-                    decimals: 6
-                    issuer: Tether
-                    jurisdiction: BVI
-                    chain: solana
-                    isDefault: false
-                    aminaApproved: true
-                  - symbol: EURC
-                    name: Euro Coin
-                    mintAddress: HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr
-                    decimals: 6
-                    issuer: Circle
-                    jurisdiction: EU
-                    chain: solana
-                    isDefault: false
-                    aminaApproved: true
-                  - symbol: PYUSD
-                    name: PayPal USD
-                    mintAddress: 2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo
-                    decimals: 6
-                    issuer: Paxos (PayPal)
-                    jurisdiction: US
-                    chain: solana
-                    isDefault: false
-                    aminaApproved: true
-                timestamp: "2026-03-17T10:00:00.000Z"
-
   # ── Institution Files ──────────────────────────────────────────────────
 
   /api/v1/institution/files:
@@ -2058,179 +1986,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  /api/v1/institution-escrow/draft:
-    post:
-      tags:
-        - Institution Escrow
-      summary: Save escrow as draft
-      description: |
-        Save an escrow as a draft with partial information. Only `payerWallet` is required;
-        all other fields can be filled in later via the update draft endpoint.
-
-        Drafts are created in `DRAFT` status. No compliance checks, nonce assignment, or
-        expiry timers are set. The draft can be updated multiple times before submission.
-
-        Use `POST /api/v1/institution-escrow/{id}/submit` to validate and submit the draft.
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InstitutionEscrowDraftRequest'
-            example:
-              payerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-              amount: 50000
-              corridor: "SG-CH"
-      responses:
-        '201':
-          description: Draft saved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionEscrowDetail'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-
-  /api/v1/institution-escrow/{id}/draft:
-    put:
-      tags:
-        - Institution Escrow
-      summary: Update draft
-      description: |
-        Update fields on a `DRAFT` escrow. Only escrows in `DRAFT` status can be updated.
-        All fields are optional — only provided fields will be changed.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Escrow ID (UUID)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InstitutionEscrowDraftUpdateRequest'
-            example:
-              recipientWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
-              amount: 75000
-              conditionType: "ADMIN_RELEASE"
-      responses:
-        '200':
-          description: Draft updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionEscrowDetail'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/institution-escrow/{id}/submit:
-    post:
-      tags:
-        - Institution Escrow
-      summary: Submit draft
-      description: |
-        Submit a `DRAFT` escrow for processing. Validates that all required fields are present
-        (`recipientWallet`, `amount > 0`, `corridor`, `conditionType`), runs compliance checks,
-        assigns a durable nonce, and transitions the escrow to `CREATED` (or `COMPLIANCE_HOLD`).
-
-        After submission, the escrow follows the normal lifecycle: deposit → release → complete.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Escrow ID (UUID)
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                expiryHours:
-                  type: integer
-                  minimum: 1
-                  maximum: 2160
-                  description: Escrow expiry in hours (default 72)
-                  example: 72
-      responses:
-        '200':
-          description: Draft submitted and escrow created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/InstitutionEscrowDetail'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          description: Missing required fields or invalid data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Not authenticated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: Compliance check failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution-escrow/{id}:
     get:
@@ -3111,6 +2866,94 @@ paths:
                     format: date-time
         '401':
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/ai/chat:
+    post:
+      tags:
+        - AI Analysis
+      summary: AI Chat — conversational assistant
+      description: |
+        Send a message to the EasyEscrow AI Assistant. Requires institution JWT.
+        The assistant can answer questions about the escrow platform, cross-border
+        stablecoin payments, and the client's escrow data (anonymized via PII pipeline).
+      operationId: postAiChat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  minLength: 1
+                  maxLength: 4000
+                  description: The user's chat message
+                  example: "What is the status of my latest escrow?"
+                history:
+                  type: array
+                  maxItems: 50
+                  description: Previous conversation messages for context
+                  items:
+                    type: object
+                    required:
+                      - role
+                      - content
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
+                        minLength: 1
+                        maxLength: 4000
+      responses:
+        '200':
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      response:
+                        type: string
+                        description: The AI assistant's response
+                      tokensUsed:
+                        type: integer
+                        description: Token count for this interaction
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: AI service not configured
           content:
             application/json:
               schema:
@@ -5283,12 +5126,11 @@ components:
           description: Null when escrow is in DRAFT status
         amount:
           type: number
-          description: USDC amount
+          description: Escrow amount in the selected stablecoin
           example: 50000
         tokenMint:
           type: string
-          nullable: true
-          description: SPL token mint address used for this escrow. Null defaults to USDC.
+          description: SPL token mint address (from AMINA-approved whitelist, defaults to USDC)
           example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
         corridor:
           type: string

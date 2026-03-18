@@ -15,24 +15,34 @@
 import { PrismaClient } from '../src/generated/prisma';
 import { InstitutionReceiptService } from '../src/services/institution-receipt.service';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 const prisma = new PrismaClient();
 
 async function main() {
   const targetStatus = process.argv[2] || 'RELEASED';
+  const escrowIdArg = process.argv[3]; // optional explicit escrow ID
   console.log(`Looking for a ${targetStatus} escrow in staging DB...\n`);
 
-  const escrow = await prisma.institutionEscrow.findFirst({
-    where: { status: targetStatus as any },
-    include: {
-      client: true,
-      deposits: true,
-      auditLogs: { orderBy: { createdAt: 'asc' } },
-      aiAnalyses: { take: 1 },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+  const queryInclude = {
+    client: true,
+    deposits: true,
+    auditLogs: { orderBy: { createdAt: 'asc' as const } },
+    aiAnalyses: { take: 1 },
+  };
+
+  const escrow = escrowIdArg
+    ? await prisma.institutionEscrow.findFirst({
+        where: { escrowId: escrowIdArg, status: targetStatus as any },
+        include: queryInclude,
+        orderBy: { createdAt: 'desc' },
+      })
+    : await prisma.institutionEscrow.findFirst({
+        where: { status: targetStatus as any },
+        include: queryInclude,
+        orderBy: { createdAt: 'desc' },
+      });
 
   if (!escrow) {
     console.error(`No escrow found with status ${targetStatus}`);
@@ -54,7 +64,7 @@ async function main() {
   console.log('Generating receipt data...');
   const data = await service.getReceiptData(escrow.escrowId, escrow.clientId);
 
-  const outDir = path.resolve(__dirname, '../receipts');
+  const outDir = path.join(os.tmpdir(), 'easyescrow-receipts');
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir, { recursive: true });
   }

@@ -916,6 +916,7 @@ model InstitutionClient {
   auditLogs     InstitutionAuditLog[]
   files         InstitutionFile[]
   wallets       InstitutionWallet[]
+  accounts      InstitutionAccount[]
   aiAnalyses    InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
 
   @@index([email])
@@ -1255,6 +1256,50 @@ model InstitutionApprovedToken {
   @@index([isActive])
   @@index([aminaApproved])
   @@map("institution_approved_tokens")
+}
+
+// ============================================
+// ADMIN USER SYSTEM
+// ============================================
+
+enum AdminRole {
+  SUPER_ADMIN
+}
+
+// Admin user account (seed-only, no public registration)
+model AdminUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  role         AdminRole @default(SUPER_ADMIN)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  refreshTokens AdminRefreshToken[]
+
+  @@index([email])
+  @@index([isActive])
+  @@map("admin_users")
+}
+
+// Admin refresh token storage (hashed)
+model AdminRefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique @map("token_hash")
+  adminId   String    @map("admin_id")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([expiresAt])
+  @@index([tokenHash])
+  @@map("admin_refresh_tokens")
 }
 
 // ============================================

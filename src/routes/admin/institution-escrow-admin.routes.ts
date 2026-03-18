@@ -14,10 +14,7 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { validationResult } from 'express-validator';
-import {
-  requireAdminOrApiKey,
-  AdminAuthenticatedRequest,
-} from '../../middleware/admin-jwt.middleware';
+import { requireAdminOrApiKey } from '../../middleware/admin-jwt.middleware';
 import { getAllowlistService } from '../../services/allowlist.service';
 import {
   validateAddToAllowlist,

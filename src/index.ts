@@ -27,8 +27,11 @@ import {
   institutionEscrowRoutes,
   aiAnalysisRoutes,
   institutionClientsRoutes,
+  adminAuthRoutes,
   institutionReceiptRoutes,
   institutionTokensRoutes,
+  aiChatRoutes,
+  institutionAccountRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -236,10 +239,8 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.aiAnalysis = '/api/v1/ai';
     response.endpoints.aiAnalyzeEscrowDoc = '/api/v1/ai/analyze-escrow-doc/:escrow_id';
     response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis/:escrow_id';
-    response.endpoints.institutionReceipts = '/api/v1/institution-escrow/:escrowId/receipt';
-    response.endpoints.institutionTokens = '/api/v1/institution/tokens';
-    response.endpoints.institutionAccounts = '/api/v1/institution/accounts';
     response.endpoints.aiChat = '/api/v1/ai/chat';
+    response.endpoints.institutionAccounts = '/api/v1/institution/accounts';
   }
 
   // Only include documentation field if OpenAPI spec loaded successfully
@@ -265,111 +266,19 @@ if (openApiDocument) {
   <title>EasyEscrow.ai API Documentation</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700&display=swap" rel="stylesheet">
   <style>
-    /* Base dark mode */
-    body, html { margin: 0; padding: 0; background: #0f172a !important; }
+    /* Base */
+    body, html { margin: 0; padding: 0; background: #0f172a !important; font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
     /* Topbar */
-    #topbar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-      height: 56px; background: #1e293b;
-      border-bottom: 1px solid #334155;
-      display: flex; align-items: center; gap: 20px;
-      padding: 0 24px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-    #topbar .brand {
-      display: flex; align-items: center; flex-shrink: 0;
-      text-decoration: none;
-    }
-    #topbar .brand img {
-      height: 28px;
-    }
-    #topbar .search-wrapper {
-      flex: 0 1 420px; position: relative;
-    }
-    #topbar .search-wrapper svg.search-icon {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      width: 16px; height: 16px; color: #64748b; pointer-events: none;
-    }
-    #topbar-search {
-      width: 100%; height: 38px;
-      padding: 0 32px 0 40px;
-      font-size: 14px; font-family: Inter, sans-serif;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: #0f172a; color: #e2e8f0;
-      outline: none; box-sizing: border-box;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    #topbar-search::placeholder { color: #64748b; }
-    #topbar-search:focus {
-      border-color: #818cf8;
-      box-shadow: 0 0 0 3px rgba(129,140,248,0.25);
-    }
-    /* Search results dropdown */
-    #search-results {
-      display: none; position: absolute; top: 100%; left: 0; right: 0;
-      margin-top: 6px; max-height: 400px; overflow-y: auto;
-      background: #1e293b; border: 1px solid #475569; border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 1001;
-    }
-    #search-results.active { display: block; }
-    #search-results .sr-empty {
-      padding: 16px; color: #64748b; text-align: center; font-size: 13px;
-    }
-    #search-results .sr-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #262f3d;
-      transition: background 0.15s;
-    }
-    #search-results .sr-item:last-child { border-bottom: none; }
-    #search-results .sr-item:hover, #search-results .sr-item.active {
-      background: #334155;
-    }
-    #search-results .sr-method {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      padding: 2px 6px; border-radius: 4px; color: #fff; flex-shrink: 0;
-      min-width: 40px; text-align: center; letter-spacing: 0.5px;
-    }
-    #search-results .sr-method.get { background: #22c55e; }
-    #search-results .sr-method.post { background: #3b82f6; }
-    #search-results .sr-method.put { background: #f59e0b; }
-    #search-results .sr-method.delete { background: #ef4444; }
-    #search-results .sr-method.tag { background: #818cf8; }
-    #search-results .sr-text {
-      display: flex; flex-direction: column; min-width: 0;
-    }
-    #search-results .sr-title {
-      font-size: 13px; color: #f1f5f9; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis;
-    }
-    #search-results .sr-path {
-      font-size: 11px; color: #64748b; font-family: monospace;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    #search-results .sr-title mark {
-      background: rgba(129,140,248,0.3); color: #c7d2fe;
-      padding: 0 2px; border-radius: 2px;
-    }
-    #search-clear {
-      display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; color: #64748b; font-size: 18px; line-height: 1;
-      cursor: pointer; padding: 2px 6px; border-radius: 4px;
-      transition: color 0.15s, background 0.15s;
-    }
-    #search-clear:hover { color: #e2e8f0; background: rgba(255,255,255,0.1); }
-    #search-clear.visible { display: block; }
-    #topbar .spacer { flex: 1; }
-    #topbar .version-badge {
-      font-size: 12px; color: #94a3b8;
-      background: #0f172a; padding: 4px 10px;
-      border-radius: 12px; border: 1px solid #334155;
-      white-space: nowrap; flex-shrink: 0;
-    }
-    /* Push content below fixed topbar */
+    #docs-topbar { position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #0f172a; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 1000; box-sizing: border-box; }
+    .topbar-title { color: #f1f5f9; font-size: 18px; font-weight: 600; white-space: nowrap; }
+    #topbar-search { position: relative; width: 320px; flex-shrink: 0; }
     #redoc-container { padding-top: 56px; }
+    /* Footer */
+    #docs-footer { background: #0f172a; border-top: 1px solid #1e293b; padding: 20px 24px; text-align: center; font-size: 13px; color: #94a3b8; }
+    #docs-footer a { color: #818cf8 !important; text-decoration: none; }
+    #docs-footer a:hover { color: #a5b4fc !important; text-decoration: underline; }
     /* Force ALL Redoc elements dark */
     .redoc-wrap, .redoc-wrap > div { background: #0f172a !important; }
     /* Sidebar offset for topbar */
@@ -378,9 +287,8 @@ if (openApiDocument) {
     .redoc-wrap > div > div:nth-child(2) { background: #0f172a !important; }
     [class*="api-content"], [class*="middle-panel"], [data-section-id] { background: #0f172a !important; }
     /* All text white/light */
-    .redoc-wrap h1 { color: #f1f5f9 !important; font-size: 40px !important; font-weight: 700 !important; margin-top: 32px !important; margin-bottom: 16px !important; letter-spacing: -0.5px !important; }
-    .redoc-wrap h2 { color: #f1f5f9 !important; margin-top: 24px !important; }
-    .redoc-wrap h3, .redoc-wrap h4, .redoc-wrap h5, .redoc-wrap h6 { color: #f1f5f9 !important; }
+    .redoc-wrap h1 { color: #f1f5f9 !important; font-size: 40px !important; }
+    .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h4, .redoc-wrap h5, .redoc-wrap h6 { color: #f1f5f9 !important; }
     .redoc-wrap p, .redoc-wrap span, .redoc-wrap li, .redoc-wrap td, .redoc-wrap th, .redoc-wrap label { color: #e2e8f0 !important; }
     .redoc-wrap div { color: #e2e8f0; }
     .redoc-wrap a { color: #818cf8 !important; }
@@ -415,7 +323,6 @@ if (openApiDocument) {
     .redoc-wrap [class*="operation"], .redoc-wrap [class*="Operation"] { background: #0f172a !important; }
     .redoc-wrap [class*="callback"], .redoc-wrap [class*="Callback"] { background: #0f172a !important; }
     .redoc-wrap [class*="container"] { background: transparent !important; }
-    .redoc-wrap [role="search"] [class*="container"] { background: #1e293b !important; }
     .redoc-wrap [class*="react-tabs__tab-panel"] { background: #0f172a !important; }
     .redoc-wrap [class*="tab-panel"], .redoc-wrap [role="tabpanel"] { background: #0f172a !important; }
     .redoc-wrap [class*="security"] { background: #0f172a !important; }
@@ -426,20 +333,21 @@ if (openApiDocument) {
     /* Enum values and oneOf selectors */
     .redoc-wrap [class*="enum"], .redoc-wrap [class*="oneOf"] { background: #1e293b !important; color: #e2e8f0 !important; }
     /* Any remaining white backgrounds in the middle panel */
+    .redoc-wrap div[class] { background-color: inherit; }
     .redoc-wrap [class*="panel"] { background: #0f172a !important; }
-    .redoc-wrap [class*="content"] { background: transparent !important; }
-    .redoc-wrap [role="search"] [class*="content"] { background: #1e293b !important; }
+    .redoc-wrap [class*="content"]:not([class*="search"]):not([class*="Search"]) { background: transparent !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
-    /* Search container */
-    .redoc-wrap [role="search"] { margin-top: 20px !important; padding: 0 10px !important; }
-    /* Search input */
-    .redoc-wrap [role="search"] input[type="text"],
-    .redoc-wrap [role="search"] input[type="search"],
-    .redoc-wrap [role="search"] input:not([type]) {
+    /* Search (relocated to topbar via JS) */
+    #topbar-search [role="search"] { margin: 0 !important; padding: 0 !important; }
+    #topbar-search [role="search"] label { display: none !important; }
+    #topbar-search [role="search"] input[type="text"],
+    #topbar-search [role="search"] input[type="search"],
+    #topbar-search [role="search"] input:not([type]) {
       width: 100% !important;
-      min-height: 44px !important;
-      padding: 12px 16px !important;
+      height: 36px !important;
+      min-height: 36px !important;
+      padding: 8px 14px !important;
       font-size: 14px !important;
       border-radius: 8px !important;
       border: 1px solid #475569 !important;
@@ -449,57 +357,50 @@ if (openApiDocument) {
       outline: none !important;
       transition: border-color 0.2s, box-shadow 0.2s !important;
     }
-    .redoc-wrap [role="search"] input::placeholder {
-      color: #64748b !important;
-    }
-    .redoc-wrap [role="search"] input:focus {
+    #topbar-search [role="search"] input::placeholder { color: #64748b !important; }
+    #topbar-search [role="search"] input:focus {
       border-color: #818cf8 !important;
       box-shadow: 0 0 0 3px rgba(129,140,248,0.25) !important;
     }
-    /* Search results dropdown */
-    .redoc-wrap [role="search"] > div:not(:first-child),
-    .redoc-wrap [role="search"] ul,
-    .redoc-wrap [role="search"] [class*="results"],
-    .redoc-wrap [role="search"] [class*="menu"] {
+    /* Search results dropdown (topbar) */
+    #topbar-search [role="search"] > div:not(:first-child),
+    #topbar-search [role="search"] ul,
+    #topbar-search [role="search"] [class*="results"],
+    #topbar-search [role="search"] [class*="menu"] {
       background: #1e293b !important;
       border: 1px solid #475569 !important;
       border-radius: 8px !important;
       margin-top: 4px !important;
       color: #e2e8f0 !important;
-      z-index: 200 !important;
+      z-index: 1001 !important;
       max-height: 400px !important;
       overflow-y: auto !important;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
     }
-    /* Search result items */
-    .redoc-wrap [role="search"] li,
-    .redoc-wrap [role="search"] [class*="result"] {
+    #topbar-search [role="search"] li,
+    #topbar-search [role="search"] [class*="result"] {
       padding: 10px 14px !important;
       color: #e2e8f0 !important;
       background: transparent !important;
       cursor: pointer !important;
       border-bottom: 1px solid rgba(51,65,85,0.5) !important;
     }
-    .redoc-wrap [role="search"] li:last-child {
-      border-bottom: none !important;
-    }
-    .redoc-wrap [role="search"] li:hover,
-    .redoc-wrap [role="search"] li[class*="active"],
-    .redoc-wrap [role="search"] [class*="result"]:hover {
-      background: #334155 !important;
-    }
-    /* Search result text highlights */
-    .redoc-wrap [role="search"] mark,
-    .redoc-wrap [role="search"] [class*="highlight"],
-    .redoc-wrap [role="search"] em,
-    .redoc-wrap mark {
+    #topbar-search [role="search"] li:last-child { border-bottom: none !important; }
+    #topbar-search [role="search"] li:hover,
+    #topbar-search [role="search"] li[class*="active"],
+    #topbar-search [role="search"] [class*="result"]:hover { background: #334155 !important; }
+    #topbar-search [role="search"] mark,
+    #topbar-search [role="search"] [class*="highlight"],
+    #topbar-search [role="search"] em,
+    #topbar-search mark {
       background: rgba(129,140,248,0.3) !important;
       color: #c7d2fe !important;
       padding: 1px 3px !important;
       border-radius: 2px !important;
       font-style: normal !important;
     }
-    .redoc-wrap [role="search"] label { display: none !important; }
+    #topbar-search [class*="container"] { background: #1e293b !important; }
+    #topbar-search [class*="content"] { background: #1e293b !important; }
     /* Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -508,18 +409,14 @@ if (openApiDocument) {
   </style>
 </head>
 <body>
-  <div id="topbar">
-    <a class="brand" href="/"><img src="https://portal.easyescrow.ai/assets/easyescrow-logo-invert.svg" alt="EasyEscrow.ai" /></a>
-    <div class="search-wrapper">
-      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input id="topbar-search" type="text" placeholder="Search endpoints, schemas, tags...  (Ctrl+K)" autocomplete="off" />
-      <button id="search-clear" type="button" aria-label="Clear search">&times;</button>
-      <div id="search-results"></div>
-    </div>
-    <div class="spacer"></div>
-    <span class="version-badge">v1.1.0</span>
+  <div id="docs-topbar">
+    <span class="topbar-title">EasyEscrow.ai API</span>
+    <div id="topbar-search"></div>
   </div>
   <div id="redoc-container"></div>
+  <div id="docs-footer">
+    EasyEscrow.ai Support: <a href="mailto:support@easyescrow.ai">support@easyescrow.ai</a>
+  </div>
   <script src="https://unpkg.com/redoc@2.1.3/bundles/redoc.standalone.js"></script>
   <script>
     Redoc.init('/openapi.json', {
@@ -547,7 +444,7 @@ if (openApiDocument) {
           textColor: '#e2e8f0'
         },
         schema: { nestedBackground: '#1e293b' },
-        spacing: { sectionVertical: 24 }
+        spacing: { sectionVertical: 16 }
       },
       hideDownloadButton: true,
       disableSearch: false,
@@ -557,212 +454,33 @@ if (openApiDocument) {
       jsonSampleExpandLevel: 2,
       nativeScrollbars: true,
       hideHostname: true
-    }, document.getElementById('redoc-container'));
-
-    // Topbar search — builds searchable index from OpenAPI spec, shows dropdown results
-    (function() {
-      var input = document.getElementById('topbar-search');
-      var dropdown = document.getElementById('search-results');
-      var clearBtn = document.getElementById('search-clear');
-      if (!input || !dropdown) return;
-      var searchIndex = [];
-      var activeIdx = -1;
-
-      function updateClearBtn() {
-        if (clearBtn) clearBtn.classList.toggle('visible', input.value.length > 0);
-      }
-      if (clearBtn) {
-        clearBtn.addEventListener('click', function() {
-          input.value = '';
-          dropdown.innerHTML = '';
-          dropdown.classList.remove('active');
-          updateClearBtn();
-          input.focus();
-        });
-      }
-
-      // Build search index from the OpenAPI spec
-      fetch('/openapi.json').then(function(r) { return r.json(); }).then(function(spec) {
-        // Add tags (sections)
-        (spec.tags || []).forEach(function(tag) {
-          searchIndex.push({ type: 'tag', method: 'tag', title: tag.name, path: '', tag: tag.name });
-        });
-        // Add paths (endpoints)
-        Object.keys(spec.paths || {}).forEach(function(path) {
-          var methods = spec.paths[path];
-          ['get','post','put','delete','patch'].forEach(function(method) {
-            if (methods[method]) {
-              var op = methods[method];
-              searchIndex.push({
-                type: 'endpoint',
-                method: method,
-                title: op.summary || path,
-                path: path,
-                tag: (op.tags || [''])[0],
-                description: op.description || '',
-                operationId: op.operationId || ''
-              });
-            }
-          });
-        });
-        // Add schemas
-        Object.keys((spec.components || {}).schemas || {}).forEach(function(name) {
-          searchIndex.push({ type: 'schema', method: 'tag', title: name, path: 'Schema', tag: 'Schema' });
-        });
-      });
-
-      function highlightText(text, query) {
-        var idx = text.toLowerCase().indexOf(query);
-        if (idx === -1) return text;
-        return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + query.length) + '</mark>' + text.slice(idx + query.length);
-      }
-
-      function renderResults(query) {
-        if (!query) { dropdown.innerHTML = ''; dropdown.classList.remove('active'); return; }
-        var results = searchIndex.filter(function(item) {
-          var haystack = (item.title + ' ' + item.path + ' ' + item.tag + ' ' + item.method).toLowerCase();
-          return haystack.indexOf(query) !== -1;
-        }).slice(0, 20);
-
-        if (!results.length) {
-          dropdown.innerHTML = '<div class="sr-empty">No results for &ldquo;' + query + '&rdquo;</div>';
-          dropdown.classList.add('active');
-          activeIdx = -1;
-          return;
+    }, document.getElementById('redoc-container'), function() {
+      // Move Redoc search from sidebar into topbar
+      var doMove = function() {
+        var search = document.querySelector('.redoc-wrap [role="search"]');
+        var target = document.getElementById('topbar-search');
+        if (search && target) {
+          target.appendChild(search);
+          search.style.display = 'block';
+          return true;
         }
-
-        activeIdx = -1;
-        dropdown.innerHTML = results.map(function(r, i) {
-          return '<div class="sr-item" data-idx="' + i + '">' +
-            '<span class="sr-method ' + r.method + '">' + (r.type === 'schema' ? 'Schema' : r.type === 'tag' ? 'Section' : r.method.toUpperCase()) + '</span>' +
-            '<div class="sr-text">' +
-              '<span class="sr-title">' + highlightText(r.title, query) + '</span>' +
-              (r.path ? '<span class="sr-path">' + highlightText(r.path, query) + '</span>' : '') +
-            '</div></div>';
-        }).join('');
-        dropdown.classList.add('active');
-
-        // Click handlers
-        dropdown.querySelectorAll('.sr-item').forEach(function(item, i) {
-          item.addEventListener('click', function() { navigateTo(results[i]); });
-        });
+        return false;
+      };
+      if (!doMove()) {
+        var n = 0;
+        var t = setInterval(function() { if (doMove() || ++n > 30) clearInterval(t); }, 100);
       }
-
-      function navigateTo(result) {
-        dropdown.classList.remove('active');
-        input.value = '';
-        updateClearBtn();
-        // Build Redoc hash anchor based on result type
-        var hash = '';
-        if (result.type === 'tag') {
-          hash = '#tag/' + encodeURIComponent(result.title);
-        } else if (result.type === 'schema') {
-          hash = '#schema/' + encodeURIComponent(result.title);
-        } else if (result.type === 'endpoint' && result.operationId) {
-          hash = '#tag/' + encodeURIComponent(result.tag) + '/operation/' + encodeURIComponent(result.operationId);
-        } else if (result.type === 'endpoint') {
-          // Redoc expects JSON Pointer encoding (RFC 6901): ~ becomes ~0, / becomes ~1
-          var pointer = result.path.split('~').join('~0').split('/').join('~1');
-          hash = '#tag/' + encodeURIComponent(result.tag) + '/paths/' + encodeURIComponent(pointer) + '/' + result.method;
-        }
-        if (hash) {
-          window.location.hash = hash;
-          // Give Redoc time to process hash change, then ensure scroll with topbar offset
-          setTimeout(function() {
-            var topbarH = 56;
-            var hashId = decodeURIComponent(hash.slice(1));
-            // Try finding element by ID (Redoc generates anchor IDs matching the hash)
-            var el = document.getElementById(hashId);
-            // Fallback: find heading matching result title
-            if (!el) {
-              var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h5');
-              var target = result.title.toLowerCase();
-              for (var i = 0; i < headings.length; i++) {
-                if ((headings[i].textContent || '').toLowerCase().indexOf(target) !== -1) {
-                  el = headings[i]; break;
-                }
-              }
-            }
-            if (el) {
-              var y = el.getBoundingClientRect().top + window.scrollY - topbarH - 10;
-              window.scrollTo({ top: y, behavior: 'instant' });
-            }
-          }, 250);
-          return;
-        }
-        // Last-resort fallback: find heading in content and scroll
-        var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h5');
-        for (var j = 0; j < headings.length; j++) {
-          if ((headings[j].textContent || '').toLowerCase().indexOf(result.title.toLowerCase()) !== -1) {
-            var topH = 56;
-            var yPos = headings[j].getBoundingClientRect().top + window.scrollY - topH - 10;
-            window.scrollTo({ top: yPos, behavior: 'instant' });
-            return;
+      // Adjust sticky elements to account for topbar height
+      setTimeout(function() {
+        document.querySelectorAll('.redoc-wrap *').forEach(function(el) {
+          var cs = window.getComputedStyle(el);
+          if (cs.position === 'sticky') {
+            el.style.setProperty('top', '56px', 'important');
+            el.style.setProperty('height', 'calc(100vh - 56px)', 'important');
           }
-        }
-      }
-
-      function setActive(idx) {
-        var items = dropdown.querySelectorAll('.sr-item');
-        items.forEach(function(el) { el.classList.remove('active'); });
-        if (idx >= 0 && idx < items.length) {
-          items[idx].classList.add('active');
-          items[idx].scrollIntoView({ block: 'nearest' });
-        }
-        activeIdx = idx;
-      }
-
-      var debounceTimer;
-      input.addEventListener('input', function() {
-        var query = this.value.toLowerCase().trim();
-        updateClearBtn();
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(function() { renderResults(query); }, 150);
-      });
-
-      input.addEventListener('keydown', function(e) {
-        var items = dropdown.querySelectorAll('.sr-item');
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setActive(Math.min(activeIdx + 1, items.length - 1));
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          setActive(Math.max(activeIdx - 1, 0));
-        } else if (e.key === 'Enter') {
-          e.preventDefault();
-          if (activeIdx >= 0 && items[activeIdx]) {
-            items[activeIdx].click();
-          } else if (items.length) {
-            items[0].click();
-          }
-        } else if (e.key === 'Escape') {
-          this.value = '';
-          dropdown.classList.remove('active');
-          updateClearBtn();
-          this.blur();
-        }
-      });
-
-      // Close dropdown on outside click
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('#topbar .search-wrapper')) {
-          dropdown.classList.remove('active');
-        }
-      });
-      // Reopen on focus if there's a query
-      input.addEventListener('focus', function() {
-        if (this.value.trim()) renderResults(this.value.toLowerCase().trim());
-      });
-
-      // Ctrl+K / Cmd+K shortcut
-      document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-          e.preventDefault();
-          input.focus();
-          input.select();
-        }
-      });
-    })();
+        });
+      }, 300);
+    });
   </script>
 </body>
 </html>`;
@@ -793,6 +511,7 @@ app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
 app.use('/metrics', metricsRoutes); // Prometheus metrics endpoint
+app.use(adminAuthRoutes); // Admin login/auth endpoints
 app.use(authorizedAppsRoutes); // Admin endpoints for zero-fee API key management
 app.use('/admin/nonce-pool', noncePoolAdminRoutes); // Admin endpoints for nonce pool management
 app.use(testRoutes);
@@ -809,6 +528,8 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionEscrowAdminRoutes);
   app.use(institutionReceiptRoutes);
   app.use(institutionTokensRoutes);
+  app.use(aiChatRoutes);
+  app.use(institutionAccountRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled
@@ -856,7 +577,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   }
 
   console.error('Error:', err);
-  res.status(500).json({
+  return res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message,
     timestamp: new Date().toISOString(),

@@ -1,14 +1,13 @@
 /**
  * Institution Account Routes
  *
- * POST   /api/v1/institution/accounts                  -> Create account
- * GET    /api/v1/institution/accounts                  -> List accounts (with balances)
- * GET    /api/v1/institution/accounts/:id              -> Get account + balance
- * PUT    /api/v1/institution/accounts/:id              -> Update account
- * DELETE /api/v1/institution/accounts/:id              -> Deactivate account
- * PUT    /api/v1/institution/accounts/:id/default      -> Set as default
- * GET    /api/v1/institution/accounts/:id/balance      -> Get cached balance
- * POST   /api/v1/institution/accounts/:id/refresh-balance -> Bust cache, re-fetch live
+ * POST   /api/v1/institution/accounts           -> Create account
+ * GET    /api/v1/institution/accounts           -> List accounts (with filters)
+ * GET    /api/v1/institution/accounts/:id       -> Get account + balance
+ * PUT    /api/v1/institution/accounts/:id       -> Update account
+ * DELETE /api/v1/institution/accounts/:id       -> Deactivate account
+ * PUT    /api/v1/institution/accounts/:id/default -> Set as default
+ * GET    /api/v1/institution/accounts/:id/balance -> Get live balance
  */
 
 import { Router, Response } from 'express';
@@ -71,17 +70,13 @@ router.get(
       const filters: any = {};
       if (req.query.accountType) {
         if (!VALID_ACCOUNT_TYPES.includes(req.query.accountType as string)) {
-          return res
-            .status(400)
-            .json({ error: 'Invalid accountType', timestamp: new Date().toISOString() });
+          return res.status(400).json({ error: 'Invalid accountType', timestamp: new Date().toISOString() });
         }
         filters.accountType = req.query.accountType;
       }
       if (req.query.verificationStatus) {
         if (!VALID_VERIFICATION_STATUSES.includes(req.query.verificationStatus as string)) {
-          return res
-            .status(400)
-            .json({ error: 'Invalid verificationStatus', timestamp: new Date().toISOString() });
+          return res.status(400).json({ error: 'Invalid verificationStatus', timestamp: new Date().toISOString() });
         }
         filters.verificationStatus = req.query.verificationStatus;
       }
@@ -245,36 +240,6 @@ router.get(
       logger.error('Balance fetch failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Balance Fetch Failed',
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
-);
-
-// POST /api/v1/institution/accounts/:id/refresh-balance — Bust cache and re-fetch live
-router.post(
-  '/api/v1/institution/accounts/:id/refresh-balance',
-  standardRateLimiter,
-  requireInstitutionAuth,
-  async (req: InstitutionAuthenticatedRequest, res: Response) => {
-    try {
-      const service = getInstitutionAccountService();
-      const account = await service.refreshAccountBalance(
-        req.institutionClient!.clientId,
-        req.params.id
-      );
-
-      res.status(200).json({
-        success: true,
-        data: account,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      const status = message === 'Account not found' ? 404 : 500;
-      logger.error('Balance refresh failed', { error: message });
-      res.status(status).json({
-        error: status === 404 ? 'Not Found' : 'Balance Refresh Failed',
         timestamp: new Date().toISOString(),
       });
     }
