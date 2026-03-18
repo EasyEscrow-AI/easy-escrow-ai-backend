@@ -262,8 +262,17 @@ if (openApiDocument) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700&display=swap" rel="stylesheet">
   <style>
-    /* Base dark mode */
-    body, html { margin: 0; padding: 0; background: #0f172a !important; }
+    /* Base */
+    body, html { margin: 0; padding: 0; background: #0f172a !important; font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
+    /* Topbar */
+    #docs-topbar { position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #0f172a; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 1000; box-sizing: border-box; }
+    .topbar-title { color: #f1f5f9; font-size: 18px; font-weight: 600; white-space: nowrap; }
+    #topbar-search { position: relative; width: 320px; flex-shrink: 0; }
+    #redoc-container { padding-top: 56px; }
+    /* Footer */
+    #docs-footer { background: #0f172a; border-top: 1px solid #1e293b; padding: 20px 24px; text-align: center; font-size: 13px; color: #94a3b8; }
+    #docs-footer a { color: #818cf8 !important; text-decoration: none; }
+    #docs-footer a:hover { color: #a5b4fc !important; text-decoration: underline; }
     /* Force ALL Redoc elements dark */
     .redoc-wrap, .redoc-wrap > div { background: #0f172a !important; }
     /* Middle panel - comprehensive targeting */
@@ -321,8 +330,69 @@ if (openApiDocument) {
     .redoc-wrap [class*="content"] { background: transparent !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
-    /* Search bar margin */
-    .redoc-wrap [class*="search"], .redoc-wrap [role="search"] { margin-top: 20px !important; }
+    /* Search (relocated to topbar via JS) */
+    #topbar-search [role="search"] { margin: 0 !important; padding: 0 !important; }
+    #topbar-search [role="search"] label { display: none !important; }
+    #topbar-search [role="search"] input[type="text"],
+    #topbar-search [role="search"] input[type="search"],
+    #topbar-search [role="search"] input:not([type]) {
+      width: 100% !important;
+      height: 36px !important;
+      min-height: 36px !important;
+      padding: 8px 14px !important;
+      font-size: 14px !important;
+      border-radius: 8px !important;
+      border: 1px solid #475569 !important;
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      box-sizing: border-box !important;
+      outline: none !important;
+      transition: border-color 0.2s, box-shadow 0.2s !important;
+    }
+    #topbar-search [role="search"] input::placeholder { color: #64748b !important; }
+    #topbar-search [role="search"] input:focus {
+      border-color: #818cf8 !important;
+      box-shadow: 0 0 0 3px rgba(129,140,248,0.25) !important;
+    }
+    /* Search results dropdown (topbar) */
+    #topbar-search [role="search"] > div:not(:first-child),
+    #topbar-search [role="search"] ul,
+    #topbar-search [role="search"] [class*="results"],
+    #topbar-search [role="search"] [class*="menu"] {
+      background: #1e293b !important;
+      border: 1px solid #475569 !important;
+      border-radius: 8px !important;
+      margin-top: 4px !important;
+      color: #e2e8f0 !important;
+      z-index: 1001 !important;
+      max-height: 400px !important;
+      overflow-y: auto !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+    }
+    #topbar-search [role="search"] li,
+    #topbar-search [role="search"] [class*="result"] {
+      padding: 10px 14px !important;
+      color: #e2e8f0 !important;
+      background: transparent !important;
+      cursor: pointer !important;
+      border-bottom: 1px solid rgba(51,65,85,0.5) !important;
+    }
+    #topbar-search [role="search"] li:last-child { border-bottom: none !important; }
+    #topbar-search [role="search"] li:hover,
+    #topbar-search [role="search"] li[class*="active"],
+    #topbar-search [role="search"] [class*="result"]:hover { background: #334155 !important; }
+    #topbar-search [role="search"] mark,
+    #topbar-search [role="search"] [class*="highlight"],
+    #topbar-search [role="search"] em,
+    #topbar-search mark {
+      background: rgba(129,140,248,0.3) !important;
+      color: #c7d2fe !important;
+      padding: 1px 3px !important;
+      border-radius: 2px !important;
+      font-style: normal !important;
+    }
+    #topbar-search [class*="container"] { background: #1e293b !important; }
+    #topbar-search [class*="content"] { background: #1e293b !important; }
     /* Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -331,7 +401,14 @@ if (openApiDocument) {
   </style>
 </head>
 <body>
+  <div id="docs-topbar">
+    <span class="topbar-title">EasyEscrow.ai API</span>
+    <div id="topbar-search"></div>
+  </div>
   <div id="redoc-container"></div>
+  <div id="docs-footer">
+    EasyEscrow.ai Support: <a href="mailto:support@easyescrow.ai">support@easyescrow.ai</a>
+  </div>
   <script src="https://unpkg.com/redoc@2.1.3/bundles/redoc.standalone.js"></script>
   <script>
     Redoc.init('/openapi.json', {
@@ -362,13 +439,40 @@ if (openApiDocument) {
         spacing: { sectionVertical: 16 }
       },
       hideDownloadButton: true,
+      disableSearch: false,
       expandResponses: '200,201',
       pathInMiddlePanel: true,
       sortPropsAlphabetically: false,
       jsonSampleExpandLevel: 2,
       nativeScrollbars: true,
       hideHostname: true
-    }, document.getElementById('redoc-container'));
+    }, document.getElementById('redoc-container'), function() {
+      // Move Redoc search from sidebar into topbar
+      var doMove = function() {
+        var search = document.querySelector('.redoc-wrap [role="search"]');
+        var target = document.getElementById('topbar-search');
+        if (search && target) {
+          target.appendChild(search);
+          search.style.display = 'block';
+          return true;
+        }
+        return false;
+      };
+      if (!doMove()) {
+        var n = 0;
+        var t = setInterval(function() { if (doMove() || ++n > 30) clearInterval(t); }, 100);
+      }
+      // Adjust sticky elements to account for topbar height
+      setTimeout(function() {
+        document.querySelectorAll('.redoc-wrap *').forEach(function(el) {
+          var cs = window.getComputedStyle(el);
+          if (cs.position === 'sticky') {
+            el.style.setProperty('top', '56px', 'important');
+            el.style.setProperty('height', 'calc(100vh - 56px)', 'important');
+          }
+        });
+      }, 300);
+    });
   </script>
 </body>
 </html>`;

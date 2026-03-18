@@ -18,7 +18,8 @@ export const helmetConfig = helmet({
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://api.coingecko.com'], // Allow CoinGecko API for SOL price
+      connectSrc: ["'self'", 'https://api.coingecko.com', 'https://unpkg.com'],
+      workerSrc: ["'self'", 'blob:'],
     },
   },
   // Hide X-Powered-By header
@@ -47,11 +48,7 @@ export const helmetConfig = helmet({
  * Input sanitization middleware
  * Removes potentially dangerous characters from request data
  */
-export const sanitizeInput = (
-  req: Request,
-  _res: Response,
-  next: NextFunction
-): void => {
+export const sanitizeInput = (req: Request, _res: Response, next: NextFunction): void => {
   try {
     // Sanitize query parameters
     if (req.query) {
@@ -61,18 +58,18 @@ export const sanitizeInput = (
         }
       });
     }
-    
+
     // Sanitize body parameters (except for specific fields that need raw values)
     if (req.body) {
       const skipFields = ['signature', 'transaction', 'memo']; // Fields to skip sanitization
-      
+
       Object.keys(req.body).forEach((key) => {
         if (!skipFields.includes(key) && typeof req.body[key] === 'string') {
           req.body[key] = sanitizeString(req.body[key]);
         }
       });
     }
-    
+
     next();
   } catch (error) {
     console.error('Input sanitization error:', error);
@@ -93,11 +90,11 @@ const sanitizeString = (str: string): string => {
 
 /**
  * Note: Request size limiting is handled by Express body parsers
- * 
+ *
  * Express's express.json() and express.urlencoded() already enforce
  * the 'limit' option (e.g., { limit: '10mb' }), which rejects oversized
  * requests with 413 Payload Too Large before any custom middleware runs.
- * 
+ *
  * A custom requestSizeLimiter would be redundant and is therefore not implemented.
  */
 
@@ -105,29 +102,24 @@ const sanitizeString = (str: string): string => {
  * Security headers middleware
  * Adds custom security headers to responses
  */
-export const securityHeaders = (
-  _req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const securityHeaders = (_req: Request, res: Response, next: NextFunction): void => {
   // API version header
   res.setHeader('X-API-Version', '1.0.0');
-  
+
   // Content type options
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  
+
   // Frame options
   res.setHeader('X-Frame-Options', 'DENY');
-  
+
   // XSS protection
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  
+
   // Referrer policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   // Permissions policy
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  
+
   next();
 };
-
