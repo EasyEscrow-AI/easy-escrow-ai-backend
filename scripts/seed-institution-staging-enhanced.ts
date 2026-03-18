@@ -1150,37 +1150,6 @@ interface ExtraAccountDef {
 
 const extraAccounts: ExtraAccountDef[] = [
   {
-    clientEmail: 'ops@helvetica-digital.ch',
-    accounts: [
-      {
-        name: 'Collateral Reserve',
-        label: 'Cold Storage Collateral',
-        accountType: 'COLLATERAL',
-        description: 'Cold storage collateral reserve for margin and lending operations',
-        walletAddress: fakeWallet('helvetica-collateral'),
-        walletProvider: 'Fireblocks',
-        custodyType: 'MPC',
-        verificationStatus: 'VERIFIED',
-        verifiedAt: new Date('2026-01-10'),
-        approvalMode: 'MULTI_APPROVAL',
-        isDefault: false,
-      },
-      {
-        name: 'EURC Settlement',
-        label: 'Euro Stablecoin Operations',
-        accountType: 'SETTLEMENT',
-        description: 'Dedicated account for EURC stablecoin cross-border settlement',
-        walletAddress: fakeWallet('helvetica-eurc'),
-        walletProvider: 'Fireblocks',
-        custodyType: 'MPC',
-        verificationStatus: 'VERIFIED',
-        verifiedAt: new Date('2026-02-01'),
-        approvalMode: 'SINGLE_APPROVAL',
-        isDefault: false,
-      },
-    ],
-  },
-  {
     clientEmail: 'finance@satoshi-bridge.io',
     accounts: [
       {
