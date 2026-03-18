@@ -1086,20 +1086,20 @@ model InstitutionApiKey {
 
 // Core institution escrow record
 model InstitutionEscrow {
-  id                  String                    @id @default(uuid())
-  escrowId            String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
-  escrowCode          String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
-  clientId            String                    @map("client_id")
-  payerWallet         String                    @map("payer_wallet")
-  recipientWallet     String?                   @map("recipient_wallet")
-  usdcMint            String                    @map("usdc_mint")
-  amount              Decimal                   @db.Decimal(20, 6) // USDC amount (6 decimal precision)
-  platformFee         Decimal                   @map("platform_fee") @db.Decimal(20, 6)
-  corridor            String? // e.g. 'SG-CH'
-  conditionType       InstitutionConditionType? @map("condition_type")
-  status              InstitutionEscrowStatus   @default(CREATED)
-  settlementAuthority String                    @map("settlement_authority")
-  riskScore           Int?                      @map("risk_score")
+  id                  String                   @id @default(uuid())
+  escrowId            String                   @unique @map("escrow_id") // UUID for on-chain PDA derivation
+  escrowCode          String                   @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
+  clientId            String                   @map("client_id")
+  payerWallet         String                   @map("payer_wallet")
+  recipientWallet     String                   @map("recipient_wallet")
+  usdcMint            String                   @map("usdc_mint")
+  amount              Decimal                  @db.Decimal(20, 6) // USDC amount (6 decimal precision)
+  platformFee         Decimal                  @map("platform_fee") @db.Decimal(20, 6)
+  corridor            String // e.g. 'SG-CH'
+  conditionType       InstitutionConditionType @map("condition_type")
+  status              InstitutionEscrowStatus  @default(CREATED)
+  settlementAuthority String                   @map("settlement_authority")
+  riskScore           Int?                     @map("risk_score")
 
   // On-chain references
   escrowPda          String? @map("escrow_pda")

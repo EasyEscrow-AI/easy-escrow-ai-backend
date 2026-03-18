@@ -60,32 +60,6 @@ export class InstitutionEscrowService {
   }
 
   /**
-   * Lazy getter for InstitutionEscrowProgramService.
-   */
-  private getProgramService(): InstitutionEscrowProgramService | null {
-    try {
-      return getInstitutionEscrowProgramService();
-    } catch (err) {
-      console.warn('[InstitutionEscrow] ProgramService not available:', (err as Error).message);
-      return null;
-    }
-  }
-
-  /**
-   * Lazy getter for NoncePoolManager to avoid circular import at load time.
-   * The singleton is created in offers.routes.ts and exported from there.
-   */
-  private getNoncePoolManager(): NoncePoolManager | null {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { noncePoolManager } = require('../routes/offers.routes');
-      return noncePoolManager || null;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
    * Generate a human-readable escrow code in EE-XXXX-XXXX format.
    * Uses uppercase alphanumeric characters (excludes ambiguous: 0/O, 1/I/L).
    */
@@ -588,7 +562,7 @@ export class InstitutionEscrowService {
   async recordDeposit(
     clientId: string,
     idOrCode: string,
-    txSignature: string
+    txSignature: string,
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -716,7 +690,7 @@ export class InstitutionEscrowService {
   async releaseFunds(
     clientId: string,
     idOrCode: string,
-    notes?: string
+    notes?: string,
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -868,7 +842,7 @@ export class InstitutionEscrowService {
   async cancelEscrow(
     clientId: string,
     idOrCode: string,
-    reason?: string
+    reason?: string,
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -968,85 +942,27 @@ export class InstitutionEscrowService {
   }
 
   /**
-   * Check payer's USDC balance before settlement.
-   * Sets INSUFFICIENT_FUNDS if balance is too low or token account doesn't exist.
+   * Get a single escrow by code or ID (scoped to client)
    */
   private async checkPayerBalance(
     escrow: any,
     clientId: string,
-    originalStatus?: InstitutionEscrowStatus
-  ): Promise<void> {
-    const { escrowId } = escrow;
+    idOrCode: string,
+  ): Promise<Record<string, unknown>> {
+    // Try Redis cache first (cache keyed by escrowCode)
     try {
-      const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
-      const connection = new Connection(rpcUrl, 'confirmed');
-      const usdcMint = new PublicKey(escrow.usdcMint);
-      const payerWallet = new PublicKey(escrow.payerWallet);
-      const payerAta = await getAssociatedTokenAddress(usdcMint, payerWallet);
-
-      try {
-        const tokenAccount = await getAccount(connection, payerAta);
-        const requiredMicroUsdc = BigInt(Math.round(Number(escrow.amount) * 1_000_000));
-        if (tokenAccount.amount < requiredMicroUsdc) {
-          console.warn(
-            `[InstitutionEscrow] Insufficient balance for ${escrowId}: has ${tokenAccount.amount}, needs ${requiredMicroUsdc}`
-          );
-          await this.prisma.institutionEscrow.update({
-            where: { escrowId },
-            data: { status: 'INSUFFICIENT_FUNDS' },
-          });
-          await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
-            available: tokenAccount.amount.toString(),
-            required: requiredMicroUsdc.toString(),
-          });
-          throw new Error(
-            `Insufficient USDC balance: has ${
-              Number(tokenAccount.amount) / 1_000_000
-            }, needs ${Number(escrow.amount)}`
-          );
+      const cached = await redisClient.get(`${ESCROW_CACHE_PREFIX}${idOrCode}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.clientId === clientId) {
+          return this.formatEscrow(parsed);
         }
-      } catch (err: any) {
-        if (err.message?.startsWith('Insufficient USDC balance')) throw err;
-        // Token account doesn't exist
-        console.warn(`[InstitutionEscrow] Payer token account not found for ${escrowId}`);
-        await this.prisma.institutionEscrow.update({
-          where: { escrowId },
-          data: { status: 'INSUFFICIENT_FUNDS' },
-        });
-        await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
-          reason: 'Token account does not exist',
-        });
-        throw new Error('Insufficient USDC balance: payer token account does not exist');
       }
-    } catch (err: any) {
-      if (
-        err.message?.includes('Insufficient USDC balance') ||
-        err.message?.includes('payer token account')
-      ) {
-        throw err;
-      }
-      // For RPC/network errors, revert to previous status so release can be retried
-      console.error('[InstitutionEscrow] Balance check failed due to RPC error:', err);
-      const revertStatus = originalStatus || (escrow.status as InstitutionEscrowStatus);
-      await this.prisma.institutionEscrow.update({
-        where: { escrowId },
-        data: { status: revertStatus },
-      });
-      throw new Error(`Balance check failed: ${err.message}`);
+    } catch {
+      // Cache miss
     }
-  }
 
-  /**
-   * Get a single escrow by code or ID (scoped to client)
-   */
-  async getEscrow(clientId: string, idOrCode: string): Promise<Record<string, unknown>> {
-    // Skip cache for detail view — we need enriched data from DB
-    const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
-    // Counterparty requests get the base format (no AI analyses, audit logs)
-    const isOwner = escrow.clientId === clientId;
-    if (isOwner) {
-      return this.formatEscrowEnriched(escrow);
-    }
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
     return this.formatEscrow(escrow);
   }
 
@@ -1086,14 +1002,8 @@ export class InstitutionEscrowService {
   /**
    * Internal: Get escrow with client ownership check.
    * Accepts either escrowCode (EE-XXXX-XXXX) or escrowId (UUID).
-   * @param allowCounterpartyRead - When true, counterparties can view but not mutate.
-   *   Mutation callers (recordDeposit, releaseFunds, cancelEscrow) pass false.
    */
-  private async getEscrowInternal(
-    clientId: string,
-    idOrCode: string,
-    allowCounterpartyRead = false
-  ) {
+  private async getEscrowInternal(clientId: string, idOrCode: string) {
     const isCode = idOrCode.startsWith('EE-');
     const escrow = await this.prisma.institutionEscrow.findUnique({
       where: isCode ? { escrowCode: idOrCode } : { escrowId: idOrCode },

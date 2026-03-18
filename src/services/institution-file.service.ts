@@ -126,7 +126,7 @@ export class InstitutionFileService {
     // Generate structured S3 key: institution/{clientId}/{YYYY-MM-DD}/{escrowId|general}/{timestamp}_{filename}
     const date = new Date();
     const dateFolder = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-    const folder = escrowId || 'general';
+    const folder = resolvedEscrowId || 'general';
     const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${randomUUID().slice(0, 8)}_${sanitizedFileName}`;
 
     // Upload to S3
