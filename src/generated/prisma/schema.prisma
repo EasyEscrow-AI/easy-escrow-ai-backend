@@ -892,6 +892,7 @@ model InstitutionClient {
   auditLogs     InstitutionAuditLog[]
   files         InstitutionFile[]
   wallets       InstitutionWallet[]
+  aiAnalyses    InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
 
   @@index([email])
   @@index([status])
@@ -1080,26 +1081,38 @@ model InstitutionAuditLog {
   @@map("institution_audit_logs")
 }
 
-// AI analysis results
+// AI analysis results (document, escrow-level, and client-level)
 model InstitutionAiAnalysis {
-  id              String   @id @default(uuid())
-  escrowId        String   @map("escrow_id")
-  fileId          String?  @map("file_id")
-  documentHash    String?  @map("document_hash")
-  riskScore       Int      @map("risk_score") // 0-100
-  factors         Json     @default("[]") // Array of {name, weight, value}
+  id              String         @id @default(uuid())
+  analysisType    AiAnalysisType @default(DOCUMENT) @map("analysis_type")
+  escrowId        String?        @map("escrow_id")
+  clientId        String?        @map("client_id")
+  fileId          String?        @map("file_id")
+  documentHash    String?        @map("document_hash")
+  riskScore       Int            @map("risk_score") // 0-100
+  factors         Json           @default("[]") // Array of {name, weight, value}
   recommendation  String // APPROVE, REVIEW, REJECT
-  extractedFields Json     @default("{}") @map("extracted_fields")
+  extractedFields Json           @default("{}") @map("extracted_fields")
+  summary         String? // Human-readable analysis summary
   model           String // AI model used
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
 
-  escrow InstitutionEscrow @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  escrow InstitutionEscrow? @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  client InstitutionClient? @relation("ClientAiAnalyses", fields: [clientId], references: [id], onDelete: Cascade)
 
+  @@index([analysisType])
   @@index([escrowId])
+  @@index([clientId])
   @@index([riskScore])
   @@index([recommendation])
   @@index([createdAt])
   @@map("institution_ai_analyses")
+}
+
+enum AiAnalysisType {
+  DOCUMENT
+  ESCROW
+  CLIENT
 }
 
 // Corridor configuration
@@ -1149,50 +1162,6 @@ model InstitutionApprovedToken {
   @@index([isActive])
   @@index([aminaApproved])
   @@map("institution_approved_tokens")
-}
-
-// ============================================
-// ADMIN USER SYSTEM
-// ============================================
-
-enum AdminRole {
-  SUPER_ADMIN
-}
-
-// Admin user account (seed-only, no public registration)
-model AdminUser {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  name         String
-  role         AdminRole @default(SUPER_ADMIN)
-  isActive     Boolean   @default(true) @map("is_active")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  lastLoginAt  DateTime? @map("last_login_at")
-
-  refreshTokens AdminRefreshToken[]
-
-  @@index([email])
-  @@index([isActive])
-  @@map("admin_users")
-}
-
-// Admin refresh token storage (hashed)
-model AdminRefreshToken {
-  id        String    @id @default(uuid())
-  tokenHash String    @unique @map("token_hash")
-  adminId   String    @map("admin_id")
-  expiresAt DateTime  @map("expires_at")
-  revokedAt DateTime? @map("revoked_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-
-  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
-
-  @@index([adminId])
-  @@index([expiresAt])
-  @@index([tokenHash])
-  @@map("admin_refresh_tokens")
 }
 
 // ============================================

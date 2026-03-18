@@ -575,13 +575,16 @@ exports.Prisma.InstitutionAuditLogScalarFieldEnum = {
 
 exports.Prisma.InstitutionAiAnalysisScalarFieldEnum = {
   id: 'id',
+  analysisType: 'analysisType',
   escrowId: 'escrowId',
+  clientId: 'clientId',
   fileId: 'fileId',
   documentHash: 'documentHash',
   riskScore: 'riskScore',
   factors: 'factors',
   recommendation: 'recommendation',
   extractedFields: 'extractedFields',
+  summary: 'summary',
   model: 'model',
   createdAt: 'createdAt'
 };
@@ -616,27 +619,6 @@ exports.Prisma.InstitutionApprovedTokenScalarFieldEnum = {
   aminaApproved: 'aminaApproved',
   addedAt: 'addedAt',
   updatedAt: 'updatedAt'
-};
-
-exports.Prisma.AdminUserScalarFieldEnum = {
-  id: 'id',
-  email: 'email',
-  passwordHash: 'passwordHash',
-  name: 'name',
-  role: 'role',
-  isActive: 'isActive',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  lastLoginAt: 'lastLoginAt'
-};
-
-exports.Prisma.AdminRefreshTokenScalarFieldEnum = {
-  id: 'id',
-  tokenHash: 'tokenHash',
-  adminId: 'adminId',
-  expiresAt: 'expiresAt',
-  revokedAt: 'revokedAt',
-  createdAt: 'createdAt'
 };
 
 exports.Prisma.InstitutionFileScalarFieldEnum = {
@@ -889,14 +871,16 @@ exports.InstitutionEscrowStatus = exports.$Enums.InstitutionEscrowStatus = {
   FAILED: 'FAILED'
 };
 
+exports.AiAnalysisType = exports.$Enums.AiAnalysisType = {
+  DOCUMENT: 'DOCUMENT',
+  ESCROW: 'ESCROW',
+  CLIENT: 'CLIENT'
+};
+
 exports.CorridorStatus = exports.$Enums.CorridorStatus = {
   ACTIVE: 'ACTIVE',
   SUSPENDED: 'SUSPENDED',
   DEPRECATED: 'DEPRECATED'
-};
-
-exports.AdminRole = exports.$Enums.AdminRole = {
-  SUPER_ADMIN: 'SUPER_ADMIN'
 };
 
 exports.DocumentType = exports.$Enums.DocumentType = {
@@ -934,8 +918,6 @@ exports.Prisma.ModelName = {
   InstitutionAiAnalysis: 'InstitutionAiAnalysis',
   InstitutionCorridor: 'InstitutionCorridor',
   InstitutionApprovedToken: 'InstitutionApprovedToken',
-  AdminUser: 'AdminUser',
-  AdminRefreshToken: 'AdminRefreshToken',
   InstitutionFile: 'InstitutionFile'
 };
 
