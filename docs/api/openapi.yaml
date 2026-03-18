@@ -190,7 +190,7 @@ tags:
       - **Authenticated accounts** via email + password with JWT tokens
       - **Compliance checks** with allowlists and corridor-based limits
       - **AI-powered document analysis** for risk assessment
-      - **Multi-step escrow lifecycle**: create → deposit → release/cancel
+      - **Multi-step escrow lifecycle** with 9 distinct states
 
       ### How It Works
       1. **Register** an institution client account
@@ -200,6 +200,71 @@ tags:
       5. **Deposit** stablecoins on-chain and record the transaction signature
       6. **Release** funds (requires settlement authority) or **cancel** the escrow
       7. Optionally **analyze** uploaded documents with AI for risk scoring
+
+      ### Escrow States
+
+      Every escrow progresses through a defined set of states. Terminal states (`RELEASED`, `CANCELLED`, `EXPIRED`, `FAILED`) cannot transition further.
+
+      | State | Description |
+      |-------|-------------|
+      | `CREATED` | Escrow created, awaiting stablecoin deposit |
+      | `FUNDED` | Deposit confirmed on-chain, awaiting release or cancellation |
+      | `COMPLIANCE_HOLD` | Held for compliance review (medium risk score) |
+      | `RELEASING` | Release transaction in progress |
+      | `RELEASED` | Funds successfully released to recipient (terminal) |
+      | `CANCELLING` | Cancellation in progress |
+      | `CANCELLED` | Escrow cancelled, funds refunded to payer (terminal) |
+      | `EXPIRED` | Escrow expired without completion (terminal) |
+      | `FAILED` | Escrow failed due to an error (terminal) |
+
+      ### State Flow
+
+      ```
+                      ┌──────────────────────┐
+                      │    Create Escrow      │
+                      │  (compliance check)   │
+                      └──────────┬───────────┘
+                                 │
+                  ┌──────────────┼──────────────┐
+                  │              │              │
+                  ▼              ▼              ▼
+           ┌──────────┐  ┌───────────┐  (high risk)
+           │ CREATED  │  │COMPLIANCE │   → rejected
+           │          │  │   _HOLD   │
+           └────┬─────┘  └─────┬─────┘
+                │              │
+         deposit│        cancel│
+                ▼              ▼
+           ┌──────────┐  ┌───────────┐
+           │  FUNDED  │  │CANCELLING │──▶ CANCELLED
+           └────┬─────┘  └───────────┘
+                │
+         ┌──────┼──────┐
+         │      │      │
+      release cancel  expire
+         │      │      │
+         ▼      ▼      ▼
+      RELEASING CANCELLING EXPIRED
+         │      │
+         ▼      ▼
+      RELEASED CANCELLED
+      ```
+
+      ### State Transitions
+
+      | From | Action | To | Notes |
+      |------|--------|----|-------|
+      | — | Create (compliance passed) | `CREATED` | Ready for deposit |
+      | — | Create (medium risk) | `COMPLIANCE_HOLD` | Requires review before proceeding |
+      | — | Create (high risk ≥75) | Rejected | Error thrown, no escrow created |
+      | `CREATED` | Record deposit | `FUNDED` | On-chain tx signature stored |
+      | `CREATED` | Cancel | `CANCELLING` → `CANCELLED` | No deposit to refund |
+      | `CREATED` | Auto-expire | `EXPIRED` | `expiresAt` exceeded (default 72h) |
+      | `FUNDED` | Release funds | `RELEASING` → `RELEASED` | Requires settlement authority |
+      | `FUNDED` | Cancel | `CANCELLING` → `CANCELLED` | On-chain refund to payer |
+      | `FUNDED` | Auto-expire | `EXPIRED` | `expiresAt` exceeded |
+      | `COMPLIANCE_HOLD` | Cancel | `CANCELLING` → `CANCELLED` | No deposit to refund |
+      | `COMPLIANCE_HOLD` | Auto-expire | `EXPIRED` | `expiresAt` exceeded |
 
       ### Feature Gate
       This feature is gated by the `INSTITUTION_ESCROW_ENABLED` environment variable.
