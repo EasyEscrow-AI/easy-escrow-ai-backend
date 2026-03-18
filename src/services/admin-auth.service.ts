@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import ms from 'ms';
 import { PrismaClient } from '../generated/prisma';
+import { prisma as sharedPrisma } from '../config/database';
 import { config } from '../config';
 import { redisClient } from '../config/redis';
 
@@ -17,7 +18,7 @@ export class AdminAuthService {
   private prisma: PrismaClient;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = sharedPrisma;
   }
 
   async login(email: string, password: string) {

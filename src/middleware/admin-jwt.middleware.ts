@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { config } from '../config';
 
 export interface AdminAuthenticatedRequest extends Request {
   adminUser?: {
@@ -17,9 +18,9 @@ interface AdminJwtPayload {
 }
 
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
+  const secret = config.security.jwtSecret || process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not configured');
+    throw new Error('JWT_SECRET is not configured');
   }
   return secret;
 }
@@ -61,13 +62,14 @@ function checkApiKey(req: Request): boolean {
     return false;
   }
 
-  const adminKeys = process.env.ADMIN_API_KEYS?.split(',').map((k) => k.trim()) || [];
-
   if (process.env.NODE_ENV === 'development' && apiKey === 'test-admin-key-dev') {
+    console.warn('[Admin Auth] Dev-only API key bypass used — do not use in production');
     return true;
   }
 
-  return adminKeys.includes(apiKey);
+  const adminKeys = process.env.ADMIN_API_KEYS?.split(',').map((k) => k.trim()) || [];
+
+  return adminKeys.some((key) => constantTimeCompare(apiKey, key));
 }
 
 export const requireAdminAuth = (
@@ -122,7 +124,8 @@ export const requireAdminOrApiKey = (
       return;
     }
 
-    // Fall back to API key
+    // Fall back to API key (backward compat). req.adminUser stays undefined —
+    // downstream handlers must guard for this when using the API key path.
     if (checkApiKey(req)) {
       next();
       return;

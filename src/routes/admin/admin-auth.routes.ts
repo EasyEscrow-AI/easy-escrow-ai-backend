@@ -53,7 +53,7 @@ router.post(
 );
 
 // POST /api/admin/auth/refresh
-router.post('/api/admin/auth/refresh', async (req: Request, res: Response) => {
+router.post('/api/admin/auth/refresh', loginRateLimiter, async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
@@ -159,10 +159,19 @@ router.put(
         return;
       }
 
-      if (newPassword.length < 8) {
+      if (newPassword.length < 12) {
         res.status(400).json({
           error: 'Validation Error',
-          message: 'New password must be at least 8 characters',
+          message: 'New password must be at least 12 characters',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/.test(newPassword)) {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: 'Password must contain uppercase, lowercase, digit, and special character (!@#$%^&*)',
           timestamp: new Date().toISOString(),
         });
         return;
