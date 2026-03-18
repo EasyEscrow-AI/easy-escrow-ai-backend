@@ -141,11 +141,10 @@ router.post(
 
     try {
       const service = getAiAnalysisService();
-      const anonymize = req.query.anonymize !== 'false'; // default true
       const result = await service.analyzeEscrow(
         req.params.escrow_id,
         req.institutionClient!.clientId,
-        { anonymize },
+        { anonymize: true },
       );
 
       res.status(200).json({
@@ -250,10 +249,9 @@ router.post(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getAiAnalysisService();
-      const anonymize = req.query.anonymize !== 'false'; // default true
       const result = await service.analyzeClient(
         req.institutionClient!.clientId,
-        { anonymize },
+        { anonymize: true },
       );
 
       res.status(200).json({

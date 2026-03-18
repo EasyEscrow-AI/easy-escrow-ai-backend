@@ -760,7 +760,7 @@ function buildReceiptHTML(d: ReceiptData): string {
         <tr>
           <td>${esc(formatAction(f.name))}</td>
           <td>${(f.weight * 100).toFixed(0)}%</td>
-          <td>${esc(f.value)}</td>
+          <td>${esc(String(f.value))}</td>
         </tr>`).join('')}
       </tbody>
     </table>

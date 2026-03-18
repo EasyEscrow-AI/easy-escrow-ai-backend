@@ -37,11 +37,11 @@ const validateChatMessage = [
     .isArray({ max: 50 })
     .withMessage('History must be an array with at most 50 messages'),
   body('history.*.role')
-    .optional()
+    .exists()
     .isIn(['user', 'assistant'])
     .withMessage('Each history message role must be "user" or "assistant"'),
   body('history.*.content')
-    .optional()
+    .exists()
     .isString()
     .isLength({ min: 1, max: 4000 })
     .withMessage('Each history message content must be between 1 and 4000 characters'),
@@ -79,15 +79,16 @@ router.post(
         data: result,
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
-      const status = error.message.includes('rate limit')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message.includes('rate limit')
         ? 429
-        : error.message.includes('not configured')
+        : message.includes('not configured')
           ? 503
           : 500;
       res.status(status).json({
         error: 'Chat Error',
-        message: error.message,
+        message: status === 500 ? 'An internal error occurred' : message,
         timestamp: new Date().toISOString(),
       });
     }

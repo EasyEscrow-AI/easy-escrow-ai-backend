@@ -64,5 +64,8 @@ CREATE INDEX "institution_accounts_is_active_idx" ON "institution_accounts"("is_
 -- CreateIndex
 CREATE UNIQUE INDEX "institution_accounts_client_id_name_key" ON "institution_accounts"("client_id", "name");
 
+-- Enforce one active default per client
+CREATE UNIQUE INDEX "institution_accounts_one_default_active_idx" ON "institution_accounts"("client_id") WHERE "is_default" = true AND "is_active" = true;
+
 -- AddForeignKey
 ALTER TABLE "institution_accounts" ADD CONSTRAINT "institution_accounts_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "institution_clients"("id") ON DELETE CASCADE ON UPDATE CASCADE;

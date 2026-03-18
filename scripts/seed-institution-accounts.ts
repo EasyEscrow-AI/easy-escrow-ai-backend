@@ -13,18 +13,26 @@
  */
 
 import { PrismaClient } from '../src/generated/prisma';
+import { createHash } from 'crypto';
 
 const prisma = new PrismaClient();
 
-/** Deterministic fake Solana address (base58-ish, 44 chars) */
+/** Deterministic fake Solana address — produces a valid 32-byte base58 public key */
 function fakeWallet(seed: string): string {
   const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  let hash = 0;
-  for (const ch of seed) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
+  // SHA-256 produces exactly 32 bytes
+  const bytes = createHash('sha256').update(seed).digest();
+  // Base58 encode the 32-byte buffer
+  let num = BigInt('0x' + bytes.toString('hex'));
   let out = '';
-  for (let i = 0; i < 44; i++) {
-    hash = ((hash << 5) - hash + i) | 0;
-    out += chars[Math.abs(hash) % chars.length];
+  while (num > 0n) {
+    out = chars[Number(num % 58n)] + out;
+    num = num / 58n;
+  }
+  // Pad leading zeros (bytes that are 0x00 become '1' in base58)
+  for (const b of bytes) {
+    if (b === 0) out = '1' + out;
+    else break;
   }
   return out;
 }

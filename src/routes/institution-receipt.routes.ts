@@ -42,6 +42,11 @@ router.get(
 
       const service = getInstitutionReceiptService();
 
+      // Prevent caching of sensitive receipt data
+      res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
       if (format === 'pdf') {
         const { buffer, filename } = await service.generatePDF(escrowId, clientId);
         res.setHeader('Content-Type', 'application/pdf');
@@ -77,6 +82,10 @@ router.get(
     try {
       const { escrowId } = req.params;
       const clientId = req.institutionClient!.clientId;
+
+      res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
 
       const service = getInstitutionReceiptService();
       const data = await service.getReceiptData(escrowId, clientId);

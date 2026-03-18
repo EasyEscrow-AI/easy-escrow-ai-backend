@@ -575,7 +575,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   }
 
   console.error('Error:', err);
-  res.status(500).json({
+  return res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message,
     timestamp: new Date().toISOString(),

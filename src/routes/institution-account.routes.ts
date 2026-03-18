@@ -17,8 +17,12 @@ import {
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionAccountService } from '../services/institution-account.service';
+import { logger } from '../services/logger.service';
 
 const router = Router();
+
+const VALID_ACCOUNT_TYPES = ['TREASURY', 'OPERATIONS', 'SETTLEMENT', 'COLLATERAL', 'GENERAL'];
+const VALID_VERIFICATION_STATUSES = ['PENDING', 'VERIFIED', 'SUSPENDED', 'REJECTED'];
 
 const standardRateLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -43,10 +47,11 @@ router.post(
         data: account,
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('Account creation failed', { error: message });
       res.status(400).json({
         error: 'Account Creation Failed',
-        message: error.message,
         timestamp: new Date().toISOString(),
       });
     }
@@ -63,8 +68,18 @@ router.get(
       const service = getInstitutionAccountService();
 
       const filters: any = {};
-      if (req.query.accountType) filters.accountType = req.query.accountType;
-      if (req.query.verificationStatus) filters.verificationStatus = req.query.verificationStatus;
+      if (req.query.accountType) {
+        if (!VALID_ACCOUNT_TYPES.includes(req.query.accountType as string)) {
+          return res.status(400).json({ error: 'Invalid accountType', timestamp: new Date().toISOString() });
+        }
+        filters.accountType = req.query.accountType;
+      }
+      if (req.query.verificationStatus) {
+        if (!VALID_VERIFICATION_STATUSES.includes(req.query.verificationStatus as string)) {
+          return res.status(400).json({ error: 'Invalid verificationStatus', timestamp: new Date().toISOString() });
+        }
+        filters.verificationStatus = req.query.verificationStatus;
+      }
       if (req.query.isActive !== undefined) filters.isActive = req.query.isActive === 'true';
 
       const accounts = await service.listAccounts(req.institutionClient!.clientId, filters);
@@ -75,10 +90,11 @@ router.get(
         count: accounts.length,
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('Account list failed', { error: message });
       res.status(500).json({
         error: 'Internal Error',
-        message: error.message,
         timestamp: new Date().toISOString(),
       });
     }
@@ -100,11 +116,12 @@ router.get(
         data: account,
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
-      const status = error.message === 'Account not found' ? 404 : 500;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message === 'Account not found' ? 404 : 500;
+      logger.error('Account fetch failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Internal Error',
-        message: error.message,
         timestamp: new Date().toISOString(),
       });
     }
@@ -130,11 +147,12 @@ router.put(
         data: account,
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
-      const status = error.message === 'Account not found' ? 404 : 400;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message === 'Account not found' ? 404 : 400;
+      logger.error('Account update failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Update Failed',
-        message: error.message,
         timestamp: new Date().toISOString(),
       });
     }
@@ -156,11 +174,12 @@ router.delete(
         message: 'Account deactivated',
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
-      const status = error.message === 'Account not found' ? 404 : 400;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message === 'Account not found' ? 404 : 400;
+      logger.error('Account deactivation failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Deactivation Failed',
-        message: error.message,
         timestamp: new Date().toISOString(),
       });
     }
@@ -186,11 +205,12 @@ router.put(
         message: 'Default account updated',
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
-      const status = error.message.includes('not found') ? 404 : 400;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = (message ?? '').toLowerCase().includes('not found') ? 404 : 400;
+      logger.error('Set default account failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Update Failed',
-        message: error.message,
         timestamp: new Date().toISOString(),
       });
     }
@@ -214,11 +234,12 @@ router.get(
         data: account.balance,
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
-      const status = error.message === 'Account not found' ? 404 : 500;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message === 'Account not found' ? 404 : 500;
+      logger.error('Balance fetch failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Balance Fetch Failed',
-        message: error.message,
         timestamp: new Date().toISOString(),
       });
     }

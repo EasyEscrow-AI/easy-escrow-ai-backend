@@ -89,8 +89,8 @@ export class AiChatService {
   private prisma: PrismaClient;
   private anthropic: Anthropic | null = null;
 
-  constructor() {
-    this.prisma = new PrismaClient();
+  constructor(prisma?: PrismaClient) {
+    this.prisma = prisma ?? new PrismaClient();
   }
 
   private getAnthropicClient(): Anthropic {

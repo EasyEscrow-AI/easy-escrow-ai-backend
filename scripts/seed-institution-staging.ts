@@ -60,8 +60,12 @@ function hoursFromNow(n: number): Date {
   return new Date(Date.now() + n * 3600000);
 }
 
-// Staging USDC mint (devnet/staging)
-const USDC_MINT = process.env.USDC_MINT_ADDRESS || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+// Staging USDC mint — must be set explicitly for staging/devnet
+const USDC_MINT = process.env.USDC_MINT_ADDRESS;
+if (!USDC_MINT) {
+  console.error('ERROR: USDC_MINT_ADDRESS environment variable is required for staging seeder');
+  process.exit(1);
+}
 
 // ---------------------------------------------------------------------------
 // Corridor data
@@ -861,6 +865,12 @@ const escrows: EscrowDef[] = [
 // ---------------------------------------------------------------------------
 
 async function main() {
+  // Fail-fast: only run on staging
+  if (process.env.NODE_ENV !== 'staging' && !process.argv.includes('--staging')) {
+    console.error('ERROR: Staging seeder requires NODE_ENV=staging or --staging flag');
+    process.exit(1);
+  }
+
   console.log('=== Institution Staging Data Seeder ===\n');
 
   // ── 1. Corridors ─────────────────────────────────────────────────
@@ -1172,10 +1182,10 @@ async function main() {
           escrowId,
           riskScore: e.riskScore,
           factors: [
-            { name: 'corridor_risk', weight: 0.3, value: e.corridor.includes('US') ? 'medium' : 'low' },
-            { name: 'amount_threshold', weight: 0.25, value: e.amount > 100_000 ? 'high' : 'standard' },
-            { name: 'client_history', weight: 0.25, value: 'established' },
-            { name: 'sanctions_screening', weight: 0.2, value: 'clear' },
+            { name: 'corridor_risk', weight: 0.3, value: e.corridor.includes('US') ? 50 : 20 },
+            { name: 'amount_threshold', weight: 0.25, value: e.amount > 100_000 ? 80 : 30 },
+            { name: 'client_history', weight: 0.25, value: 70 },
+            { name: 'sanctions_screening', weight: 0.2, value: 10 },
           ],
           recommendation,
           extractedFields: {

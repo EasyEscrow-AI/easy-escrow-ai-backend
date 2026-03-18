@@ -301,8 +301,9 @@ export class InstitutionAccountService {
           // USDC token account may not exist for this wallet — that's fine
         }
       }
-    } catch {
-      // RPC error — return zeros
+    } catch (err) {
+      console.error(`Balance fetch RPC error for ${walletAddress}:`, err instanceof Error ? err.message : err);
+      // Return zeros — caller sees stale/empty balance rather than a hard failure
     }
 
     const balance: AccountBalance = {

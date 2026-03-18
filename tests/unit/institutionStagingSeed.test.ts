@@ -13,7 +13,11 @@ import { PrismaClient } from '../../src/generated/prisma';
 
 const prisma = new PrismaClient();
 
-describe('Institution Staging Seed Data Verification', () => {
+describe('Institution Staging Seed Data Verification', function () {
+  if (!process.env.RUN_STAGING_DB_TESTS) {
+    before(function () { this.skip(); });
+  }
+
   after(async () => {
     await prisma.$disconnect();
   });
