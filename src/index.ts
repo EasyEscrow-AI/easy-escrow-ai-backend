@@ -447,7 +447,10 @@ if (openApiDocument) {
       var searchIndex = [];
       var activeIdx = -1;
 
-      fetch('/openapi.json').then(function(r) { return r.json(); }).then(function(spec) {
+      fetch('/openapi.json').then(function(r) {
+        if (!r.ok) throw new Error('Failed to load API spec: ' + r.status);
+        return r.json();
+      }).then(function(spec) {
         var paths = spec.paths || {};
         Object.keys(paths).forEach(function(p) {
           Object.keys(paths[p]).forEach(function(method) {
@@ -469,33 +472,75 @@ if (openApiDocument) {
             description: tag.description || '', isTag: true
           });
         });
+      }).catch(function(err) {
+        console.error('Search index load failed:', err);
+        searchInput.placeholder = 'Search unavailable';
+        searchInput.disabled = true;
       });
 
-      function highlight(text, query) {
-        if (!query) return text;
-        var esc = query.replace(/[.*+?^\${}()|[\\]\\\\]/g, '\\\\$&');
-        return text.replace(new RegExp('(' + esc + ')', 'gi'), '<mark>$1</mark>');
+      function highlight(parent, text, query) {
+        if (!query || !text) { parent.textContent = text || ''; return; }
+        var lower = text.toLowerCase();
+        var ql = query.toLowerCase();
+        var pos = 0;
+        var found = false;
+        var idx = lower.indexOf(ql);
+        while (idx !== -1) {
+          found = true;
+          if (idx > pos) parent.appendChild(document.createTextNode(text.slice(pos, idx)));
+          var mark = document.createElement('mark');
+          mark.textContent = text.slice(idx, idx + ql.length);
+          parent.appendChild(mark);
+          pos = idx + ql.length;
+          idx = lower.indexOf(ql, pos);
+        }
+        if (!found) { parent.textContent = text; return; }
+        if (pos < text.length) parent.appendChild(document.createTextNode(text.slice(pos)));
       }
 
       function renderResults(matches, query) {
         activeIdx = -1;
+        resultsBox.innerHTML = '';
         if (!matches.length) {
-          resultsBox.innerHTML = '<div class="no-results">No results found</div>';
+          var noRes = document.createElement('div');
+          noRes.className = 'no-results';
+          noRes.textContent = 'No results found';
+          resultsBox.appendChild(noRes);
           resultsBox.style.display = 'block';
           return;
         }
-        resultsBox.innerHTML = matches.slice(0, 20).map(function(m, i) {
+        matches.slice(0, 20).forEach(function(m, i) {
+          var item = document.createElement('div');
+          item.className = 'result-item';
+          item.setAttribute('data-index', String(i));
           if (m.isTag) {
-            return '<div class="result-item" data-tag="' + m.summary + '" data-index="' + i + '">'
-              + '<div>' + highlight(m.summary, query) + '</div>'
-              + (m.description ? '<div class="result-path">' + highlight(m.description.substring(0, 100), query) + '</div>' : '')
-              + '</div>';
+            item.setAttribute('data-tag', m.summary);
+            var tagTitle = document.createElement('div');
+            highlight(tagTitle, m.summary, query);
+            item.appendChild(tagTitle);
+            if (m.description) {
+              var tagDesc = document.createElement('div');
+              tagDesc.className = 'result-path';
+              highlight(tagDesc, m.description.substring(0, 100), query);
+              item.appendChild(tagDesc);
+            }
+          } else {
+            item.setAttribute('data-path', m.path);
+            item.setAttribute('data-method', m.method);
+            var titleRow = document.createElement('div');
+            var badge = document.createElement('span');
+            badge.className = 'result-method ' + m.method;
+            badge.textContent = m.method;
+            titleRow.appendChild(badge);
+            highlight(titleRow, m.summary || m.path, query);
+            item.appendChild(titleRow);
+            var pathRow = document.createElement('div');
+            pathRow.className = 'result-path';
+            highlight(pathRow, m.path, query);
+            item.appendChild(pathRow);
           }
-          return '<div class="result-item" data-path="' + m.path + '" data-method="' + m.method + '" data-index="' + i + '">'
-            + '<div><span class="result-method ' + m.method + '">' + m.method + '</span>' + highlight(m.summary || m.path, query) + '</div>'
-            + '<div class="result-path">' + highlight(m.path, query) + '</div>'
-            + '</div>';
-        }).join('');
+          resultsBox.appendChild(item);
+        });
         resultsBox.style.display = 'block';
       }
 
