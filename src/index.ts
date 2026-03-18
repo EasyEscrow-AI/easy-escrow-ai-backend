@@ -227,7 +227,7 @@ app.get('/', (_req: Request, res: Response) => {
   };
 
   // Add institution escrow endpoints if enabled
-  if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
+  if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
     response.endpoints.institutionAuth = '/api/v1/institution/auth';
     response.endpoints.institutionSettings = '/api/v1/institution/settings';
     response.endpoints.institutionFiles = '/api/v1/institution/files';
@@ -452,7 +452,7 @@ app.use(testRoutes);
 app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with private keys
 
 // Institution Escrow Routes (gated by feature flag)
-if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
+if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionAuthRoutes);
   app.use(institutionSettingsRoutes);
   app.use(institutionFilesRoutes);

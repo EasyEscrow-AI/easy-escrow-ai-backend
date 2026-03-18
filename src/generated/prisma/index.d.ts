@@ -139,6 +139,11 @@ export type InstitutionAiAnalysis = $Result.DefaultSelection<Prisma.$Institution
  */
 export type InstitutionCorridor = $Result.DefaultSelection<Prisma.$InstitutionCorridorPayload>
 /**
+ * Model InstitutionApprovedToken
+ * 
+ */
+export type InstitutionApprovedToken = $Result.DefaultSelection<Prisma.$InstitutionApprovedTokenPayload>
+/**
  * Model InstitutionFile
  * 
  */
@@ -451,6 +456,15 @@ export const AnnualRevenueRange: {
 
 export type AnnualRevenueRange = (typeof AnnualRevenueRange)[keyof typeof AnnualRevenueRange]
 
+
+export const AiAnalysisType: {
+  DOCUMENT: 'DOCUMENT',
+  ESCROW: 'ESCROW',
+  CLIENT: 'CLIENT'
+};
+
+export type AiAnalysisType = (typeof AiAnalysisType)[keyof typeof AiAnalysisType]
+
 }
 
 export type AgreementStatus = $Enums.AgreementStatus
@@ -560,6 +574,10 @@ export const EmployeeCountRange: typeof $Enums.EmployeeCountRange
 export type AnnualRevenueRange = $Enums.AnnualRevenueRange
 
 export const AnnualRevenueRange: typeof $Enums.AnnualRevenueRange
+
+export type AiAnalysisType = $Enums.AiAnalysisType
+
+export const AiAnalysisType: typeof $Enums.AiAnalysisType
 
 /**
  * ##  Prisma Client ʲˢ
@@ -928,6 +946,16 @@ export class PrismaClient<
     * ```
     */
   get institutionCorridor(): Prisma.InstitutionCorridorDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionApprovedToken`: Exposes CRUD operations for the **InstitutionApprovedToken** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionApprovedTokens
+    * const institutionApprovedTokens = await prisma.institutionApprovedToken.findMany()
+    * ```
+    */
+  get institutionApprovedToken(): Prisma.InstitutionApprovedTokenDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.institutionFile`: Exposes CRUD operations for the **InstitutionFile** model.
@@ -1403,6 +1431,7 @@ export namespace Prisma {
     InstitutionAuditLog: 'InstitutionAuditLog',
     InstitutionAiAnalysis: 'InstitutionAiAnalysis',
     InstitutionCorridor: 'InstitutionCorridor',
+    InstitutionApprovedToken: 'InstitutionApprovedToken',
     InstitutionFile: 'InstitutionFile'
   };
 
@@ -1422,7 +1451,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionFile"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionApprovedToken" | "institutionFile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3276,6 +3305,80 @@ export namespace Prisma {
           }
         }
       }
+      InstitutionApprovedToken: {
+        payload: Prisma.$InstitutionApprovedTokenPayload<ExtArgs>
+        fields: Prisma.InstitutionApprovedTokenFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionApprovedTokenFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionApprovedTokenFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionApprovedTokenFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionApprovedTokenFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionApprovedTokenFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionApprovedTokenCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionApprovedTokenCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionApprovedTokenCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionApprovedTokenDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>
+          }
+          update: {
+            args: Prisma.InstitutionApprovedTokenUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionApprovedTokenDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionApprovedTokenUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionApprovedTokenUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionApprovedTokenUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionApprovedTokenPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionApprovedTokenAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionApprovedToken>
+          }
+          groupBy: {
+            args: Prisma.InstitutionApprovedTokenGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionApprovedTokenGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionApprovedTokenCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionApprovedTokenCountAggregateOutputType> | number
+          }
+        }
+      }
       InstitutionFile: {
         payload: Prisma.$InstitutionFilePayload<ExtArgs>
         fields: Prisma.InstitutionFileFieldRefs
@@ -3471,6 +3574,7 @@ export namespace Prisma {
     institutionAuditLog?: InstitutionAuditLogOmit
     institutionAiAnalysis?: InstitutionAiAnalysisOmit
     institutionCorridor?: InstitutionCorridorOmit
+    institutionApprovedToken?: InstitutionApprovedTokenOmit
     institutionFile?: InstitutionFileOmit
   }
 
@@ -3798,6 +3902,7 @@ export namespace Prisma {
     auditLogs: number
     files: number
     wallets: number
+    aiAnalyses: number
   }
 
   export type InstitutionClientCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3807,6 +3912,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClientCountOutputTypeCountAuditLogsArgs
     files?: boolean | InstitutionClientCountOutputTypeCountFilesArgs
     wallets?: boolean | InstitutionClientCountOutputTypeCountWalletsArgs
+    aiAnalyses?: boolean | InstitutionClientCountOutputTypeCountAiAnalysesArgs
   }
 
   // Custom InputTypes
@@ -3860,6 +3966,13 @@ export namespace Prisma {
    */
   export type InstitutionClientCountOutputTypeCountWalletsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InstitutionWalletWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountAiAnalysesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAiAnalysisWhereInput
   }
 
 
@@ -23612,6 +23725,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
     files?: boolean | InstitutionClient$filesArgs<ExtArgs>
     wallets?: boolean | InstitutionClient$walletsArgs<ExtArgs>
+    aiAnalyses?: boolean | InstitutionClient$aiAnalysesArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionClient"]>
 
@@ -23819,6 +23933,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
     files?: boolean | InstitutionClient$filesArgs<ExtArgs>
     wallets?: boolean | InstitutionClient$walletsArgs<ExtArgs>
+    aiAnalyses?: boolean | InstitutionClient$aiAnalysesArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type InstitutionClientIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -23834,6 +23949,7 @@ export namespace Prisma {
       auditLogs: Prisma.$InstitutionAuditLogPayload<ExtArgs>[]
       files: Prisma.$InstitutionFilePayload<ExtArgs>[]
       wallets: Prisma.$InstitutionWalletPayload<ExtArgs>[]
+      aiAnalyses: Prisma.$InstitutionAiAnalysisPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -24299,6 +24415,7 @@ export namespace Prisma {
     auditLogs<T extends InstitutionClient$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     files<T extends InstitutionClient$filesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     wallets<T extends InstitutionClient$walletsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$walletsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    aiAnalyses<T extends InstitutionClient$aiAnalysesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$aiAnalysesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -24938,6 +25055,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: InstitutionWalletScalarFieldEnum | InstitutionWalletScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.aiAnalyses
+   */
+  export type InstitutionClient$aiAnalysesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAiAnalysis
+     */
+    select?: InstitutionAiAnalysisSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAiAnalysis
+     */
+    omit?: InstitutionAiAnalysisOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAiAnalysisInclude<ExtArgs> | null
+    where?: InstitutionAiAnalysisWhereInput
+    orderBy?: InstitutionAiAnalysisOrderByWithRelationInput | InstitutionAiAnalysisOrderByWithRelationInput[]
+    cursor?: InstitutionAiAnalysisWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionAiAnalysisScalarFieldEnum | InstitutionAiAnalysisScalarFieldEnum[]
   }
 
   /**
@@ -33225,35 +33366,44 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisMinAggregateOutputType = {
     id: string | null
+    analysisType: $Enums.AiAnalysisType | null
     escrowId: string | null
+    clientId: string | null
     fileId: string | null
     documentHash: string | null
     riskScore: number | null
     recommendation: string | null
+    summary: string | null
     model: string | null
     createdAt: Date | null
   }
 
   export type InstitutionAiAnalysisMaxAggregateOutputType = {
     id: string | null
+    analysisType: $Enums.AiAnalysisType | null
     escrowId: string | null
+    clientId: string | null
     fileId: string | null
     documentHash: string | null
     riskScore: number | null
     recommendation: string | null
+    summary: string | null
     model: string | null
     createdAt: Date | null
   }
 
   export type InstitutionAiAnalysisCountAggregateOutputType = {
     id: number
+    analysisType: number
     escrowId: number
+    clientId: number
     fileId: number
     documentHash: number
     riskScore: number
     factors: number
     recommendation: number
     extractedFields: number
+    summary: number
     model: number
     createdAt: number
     _all: number
@@ -33270,35 +33420,44 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisMinAggregateInputType = {
     id?: true
+    analysisType?: true
     escrowId?: true
+    clientId?: true
     fileId?: true
     documentHash?: true
     riskScore?: true
     recommendation?: true
+    summary?: true
     model?: true
     createdAt?: true
   }
 
   export type InstitutionAiAnalysisMaxAggregateInputType = {
     id?: true
+    analysisType?: true
     escrowId?: true
+    clientId?: true
     fileId?: true
     documentHash?: true
     riskScore?: true
     recommendation?: true
+    summary?: true
     model?: true
     createdAt?: true
   }
 
   export type InstitutionAiAnalysisCountAggregateInputType = {
     id?: true
+    analysisType?: true
     escrowId?: true
+    clientId?: true
     fileId?: true
     documentHash?: true
     riskScore?: true
     factors?: true
     recommendation?: true
     extractedFields?: true
+    summary?: true
     model?: true
     createdAt?: true
     _all?: true
@@ -33392,13 +33551,16 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisGroupByOutputType = {
     id: string
-    escrowId: string
+    analysisType: $Enums.AiAnalysisType
+    escrowId: string | null
+    clientId: string | null
     fileId: string | null
     documentHash: string | null
     riskScore: number
     factors: JsonValue
     recommendation: string
     extractedFields: JsonValue
+    summary: string | null
     model: string
     createdAt: Date
     _count: InstitutionAiAnalysisCountAggregateOutputType | null
@@ -33424,84 +33586,106 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    analysisType?: boolean
     escrowId?: boolean
+    clientId?: boolean
     fileId?: boolean
     documentHash?: boolean
     riskScore?: boolean
     factors?: boolean
     recommendation?: boolean
     extractedFields?: boolean
+    summary?: boolean
     model?: boolean
     createdAt?: boolean
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionAiAnalysis$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAiAnalysis$clientArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAiAnalysis"]>
 
   export type InstitutionAiAnalysisSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    analysisType?: boolean
     escrowId?: boolean
+    clientId?: boolean
     fileId?: boolean
     documentHash?: boolean
     riskScore?: boolean
     factors?: boolean
     recommendation?: boolean
     extractedFields?: boolean
+    summary?: boolean
     model?: boolean
     createdAt?: boolean
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionAiAnalysis$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAiAnalysis$clientArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAiAnalysis"]>
 
   export type InstitutionAiAnalysisSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    analysisType?: boolean
     escrowId?: boolean
+    clientId?: boolean
     fileId?: boolean
     documentHash?: boolean
     riskScore?: boolean
     factors?: boolean
     recommendation?: boolean
     extractedFields?: boolean
+    summary?: boolean
     model?: boolean
     createdAt?: boolean
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionAiAnalysis$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAiAnalysis$clientArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAiAnalysis"]>
 
   export type InstitutionAiAnalysisSelectScalar = {
     id?: boolean
+    analysisType?: boolean
     escrowId?: boolean
+    clientId?: boolean
     fileId?: boolean
     documentHash?: boolean
     riskScore?: boolean
     factors?: boolean
     recommendation?: boolean
     extractedFields?: boolean
+    summary?: boolean
     model?: boolean
     createdAt?: boolean
   }
 
-  export type InstitutionAiAnalysisOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "fileId" | "documentHash" | "riskScore" | "factors" | "recommendation" | "extractedFields" | "model" | "createdAt", ExtArgs["result"]["institutionAiAnalysis"]>
+  export type InstitutionAiAnalysisOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "analysisType" | "escrowId" | "clientId" | "fileId" | "documentHash" | "riskScore" | "factors" | "recommendation" | "extractedFields" | "summary" | "model" | "createdAt", ExtArgs["result"]["institutionAiAnalysis"]>
   export type InstitutionAiAnalysisInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionAiAnalysis$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAiAnalysis$clientArgs<ExtArgs>
   }
   export type InstitutionAiAnalysisIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionAiAnalysis$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAiAnalysis$clientArgs<ExtArgs>
   }
   export type InstitutionAiAnalysisIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
+    escrow?: boolean | InstitutionAiAnalysis$escrowArgs<ExtArgs>
+    client?: boolean | InstitutionAiAnalysis$clientArgs<ExtArgs>
   }
 
   export type $InstitutionAiAnalysisPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "InstitutionAiAnalysis"
     objects: {
-      escrow: Prisma.$InstitutionEscrowPayload<ExtArgs>
+      escrow: Prisma.$InstitutionEscrowPayload<ExtArgs> | null
+      client: Prisma.$InstitutionClientPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      escrowId: string
+      analysisType: $Enums.AiAnalysisType
+      escrowId: string | null
+      clientId: string | null
       fileId: string | null
       documentHash: string | null
       riskScore: number
       factors: Prisma.JsonValue
       recommendation: string
       extractedFields: Prisma.JsonValue
+      summary: string | null
       model: string
       createdAt: Date
     }, ExtArgs["result"]["institutionAiAnalysis"]>
@@ -33898,7 +34082,8 @@ export namespace Prisma {
    */
   export interface Prisma__InstitutionAiAnalysisClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    escrow<T extends InstitutionEscrowDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrowDefaultArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    escrow<T extends InstitutionAiAnalysis$escrowArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionAiAnalysis$escrowArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    client<T extends InstitutionAiAnalysis$clientArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionAiAnalysis$clientArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -33929,13 +34114,16 @@ export namespace Prisma {
    */
   interface InstitutionAiAnalysisFieldRefs {
     readonly id: FieldRef<"InstitutionAiAnalysis", 'String'>
+    readonly analysisType: FieldRef<"InstitutionAiAnalysis", 'AiAnalysisType'>
     readonly escrowId: FieldRef<"InstitutionAiAnalysis", 'String'>
+    readonly clientId: FieldRef<"InstitutionAiAnalysis", 'String'>
     readonly fileId: FieldRef<"InstitutionAiAnalysis", 'String'>
     readonly documentHash: FieldRef<"InstitutionAiAnalysis", 'String'>
     readonly riskScore: FieldRef<"InstitutionAiAnalysis", 'Int'>
     readonly factors: FieldRef<"InstitutionAiAnalysis", 'Json'>
     readonly recommendation: FieldRef<"InstitutionAiAnalysis", 'String'>
     readonly extractedFields: FieldRef<"InstitutionAiAnalysis", 'Json'>
+    readonly summary: FieldRef<"InstitutionAiAnalysis", 'String'>
     readonly model: FieldRef<"InstitutionAiAnalysis", 'String'>
     readonly createdAt: FieldRef<"InstitutionAiAnalysis", 'DateTime'>
   }
@@ -34331,6 +34519,44 @@ export namespace Prisma {
      * Limit how many InstitutionAiAnalyses to delete.
      */
     limit?: number
+  }
+
+  /**
+   * InstitutionAiAnalysis.escrow
+   */
+  export type InstitutionAiAnalysis$escrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionEscrow
+     */
+    select?: InstitutionEscrowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionEscrow
+     */
+    omit?: InstitutionEscrowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionEscrowInclude<ExtArgs> | null
+    where?: InstitutionEscrowWhereInput
+  }
+
+  /**
+   * InstitutionAiAnalysis.client
+   */
+  export type InstitutionAiAnalysis$clientArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionClient
+     */
+    select?: InstitutionClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionClient
+     */
+    omit?: InstitutionClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionClientInclude<ExtArgs> | null
+    where?: InstitutionClientWhereInput
   }
 
   /**
@@ -35490,6 +35716,1139 @@ export namespace Prisma {
      * Omit specific fields from the InstitutionCorridor
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionApprovedToken
+   */
+
+  export type AggregateInstitutionApprovedToken = {
+    _count: InstitutionApprovedTokenCountAggregateOutputType | null
+    _avg: InstitutionApprovedTokenAvgAggregateOutputType | null
+    _sum: InstitutionApprovedTokenSumAggregateOutputType | null
+    _min: InstitutionApprovedTokenMinAggregateOutputType | null
+    _max: InstitutionApprovedTokenMaxAggregateOutputType | null
+  }
+
+  export type InstitutionApprovedTokenAvgAggregateOutputType = {
+    decimals: number | null
+  }
+
+  export type InstitutionApprovedTokenSumAggregateOutputType = {
+    decimals: number | null
+  }
+
+  export type InstitutionApprovedTokenMinAggregateOutputType = {
+    id: string | null
+    symbol: string | null
+    name: string | null
+    mintAddress: string | null
+    decimals: number | null
+    issuer: string | null
+    jurisdiction: string | null
+    chain: string | null
+    isDefault: boolean | null
+    isActive: boolean | null
+    aminaApproved: boolean | null
+    addedAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionApprovedTokenMaxAggregateOutputType = {
+    id: string | null
+    symbol: string | null
+    name: string | null
+    mintAddress: string | null
+    decimals: number | null
+    issuer: string | null
+    jurisdiction: string | null
+    chain: string | null
+    isDefault: boolean | null
+    isActive: boolean | null
+    aminaApproved: boolean | null
+    addedAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionApprovedTokenCountAggregateOutputType = {
+    id: number
+    symbol: number
+    name: number
+    mintAddress: number
+    decimals: number
+    issuer: number
+    jurisdiction: number
+    chain: number
+    isDefault: number
+    isActive: number
+    aminaApproved: number
+    addedAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionApprovedTokenAvgAggregateInputType = {
+    decimals?: true
+  }
+
+  export type InstitutionApprovedTokenSumAggregateInputType = {
+    decimals?: true
+  }
+
+  export type InstitutionApprovedTokenMinAggregateInputType = {
+    id?: true
+    symbol?: true
+    name?: true
+    mintAddress?: true
+    decimals?: true
+    issuer?: true
+    jurisdiction?: true
+    chain?: true
+    isDefault?: true
+    isActive?: true
+    aminaApproved?: true
+    addedAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionApprovedTokenMaxAggregateInputType = {
+    id?: true
+    symbol?: true
+    name?: true
+    mintAddress?: true
+    decimals?: true
+    issuer?: true
+    jurisdiction?: true
+    chain?: true
+    isDefault?: true
+    isActive?: true
+    aminaApproved?: true
+    addedAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionApprovedTokenCountAggregateInputType = {
+    id?: true
+    symbol?: true
+    name?: true
+    mintAddress?: true
+    decimals?: true
+    issuer?: true
+    jurisdiction?: true
+    chain?: true
+    isDefault?: true
+    isActive?: true
+    aminaApproved?: true
+    addedAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionApprovedTokenAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionApprovedToken to aggregate.
+     */
+    where?: InstitutionApprovedTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionApprovedTokens to fetch.
+     */
+    orderBy?: InstitutionApprovedTokenOrderByWithRelationInput | InstitutionApprovedTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionApprovedTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionApprovedTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionApprovedTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionApprovedTokens
+    **/
+    _count?: true | InstitutionApprovedTokenCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionApprovedTokenAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionApprovedTokenSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionApprovedTokenMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionApprovedTokenMaxAggregateInputType
+  }
+
+  export type GetInstitutionApprovedTokenAggregateType<T extends InstitutionApprovedTokenAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionApprovedToken]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionApprovedToken[P]>
+      : GetScalarType<T[P], AggregateInstitutionApprovedToken[P]>
+  }
+
+
+
+
+  export type InstitutionApprovedTokenGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionApprovedTokenWhereInput
+    orderBy?: InstitutionApprovedTokenOrderByWithAggregationInput | InstitutionApprovedTokenOrderByWithAggregationInput[]
+    by: InstitutionApprovedTokenScalarFieldEnum[] | InstitutionApprovedTokenScalarFieldEnum
+    having?: InstitutionApprovedTokenScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionApprovedTokenCountAggregateInputType | true
+    _avg?: InstitutionApprovedTokenAvgAggregateInputType
+    _sum?: InstitutionApprovedTokenSumAggregateInputType
+    _min?: InstitutionApprovedTokenMinAggregateInputType
+    _max?: InstitutionApprovedTokenMaxAggregateInputType
+  }
+
+  export type InstitutionApprovedTokenGroupByOutputType = {
+    id: string
+    symbol: string
+    name: string
+    mintAddress: string
+    decimals: number
+    issuer: string
+    jurisdiction: string | null
+    chain: string
+    isDefault: boolean
+    isActive: boolean
+    aminaApproved: boolean
+    addedAt: Date
+    updatedAt: Date
+    _count: InstitutionApprovedTokenCountAggregateOutputType | null
+    _avg: InstitutionApprovedTokenAvgAggregateOutputType | null
+    _sum: InstitutionApprovedTokenSumAggregateOutputType | null
+    _min: InstitutionApprovedTokenMinAggregateOutputType | null
+    _max: InstitutionApprovedTokenMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionApprovedTokenGroupByPayload<T extends InstitutionApprovedTokenGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionApprovedTokenGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionApprovedTokenGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionApprovedTokenGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionApprovedTokenGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionApprovedTokenSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    symbol?: boolean
+    name?: boolean
+    mintAddress?: boolean
+    decimals?: boolean
+    issuer?: boolean
+    jurisdiction?: boolean
+    chain?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    aminaApproved?: boolean
+    addedAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["institutionApprovedToken"]>
+
+  export type InstitutionApprovedTokenSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    symbol?: boolean
+    name?: boolean
+    mintAddress?: boolean
+    decimals?: boolean
+    issuer?: boolean
+    jurisdiction?: boolean
+    chain?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    aminaApproved?: boolean
+    addedAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["institutionApprovedToken"]>
+
+  export type InstitutionApprovedTokenSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    symbol?: boolean
+    name?: boolean
+    mintAddress?: boolean
+    decimals?: boolean
+    issuer?: boolean
+    jurisdiction?: boolean
+    chain?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    aminaApproved?: boolean
+    addedAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["institutionApprovedToken"]>
+
+  export type InstitutionApprovedTokenSelectScalar = {
+    id?: boolean
+    symbol?: boolean
+    name?: boolean
+    mintAddress?: boolean
+    decimals?: boolean
+    issuer?: boolean
+    jurisdiction?: boolean
+    chain?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    aminaApproved?: boolean
+    addedAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InstitutionApprovedTokenOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "symbol" | "name" | "mintAddress" | "decimals" | "issuer" | "jurisdiction" | "chain" | "isDefault" | "isActive" | "aminaApproved" | "addedAt" | "updatedAt", ExtArgs["result"]["institutionApprovedToken"]>
+
+  export type $InstitutionApprovedTokenPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionApprovedToken"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      symbol: string
+      name: string
+      mintAddress: string
+      decimals: number
+      issuer: string
+      jurisdiction: string | null
+      chain: string
+      isDefault: boolean
+      isActive: boolean
+      aminaApproved: boolean
+      addedAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["institutionApprovedToken"]>
+    composites: {}
+  }
+
+  type InstitutionApprovedTokenGetPayload<S extends boolean | null | undefined | InstitutionApprovedTokenDefaultArgs> = $Result.GetResult<Prisma.$InstitutionApprovedTokenPayload, S>
+
+  type InstitutionApprovedTokenCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionApprovedTokenFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionApprovedTokenCountAggregateInputType | true
+    }
+
+  export interface InstitutionApprovedTokenDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionApprovedToken'], meta: { name: 'InstitutionApprovedToken' } }
+    /**
+     * Find zero or one InstitutionApprovedToken that matches the filter.
+     * @param {InstitutionApprovedTokenFindUniqueArgs} args - Arguments to find a InstitutionApprovedToken
+     * @example
+     * // Get one InstitutionApprovedToken
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionApprovedTokenFindUniqueArgs>(args: SelectSubset<T, InstitutionApprovedTokenFindUniqueArgs<ExtArgs>>): Prisma__InstitutionApprovedTokenClient<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionApprovedToken that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionApprovedTokenFindUniqueOrThrowArgs} args - Arguments to find a InstitutionApprovedToken
+     * @example
+     * // Get one InstitutionApprovedToken
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionApprovedTokenFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionApprovedTokenFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionApprovedTokenClient<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionApprovedToken that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApprovedTokenFindFirstArgs} args - Arguments to find a InstitutionApprovedToken
+     * @example
+     * // Get one InstitutionApprovedToken
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionApprovedTokenFindFirstArgs>(args?: SelectSubset<T, InstitutionApprovedTokenFindFirstArgs<ExtArgs>>): Prisma__InstitutionApprovedTokenClient<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionApprovedToken that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApprovedTokenFindFirstOrThrowArgs} args - Arguments to find a InstitutionApprovedToken
+     * @example
+     * // Get one InstitutionApprovedToken
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionApprovedTokenFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionApprovedTokenFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionApprovedTokenClient<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionApprovedTokens that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApprovedTokenFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionApprovedTokens
+     * const institutionApprovedTokens = await prisma.institutionApprovedToken.findMany()
+     * 
+     * // Get first 10 InstitutionApprovedTokens
+     * const institutionApprovedTokens = await prisma.institutionApprovedToken.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionApprovedTokenWithIdOnly = await prisma.institutionApprovedToken.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionApprovedTokenFindManyArgs>(args?: SelectSubset<T, InstitutionApprovedTokenFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionApprovedToken.
+     * @param {InstitutionApprovedTokenCreateArgs} args - Arguments to create a InstitutionApprovedToken.
+     * @example
+     * // Create one InstitutionApprovedToken
+     * const InstitutionApprovedToken = await prisma.institutionApprovedToken.create({
+     *   data: {
+     *     // ... data to create a InstitutionApprovedToken
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionApprovedTokenCreateArgs>(args: SelectSubset<T, InstitutionApprovedTokenCreateArgs<ExtArgs>>): Prisma__InstitutionApprovedTokenClient<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionApprovedTokens.
+     * @param {InstitutionApprovedTokenCreateManyArgs} args - Arguments to create many InstitutionApprovedTokens.
+     * @example
+     * // Create many InstitutionApprovedTokens
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionApprovedTokenCreateManyArgs>(args?: SelectSubset<T, InstitutionApprovedTokenCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionApprovedTokens and returns the data saved in the database.
+     * @param {InstitutionApprovedTokenCreateManyAndReturnArgs} args - Arguments to create many InstitutionApprovedTokens.
+     * @example
+     * // Create many InstitutionApprovedTokens
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionApprovedTokens and only return the `id`
+     * const institutionApprovedTokenWithIdOnly = await prisma.institutionApprovedToken.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionApprovedTokenCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionApprovedTokenCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionApprovedToken.
+     * @param {InstitutionApprovedTokenDeleteArgs} args - Arguments to delete one InstitutionApprovedToken.
+     * @example
+     * // Delete one InstitutionApprovedToken
+     * const InstitutionApprovedToken = await prisma.institutionApprovedToken.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionApprovedToken
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionApprovedTokenDeleteArgs>(args: SelectSubset<T, InstitutionApprovedTokenDeleteArgs<ExtArgs>>): Prisma__InstitutionApprovedTokenClient<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionApprovedToken.
+     * @param {InstitutionApprovedTokenUpdateArgs} args - Arguments to update one InstitutionApprovedToken.
+     * @example
+     * // Update one InstitutionApprovedToken
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionApprovedTokenUpdateArgs>(args: SelectSubset<T, InstitutionApprovedTokenUpdateArgs<ExtArgs>>): Prisma__InstitutionApprovedTokenClient<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionApprovedTokens.
+     * @param {InstitutionApprovedTokenDeleteManyArgs} args - Arguments to filter InstitutionApprovedTokens to delete.
+     * @example
+     * // Delete a few InstitutionApprovedTokens
+     * const { count } = await prisma.institutionApprovedToken.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionApprovedTokenDeleteManyArgs>(args?: SelectSubset<T, InstitutionApprovedTokenDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionApprovedTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApprovedTokenUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionApprovedTokens
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionApprovedTokenUpdateManyArgs>(args: SelectSubset<T, InstitutionApprovedTokenUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionApprovedTokens and returns the data updated in the database.
+     * @param {InstitutionApprovedTokenUpdateManyAndReturnArgs} args - Arguments to update many InstitutionApprovedTokens.
+     * @example
+     * // Update many InstitutionApprovedTokens
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionApprovedTokens and only return the `id`
+     * const institutionApprovedTokenWithIdOnly = await prisma.institutionApprovedToken.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionApprovedTokenUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionApprovedTokenUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionApprovedToken.
+     * @param {InstitutionApprovedTokenUpsertArgs} args - Arguments to update or create a InstitutionApprovedToken.
+     * @example
+     * // Update or create a InstitutionApprovedToken
+     * const institutionApprovedToken = await prisma.institutionApprovedToken.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionApprovedToken
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionApprovedToken we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionApprovedTokenUpsertArgs>(args: SelectSubset<T, InstitutionApprovedTokenUpsertArgs<ExtArgs>>): Prisma__InstitutionApprovedTokenClient<$Result.GetResult<Prisma.$InstitutionApprovedTokenPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionApprovedTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApprovedTokenCountArgs} args - Arguments to filter InstitutionApprovedTokens to count.
+     * @example
+     * // Count the number of InstitutionApprovedTokens
+     * const count = await prisma.institutionApprovedToken.count({
+     *   where: {
+     *     // ... the filter for the InstitutionApprovedTokens we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionApprovedTokenCountArgs>(
+      args?: Subset<T, InstitutionApprovedTokenCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionApprovedTokenCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionApprovedToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApprovedTokenAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionApprovedTokenAggregateArgs>(args: Subset<T, InstitutionApprovedTokenAggregateArgs>): Prisma.PrismaPromise<GetInstitutionApprovedTokenAggregateType<T>>
+
+    /**
+     * Group by InstitutionApprovedToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionApprovedTokenGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionApprovedTokenGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionApprovedTokenGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionApprovedTokenGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionApprovedTokenGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionApprovedTokenGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionApprovedToken model
+   */
+  readonly fields: InstitutionApprovedTokenFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionApprovedToken.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionApprovedTokenClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionApprovedToken model
+   */
+  interface InstitutionApprovedTokenFieldRefs {
+    readonly id: FieldRef<"InstitutionApprovedToken", 'String'>
+    readonly symbol: FieldRef<"InstitutionApprovedToken", 'String'>
+    readonly name: FieldRef<"InstitutionApprovedToken", 'String'>
+    readonly mintAddress: FieldRef<"InstitutionApprovedToken", 'String'>
+    readonly decimals: FieldRef<"InstitutionApprovedToken", 'Int'>
+    readonly issuer: FieldRef<"InstitutionApprovedToken", 'String'>
+    readonly jurisdiction: FieldRef<"InstitutionApprovedToken", 'String'>
+    readonly chain: FieldRef<"InstitutionApprovedToken", 'String'>
+    readonly isDefault: FieldRef<"InstitutionApprovedToken", 'Boolean'>
+    readonly isActive: FieldRef<"InstitutionApprovedToken", 'Boolean'>
+    readonly aminaApproved: FieldRef<"InstitutionApprovedToken", 'Boolean'>
+    readonly addedAt: FieldRef<"InstitutionApprovedToken", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionApprovedToken", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionApprovedToken findUnique
+   */
+  export type InstitutionApprovedTokenFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApprovedToken to fetch.
+     */
+    where: InstitutionApprovedTokenWhereUniqueInput
+  }
+
+  /**
+   * InstitutionApprovedToken findUniqueOrThrow
+   */
+  export type InstitutionApprovedTokenFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApprovedToken to fetch.
+     */
+    where: InstitutionApprovedTokenWhereUniqueInput
+  }
+
+  /**
+   * InstitutionApprovedToken findFirst
+   */
+  export type InstitutionApprovedTokenFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApprovedToken to fetch.
+     */
+    where?: InstitutionApprovedTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionApprovedTokens to fetch.
+     */
+    orderBy?: InstitutionApprovedTokenOrderByWithRelationInput | InstitutionApprovedTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionApprovedTokens.
+     */
+    cursor?: InstitutionApprovedTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionApprovedTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionApprovedTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionApprovedTokens.
+     */
+    distinct?: InstitutionApprovedTokenScalarFieldEnum | InstitutionApprovedTokenScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionApprovedToken findFirstOrThrow
+   */
+  export type InstitutionApprovedTokenFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApprovedToken to fetch.
+     */
+    where?: InstitutionApprovedTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionApprovedTokens to fetch.
+     */
+    orderBy?: InstitutionApprovedTokenOrderByWithRelationInput | InstitutionApprovedTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionApprovedTokens.
+     */
+    cursor?: InstitutionApprovedTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionApprovedTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionApprovedTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionApprovedTokens.
+     */
+    distinct?: InstitutionApprovedTokenScalarFieldEnum | InstitutionApprovedTokenScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionApprovedToken findMany
+   */
+  export type InstitutionApprovedTokenFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which InstitutionApprovedTokens to fetch.
+     */
+    where?: InstitutionApprovedTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionApprovedTokens to fetch.
+     */
+    orderBy?: InstitutionApprovedTokenOrderByWithRelationInput | InstitutionApprovedTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionApprovedTokens.
+     */
+    cursor?: InstitutionApprovedTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionApprovedTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionApprovedTokens.
+     */
+    skip?: number
+    distinct?: InstitutionApprovedTokenScalarFieldEnum | InstitutionApprovedTokenScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionApprovedToken create
+   */
+  export type InstitutionApprovedTokenCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionApprovedToken.
+     */
+    data: XOR<InstitutionApprovedTokenCreateInput, InstitutionApprovedTokenUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionApprovedToken createMany
+   */
+  export type InstitutionApprovedTokenCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionApprovedTokens.
+     */
+    data: InstitutionApprovedTokenCreateManyInput | InstitutionApprovedTokenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionApprovedToken createManyAndReturn
+   */
+  export type InstitutionApprovedTokenCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionApprovedTokens.
+     */
+    data: InstitutionApprovedTokenCreateManyInput | InstitutionApprovedTokenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionApprovedToken update
+   */
+  export type InstitutionApprovedTokenUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionApprovedToken.
+     */
+    data: XOR<InstitutionApprovedTokenUpdateInput, InstitutionApprovedTokenUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionApprovedToken to update.
+     */
+    where: InstitutionApprovedTokenWhereUniqueInput
+  }
+
+  /**
+   * InstitutionApprovedToken updateMany
+   */
+  export type InstitutionApprovedTokenUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionApprovedTokens.
+     */
+    data: XOR<InstitutionApprovedTokenUpdateManyMutationInput, InstitutionApprovedTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionApprovedTokens to update
+     */
+    where?: InstitutionApprovedTokenWhereInput
+    /**
+     * Limit how many InstitutionApprovedTokens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionApprovedToken updateManyAndReturn
+   */
+  export type InstitutionApprovedTokenUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionApprovedTokens.
+     */
+    data: XOR<InstitutionApprovedTokenUpdateManyMutationInput, InstitutionApprovedTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionApprovedTokens to update
+     */
+    where?: InstitutionApprovedTokenWhereInput
+    /**
+     * Limit how many InstitutionApprovedTokens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionApprovedToken upsert
+   */
+  export type InstitutionApprovedTokenUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionApprovedToken to update in case it exists.
+     */
+    where: InstitutionApprovedTokenWhereUniqueInput
+    /**
+     * In case the InstitutionApprovedToken found by the `where` argument doesn't exist, create a new InstitutionApprovedToken with this data.
+     */
+    create: XOR<InstitutionApprovedTokenCreateInput, InstitutionApprovedTokenUncheckedCreateInput>
+    /**
+     * In case the InstitutionApprovedToken was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionApprovedTokenUpdateInput, InstitutionApprovedTokenUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionApprovedToken delete
+   */
+  export type InstitutionApprovedTokenDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
+    /**
+     * Filter which InstitutionApprovedToken to delete.
+     */
+    where: InstitutionApprovedTokenWhereUniqueInput
+  }
+
+  /**
+   * InstitutionApprovedToken deleteMany
+   */
+  export type InstitutionApprovedTokenDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionApprovedTokens to delete
+     */
+    where?: InstitutionApprovedTokenWhereInput
+    /**
+     * Limit how many InstitutionApprovedTokens to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionApprovedToken without action
+   */
+  export type InstitutionApprovedTokenDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionApprovedToken
+     */
+    select?: InstitutionApprovedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionApprovedToken
+     */
+    omit?: InstitutionApprovedTokenOmit<ExtArgs> | null
   }
 
 
@@ -37202,13 +38561,16 @@ export namespace Prisma {
 
   export const InstitutionAiAnalysisScalarFieldEnum: {
     id: 'id',
+    analysisType: 'analysisType',
     escrowId: 'escrowId',
+    clientId: 'clientId',
     fileId: 'fileId',
     documentHash: 'documentHash',
     riskScore: 'riskScore',
     factors: 'factors',
     recommendation: 'recommendation',
     extractedFields: 'extractedFields',
+    summary: 'summary',
     model: 'model',
     createdAt: 'createdAt'
   };
@@ -37233,6 +38595,25 @@ export namespace Prisma {
   };
 
   export type InstitutionCorridorScalarFieldEnum = (typeof InstitutionCorridorScalarFieldEnum)[keyof typeof InstitutionCorridorScalarFieldEnum]
+
+
+  export const InstitutionApprovedTokenScalarFieldEnum: {
+    id: 'id',
+    symbol: 'symbol',
+    name: 'name',
+    mintAddress: 'mintAddress',
+    decimals: 'decimals',
+    issuer: 'issuer',
+    jurisdiction: 'jurisdiction',
+    chain: 'chain',
+    isDefault: 'isDefault',
+    isActive: 'isActive',
+    aminaApproved: 'aminaApproved',
+    addedAt: 'addedAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InstitutionApprovedTokenScalarFieldEnum = (typeof InstitutionApprovedTokenScalarFieldEnum)[keyof typeof InstitutionApprovedTokenScalarFieldEnum]
 
 
   export const InstitutionFileScalarFieldEnum: {
@@ -37741,6 +39122,20 @@ export namespace Prisma {
    * Reference to a field of type 'InstitutionEscrowStatus[]'
    */
   export type ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionEscrowStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'AiAnalysisType'
+   */
+  export type EnumAiAnalysisTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AiAnalysisType'>
+    
+
+
+  /**
+   * Reference to a field of type 'AiAnalysisType[]'
+   */
+  export type ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AiAnalysisType[]'>
     
 
 
@@ -39602,6 +40997,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     files?: InstitutionFileListRelationFilter
     wallets?: InstitutionWalletListRelationFilter
+    aiAnalyses?: InstitutionAiAnalysisListRelationFilter
   }
 
   export type InstitutionClientOrderByWithRelationInput = {
@@ -39674,6 +41070,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogOrderByRelationAggregateInput
     files?: InstitutionFileOrderByRelationAggregateInput
     wallets?: InstitutionWalletOrderByRelationAggregateInput
+    aiAnalyses?: InstitutionAiAnalysisOrderByRelationAggregateInput
   }
 
   export type InstitutionClientWhereUniqueInput = Prisma.AtLeast<{
@@ -39749,6 +41146,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     files?: InstitutionFileListRelationFilter
     wallets?: InstitutionWalletListRelationFilter
+    aiAnalyses?: InstitutionAiAnalysisListRelationFilter
   }, "id" | "email">
 
   export type InstitutionClientOrderByWithAggregationInput = {
@@ -40520,30 +41918,38 @@ export namespace Prisma {
     OR?: InstitutionAiAnalysisWhereInput[]
     NOT?: InstitutionAiAnalysisWhereInput | InstitutionAiAnalysisWhereInput[]
     id?: StringFilter<"InstitutionAiAnalysis"> | string
-    escrowId?: StringFilter<"InstitutionAiAnalysis"> | string
+    analysisType?: EnumAiAnalysisTypeFilter<"InstitutionAiAnalysis"> | $Enums.AiAnalysisType
+    escrowId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    clientId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
     fileId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
     documentHash?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
     riskScore?: IntFilter<"InstitutionAiAnalysis"> | number
     factors?: JsonFilter<"InstitutionAiAnalysis">
     recommendation?: StringFilter<"InstitutionAiAnalysis"> | string
     extractedFields?: JsonFilter<"InstitutionAiAnalysis">
+    summary?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
     model?: StringFilter<"InstitutionAiAnalysis"> | string
     createdAt?: DateTimeFilter<"InstitutionAiAnalysis"> | Date | string
-    escrow?: XOR<InstitutionEscrowScalarRelationFilter, InstitutionEscrowWhereInput>
+    escrow?: XOR<InstitutionEscrowNullableScalarRelationFilter, InstitutionEscrowWhereInput> | null
+    client?: XOR<InstitutionClientNullableScalarRelationFilter, InstitutionClientWhereInput> | null
   }
 
   export type InstitutionAiAnalysisOrderByWithRelationInput = {
     id?: SortOrder
-    escrowId?: SortOrder
+    analysisType?: SortOrder
+    escrowId?: SortOrderInput | SortOrder
+    clientId?: SortOrderInput | SortOrder
     fileId?: SortOrderInput | SortOrder
     documentHash?: SortOrderInput | SortOrder
     riskScore?: SortOrder
     factors?: SortOrder
     recommendation?: SortOrder
     extractedFields?: SortOrder
+    summary?: SortOrderInput | SortOrder
     model?: SortOrder
     createdAt?: SortOrder
     escrow?: InstitutionEscrowOrderByWithRelationInput
+    client?: InstitutionClientOrderByWithRelationInput
   }
 
   export type InstitutionAiAnalysisWhereUniqueInput = Prisma.AtLeast<{
@@ -40551,27 +41957,34 @@ export namespace Prisma {
     AND?: InstitutionAiAnalysisWhereInput | InstitutionAiAnalysisWhereInput[]
     OR?: InstitutionAiAnalysisWhereInput[]
     NOT?: InstitutionAiAnalysisWhereInput | InstitutionAiAnalysisWhereInput[]
-    escrowId?: StringFilter<"InstitutionAiAnalysis"> | string
+    analysisType?: EnumAiAnalysisTypeFilter<"InstitutionAiAnalysis"> | $Enums.AiAnalysisType
+    escrowId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    clientId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
     fileId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
     documentHash?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
     riskScore?: IntFilter<"InstitutionAiAnalysis"> | number
     factors?: JsonFilter<"InstitutionAiAnalysis">
     recommendation?: StringFilter<"InstitutionAiAnalysis"> | string
     extractedFields?: JsonFilter<"InstitutionAiAnalysis">
+    summary?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
     model?: StringFilter<"InstitutionAiAnalysis"> | string
     createdAt?: DateTimeFilter<"InstitutionAiAnalysis"> | Date | string
-    escrow?: XOR<InstitutionEscrowScalarRelationFilter, InstitutionEscrowWhereInput>
+    escrow?: XOR<InstitutionEscrowNullableScalarRelationFilter, InstitutionEscrowWhereInput> | null
+    client?: XOR<InstitutionClientNullableScalarRelationFilter, InstitutionClientWhereInput> | null
   }, "id">
 
   export type InstitutionAiAnalysisOrderByWithAggregationInput = {
     id?: SortOrder
-    escrowId?: SortOrder
+    analysisType?: SortOrder
+    escrowId?: SortOrderInput | SortOrder
+    clientId?: SortOrderInput | SortOrder
     fileId?: SortOrderInput | SortOrder
     documentHash?: SortOrderInput | SortOrder
     riskScore?: SortOrder
     factors?: SortOrder
     recommendation?: SortOrder
     extractedFields?: SortOrder
+    summary?: SortOrderInput | SortOrder
     model?: SortOrder
     createdAt?: SortOrder
     _count?: InstitutionAiAnalysisCountOrderByAggregateInput
@@ -40586,13 +41999,16 @@ export namespace Prisma {
     OR?: InstitutionAiAnalysisScalarWhereWithAggregatesInput[]
     NOT?: InstitutionAiAnalysisScalarWhereWithAggregatesInput | InstitutionAiAnalysisScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"InstitutionAiAnalysis"> | string
-    escrowId?: StringWithAggregatesFilter<"InstitutionAiAnalysis"> | string
+    analysisType?: EnumAiAnalysisTypeWithAggregatesFilter<"InstitutionAiAnalysis"> | $Enums.AiAnalysisType
+    escrowId?: StringNullableWithAggregatesFilter<"InstitutionAiAnalysis"> | string | null
+    clientId?: StringNullableWithAggregatesFilter<"InstitutionAiAnalysis"> | string | null
     fileId?: StringNullableWithAggregatesFilter<"InstitutionAiAnalysis"> | string | null
     documentHash?: StringNullableWithAggregatesFilter<"InstitutionAiAnalysis"> | string | null
     riskScore?: IntWithAggregatesFilter<"InstitutionAiAnalysis"> | number
     factors?: JsonWithAggregatesFilter<"InstitutionAiAnalysis">
     recommendation?: StringWithAggregatesFilter<"InstitutionAiAnalysis"> | string
     extractedFields?: JsonWithAggregatesFilter<"InstitutionAiAnalysis">
+    summary?: StringNullableWithAggregatesFilter<"InstitutionAiAnalysis"> | string | null
     model?: StringWithAggregatesFilter<"InstitutionAiAnalysis"> | string
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionAiAnalysis"> | Date | string
   }
@@ -40689,6 +42105,100 @@ export namespace Prisma {
     status?: EnumCorridorStatusWithAggregatesFilter<"InstitutionCorridor"> | $Enums.CorridorStatus
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionCorridor"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionCorridor"> | Date | string
+  }
+
+  export type InstitutionApprovedTokenWhereInput = {
+    AND?: InstitutionApprovedTokenWhereInput | InstitutionApprovedTokenWhereInput[]
+    OR?: InstitutionApprovedTokenWhereInput[]
+    NOT?: InstitutionApprovedTokenWhereInput | InstitutionApprovedTokenWhereInput[]
+    id?: StringFilter<"InstitutionApprovedToken"> | string
+    symbol?: StringFilter<"InstitutionApprovedToken"> | string
+    name?: StringFilter<"InstitutionApprovedToken"> | string
+    mintAddress?: StringFilter<"InstitutionApprovedToken"> | string
+    decimals?: IntFilter<"InstitutionApprovedToken"> | number
+    issuer?: StringFilter<"InstitutionApprovedToken"> | string
+    jurisdiction?: StringNullableFilter<"InstitutionApprovedToken"> | string | null
+    chain?: StringFilter<"InstitutionApprovedToken"> | string
+    isDefault?: BoolFilter<"InstitutionApprovedToken"> | boolean
+    isActive?: BoolFilter<"InstitutionApprovedToken"> | boolean
+    aminaApproved?: BoolFilter<"InstitutionApprovedToken"> | boolean
+    addedAt?: DateTimeFilter<"InstitutionApprovedToken"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionApprovedToken"> | Date | string
+  }
+
+  export type InstitutionApprovedTokenOrderByWithRelationInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    name?: SortOrder
+    mintAddress?: SortOrder
+    decimals?: SortOrder
+    issuer?: SortOrder
+    jurisdiction?: SortOrderInput | SortOrder
+    chain?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    aminaApproved?: SortOrder
+    addedAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionApprovedTokenWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    symbol?: string
+    mintAddress?: string
+    AND?: InstitutionApprovedTokenWhereInput | InstitutionApprovedTokenWhereInput[]
+    OR?: InstitutionApprovedTokenWhereInput[]
+    NOT?: InstitutionApprovedTokenWhereInput | InstitutionApprovedTokenWhereInput[]
+    name?: StringFilter<"InstitutionApprovedToken"> | string
+    decimals?: IntFilter<"InstitutionApprovedToken"> | number
+    issuer?: StringFilter<"InstitutionApprovedToken"> | string
+    jurisdiction?: StringNullableFilter<"InstitutionApprovedToken"> | string | null
+    chain?: StringFilter<"InstitutionApprovedToken"> | string
+    isDefault?: BoolFilter<"InstitutionApprovedToken"> | boolean
+    isActive?: BoolFilter<"InstitutionApprovedToken"> | boolean
+    aminaApproved?: BoolFilter<"InstitutionApprovedToken"> | boolean
+    addedAt?: DateTimeFilter<"InstitutionApprovedToken"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionApprovedToken"> | Date | string
+  }, "id" | "symbol" | "mintAddress">
+
+  export type InstitutionApprovedTokenOrderByWithAggregationInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    name?: SortOrder
+    mintAddress?: SortOrder
+    decimals?: SortOrder
+    issuer?: SortOrder
+    jurisdiction?: SortOrderInput | SortOrder
+    chain?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    aminaApproved?: SortOrder
+    addedAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InstitutionApprovedTokenCountOrderByAggregateInput
+    _avg?: InstitutionApprovedTokenAvgOrderByAggregateInput
+    _max?: InstitutionApprovedTokenMaxOrderByAggregateInput
+    _min?: InstitutionApprovedTokenMinOrderByAggregateInput
+    _sum?: InstitutionApprovedTokenSumOrderByAggregateInput
+  }
+
+  export type InstitutionApprovedTokenScalarWhereWithAggregatesInput = {
+    AND?: InstitutionApprovedTokenScalarWhereWithAggregatesInput | InstitutionApprovedTokenScalarWhereWithAggregatesInput[]
+    OR?: InstitutionApprovedTokenScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionApprovedTokenScalarWhereWithAggregatesInput | InstitutionApprovedTokenScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionApprovedToken"> | string
+    symbol?: StringWithAggregatesFilter<"InstitutionApprovedToken"> | string
+    name?: StringWithAggregatesFilter<"InstitutionApprovedToken"> | string
+    mintAddress?: StringWithAggregatesFilter<"InstitutionApprovedToken"> | string
+    decimals?: IntWithAggregatesFilter<"InstitutionApprovedToken"> | number
+    issuer?: StringWithAggregatesFilter<"InstitutionApprovedToken"> | string
+    jurisdiction?: StringNullableWithAggregatesFilter<"InstitutionApprovedToken"> | string | null
+    chain?: StringWithAggregatesFilter<"InstitutionApprovedToken"> | string
+    isDefault?: BoolWithAggregatesFilter<"InstitutionApprovedToken"> | boolean
+    isActive?: BoolWithAggregatesFilter<"InstitutionApprovedToken"> | boolean
+    aminaApproved?: BoolWithAggregatesFilter<"InstitutionApprovedToken"> | boolean
+    addedAt?: DateTimeWithAggregatesFilter<"InstitutionApprovedToken"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionApprovedToken"> | Date | string
   }
 
   export type InstitutionFileWhereInput = {
@@ -42893,6 +44403,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateInput = {
@@ -42965,6 +44476,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUpdateInput = {
@@ -43037,6 +44549,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateInput = {
@@ -43109,6 +44622,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateManyInput = {
@@ -44016,90 +45530,110 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisCreateInput = {
     id?: string
+    analysisType?: $Enums.AiAnalysisType
     fileId?: string | null
     documentHash?: string | null
     riskScore: number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation: string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
     model: string
     createdAt?: Date | string
-    escrow: InstitutionEscrowCreateNestedOneWithoutAiAnalysesInput
+    escrow?: InstitutionEscrowCreateNestedOneWithoutAiAnalysesInput
+    client?: InstitutionClientCreateNestedOneWithoutAiAnalysesInput
   }
 
   export type InstitutionAiAnalysisUncheckedCreateInput = {
     id?: string
-    escrowId: string
+    analysisType?: $Enums.AiAnalysisType
+    escrowId?: string | null
+    clientId?: string | null
     fileId?: string | null
     documentHash?: string | null
     riskScore: number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation: string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
     model: string
     createdAt?: Date | string
   }
 
   export type InstitutionAiAnalysisUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
     fileId?: NullableStringFieldUpdateOperationsInput | string | null
     documentHash?: NullableStringFieldUpdateOperationsInput | string | null
     riskScore?: IntFieldUpdateOperationsInput | number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation?: StringFieldUpdateOperationsInput | string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     model?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    escrow?: InstitutionEscrowUpdateOneRequiredWithoutAiAnalysesNestedInput
+    escrow?: InstitutionEscrowUpdateOneWithoutAiAnalysesNestedInput
+    client?: InstitutionClientUpdateOneWithoutAiAnalysesNestedInput
   }
 
   export type InstitutionAiAnalysisUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    escrowId?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
     fileId?: NullableStringFieldUpdateOperationsInput | string | null
     documentHash?: NullableStringFieldUpdateOperationsInput | string | null
     riskScore?: IntFieldUpdateOperationsInput | number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation?: StringFieldUpdateOperationsInput | string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     model?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type InstitutionAiAnalysisCreateManyInput = {
     id?: string
-    escrowId: string
+    analysisType?: $Enums.AiAnalysisType
+    escrowId?: string | null
+    clientId?: string | null
     fileId?: string | null
     documentHash?: string | null
     riskScore: number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation: string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
     model: string
     createdAt?: Date | string
   }
 
   export type InstitutionAiAnalysisUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
     fileId?: NullableStringFieldUpdateOperationsInput | string | null
     documentHash?: NullableStringFieldUpdateOperationsInput | string | null
     riskScore?: IntFieldUpdateOperationsInput | number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation?: StringFieldUpdateOperationsInput | string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     model?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type InstitutionAiAnalysisUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    escrowId?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
     fileId?: NullableStringFieldUpdateOperationsInput | string | null
     documentHash?: NullableStringFieldUpdateOperationsInput | string | null
     riskScore?: IntFieldUpdateOperationsInput | number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation?: StringFieldUpdateOperationsInput | string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     model?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -44213,6 +45747,118 @@ export namespace Prisma {
     riskLevel?: StringFieldUpdateOperationsInput | string
     status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApprovedTokenCreateInput = {
+    id?: string
+    symbol: string
+    name: string
+    mintAddress: string
+    decimals?: number
+    issuer: string
+    jurisdiction?: string | null
+    chain?: string
+    isDefault?: boolean
+    isActive?: boolean
+    aminaApproved?: boolean
+    addedAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionApprovedTokenUncheckedCreateInput = {
+    id?: string
+    symbol: string
+    name: string
+    mintAddress: string
+    decimals?: number
+    issuer: string
+    jurisdiction?: string | null
+    chain?: string
+    isDefault?: boolean
+    isActive?: boolean
+    aminaApproved?: boolean
+    addedAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionApprovedTokenUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    mintAddress?: StringFieldUpdateOperationsInput | string
+    decimals?: IntFieldUpdateOperationsInput | number
+    issuer?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    chain?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    aminaApproved?: BoolFieldUpdateOperationsInput | boolean
+    addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApprovedTokenUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    mintAddress?: StringFieldUpdateOperationsInput | string
+    decimals?: IntFieldUpdateOperationsInput | number
+    issuer?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    chain?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    aminaApproved?: BoolFieldUpdateOperationsInput | boolean
+    addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApprovedTokenCreateManyInput = {
+    id?: string
+    symbol: string
+    name: string
+    mintAddress: string
+    decimals?: number
+    issuer: string
+    jurisdiction?: string | null
+    chain?: string
+    isDefault?: boolean
+    isActive?: boolean
+    aminaApproved?: boolean
+    addedAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionApprovedTokenUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    mintAddress?: StringFieldUpdateOperationsInput | string
+    decimals?: IntFieldUpdateOperationsInput | number
+    issuer?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    chain?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    aminaApproved?: BoolFieldUpdateOperationsInput | boolean
+    addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionApprovedTokenUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    mintAddress?: StringFieldUpdateOperationsInput | string
+    decimals?: IntFieldUpdateOperationsInput | number
+    issuer?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    chain?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    aminaApproved?: BoolFieldUpdateOperationsInput | boolean
+    addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -46181,6 +47827,12 @@ export namespace Prisma {
     none?: InstitutionWalletWhereInput
   }
 
+  export type InstitutionAiAnalysisListRelationFilter = {
+    every?: InstitutionAiAnalysisWhereInput
+    some?: InstitutionAiAnalysisWhereInput
+    none?: InstitutionAiAnalysisWhereInput
+  }
+
   export type InstitutionRefreshTokenOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -46202,6 +47854,10 @@ export namespace Prisma {
   }
 
   export type InstitutionWalletOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionAiAnalysisOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -46706,17 +48362,7 @@ export namespace Prisma {
     none?: InstitutionDepositWhereInput
   }
 
-  export type InstitutionAiAnalysisListRelationFilter = {
-    every?: InstitutionAiAnalysisWhereInput
-    some?: InstitutionAiAnalysisWhereInput
-    none?: InstitutionAiAnalysisWhereInput
-  }
-
   export type InstitutionDepositOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type InstitutionAiAnalysisOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -46916,15 +48562,25 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type EnumAiAnalysisTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.AiAnalysisType | EnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AiAnalysisType[] | ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AiAnalysisType[] | ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAiAnalysisTypeFilter<$PrismaModel> | $Enums.AiAnalysisType
+  }
+
   export type InstitutionAiAnalysisCountOrderByAggregateInput = {
     id?: SortOrder
+    analysisType?: SortOrder
     escrowId?: SortOrder
+    clientId?: SortOrder
     fileId?: SortOrder
     documentHash?: SortOrder
     riskScore?: SortOrder
     factors?: SortOrder
     recommendation?: SortOrder
     extractedFields?: SortOrder
+    summary?: SortOrder
     model?: SortOrder
     createdAt?: SortOrder
   }
@@ -46935,28 +48591,44 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisMaxOrderByAggregateInput = {
     id?: SortOrder
+    analysisType?: SortOrder
     escrowId?: SortOrder
+    clientId?: SortOrder
     fileId?: SortOrder
     documentHash?: SortOrder
     riskScore?: SortOrder
     recommendation?: SortOrder
+    summary?: SortOrder
     model?: SortOrder
     createdAt?: SortOrder
   }
 
   export type InstitutionAiAnalysisMinOrderByAggregateInput = {
     id?: SortOrder
+    analysisType?: SortOrder
     escrowId?: SortOrder
+    clientId?: SortOrder
     fileId?: SortOrder
     documentHash?: SortOrder
     riskScore?: SortOrder
     recommendation?: SortOrder
+    summary?: SortOrder
     model?: SortOrder
     createdAt?: SortOrder
   }
 
   export type InstitutionAiAnalysisSumOrderByAggregateInput = {
     riskScore?: SortOrder
+  }
+
+  export type EnumAiAnalysisTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AiAnalysisType | EnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AiAnalysisType[] | ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AiAnalysisType[] | ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAiAnalysisTypeWithAggregatesFilter<$PrismaModel> | $Enums.AiAnalysisType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAiAnalysisTypeFilter<$PrismaModel>
+    _max?: NestedEnumAiAnalysisTypeFilter<$PrismaModel>
   }
 
   export type EnumCorridorStatusFilter<$PrismaModel = never> = {
@@ -47034,6 +48706,62 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCorridorStatusFilter<$PrismaModel>
     _max?: NestedEnumCorridorStatusFilter<$PrismaModel>
+  }
+
+  export type InstitutionApprovedTokenCountOrderByAggregateInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    name?: SortOrder
+    mintAddress?: SortOrder
+    decimals?: SortOrder
+    issuer?: SortOrder
+    jurisdiction?: SortOrder
+    chain?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    aminaApproved?: SortOrder
+    addedAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionApprovedTokenAvgOrderByAggregateInput = {
+    decimals?: SortOrder
+  }
+
+  export type InstitutionApprovedTokenMaxOrderByAggregateInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    name?: SortOrder
+    mintAddress?: SortOrder
+    decimals?: SortOrder
+    issuer?: SortOrder
+    jurisdiction?: SortOrder
+    chain?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    aminaApproved?: SortOrder
+    addedAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionApprovedTokenMinOrderByAggregateInput = {
+    id?: SortOrder
+    symbol?: SortOrder
+    name?: SortOrder
+    mintAddress?: SortOrder
+    decimals?: SortOrder
+    issuer?: SortOrder
+    jurisdiction?: SortOrder
+    chain?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    aminaApproved?: SortOrder
+    addedAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionApprovedTokenSumOrderByAggregateInput = {
+    decimals?: SortOrder
   }
 
   export type EnumDocumentTypeFilter<$PrismaModel = never> = {
@@ -48089,6 +49817,13 @@ export namespace Prisma {
     connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
   }
 
+  export type InstitutionAiAnalysisCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionAiAnalysisCreateManyClientInputEnvelope
+    connect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+  }
+
   export type InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput = {
     create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
@@ -48135,6 +49870,13 @@ export namespace Prisma {
     connectOrCreate?: InstitutionWalletCreateOrConnectWithoutClientInput | InstitutionWalletCreateOrConnectWithoutClientInput[]
     createMany?: InstitutionWalletCreateManyClientInputEnvelope
     connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+  }
+
+  export type InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionAiAnalysisCreateManyClientInputEnvelope
+    connect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
   }
 
   export type EnumClientTierFieldUpdateOperationsInput = {
@@ -48280,6 +50022,20 @@ export namespace Prisma {
     deleteMany?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
   }
 
+  export type InstitutionAiAnalysisUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput | InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionAiAnalysisCreateManyClientInputEnvelope
+    set?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    disconnect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    delete?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    connect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    update?: InstitutionAiAnalysisUpdateWithWhereUniqueWithoutClientInput | InstitutionAiAnalysisUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionAiAnalysisUpdateManyWithWhereWithoutClientInput | InstitutionAiAnalysisUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
+  }
+
   export type InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput = {
     create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
@@ -48372,6 +50128,20 @@ export namespace Prisma {
     update?: InstitutionWalletUpdateWithWhereUniqueWithoutClientInput | InstitutionWalletUpdateWithWhereUniqueWithoutClientInput[]
     updateMany?: InstitutionWalletUpdateManyWithWhereWithoutClientInput | InstitutionWalletUpdateManyWithWhereWithoutClientInput[]
     deleteMany?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
+  }
+
+  export type InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput | InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionAiAnalysisCreateManyClientInputEnvelope
+    set?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    disconnect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    delete?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    connect?: InstitutionAiAnalysisWhereUniqueInput | InstitutionAiAnalysisWhereUniqueInput[]
+    update?: InstitutionAiAnalysisUpdateWithWhereUniqueWithoutClientInput | InstitutionAiAnalysisUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionAiAnalysisUpdateManyWithWhereWithoutClientInput | InstitutionAiAnalysisUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
   }
 
   export type InstitutionClientCreateNestedOneWithoutWalletsInput = {
@@ -48681,12 +50451,34 @@ export namespace Prisma {
     connect?: InstitutionEscrowWhereUniqueInput
   }
 
-  export type InstitutionEscrowUpdateOneRequiredWithoutAiAnalysesNestedInput = {
+  export type InstitutionClientCreateNestedOneWithoutAiAnalysesInput = {
+    create?: XOR<InstitutionClientCreateWithoutAiAnalysesInput, InstitutionClientUncheckedCreateWithoutAiAnalysesInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutAiAnalysesInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type EnumAiAnalysisTypeFieldUpdateOperationsInput = {
+    set?: $Enums.AiAnalysisType
+  }
+
+  export type InstitutionEscrowUpdateOneWithoutAiAnalysesNestedInput = {
     create?: XOR<InstitutionEscrowCreateWithoutAiAnalysesInput, InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput>
     connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutAiAnalysesInput
     upsert?: InstitutionEscrowUpsertWithoutAiAnalysesInput
+    disconnect?: InstitutionEscrowWhereInput | boolean
+    delete?: InstitutionEscrowWhereInput | boolean
     connect?: InstitutionEscrowWhereUniqueInput
     update?: XOR<XOR<InstitutionEscrowUpdateToOneWithWhereWithoutAiAnalysesInput, InstitutionEscrowUpdateWithoutAiAnalysesInput>, InstitutionEscrowUncheckedUpdateWithoutAiAnalysesInput>
+  }
+
+  export type InstitutionClientUpdateOneWithoutAiAnalysesNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutAiAnalysesInput, InstitutionClientUncheckedCreateWithoutAiAnalysesInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutAiAnalysesInput
+    upsert?: InstitutionClientUpsertWithoutAiAnalysesInput
+    disconnect?: InstitutionClientWhereInput | boolean
+    delete?: InstitutionClientWhereInput | boolean
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutAiAnalysesInput, InstitutionClientUpdateWithoutAiAnalysesInput>, InstitutionClientUncheckedUpdateWithoutAiAnalysesInput>
   }
 
   export type InstitutionCorridorCreaterequiredDocumentsInput = {
@@ -49527,6 +51319,23 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
     _max?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAiAnalysisTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.AiAnalysisType | EnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AiAnalysisType[] | ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AiAnalysisType[] | ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAiAnalysisTypeFilter<$PrismaModel> | $Enums.AiAnalysisType
+  }
+
+  export type NestedEnumAiAnalysisTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AiAnalysisType | EnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AiAnalysisType[] | ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AiAnalysisType[] | ListEnumAiAnalysisTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAiAnalysisTypeWithAggregatesFilter<$PrismaModel> | $Enums.AiAnalysisType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAiAnalysisTypeFilter<$PrismaModel>
+    _max?: NestedEnumAiAnalysisTypeFilter<$PrismaModel>
   }
 
   export type NestedEnumCorridorStatusFilter<$PrismaModel = never> = {
@@ -52982,6 +54791,46 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type InstitutionAiAnalysisCreateWithoutClientInput = {
+    id?: string
+    analysisType?: $Enums.AiAnalysisType
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
+    model: string
+    createdAt?: Date | string
+    escrow?: InstitutionEscrowCreateNestedOneWithoutAiAnalysesInput
+  }
+
+  export type InstitutionAiAnalysisUncheckedCreateWithoutClientInput = {
+    id?: string
+    analysisType?: $Enums.AiAnalysisType
+    escrowId?: string | null
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
+    model: string
+    createdAt?: Date | string
+  }
+
+  export type InstitutionAiAnalysisCreateOrConnectWithoutClientInput = {
+    where: InstitutionAiAnalysisWhereUniqueInput
+    create: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionAiAnalysisCreateManyClientInputEnvelope = {
+    data: InstitutionAiAnalysisCreateManyClientInput | InstitutionAiAnalysisCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
   export type InstitutionRefreshTokenUpsertWithWhereUniqueWithoutClientInput = {
     where: InstitutionRefreshTokenWhereUniqueInput
     update: XOR<InstitutionRefreshTokenUpdateWithoutClientInput, InstitutionRefreshTokenUncheckedUpdateWithoutClientInput>
@@ -53222,6 +55071,41 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
   }
 
+  export type InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionAiAnalysisWhereUniqueInput
+    update: XOR<InstitutionAiAnalysisUpdateWithoutClientInput, InstitutionAiAnalysisUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionAiAnalysisUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionAiAnalysisWhereUniqueInput
+    data: XOR<InstitutionAiAnalysisUpdateWithoutClientInput, InstitutionAiAnalysisUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionAiAnalysisUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionAiAnalysisScalarWhereInput
+    data: XOR<InstitutionAiAnalysisUpdateManyMutationInput, InstitutionAiAnalysisUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionAiAnalysisScalarWhereInput = {
+    AND?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
+    OR?: InstitutionAiAnalysisScalarWhereInput[]
+    NOT?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
+    id?: StringFilter<"InstitutionAiAnalysis"> | string
+    analysisType?: EnumAiAnalysisTypeFilter<"InstitutionAiAnalysis"> | $Enums.AiAnalysisType
+    escrowId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    clientId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    fileId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    documentHash?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    riskScore?: IntFilter<"InstitutionAiAnalysis"> | number
+    factors?: JsonFilter<"InstitutionAiAnalysis">
+    recommendation?: StringFilter<"InstitutionAiAnalysis"> | string
+    extractedFields?: JsonFilter<"InstitutionAiAnalysis">
+    summary?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
+    model?: StringFilter<"InstitutionAiAnalysis"> | string
+    createdAt?: DateTimeFilter<"InstitutionAiAnalysis"> | Date | string
+  }
+
   export type InstitutionClientCreateWithoutWalletsInput = {
     id?: string
     email: string
@@ -53291,6 +55175,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutWalletsInput = {
@@ -53362,6 +55247,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutWalletsInput = {
@@ -53449,6 +55335,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutWalletsInput = {
@@ -53520,6 +55407,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutRefreshTokensInput = {
@@ -53591,6 +55479,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutRefreshTokensInput = {
@@ -53662,6 +55551,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutRefreshTokensInput = {
@@ -53749,6 +55639,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutRefreshTokensInput = {
@@ -53820,6 +55711,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutSettingsInput = {
@@ -53891,6 +55783,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutSettingsInput = {
@@ -53962,6 +55855,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutSettingsInput = {
@@ -54049,6 +55943,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutSettingsInput = {
@@ -54120,6 +56015,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutApiKeysInput = {
@@ -54191,6 +56087,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutApiKeysInput = {
@@ -54262,6 +56159,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutApiKeysInput = {
@@ -54349,6 +56247,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutApiKeysInput = {
@@ -54420,6 +56319,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutEscrowsInput = {
@@ -54491,6 +56391,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutEscrowsInput = {
@@ -54562,6 +56463,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutEscrowsInput = {
@@ -54629,24 +56531,30 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisCreateWithoutEscrowInput = {
     id?: string
+    analysisType?: $Enums.AiAnalysisType
     fileId?: string | null
     documentHash?: string | null
     riskScore: number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation: string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
     model: string
     createdAt?: Date | string
+    client?: InstitutionClientCreateNestedOneWithoutAiAnalysesInput
   }
 
   export type InstitutionAiAnalysisUncheckedCreateWithoutEscrowInput = {
     id?: string
+    analysisType?: $Enums.AiAnalysisType
+    clientId?: string | null
     fileId?: string | null
     documentHash?: string | null
     riskScore: number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation: string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
     model: string
     createdAt?: Date | string
   }
@@ -54773,6 +56681,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutEscrowsInput = {
@@ -54844,6 +56753,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionDepositUpsertWithWhereUniqueWithoutEscrowInput = {
@@ -54905,22 +56815,6 @@ export namespace Prisma {
   export type InstitutionAiAnalysisUpdateManyWithWhereWithoutEscrowInput = {
     where: InstitutionAiAnalysisScalarWhereInput
     data: XOR<InstitutionAiAnalysisUpdateManyMutationInput, InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowInput>
-  }
-
-  export type InstitutionAiAnalysisScalarWhereInput = {
-    AND?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
-    OR?: InstitutionAiAnalysisScalarWhereInput[]
-    NOT?: InstitutionAiAnalysisScalarWhereInput | InstitutionAiAnalysisScalarWhereInput[]
-    id?: StringFilter<"InstitutionAiAnalysis"> | string
-    escrowId?: StringFilter<"InstitutionAiAnalysis"> | string
-    fileId?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
-    documentHash?: StringNullableFilter<"InstitutionAiAnalysis"> | string | null
-    riskScore?: IntFilter<"InstitutionAiAnalysis"> | number
-    factors?: JsonFilter<"InstitutionAiAnalysis">
-    recommendation?: StringFilter<"InstitutionAiAnalysis"> | string
-    extractedFields?: JsonFilter<"InstitutionAiAnalysis">
-    model?: StringFilter<"InstitutionAiAnalysis"> | string
-    createdAt?: DateTimeFilter<"InstitutionAiAnalysis"> | Date | string
   }
 
   export type InstitutionFileUpsertWithWhereUniqueWithoutEscrowInput = {
@@ -55203,6 +57097,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutAuditLogsInput = {
@@ -55274,6 +57169,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutAuditLogsInput = {
@@ -55430,6 +57326,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutAuditLogsInput = {
@@ -55501,6 +57398,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionEscrowCreateWithoutAiAnalysesInput = {
@@ -55564,6 +57462,155 @@ export namespace Prisma {
   export type InstitutionEscrowCreateOrConnectWithoutAiAnalysesInput = {
     where: InstitutionEscrowWhereUniqueInput
     create: XOR<InstitutionEscrowCreateWithoutAiAnalysesInput, InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput>
+  }
+
+  export type InstitutionClientCreateWithoutAiAnalysesInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutAiAnalysesInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutAiAnalysesInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutAiAnalysesInput, InstitutionClientUncheckedCreateWithoutAiAnalysesInput>
   }
 
   export type InstitutionEscrowUpsertWithoutAiAnalysesInput = {
@@ -55635,6 +57682,161 @@ export namespace Prisma {
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
+  export type InstitutionClientUpsertWithoutAiAnalysesInput = {
+    update: XOR<InstitutionClientUpdateWithoutAiAnalysesInput, InstitutionClientUncheckedUpdateWithoutAiAnalysesInput>
+    create: XOR<InstitutionClientCreateWithoutAiAnalysesInput, InstitutionClientUncheckedCreateWithoutAiAnalysesInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutAiAnalysesInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutAiAnalysesInput, InstitutionClientUncheckedUpdateWithoutAiAnalysesInput>
+  }
+
+  export type InstitutionClientUpdateWithoutAiAnalysesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutAiAnalysesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+  }
+
   export type InstitutionClientCreateWithoutFilesInput = {
     id?: string
     email: string
@@ -55704,6 +57906,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutFilesInput = {
@@ -55775,6 +57978,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutFilesInput = {
@@ -55925,6 +58129,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutFilesInput = {
@@ -55996,6 +58201,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionEscrowUpsertWithoutFilesInput = {
@@ -57293,6 +59499,21 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type InstitutionAiAnalysisCreateManyClientInput = {
+    id?: string
+    analysisType?: $Enums.AiAnalysisType
+    escrowId?: string | null
+    fileId?: string | null
+    documentHash?: string | null
+    riskScore: number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation: string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
+    model: string
+    createdAt?: Date | string
+  }
+
   export type InstitutionRefreshTokenUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     tokenHash?: StringFieldUpdateOperationsInput | string
@@ -57544,6 +59765,51 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type InstitutionAiAnalysisUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrow?: InstitutionEscrowUpdateOneWithoutAiAnalysesNestedInput
+  }
+
+  export type InstitutionAiAnalysisUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAiAnalysisUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
+    escrowId?: NullableStringFieldUpdateOperationsInput | string | null
+    fileId?: NullableStringFieldUpdateOperationsInput | string | null
+    documentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    riskScore?: IntFieldUpdateOperationsInput | number
+    factors?: JsonNullValueInput | InputJsonValue
+    recommendation?: StringFieldUpdateOperationsInput | string
+    extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type InstitutionDepositCreateManyEscrowInput = {
     id?: string
     txSignature: string
@@ -57565,12 +59831,15 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisCreateManyEscrowInput = {
     id?: string
+    analysisType?: $Enums.AiAnalysisType
+    clientId?: string | null
     fileId?: string | null
     documentHash?: string | null
     riskScore: number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation: string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: string | null
     model: string
     createdAt?: Date | string
   }
@@ -57645,36 +59914,45 @@ export namespace Prisma {
 
   export type InstitutionAiAnalysisUpdateWithoutEscrowInput = {
     id?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
     fileId?: NullableStringFieldUpdateOperationsInput | string | null
     documentHash?: NullableStringFieldUpdateOperationsInput | string | null
     riskScore?: IntFieldUpdateOperationsInput | number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation?: StringFieldUpdateOperationsInput | string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     model?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneWithoutAiAnalysesNestedInput
   }
 
   export type InstitutionAiAnalysisUncheckedUpdateWithoutEscrowInput = {
     id?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
     fileId?: NullableStringFieldUpdateOperationsInput | string | null
     documentHash?: NullableStringFieldUpdateOperationsInput | string | null
     riskScore?: IntFieldUpdateOperationsInput | number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation?: StringFieldUpdateOperationsInput | string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     model?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowInput = {
     id?: StringFieldUpdateOperationsInput | string
+    analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
     fileId?: NullableStringFieldUpdateOperationsInput | string | null
     documentHash?: NullableStringFieldUpdateOperationsInput | string | null
     riskScore?: IntFieldUpdateOperationsInput | number
     factors?: JsonNullValueInput | InputJsonValue
     recommendation?: StringFieldUpdateOperationsInput | string
     extractedFields?: JsonNullValueInput | InputJsonValue
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     model?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
