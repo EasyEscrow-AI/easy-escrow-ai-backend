@@ -659,27 +659,6 @@ exports.Prisma.InstitutionApprovedTokenScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.AdminUserScalarFieldEnum = {
-  id: 'id',
-  email: 'email',
-  passwordHash: 'passwordHash',
-  name: 'name',
-  role: 'role',
-  isActive: 'isActive',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  lastLoginAt: 'lastLoginAt'
-};
-
-exports.Prisma.AdminRefreshTokenScalarFieldEnum = {
-  id: 'id',
-  tokenHash: 'tokenHash',
-  adminId: 'adminId',
-  expiresAt: 'expiresAt',
-  revokedAt: 'revokedAt',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.InstitutionFileScalarFieldEnum = {
   id: 'id',
   clientId: 'clientId',
@@ -1062,11 +1041,7 @@ exports.Prisma.ModelName = {
   InstitutionAiAnalysis: 'InstitutionAiAnalysis',
   InstitutionCorridor: 'InstitutionCorridor',
   InstitutionApprovedToken: 'InstitutionApprovedToken',
-  AdminUser: 'AdminUser',
-  AdminRefreshToken: 'AdminRefreshToken',
-  InstitutionFile: 'InstitutionFile',
-  InstitutionNotification: 'InstitutionNotification',
-  SystemSetting: 'SystemSetting'
+  InstitutionFile: 'InstitutionFile'
 };
 
 /**
