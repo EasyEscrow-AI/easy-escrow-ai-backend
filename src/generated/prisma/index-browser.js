@@ -565,6 +565,7 @@ exports.Prisma.InstitutionApiKeyScalarFieldEnum = {
 exports.Prisma.InstitutionEscrowScalarFieldEnum = {
   id: 'id',
   escrowId: 'escrowId',
+  escrowCode: 'escrowCode',
   clientId: 'clientId',
   payerWallet: 'payerWallet',
   recipientWallet: 'recipientWallet',

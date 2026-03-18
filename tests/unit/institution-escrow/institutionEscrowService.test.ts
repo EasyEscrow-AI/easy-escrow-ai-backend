@@ -29,6 +29,7 @@ describe('InstitutionEscrowService', () => {
 
   const CLIENT_ID = 'client-123';
   const ESCROW_ID = 'escrow-456';
+  const ESCROW_CODE = 'EE-AB3D-7KMN';
   const PAYER_WALLET = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
   const RECIPIENT_WALLET = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM';
 
@@ -46,6 +47,7 @@ describe('InstitutionEscrowService', () => {
   const makeEscrow = (overrides: Record<string, unknown> = {}) => ({
     id: 1,
     escrowId: ESCROW_ID,
+    escrowCode: ESCROW_CODE,
     clientId: CLIENT_ID,
     payerWallet: PAYER_WALLET,
     recipientWallet: RECIPIENT_WALLET,
@@ -365,7 +367,7 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
 
-      expect(result).to.have.property('escrowId', ESCROW_ID);
+      expect(result).to.have.property('escrowId', ESCROW_CODE);
       expect(result).to.have.property('clientId', CLIENT_ID);
     });
 
@@ -391,7 +393,7 @@ describe('InstitutionEscrowService', () => {
 
       // When cache misses, it falls through to getEscrowInternal
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
-      expect(result).to.have.property('escrowId', ESCROW_ID);
+      expect(result).to.have.property('escrowId', ESCROW_CODE);
     });
   });
 

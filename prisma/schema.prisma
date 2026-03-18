@@ -1085,6 +1085,7 @@ model InstitutionApiKey {
 model InstitutionEscrow {
   id                    String                    @id @default(uuid())
   escrowId              String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
+  escrowCode            String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
   clientId              String                    @map("client_id")
   payerWallet           String                    @map("payer_wallet")
   recipientWallet       String                    @map("recipient_wallet")
@@ -1120,6 +1121,7 @@ model InstitutionEscrow {
 
   @@index([clientId])
   @@index([escrowId])
+  @@index([escrowCode])
   @@index([status])
   @@index([corridor])
   @@index([payerWallet])

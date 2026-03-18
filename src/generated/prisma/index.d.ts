@@ -31532,6 +31532,7 @@ export namespace Prisma {
   export type InstitutionEscrowMinAggregateOutputType = {
     id: string | null
     escrowId: string | null
+    escrowCode: string | null
     clientId: string | null
     payerWallet: string | null
     recipientWallet: string | null
@@ -31558,6 +31559,7 @@ export namespace Prisma {
   export type InstitutionEscrowMaxAggregateOutputType = {
     id: string | null
     escrowId: string | null
+    escrowCode: string | null
     clientId: string | null
     payerWallet: string | null
     recipientWallet: string | null
@@ -31584,6 +31586,7 @@ export namespace Prisma {
   export type InstitutionEscrowCountAggregateOutputType = {
     id: number
     escrowId: number
+    escrowCode: number
     clientId: number
     payerWallet: number
     recipientWallet: number
@@ -31624,6 +31627,7 @@ export namespace Prisma {
   export type InstitutionEscrowMinAggregateInputType = {
     id?: true
     escrowId?: true
+    escrowCode?: true
     clientId?: true
     payerWallet?: true
     recipientWallet?: true
@@ -31650,6 +31654,7 @@ export namespace Prisma {
   export type InstitutionEscrowMaxAggregateInputType = {
     id?: true
     escrowId?: true
+    escrowCode?: true
     clientId?: true
     payerWallet?: true
     recipientWallet?: true
@@ -31676,6 +31681,7 @@ export namespace Prisma {
   export type InstitutionEscrowCountAggregateInputType = {
     id?: true
     escrowId?: true
+    escrowCode?: true
     clientId?: true
     payerWallet?: true
     recipientWallet?: true
@@ -31789,6 +31795,7 @@ export namespace Prisma {
   export type InstitutionEscrowGroupByOutputType = {
     id: string
     escrowId: string
+    escrowCode: string
     clientId: string
     payerWallet: string
     recipientWallet: string
@@ -31834,6 +31841,7 @@ export namespace Prisma {
   export type InstitutionEscrowSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     escrowId?: boolean
+    escrowCode?: boolean
     clientId?: boolean
     payerWallet?: boolean
     recipientWallet?: boolean
@@ -31866,6 +31874,7 @@ export namespace Prisma {
   export type InstitutionEscrowSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     escrowId?: boolean
+    escrowCode?: boolean
     clientId?: boolean
     payerWallet?: boolean
     recipientWallet?: boolean
@@ -31893,6 +31902,7 @@ export namespace Prisma {
   export type InstitutionEscrowSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     escrowId?: boolean
+    escrowCode?: boolean
     clientId?: boolean
     payerWallet?: boolean
     recipientWallet?: boolean
@@ -31920,6 +31930,7 @@ export namespace Prisma {
   export type InstitutionEscrowSelectScalar = {
     id?: boolean
     escrowId?: boolean
+    escrowCode?: boolean
     clientId?: boolean
     payerWallet?: boolean
     recipientWallet?: boolean
@@ -31943,7 +31954,7 @@ export namespace Prisma {
     fundedAt?: boolean
   }
 
-  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "escrowPda" | "vaultPda" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
+  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "escrowPda" | "vaultPda" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
   export type InstitutionEscrowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
@@ -31971,6 +31982,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       escrowId: string
+      escrowCode: string
       clientId: string
       payerWallet: string
       recipientWallet: string
@@ -32422,6 +32434,7 @@ export namespace Prisma {
   interface InstitutionEscrowFieldRefs {
     readonly id: FieldRef<"InstitutionEscrow", 'String'>
     readonly escrowId: FieldRef<"InstitutionEscrow", 'String'>
+    readonly escrowCode: FieldRef<"InstitutionEscrow", 'String'>
     readonly clientId: FieldRef<"InstitutionEscrow", 'String'>
     readonly payerWallet: FieldRef<"InstitutionEscrow", 'String'>
     readonly recipientWallet: FieldRef<"InstitutionEscrow", 'String'>
@@ -42608,6 +42621,7 @@ export namespace Prisma {
   export const InstitutionEscrowScalarFieldEnum: {
     id: 'id',
     escrowId: 'escrowId',
+    escrowCode: 'escrowCode',
     clientId: 'clientId',
     payerWallet: 'payerWallet',
     recipientWallet: 'recipientWallet',
@@ -46006,6 +46020,7 @@ export namespace Prisma {
     NOT?: InstitutionEscrowWhereInput | InstitutionEscrowWhereInput[]
     id?: StringFilter<"InstitutionEscrow"> | string
     escrowId?: StringFilter<"InstitutionEscrow"> | string
+    escrowCode?: StringFilter<"InstitutionEscrow"> | string
     clientId?: StringFilter<"InstitutionEscrow"> | string
     payerWallet?: StringFilter<"InstitutionEscrow"> | string
     recipientWallet?: StringFilter<"InstitutionEscrow"> | string
@@ -46037,6 +46052,7 @@ export namespace Prisma {
   export type InstitutionEscrowOrderByWithRelationInput = {
     id?: SortOrder
     escrowId?: SortOrder
+    escrowCode?: SortOrder
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrder
@@ -46068,6 +46084,7 @@ export namespace Prisma {
   export type InstitutionEscrowWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     escrowId?: string
+    escrowCode?: string
     AND?: InstitutionEscrowWhereInput | InstitutionEscrowWhereInput[]
     OR?: InstitutionEscrowWhereInput[]
     NOT?: InstitutionEscrowWhereInput | InstitutionEscrowWhereInput[]
@@ -46097,11 +46114,12 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
     files?: InstitutionFileListRelationFilter
-  }, "id" | "escrowId">
+  }, "id" | "escrowId" | "escrowCode">
 
   export type InstitutionEscrowOrderByWithAggregationInput = {
     id?: SortOrder
     escrowId?: SortOrder
+    escrowCode?: SortOrder
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrder
@@ -46136,6 +46154,7 @@ export namespace Prisma {
     NOT?: InstitutionEscrowScalarWhereWithAggregatesInput | InstitutionEscrowScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     escrowId?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    escrowCode?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     clientId?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     payerWallet?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     recipientWallet?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
@@ -49966,6 +49985,7 @@ export namespace Prisma {
   export type InstitutionEscrowCreateInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     payerWallet: string
     recipientWallet: string
     usdcMint: string
@@ -49996,6 +50016,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedCreateInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     clientId: string
     payerWallet: string
     recipientWallet: string
@@ -50026,6 +50047,7 @@ export namespace Prisma {
   export type InstitutionEscrowUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string
@@ -50056,6 +50078,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
@@ -50086,6 +50109,7 @@ export namespace Prisma {
   export type InstitutionEscrowCreateManyInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     clientId: string
     payerWallet: string
     recipientWallet: string
@@ -50112,6 +50136,7 @@ export namespace Prisma {
   export type InstitutionEscrowUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string
@@ -50137,6 +50162,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
@@ -53487,6 +53513,7 @@ export namespace Prisma {
   export type InstitutionEscrowCountOrderByAggregateInput = {
     id?: SortOrder
     escrowId?: SortOrder
+    escrowCode?: SortOrder
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrder
@@ -53519,6 +53546,7 @@ export namespace Prisma {
   export type InstitutionEscrowMaxOrderByAggregateInput = {
     id?: SortOrder
     escrowId?: SortOrder
+    escrowCode?: SortOrder
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrder
@@ -53545,6 +53573,7 @@ export namespace Prisma {
   export type InstitutionEscrowMinOrderByAggregateInput = {
     id?: SortOrder
     escrowId?: SortOrder
+    escrowCode?: SortOrder
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrder
@@ -60046,6 +60075,7 @@ export namespace Prisma {
   export type InstitutionEscrowCreateWithoutClientInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     payerWallet: string
     recipientWallet: string
     usdcMint: string
@@ -60075,6 +60105,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedCreateWithoutClientInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     payerWallet: string
     recipientWallet: string
     usdcMint: string
@@ -60452,6 +60483,7 @@ export namespace Prisma {
     NOT?: InstitutionEscrowScalarWhereInput | InstitutionEscrowScalarWhereInput[]
     id?: StringFilter<"InstitutionEscrow"> | string
     escrowId?: StringFilter<"InstitutionEscrow"> | string
+    escrowCode?: StringFilter<"InstitutionEscrow"> | string
     clientId?: StringFilter<"InstitutionEscrow"> | string
     payerWallet?: StringFilter<"InstitutionEscrow"> | string
     recipientWallet?: StringFilter<"InstitutionEscrow"> | string
@@ -62717,6 +62749,7 @@ export namespace Prisma {
   export type InstitutionEscrowCreateWithoutDepositsInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     payerWallet: string
     recipientWallet: string
     usdcMint: string
@@ -62746,6 +62779,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedCreateWithoutDepositsInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     clientId: string
     payerWallet: string
     recipientWallet: string
@@ -62791,6 +62825,7 @@ export namespace Prisma {
   export type InstitutionEscrowUpdateWithoutDepositsInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string
@@ -62820,6 +62855,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedUpdateWithoutDepositsInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
@@ -62849,6 +62885,7 @@ export namespace Prisma {
   export type InstitutionEscrowCreateWithoutAuditLogsInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     payerWallet: string
     recipientWallet: string
     usdcMint: string
@@ -62878,6 +62915,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedCreateWithoutAuditLogsInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     clientId: string
     payerWallet: string
     recipientWallet: string
@@ -63074,6 +63112,7 @@ export namespace Prisma {
   export type InstitutionEscrowUpdateWithoutAuditLogsInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string
@@ -63103,6 +63142,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedUpdateWithoutAuditLogsInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
@@ -63289,6 +63329,7 @@ export namespace Prisma {
   export type InstitutionEscrowCreateWithoutAiAnalysesInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     payerWallet: string
     recipientWallet: string
     usdcMint: string
@@ -63318,6 +63359,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     clientId: string
     payerWallet: string
     recipientWallet: string
@@ -63514,6 +63556,7 @@ export namespace Prisma {
   export type InstitutionEscrowUpdateWithoutAiAnalysesInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string
@@ -63543,6 +63586,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedUpdateWithoutAiAnalysesInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
@@ -63998,6 +64042,7 @@ export namespace Prisma {
   export type InstitutionEscrowCreateWithoutFilesInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     payerWallet: string
     recipientWallet: string
     usdcMint: string
@@ -64027,6 +64072,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedCreateWithoutFilesInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     clientId: string
     payerWallet: string
     recipientWallet: string
@@ -64229,6 +64275,7 @@ export namespace Prisma {
   export type InstitutionEscrowUpdateWithoutFilesInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string
@@ -64258,6 +64305,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedUpdateWithoutFilesInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
@@ -65454,6 +65502,7 @@ export namespace Prisma {
   export type InstitutionEscrowCreateManyClientInput = {
     id?: string
     escrowId: string
+    escrowCode: string
     payerWallet: string
     recipientWallet: string
     usdcMint: string
@@ -65629,6 +65678,7 @@ export namespace Prisma {
   export type InstitutionEscrowUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string
@@ -65658,6 +65708,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string
@@ -65687,6 +65738,7 @@ export namespace Prisma {
   export type InstitutionEscrowUncheckedUpdateManyWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     escrowId?: StringFieldUpdateOperationsInput | string
+    escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: StringFieldUpdateOperationsInput | string
     usdcMint?: StringFieldUpdateOperationsInput | string

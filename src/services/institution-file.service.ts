@@ -7,6 +7,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PrismaClient, DocumentType } from '../generated/prisma';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
+import { escrowWhere } from '../utils/uuid-conversion';
 import multer from 'multer';
 import { Readable } from 'stream';
 import { randomUUID } from 'crypto';
@@ -108,13 +109,24 @@ export class InstitutionFileService {
       );
     }
 
+    // Resolve escrow code to UUID if needed
+    let resolvedEscrowId = escrowId;
+    if (escrowId?.startsWith('EE-')) {
+      const esc = await this.prisma.institutionEscrow.findUnique({
+        where: { escrowCode: escrowId },
+        select: { escrowId: true },
+      });
+      if (!esc) throw new Error(`Escrow not found: ${escrowId}`);
+      resolvedEscrowId = esc.escrowId;
+    }
+
     // Sanitize filename
     const sanitizedFileName = sanitizeFileName(file.originalname);
 
     // Generate structured S3 key: institution/{clientId}/{YYYY-MM-DD}/{escrowId|general}/{timestamp}_{filename}
     const date = new Date();
     const dateFolder = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-    const folder = escrowId || 'general';
+    const folder = resolvedEscrowId || 'general';
     const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${randomUUID().slice(0, 8)}_${sanitizedFileName}`;
 
     // Upload to S3
@@ -135,7 +147,7 @@ export class InstitutionFileService {
     const fileRecord = await this.prisma.institutionFile.create({
       data: {
         clientId,
-        escrowId: escrowId || null,
+        escrowId: resolvedEscrowId || null,
         fileName: sanitizedFileName,
         fileKey: key,
         mimeType: file.mimetype,
@@ -178,10 +190,18 @@ export class InstitutionFileService {
   /**
    * List files for a client, optionally filtered by escrowId
    */
-  async listFiles(clientId: string, escrowId?: string) {
+  async listFiles(clientId: string, escrowIdOrCode?: string) {
     const where: { clientId: string; escrowId?: string } = { clientId };
-    if (escrowId) {
-      where.escrowId = escrowId;
+    if (escrowIdOrCode) {
+      if (escrowIdOrCode.startsWith('EE-')) {
+        const esc = await this.prisma.institutionEscrow.findUnique({
+          where: { escrowCode: escrowIdOrCode },
+          select: { escrowId: true },
+        });
+        if (esc) where.escrowId = esc.escrowId;
+      } else {
+        where.escrowId = escrowIdOrCode;
+      }
     }
 
     const files = await this.prisma.institutionFile.findMany({
