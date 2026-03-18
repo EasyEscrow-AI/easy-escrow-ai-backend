@@ -81,3 +81,11 @@ export function isValidUuid(uuid: string): boolean {
   const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   return uuidRegex.test(uuid);
 }
+
+/**
+ * Build a Prisma where clause for looking up an escrow by either
+ * escrowCode (EE-XXXX-XXXX) or escrowId (UUID).
+ */
+export function escrowWhere(idOrCode: string): { escrowCode: string } | { escrowId: string } {
+  return idOrCode.startsWith('EE-') ? { escrowCode: idOrCode } : { escrowId: idOrCode };
+}

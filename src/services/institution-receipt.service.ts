@@ -6,6 +6,7 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
+import { escrowWhere } from '../utils/uuid-conversion';
 import fs from 'fs';
 import path from 'path';
 
@@ -111,7 +112,7 @@ export class InstitutionReceiptService {
    */
   async getReceiptData(escrowId: string, clientId: string): Promise<ReceiptData> {
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { escrowId, clientId },
+      where: { ...escrowWhere(escrowId), clientId },
       include: {
         client: true,
         deposits: { orderBy: { createdAt: 'asc' } },
@@ -183,7 +184,7 @@ export class InstitutionReceiptService {
         }
       : null;
 
-    const receiptNumber = `EE-INST-${escrow.escrowId.slice(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+    const receiptNumber = `${escrow.escrowCode}-${Date.now().toString(36).toUpperCase()}`;
 
     return {
       client: {
@@ -212,7 +213,7 @@ export class InstitutionReceiptService {
         licenseNumber: c.licenseNumber,
       },
       escrow: {
-        escrowId: escrow.escrowId,
+        escrowId: escrow.escrowCode,
         status: escrow.status,
         corridor: escrow.corridor,
         conditionType: escrow.conditionType,
