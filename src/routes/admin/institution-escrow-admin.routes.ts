@@ -11,7 +11,7 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { validationResult } from 'express-validator';
-import { authenticateAdmin } from '../../middleware/auth.middleware';
+import { requireAdminOrApiKey } from '../../middleware/admin-jwt.middleware';
 import { getAllowlistService } from '../../services/allowlist.service';
 import {
   validateAddToAllowlist,
@@ -34,7 +34,7 @@ const standardRateLimiter = rateLimit({
 router.post(
   '/api/admin/institution-escrow/allowlist',
   standardRateLimiter,
-  authenticateAdmin,
+  requireAdminOrApiKey,
   validateAddToAllowlist,
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -70,7 +70,7 @@ router.post(
 router.delete(
   '/api/admin/institution-escrow/allowlist/:wallet',
   standardRateLimiter,
-  authenticateAdmin,
+  requireAdminOrApiKey,
   async (req: Request, res: Response) => {
     try {
       const service = getAllowlistService();
@@ -95,7 +95,7 @@ router.delete(
 router.get(
   '/api/admin/institution-escrow/allowlist',
   standardRateLimiter,
-  authenticateAdmin,
+  requireAdminOrApiKey,
   async (_req: Request, res: Response) => {
     try {
       const service = getAllowlistService();
@@ -121,7 +121,7 @@ router.get(
 router.post(
   '/api/admin/institution-escrow/corridors',
   standardRateLimiter,
-  authenticateAdmin,
+  requireAdminOrApiKey,
   validateConfigureCorridor,
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -179,7 +179,7 @@ router.post(
 router.get(
   '/api/admin/institution-escrow/corridors',
   standardRateLimiter,
-  authenticateAdmin,
+  requireAdminOrApiKey,
   async (_req: Request, res: Response) => {
     try {
       const corridors = await prisma.institutionCorridor.findMany({

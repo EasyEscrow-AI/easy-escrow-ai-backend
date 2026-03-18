@@ -1125,6 +1125,77 @@ model InstitutionCorridor {
 }
 
 // ============================================
+// APPROVED TOKEN WHITELIST
+// ============================================
+
+// AMINA-approved stablecoin tokens for institution escrow
+model InstitutionApprovedToken {
+  id              String    @id @default(uuid())
+  symbol          String    @unique // e.g. "USDC", "USDT", "EURC"
+  name            String    // e.g. "USD Coin"
+  mintAddress     String    @unique @map("mint_address") // Solana SPL token mint
+  decimals        Int       @default(6)
+  issuer          String    // e.g. "Circle", "Tether", "Ripple"
+  jurisdiction    String?   // e.g. "US", "EU", "SG"
+  chain           String    @default("solana")
+  isDefault       Boolean   @default(false) @map("is_default") // USDC = default
+  isActive        Boolean   @default(true) @map("is_active")
+  aminaApproved   Boolean   @default(true) @map("amina_approved")
+  addedAt         DateTime  @default(now()) @map("added_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([symbol])
+  @@index([mintAddress])
+  @@index([isActive])
+  @@index([aminaApproved])
+  @@map("institution_approved_tokens")
+}
+
+// ============================================
+// ADMIN USER SYSTEM
+// ============================================
+
+enum AdminRole {
+  SUPER_ADMIN
+}
+
+// Admin user account (seed-only, no public registration)
+model AdminUser {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String
+  role          AdminRole @default(SUPER_ADMIN)
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  lastLoginAt   DateTime? @map("last_login_at")
+
+  refreshTokens AdminRefreshToken[]
+
+  @@index([email])
+  @@index([isActive])
+  @@map("admin_users")
+}
+
+// Admin refresh token storage (hashed)
+model AdminRefreshToken {
+  id          String    @id @default(uuid())
+  tokenHash   String    @unique @map("token_hash")
+  adminId     String    @map("admin_id")
+  expiresAt   DateTime  @map("expires_at")
+  revokedAt   DateTime? @map("revoked_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  admin       AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([expiresAt])
+  @@index([tokenHash])
+  @@map("admin_refresh_tokens")
+}
+
+// ============================================
 // FILE MODEL
 // ============================================
 
