@@ -779,6 +779,27 @@ enum WalletCustodyType {
   EXCHANGE
 }
 
+enum InstitutionAccountType {
+  TREASURY
+  OPERATIONS
+  SETTLEMENT
+  COLLATERAL
+  GENERAL
+}
+
+enum AccountVerificationStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+  REJECTED
+}
+
+enum ApprovalMode {
+  AUTO
+  SINGLE_APPROVAL
+  MULTI_APPROVAL
+}
+
 enum EmployeeCountRange {
   RANGE_1_10
   RANGE_11_50
@@ -892,6 +913,7 @@ model InstitutionClient {
   auditLogs     InstitutionAuditLog[]
   files         InstitutionFile[]
   wallets       InstitutionWallet[]
+  accounts      InstitutionAccount[]
   aiAnalyses    InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
 
   @@index([email])
@@ -927,6 +949,72 @@ model InstitutionWallet {
   @@index([isPrimary])
   @@index([isSettlement])
   @@map("institution_wallets")
+}
+
+// Institution multi-account system (Treasury, Operations, Settlement, etc.)
+model InstitutionAccount {
+  id       String @id @default(uuid())
+  clientId String @map("client_id")
+
+  // Identity
+  name        String
+  label       String?
+  accountType InstitutionAccountType @default(GENERAL) @map("account_type")
+  description String?
+
+  // Wallet
+  walletAddress  String             @map("wallet_address")
+  chain          String             @default("solana")
+  walletProvider String?            @map("wallet_provider")
+  custodyType    WalletCustodyType? @map("custody_type")
+
+  // Verification (per-account, separate from client KYB)
+  verificationStatus AccountVerificationStatus @default(PENDING) @map("verification_status")
+  verifiedAt         DateTime?                 @map("verified_at")
+  verificationNotes  String?                   @map("verification_notes")
+
+  // Transaction limits (per-account overrides)
+  maxTransactionAmount         Decimal? @map("max_transaction_amount") @db.Decimal(20, 6)
+  minTransactionAmount         Decimal? @map("min_transaction_amount") @db.Decimal(20, 6)
+  dailyVolumeLimit             Decimal? @map("daily_volume_limit") @db.Decimal(20, 6)
+  monthlyVolumeLimit           Decimal? @map("monthly_volume_limit") @db.Decimal(20, 6)
+  dailyTransactionCountLimit   Int?     @map("daily_transaction_count_limit")
+  monthlyTransactionCountLimit Int?     @map("monthly_transaction_count_limit")
+
+  // Approval settings
+  approvalMode      ApprovalMode @default(AUTO) @map("approval_mode")
+  approvalThreshold Decimal?     @map("approval_threshold") @db.Decimal(20, 6)
+
+  // Security
+  whitelistedAddresses String[] @default([]) @map("whitelisted_addresses")
+  whitelistEnforced    Boolean  @default(false) @map("whitelist_enforced")
+
+  // Notifications
+  notificationEmail       String? @map("notification_email")
+  webhookUrl              String? @map("webhook_url")
+  notifyOnEscrowCreated   Boolean @default(true) @map("notify_on_escrow_created")
+  notifyOnEscrowFunded    Boolean @default(true) @map("notify_on_escrow_funded")
+  notifyOnEscrowReleased  Boolean @default(true) @map("notify_on_escrow_released")
+  notifyOnComplianceAlert Boolean @default(true) @map("notify_on_compliance_alert")
+
+  // Status
+  isDefault Boolean @default(false) @map("is_default")
+  isActive  Boolean @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, name])
+  @@index([clientId])
+  @@index([walletAddress])
+  @@index([accountType])
+  @@index([verificationStatus])
+  @@index([isActive])
+  @@map("institution_accounts")
 }
 
 // Refresh token storage (hashed)

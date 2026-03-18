@@ -99,6 +99,11 @@ export type InstitutionClient = $Result.DefaultSelection<Prisma.$InstitutionClie
  */
 export type InstitutionWallet = $Result.DefaultSelection<Prisma.$InstitutionWalletPayload>
 /**
+ * Model InstitutionAccount
+ * 
+ */
+export type InstitutionAccount = $Result.DefaultSelection<Prisma.$InstitutionAccountPayload>
+/**
  * Model InstitutionRefreshToken
  * 
  */
@@ -431,6 +436,36 @@ export const WalletCustodyType: {
 export type WalletCustodyType = (typeof WalletCustodyType)[keyof typeof WalletCustodyType]
 
 
+export const InstitutionAccountType: {
+  TREASURY: 'TREASURY',
+  OPERATIONS: 'OPERATIONS',
+  SETTLEMENT: 'SETTLEMENT',
+  COLLATERAL: 'COLLATERAL',
+  GENERAL: 'GENERAL'
+};
+
+export type InstitutionAccountType = (typeof InstitutionAccountType)[keyof typeof InstitutionAccountType]
+
+
+export const AccountVerificationStatus: {
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  SUSPENDED: 'SUSPENDED',
+  REJECTED: 'REJECTED'
+};
+
+export type AccountVerificationStatus = (typeof AccountVerificationStatus)[keyof typeof AccountVerificationStatus]
+
+
+export const ApprovalMode: {
+  AUTO: 'AUTO',
+  SINGLE_APPROVAL: 'SINGLE_APPROVAL',
+  MULTI_APPROVAL: 'MULTI_APPROVAL'
+};
+
+export type ApprovalMode = (typeof ApprovalMode)[keyof typeof ApprovalMode]
+
+
 export const EmployeeCountRange: {
   RANGE_1_10: 'RANGE_1_10',
   RANGE_11_50: 'RANGE_11_50',
@@ -566,6 +601,18 @@ export const SanctionsStatus: typeof $Enums.SanctionsStatus
 export type WalletCustodyType = $Enums.WalletCustodyType
 
 export const WalletCustodyType: typeof $Enums.WalletCustodyType
+
+export type InstitutionAccountType = $Enums.InstitutionAccountType
+
+export const InstitutionAccountType: typeof $Enums.InstitutionAccountType
+
+export type AccountVerificationStatus = $Enums.AccountVerificationStatus
+
+export const AccountVerificationStatus: typeof $Enums.AccountVerificationStatus
+
+export type ApprovalMode = $Enums.ApprovalMode
+
+export const ApprovalMode: typeof $Enums.ApprovalMode
 
 export type EmployeeCountRange = $Enums.EmployeeCountRange
 
@@ -866,6 +913,16 @@ export class PrismaClient<
     * ```
     */
   get institutionWallet(): Prisma.InstitutionWalletDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.institutionAccount`: Exposes CRUD operations for the **InstitutionAccount** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionAccounts
+    * const institutionAccounts = await prisma.institutionAccount.findMany()
+    * ```
+    */
+  get institutionAccount(): Prisma.InstitutionAccountDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.institutionRefreshToken`: Exposes CRUD operations for the **InstitutionRefreshToken** model.
@@ -1423,6 +1480,7 @@ export namespace Prisma {
     TwoPhaseSwap: 'TwoPhaseSwap',
     InstitutionClient: 'InstitutionClient',
     InstitutionWallet: 'InstitutionWallet',
+    InstitutionAccount: 'InstitutionAccount',
     InstitutionRefreshToken: 'InstitutionRefreshToken',
     InstitutionClientSettings: 'InstitutionClientSettings',
     InstitutionApiKey: 'InstitutionApiKey',
@@ -1451,7 +1509,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionApprovedToken" | "institutionFile"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionAccount" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionApprovedToken" | "institutionFile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2713,6 +2771,80 @@ export namespace Prisma {
           }
         }
       }
+      InstitutionAccount: {
+        payload: Prisma.$InstitutionAccountPayload<ExtArgs>
+        fields: Prisma.InstitutionAccountFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionAccountFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionAccountFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionAccountFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionAccountFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionAccountFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionAccountCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionAccountCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionAccountCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionAccountDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          update: {
+            args: Prisma.InstitutionAccountUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionAccountDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionAccountUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionAccountUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionAccountUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionAccountAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionAccount>
+          }
+          groupBy: {
+            args: Prisma.InstitutionAccountGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionAccountGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionAccountCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionAccountCountAggregateOutputType> | number
+          }
+        }
+      }
       InstitutionRefreshToken: {
         payload: Prisma.$InstitutionRefreshTokenPayload<ExtArgs>
         fields: Prisma.InstitutionRefreshTokenFieldRefs
@@ -3566,6 +3698,7 @@ export namespace Prisma {
     twoPhaseSwap?: TwoPhaseSwapOmit
     institutionClient?: InstitutionClientOmit
     institutionWallet?: InstitutionWalletOmit
+    institutionAccount?: InstitutionAccountOmit
     institutionRefreshToken?: InstitutionRefreshTokenOmit
     institutionClientSettings?: InstitutionClientSettingsOmit
     institutionApiKey?: InstitutionApiKeyOmit
@@ -3902,6 +4035,7 @@ export namespace Prisma {
     auditLogs: number
     files: number
     wallets: number
+    accounts: number
     aiAnalyses: number
   }
 
@@ -3912,6 +4046,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClientCountOutputTypeCountAuditLogsArgs
     files?: boolean | InstitutionClientCountOutputTypeCountFilesArgs
     wallets?: boolean | InstitutionClientCountOutputTypeCountWalletsArgs
+    accounts?: boolean | InstitutionClientCountOutputTypeCountAccountsArgs
     aiAnalyses?: boolean | InstitutionClientCountOutputTypeCountAiAnalysesArgs
   }
 
@@ -3966,6 +4101,13 @@ export namespace Prisma {
    */
   export type InstitutionClientCountOutputTypeCountWalletsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InstitutionWalletWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountAccountsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAccountWhereInput
   }
 
   /**
@@ -23725,6 +23867,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
     files?: boolean | InstitutionClient$filesArgs<ExtArgs>
     wallets?: boolean | InstitutionClient$walletsArgs<ExtArgs>
+    accounts?: boolean | InstitutionClient$accountsArgs<ExtArgs>
     aiAnalyses?: boolean | InstitutionClient$aiAnalysesArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionClient"]>
@@ -23933,6 +24076,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
     files?: boolean | InstitutionClient$filesArgs<ExtArgs>
     wallets?: boolean | InstitutionClient$walletsArgs<ExtArgs>
+    accounts?: boolean | InstitutionClient$accountsArgs<ExtArgs>
     aiAnalyses?: boolean | InstitutionClient$aiAnalysesArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -23949,6 +24093,7 @@ export namespace Prisma {
       auditLogs: Prisma.$InstitutionAuditLogPayload<ExtArgs>[]
       files: Prisma.$InstitutionFilePayload<ExtArgs>[]
       wallets: Prisma.$InstitutionWalletPayload<ExtArgs>[]
+      accounts: Prisma.$InstitutionAccountPayload<ExtArgs>[]
       aiAnalyses: Prisma.$InstitutionAiAnalysisPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -24415,6 +24560,7 @@ export namespace Prisma {
     auditLogs<T extends InstitutionClient$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     files<T extends InstitutionClient$filesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     wallets<T extends InstitutionClient$walletsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$walletsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    accounts<T extends InstitutionClient$accountsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     aiAnalyses<T extends InstitutionClient$aiAnalysesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$aiAnalysesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -25055,6 +25201,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: InstitutionWalletScalarFieldEnum | InstitutionWalletScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.accounts
+   */
+  export type InstitutionClient$accountsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    where?: InstitutionAccountWhereInput
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    cursor?: InstitutionAccountWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
   }
 
   /**
@@ -26233,6 +26403,1482 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: InstitutionWalletInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionAccount
+   */
+
+  export type AggregateInstitutionAccount = {
+    _count: InstitutionAccountCountAggregateOutputType | null
+    _avg: InstitutionAccountAvgAggregateOutputType | null
+    _sum: InstitutionAccountSumAggregateOutputType | null
+    _min: InstitutionAccountMinAggregateOutputType | null
+    _max: InstitutionAccountMaxAggregateOutputType | null
+  }
+
+  export type InstitutionAccountAvgAggregateOutputType = {
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalThreshold: Decimal | null
+  }
+
+  export type InstitutionAccountSumAggregateOutputType = {
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalThreshold: Decimal | null
+  }
+
+  export type InstitutionAccountMinAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    name: string | null
+    label: string | null
+    accountType: $Enums.InstitutionAccountType | null
+    description: string | null
+    walletAddress: string | null
+    chain: string | null
+    walletProvider: string | null
+    custodyType: $Enums.WalletCustodyType | null
+    verificationStatus: $Enums.AccountVerificationStatus | null
+    verifiedAt: Date | null
+    verificationNotes: string | null
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalMode: $Enums.ApprovalMode | null
+    approvalThreshold: Decimal | null
+    whitelistEnforced: boolean | null
+    notificationEmail: string | null
+    webhookUrl: string | null
+    notifyOnEscrowCreated: boolean | null
+    notifyOnEscrowFunded: boolean | null
+    notifyOnEscrowReleased: boolean | null
+    notifyOnComplianceAlert: boolean | null
+    isDefault: boolean | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionAccountMaxAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    name: string | null
+    label: string | null
+    accountType: $Enums.InstitutionAccountType | null
+    description: string | null
+    walletAddress: string | null
+    chain: string | null
+    walletProvider: string | null
+    custodyType: $Enums.WalletCustodyType | null
+    verificationStatus: $Enums.AccountVerificationStatus | null
+    verifiedAt: Date | null
+    verificationNotes: string | null
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalMode: $Enums.ApprovalMode | null
+    approvalThreshold: Decimal | null
+    whitelistEnforced: boolean | null
+    notificationEmail: string | null
+    webhookUrl: string | null
+    notifyOnEscrowCreated: boolean | null
+    notifyOnEscrowFunded: boolean | null
+    notifyOnEscrowReleased: boolean | null
+    notifyOnComplianceAlert: boolean | null
+    isDefault: boolean | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionAccountCountAggregateOutputType = {
+    id: number
+    clientId: number
+    name: number
+    label: number
+    accountType: number
+    description: number
+    walletAddress: number
+    chain: number
+    walletProvider: number
+    custodyType: number
+    verificationStatus: number
+    verifiedAt: number
+    verificationNotes: number
+    maxTransactionAmount: number
+    minTransactionAmount: number
+    dailyVolumeLimit: number
+    monthlyVolumeLimit: number
+    dailyTransactionCountLimit: number
+    monthlyTransactionCountLimit: number
+    approvalMode: number
+    approvalThreshold: number
+    whitelistedAddresses: number
+    whitelistEnforced: number
+    notificationEmail: number
+    webhookUrl: number
+    notifyOnEscrowCreated: number
+    notifyOnEscrowFunded: number
+    notifyOnEscrowReleased: number
+    notifyOnComplianceAlert: number
+    isDefault: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionAccountAvgAggregateInputType = {
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalThreshold?: true
+  }
+
+  export type InstitutionAccountSumAggregateInputType = {
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalThreshold?: true
+  }
+
+  export type InstitutionAccountMinAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    label?: true
+    accountType?: true
+    description?: true
+    walletAddress?: true
+    chain?: true
+    walletProvider?: true
+    custodyType?: true
+    verificationStatus?: true
+    verifiedAt?: true
+    verificationNotes?: true
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalMode?: true
+    approvalThreshold?: true
+    whitelistEnforced?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    notifyOnEscrowCreated?: true
+    notifyOnEscrowFunded?: true
+    notifyOnEscrowReleased?: true
+    notifyOnComplianceAlert?: true
+    isDefault?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionAccountMaxAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    label?: true
+    accountType?: true
+    description?: true
+    walletAddress?: true
+    chain?: true
+    walletProvider?: true
+    custodyType?: true
+    verificationStatus?: true
+    verifiedAt?: true
+    verificationNotes?: true
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalMode?: true
+    approvalThreshold?: true
+    whitelistEnforced?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    notifyOnEscrowCreated?: true
+    notifyOnEscrowFunded?: true
+    notifyOnEscrowReleased?: true
+    notifyOnComplianceAlert?: true
+    isDefault?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionAccountCountAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    label?: true
+    accountType?: true
+    description?: true
+    walletAddress?: true
+    chain?: true
+    walletProvider?: true
+    custodyType?: true
+    verificationStatus?: true
+    verifiedAt?: true
+    verificationNotes?: true
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalMode?: true
+    approvalThreshold?: true
+    whitelistedAddresses?: true
+    whitelistEnforced?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    notifyOnEscrowCreated?: true
+    notifyOnEscrowFunded?: true
+    notifyOnEscrowReleased?: true
+    notifyOnComplianceAlert?: true
+    isDefault?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionAccountAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionAccount to aggregate.
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAccounts to fetch.
+     */
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionAccounts
+    **/
+    _count?: true | InstitutionAccountCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionAccountAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionAccountSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionAccountMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionAccountMaxAggregateInputType
+  }
+
+  export type GetInstitutionAccountAggregateType<T extends InstitutionAccountAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionAccount]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionAccount[P]>
+      : GetScalarType<T[P], AggregateInstitutionAccount[P]>
+  }
+
+
+
+
+  export type InstitutionAccountGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAccountWhereInput
+    orderBy?: InstitutionAccountOrderByWithAggregationInput | InstitutionAccountOrderByWithAggregationInput[]
+    by: InstitutionAccountScalarFieldEnum[] | InstitutionAccountScalarFieldEnum
+    having?: InstitutionAccountScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionAccountCountAggregateInputType | true
+    _avg?: InstitutionAccountAvgAggregateInputType
+    _sum?: InstitutionAccountSumAggregateInputType
+    _min?: InstitutionAccountMinAggregateInputType
+    _max?: InstitutionAccountMaxAggregateInputType
+  }
+
+  export type InstitutionAccountGroupByOutputType = {
+    id: string
+    clientId: string
+    name: string
+    label: string | null
+    accountType: $Enums.InstitutionAccountType
+    description: string | null
+    walletAddress: string
+    chain: string
+    walletProvider: string | null
+    custodyType: $Enums.WalletCustodyType | null
+    verificationStatus: $Enums.AccountVerificationStatus
+    verifiedAt: Date | null
+    verificationNotes: string | null
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalMode: $Enums.ApprovalMode
+    approvalThreshold: Decimal | null
+    whitelistedAddresses: string[]
+    whitelistEnforced: boolean
+    notificationEmail: string | null
+    webhookUrl: string | null
+    notifyOnEscrowCreated: boolean
+    notifyOnEscrowFunded: boolean
+    notifyOnEscrowReleased: boolean
+    notifyOnComplianceAlert: boolean
+    isDefault: boolean
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: InstitutionAccountCountAggregateOutputType | null
+    _avg: InstitutionAccountAvgAggregateOutputType | null
+    _sum: InstitutionAccountSumAggregateOutputType | null
+    _min: InstitutionAccountMinAggregateOutputType | null
+    _max: InstitutionAccountMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionAccountGroupByPayload<T extends InstitutionAccountGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionAccountGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionAccountGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionAccountGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionAccountGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionAccountSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    label?: boolean
+    accountType?: boolean
+    description?: boolean
+    walletAddress?: boolean
+    chain?: boolean
+    walletProvider?: boolean
+    custodyType?: boolean
+    verificationStatus?: boolean
+    verifiedAt?: boolean
+    verificationNotes?: boolean
+    maxTransactionAmount?: boolean
+    minTransactionAmount?: boolean
+    dailyVolumeLimit?: boolean
+    monthlyVolumeLimit?: boolean
+    dailyTransactionCountLimit?: boolean
+    monthlyTransactionCountLimit?: boolean
+    approvalMode?: boolean
+    approvalThreshold?: boolean
+    whitelistedAddresses?: boolean
+    whitelistEnforced?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAccount"]>
+
+  export type InstitutionAccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    label?: boolean
+    accountType?: boolean
+    description?: boolean
+    walletAddress?: boolean
+    chain?: boolean
+    walletProvider?: boolean
+    custodyType?: boolean
+    verificationStatus?: boolean
+    verifiedAt?: boolean
+    verificationNotes?: boolean
+    maxTransactionAmount?: boolean
+    minTransactionAmount?: boolean
+    dailyVolumeLimit?: boolean
+    monthlyVolumeLimit?: boolean
+    dailyTransactionCountLimit?: boolean
+    monthlyTransactionCountLimit?: boolean
+    approvalMode?: boolean
+    approvalThreshold?: boolean
+    whitelistedAddresses?: boolean
+    whitelistEnforced?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAccount"]>
+
+  export type InstitutionAccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    label?: boolean
+    accountType?: boolean
+    description?: boolean
+    walletAddress?: boolean
+    chain?: boolean
+    walletProvider?: boolean
+    custodyType?: boolean
+    verificationStatus?: boolean
+    verifiedAt?: boolean
+    verificationNotes?: boolean
+    maxTransactionAmount?: boolean
+    minTransactionAmount?: boolean
+    dailyVolumeLimit?: boolean
+    monthlyVolumeLimit?: boolean
+    dailyTransactionCountLimit?: boolean
+    monthlyTransactionCountLimit?: boolean
+    approvalMode?: boolean
+    approvalThreshold?: boolean
+    whitelistedAddresses?: boolean
+    whitelistEnforced?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAccount"]>
+
+  export type InstitutionAccountSelectScalar = {
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    label?: boolean
+    accountType?: boolean
+    description?: boolean
+    walletAddress?: boolean
+    chain?: boolean
+    walletProvider?: boolean
+    custodyType?: boolean
+    verificationStatus?: boolean
+    verifiedAt?: boolean
+    verificationNotes?: boolean
+    maxTransactionAmount?: boolean
+    minTransactionAmount?: boolean
+    dailyVolumeLimit?: boolean
+    monthlyVolumeLimit?: boolean
+    dailyTransactionCountLimit?: boolean
+    monthlyTransactionCountLimit?: boolean
+    approvalMode?: boolean
+    approvalThreshold?: boolean
+    whitelistedAddresses?: boolean
+    whitelistEnforced?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "isDefault" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionAccount"]>
+  export type InstitutionAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionAccountIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionAccountIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionAccountPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionAccount"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      clientId: string
+      name: string
+      label: string | null
+      accountType: $Enums.InstitutionAccountType
+      description: string | null
+      walletAddress: string
+      chain: string
+      walletProvider: string | null
+      custodyType: $Enums.WalletCustodyType | null
+      verificationStatus: $Enums.AccountVerificationStatus
+      verifiedAt: Date | null
+      verificationNotes: string | null
+      maxTransactionAmount: Prisma.Decimal | null
+      minTransactionAmount: Prisma.Decimal | null
+      dailyVolumeLimit: Prisma.Decimal | null
+      monthlyVolumeLimit: Prisma.Decimal | null
+      dailyTransactionCountLimit: number | null
+      monthlyTransactionCountLimit: number | null
+      approvalMode: $Enums.ApprovalMode
+      approvalThreshold: Prisma.Decimal | null
+      whitelistedAddresses: string[]
+      whitelistEnforced: boolean
+      notificationEmail: string | null
+      webhookUrl: string | null
+      notifyOnEscrowCreated: boolean
+      notifyOnEscrowFunded: boolean
+      notifyOnEscrowReleased: boolean
+      notifyOnComplianceAlert: boolean
+      isDefault: boolean
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["institutionAccount"]>
+    composites: {}
+  }
+
+  type InstitutionAccountGetPayload<S extends boolean | null | undefined | InstitutionAccountDefaultArgs> = $Result.GetResult<Prisma.$InstitutionAccountPayload, S>
+
+  type InstitutionAccountCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionAccountFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionAccountCountAggregateInputType | true
+    }
+
+  export interface InstitutionAccountDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionAccount'], meta: { name: 'InstitutionAccount' } }
+    /**
+     * Find zero or one InstitutionAccount that matches the filter.
+     * @param {InstitutionAccountFindUniqueArgs} args - Arguments to find a InstitutionAccount
+     * @example
+     * // Get one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionAccountFindUniqueArgs>(args: SelectSubset<T, InstitutionAccountFindUniqueArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionAccount that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionAccountFindUniqueOrThrowArgs} args - Arguments to find a InstitutionAccount
+     * @example
+     * // Get one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionAccountFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionAccountFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionAccount that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountFindFirstArgs} args - Arguments to find a InstitutionAccount
+     * @example
+     * // Get one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionAccountFindFirstArgs>(args?: SelectSubset<T, InstitutionAccountFindFirstArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionAccount that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountFindFirstOrThrowArgs} args - Arguments to find a InstitutionAccount
+     * @example
+     * // Get one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionAccountFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionAccountFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionAccounts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionAccounts
+     * const institutionAccounts = await prisma.institutionAccount.findMany()
+     * 
+     * // Get first 10 InstitutionAccounts
+     * const institutionAccounts = await prisma.institutionAccount.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionAccountWithIdOnly = await prisma.institutionAccount.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionAccountFindManyArgs>(args?: SelectSubset<T, InstitutionAccountFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionAccount.
+     * @param {InstitutionAccountCreateArgs} args - Arguments to create a InstitutionAccount.
+     * @example
+     * // Create one InstitutionAccount
+     * const InstitutionAccount = await prisma.institutionAccount.create({
+     *   data: {
+     *     // ... data to create a InstitutionAccount
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionAccountCreateArgs>(args: SelectSubset<T, InstitutionAccountCreateArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionAccounts.
+     * @param {InstitutionAccountCreateManyArgs} args - Arguments to create many InstitutionAccounts.
+     * @example
+     * // Create many InstitutionAccounts
+     * const institutionAccount = await prisma.institutionAccount.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionAccountCreateManyArgs>(args?: SelectSubset<T, InstitutionAccountCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionAccounts and returns the data saved in the database.
+     * @param {InstitutionAccountCreateManyAndReturnArgs} args - Arguments to create many InstitutionAccounts.
+     * @example
+     * // Create many InstitutionAccounts
+     * const institutionAccount = await prisma.institutionAccount.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionAccounts and only return the `id`
+     * const institutionAccountWithIdOnly = await prisma.institutionAccount.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionAccountCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionAccountCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionAccount.
+     * @param {InstitutionAccountDeleteArgs} args - Arguments to delete one InstitutionAccount.
+     * @example
+     * // Delete one InstitutionAccount
+     * const InstitutionAccount = await prisma.institutionAccount.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionAccount
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionAccountDeleteArgs>(args: SelectSubset<T, InstitutionAccountDeleteArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionAccount.
+     * @param {InstitutionAccountUpdateArgs} args - Arguments to update one InstitutionAccount.
+     * @example
+     * // Update one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionAccountUpdateArgs>(args: SelectSubset<T, InstitutionAccountUpdateArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionAccounts.
+     * @param {InstitutionAccountDeleteManyArgs} args - Arguments to filter InstitutionAccounts to delete.
+     * @example
+     * // Delete a few InstitutionAccounts
+     * const { count } = await prisma.institutionAccount.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionAccountDeleteManyArgs>(args?: SelectSubset<T, InstitutionAccountDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionAccounts
+     * const institutionAccount = await prisma.institutionAccount.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionAccountUpdateManyArgs>(args: SelectSubset<T, InstitutionAccountUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionAccounts and returns the data updated in the database.
+     * @param {InstitutionAccountUpdateManyAndReturnArgs} args - Arguments to update many InstitutionAccounts.
+     * @example
+     * // Update many InstitutionAccounts
+     * const institutionAccount = await prisma.institutionAccount.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionAccounts and only return the `id`
+     * const institutionAccountWithIdOnly = await prisma.institutionAccount.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionAccountUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionAccountUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionAccount.
+     * @param {InstitutionAccountUpsertArgs} args - Arguments to update or create a InstitutionAccount.
+     * @example
+     * // Update or create a InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionAccount
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionAccount we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionAccountUpsertArgs>(args: SelectSubset<T, InstitutionAccountUpsertArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountCountArgs} args - Arguments to filter InstitutionAccounts to count.
+     * @example
+     * // Count the number of InstitutionAccounts
+     * const count = await prisma.institutionAccount.count({
+     *   where: {
+     *     // ... the filter for the InstitutionAccounts we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionAccountCountArgs>(
+      args?: Subset<T, InstitutionAccountCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionAccountCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionAccountAggregateArgs>(args: Subset<T, InstitutionAccountAggregateArgs>): Prisma.PrismaPromise<GetInstitutionAccountAggregateType<T>>
+
+    /**
+     * Group by InstitutionAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionAccountGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionAccountGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionAccountGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionAccountGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionAccountGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionAccount model
+   */
+  readonly fields: InstitutionAccountFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionAccount.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionAccountClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionAccount model
+   */
+  interface InstitutionAccountFieldRefs {
+    readonly id: FieldRef<"InstitutionAccount", 'String'>
+    readonly clientId: FieldRef<"InstitutionAccount", 'String'>
+    readonly name: FieldRef<"InstitutionAccount", 'String'>
+    readonly label: FieldRef<"InstitutionAccount", 'String'>
+    readonly accountType: FieldRef<"InstitutionAccount", 'InstitutionAccountType'>
+    readonly description: FieldRef<"InstitutionAccount", 'String'>
+    readonly walletAddress: FieldRef<"InstitutionAccount", 'String'>
+    readonly chain: FieldRef<"InstitutionAccount", 'String'>
+    readonly walletProvider: FieldRef<"InstitutionAccount", 'String'>
+    readonly custodyType: FieldRef<"InstitutionAccount", 'WalletCustodyType'>
+    readonly verificationStatus: FieldRef<"InstitutionAccount", 'AccountVerificationStatus'>
+    readonly verifiedAt: FieldRef<"InstitutionAccount", 'DateTime'>
+    readonly verificationNotes: FieldRef<"InstitutionAccount", 'String'>
+    readonly maxTransactionAmount: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly minTransactionAmount: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly dailyVolumeLimit: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly monthlyVolumeLimit: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly dailyTransactionCountLimit: FieldRef<"InstitutionAccount", 'Int'>
+    readonly monthlyTransactionCountLimit: FieldRef<"InstitutionAccount", 'Int'>
+    readonly approvalMode: FieldRef<"InstitutionAccount", 'ApprovalMode'>
+    readonly approvalThreshold: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly whitelistedAddresses: FieldRef<"InstitutionAccount", 'String[]'>
+    readonly whitelistEnforced: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly notificationEmail: FieldRef<"InstitutionAccount", 'String'>
+    readonly webhookUrl: FieldRef<"InstitutionAccount", 'String'>
+    readonly notifyOnEscrowCreated: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly notifyOnEscrowFunded: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly notifyOnEscrowReleased: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly notifyOnComplianceAlert: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly isDefault: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly isActive: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly createdAt: FieldRef<"InstitutionAccount", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionAccount", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionAccount findUnique
+   */
+  export type InstitutionAccountFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccount to fetch.
+     */
+    where: InstitutionAccountWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAccount findUniqueOrThrow
+   */
+  export type InstitutionAccountFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccount to fetch.
+     */
+    where: InstitutionAccountWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAccount findFirst
+   */
+  export type InstitutionAccountFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccount to fetch.
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAccounts to fetch.
+     */
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionAccounts.
+     */
+    cursor?: InstitutionAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionAccounts.
+     */
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAccount findFirstOrThrow
+   */
+  export type InstitutionAccountFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccount to fetch.
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAccounts to fetch.
+     */
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionAccounts.
+     */
+    cursor?: InstitutionAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionAccounts.
+     */
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAccount findMany
+   */
+  export type InstitutionAccountFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccounts to fetch.
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAccounts to fetch.
+     */
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionAccounts.
+     */
+    cursor?: InstitutionAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAccounts.
+     */
+    skip?: number
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAccount create
+   */
+  export type InstitutionAccountCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionAccount.
+     */
+    data: XOR<InstitutionAccountCreateInput, InstitutionAccountUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionAccount createMany
+   */
+  export type InstitutionAccountCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionAccounts.
+     */
+    data: InstitutionAccountCreateManyInput | InstitutionAccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionAccount createManyAndReturn
+   */
+  export type InstitutionAccountCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionAccounts.
+     */
+    data: InstitutionAccountCreateManyInput | InstitutionAccountCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionAccount update
+   */
+  export type InstitutionAccountUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionAccount.
+     */
+    data: XOR<InstitutionAccountUpdateInput, InstitutionAccountUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionAccount to update.
+     */
+    where: InstitutionAccountWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAccount updateMany
+   */
+  export type InstitutionAccountUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionAccounts.
+     */
+    data: XOR<InstitutionAccountUpdateManyMutationInput, InstitutionAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionAccounts to update
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * Limit how many InstitutionAccounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionAccount updateManyAndReturn
+   */
+  export type InstitutionAccountUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionAccounts.
+     */
+    data: XOR<InstitutionAccountUpdateManyMutationInput, InstitutionAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionAccounts to update
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * Limit how many InstitutionAccounts to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionAccount upsert
+   */
+  export type InstitutionAccountUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionAccount to update in case it exists.
+     */
+    where: InstitutionAccountWhereUniqueInput
+    /**
+     * In case the InstitutionAccount found by the `where` argument doesn't exist, create a new InstitutionAccount with this data.
+     */
+    create: XOR<InstitutionAccountCreateInput, InstitutionAccountUncheckedCreateInput>
+    /**
+     * In case the InstitutionAccount was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionAccountUpdateInput, InstitutionAccountUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionAccount delete
+   */
+  export type InstitutionAccountDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionAccount to delete.
+     */
+    where: InstitutionAccountWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAccount deleteMany
+   */
+  export type InstitutionAccountDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionAccounts to delete
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * Limit how many InstitutionAccounts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionAccount without action
+   */
+  export type InstitutionAccountDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
   }
 
 
@@ -38455,6 +40101,45 @@ export namespace Prisma {
   export type InstitutionWalletScalarFieldEnum = (typeof InstitutionWalletScalarFieldEnum)[keyof typeof InstitutionWalletScalarFieldEnum]
 
 
+  export const InstitutionAccountScalarFieldEnum: {
+    id: 'id',
+    clientId: 'clientId',
+    name: 'name',
+    label: 'label',
+    accountType: 'accountType',
+    description: 'description',
+    walletAddress: 'walletAddress',
+    chain: 'chain',
+    walletProvider: 'walletProvider',
+    custodyType: 'custodyType',
+    verificationStatus: 'verificationStatus',
+    verifiedAt: 'verifiedAt',
+    verificationNotes: 'verificationNotes',
+    maxTransactionAmount: 'maxTransactionAmount',
+    minTransactionAmount: 'minTransactionAmount',
+    dailyVolumeLimit: 'dailyVolumeLimit',
+    monthlyVolumeLimit: 'monthlyVolumeLimit',
+    dailyTransactionCountLimit: 'dailyTransactionCountLimit',
+    monthlyTransactionCountLimit: 'monthlyTransactionCountLimit',
+    approvalMode: 'approvalMode',
+    approvalThreshold: 'approvalThreshold',
+    whitelistedAddresses: 'whitelistedAddresses',
+    whitelistEnforced: 'whitelistEnforced',
+    notificationEmail: 'notificationEmail',
+    webhookUrl: 'webhookUrl',
+    notifyOnEscrowCreated: 'notifyOnEscrowCreated',
+    notifyOnEscrowFunded: 'notifyOnEscrowFunded',
+    notifyOnEscrowReleased: 'notifyOnEscrowReleased',
+    notifyOnComplianceAlert: 'notifyOnComplianceAlert',
+    isDefault: 'isDefault',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InstitutionAccountScalarFieldEnum = (typeof InstitutionAccountScalarFieldEnum)[keyof typeof InstitutionAccountScalarFieldEnum]
+
+
   export const InstitutionRefreshTokenScalarFieldEnum: {
     id: 'id',
     tokenHash: 'tokenHash',
@@ -39094,6 +40779,48 @@ export namespace Prisma {
    * Reference to a field of type 'WalletCustodyType[]'
    */
   export type ListEnumWalletCustodyTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WalletCustodyType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'InstitutionAccountType'
+   */
+  export type EnumInstitutionAccountTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionAccountType'>
+    
+
+
+  /**
+   * Reference to a field of type 'InstitutionAccountType[]'
+   */
+  export type ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionAccountType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'AccountVerificationStatus'
+   */
+  export type EnumAccountVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccountVerificationStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'AccountVerificationStatus[]'
+   */
+  export type ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccountVerificationStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ApprovalMode'
+   */
+  export type EnumApprovalModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'ApprovalMode[]'
+   */
+  export type ListEnumApprovalModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalMode[]'>
     
 
 
@@ -40997,6 +42724,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     files?: InstitutionFileListRelationFilter
     wallets?: InstitutionWalletListRelationFilter
+    accounts?: InstitutionAccountListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
   }
 
@@ -41070,6 +42798,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogOrderByRelationAggregateInput
     files?: InstitutionFileOrderByRelationAggregateInput
     wallets?: InstitutionWalletOrderByRelationAggregateInput
+    accounts?: InstitutionAccountOrderByRelationAggregateInput
     aiAnalyses?: InstitutionAiAnalysisOrderByRelationAggregateInput
   }
 
@@ -41146,6 +42875,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     files?: InstitutionFileListRelationFilter
     wallets?: InstitutionWalletListRelationFilter
+    accounts?: InstitutionAccountListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
   }, "id" | "email">
 
@@ -41370,6 +43100,204 @@ export namespace Prisma {
     isSettlement?: BoolWithAggregatesFilter<"InstitutionWallet"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionWallet"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionWallet"> | Date | string
+  }
+
+  export type InstitutionAccountWhereInput = {
+    AND?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
+    OR?: InstitutionAccountWhereInput[]
+    NOT?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
+    id?: StringFilter<"InstitutionAccount"> | string
+    clientId?: StringFilter<"InstitutionAccount"> | string
+    name?: StringFilter<"InstitutionAccount"> | string
+    label?: StringNullableFilter<"InstitutionAccount"> | string | null
+    accountType?: EnumInstitutionAccountTypeFilter<"InstitutionAccount"> | $Enums.InstitutionAccountType
+    description?: StringNullableFilter<"InstitutionAccount"> | string | null
+    walletAddress?: StringFilter<"InstitutionAccount"> | string
+    chain?: StringFilter<"InstitutionAccount"> | string
+    walletProvider?: StringNullableFilter<"InstitutionAccount"> | string | null
+    custodyType?: EnumWalletCustodyTypeNullableFilter<"InstitutionAccount"> | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFilter<"InstitutionAccount"> | $Enums.AccountVerificationStatus
+    verifiedAt?: DateTimeNullableFilter<"InstitutionAccount"> | Date | string | null
+    verificationNotes?: StringNullableFilter<"InstitutionAccount"> | string | null
+    maxTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    monthlyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    approvalMode?: EnumApprovalModeFilter<"InstitutionAccount"> | $Enums.ApprovalMode
+    approvalThreshold?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: StringNullableListFilter<"InstitutionAccount">
+    whitelistEnforced?: BoolFilter<"InstitutionAccount"> | boolean
+    notificationEmail?: StringNullableFilter<"InstitutionAccount"> | string | null
+    webhookUrl?: StringNullableFilter<"InstitutionAccount"> | string | null
+    notifyOnEscrowCreated?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    isDefault?: BoolFilter<"InstitutionAccount"> | boolean
+    isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }
+
+  export type InstitutionAccountOrderByWithRelationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrderInput | SortOrder
+    accountType?: SortOrder
+    description?: SortOrderInput | SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrderInput | SortOrder
+    custodyType?: SortOrderInput | SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    verificationNotes?: SortOrderInput | SortOrder
+    maxTransactionAmount?: SortOrderInput | SortOrder
+    minTransactionAmount?: SortOrderInput | SortOrder
+    dailyVolumeLimit?: SortOrderInput | SortOrder
+    monthlyVolumeLimit?: SortOrderInput | SortOrder
+    dailyTransactionCountLimit?: SortOrderInput | SortOrder
+    monthlyTransactionCountLimit?: SortOrderInput | SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrderInput | SortOrder
+    whitelistedAddresses?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrderInput | SortOrder
+    webhookUrl?: SortOrderInput | SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+  }
+
+  export type InstitutionAccountWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    clientId_name?: InstitutionAccountClientIdNameCompoundUniqueInput
+    AND?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
+    OR?: InstitutionAccountWhereInput[]
+    NOT?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
+    clientId?: StringFilter<"InstitutionAccount"> | string
+    name?: StringFilter<"InstitutionAccount"> | string
+    label?: StringNullableFilter<"InstitutionAccount"> | string | null
+    accountType?: EnumInstitutionAccountTypeFilter<"InstitutionAccount"> | $Enums.InstitutionAccountType
+    description?: StringNullableFilter<"InstitutionAccount"> | string | null
+    walletAddress?: StringFilter<"InstitutionAccount"> | string
+    chain?: StringFilter<"InstitutionAccount"> | string
+    walletProvider?: StringNullableFilter<"InstitutionAccount"> | string | null
+    custodyType?: EnumWalletCustodyTypeNullableFilter<"InstitutionAccount"> | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFilter<"InstitutionAccount"> | $Enums.AccountVerificationStatus
+    verifiedAt?: DateTimeNullableFilter<"InstitutionAccount"> | Date | string | null
+    verificationNotes?: StringNullableFilter<"InstitutionAccount"> | string | null
+    maxTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    monthlyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    approvalMode?: EnumApprovalModeFilter<"InstitutionAccount"> | $Enums.ApprovalMode
+    approvalThreshold?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: StringNullableListFilter<"InstitutionAccount">
+    whitelistEnforced?: BoolFilter<"InstitutionAccount"> | boolean
+    notificationEmail?: StringNullableFilter<"InstitutionAccount"> | string | null
+    webhookUrl?: StringNullableFilter<"InstitutionAccount"> | string | null
+    notifyOnEscrowCreated?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    isDefault?: BoolFilter<"InstitutionAccount"> | boolean
+    isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }, "id" | "clientId_name">
+
+  export type InstitutionAccountOrderByWithAggregationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrderInput | SortOrder
+    accountType?: SortOrder
+    description?: SortOrderInput | SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrderInput | SortOrder
+    custodyType?: SortOrderInput | SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    verificationNotes?: SortOrderInput | SortOrder
+    maxTransactionAmount?: SortOrderInput | SortOrder
+    minTransactionAmount?: SortOrderInput | SortOrder
+    dailyVolumeLimit?: SortOrderInput | SortOrder
+    monthlyVolumeLimit?: SortOrderInput | SortOrder
+    dailyTransactionCountLimit?: SortOrderInput | SortOrder
+    monthlyTransactionCountLimit?: SortOrderInput | SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrderInput | SortOrder
+    whitelistedAddresses?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrderInput | SortOrder
+    webhookUrl?: SortOrderInput | SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InstitutionAccountCountOrderByAggregateInput
+    _avg?: InstitutionAccountAvgOrderByAggregateInput
+    _max?: InstitutionAccountMaxOrderByAggregateInput
+    _min?: InstitutionAccountMinOrderByAggregateInput
+    _sum?: InstitutionAccountSumOrderByAggregateInput
+  }
+
+  export type InstitutionAccountScalarWhereWithAggregatesInput = {
+    AND?: InstitutionAccountScalarWhereWithAggregatesInput | InstitutionAccountScalarWhereWithAggregatesInput[]
+    OR?: InstitutionAccountScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionAccountScalarWhereWithAggregatesInput | InstitutionAccountScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    name?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    label?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    accountType?: EnumInstitutionAccountTypeWithAggregatesFilter<"InstitutionAccount"> | $Enums.InstitutionAccountType
+    description?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    walletAddress?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    chain?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    walletProvider?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    custodyType?: EnumWalletCustodyTypeNullableWithAggregatesFilter<"InstitutionAccount"> | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusWithAggregatesFilter<"InstitutionAccount"> | $Enums.AccountVerificationStatus
+    verifiedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionAccount"> | Date | string | null
+    verificationNotes?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    maxTransactionAmount?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: IntNullableWithAggregatesFilter<"InstitutionAccount"> | number | null
+    monthlyTransactionCountLimit?: IntNullableWithAggregatesFilter<"InstitutionAccount"> | number | null
+    approvalMode?: EnumApprovalModeWithAggregatesFilter<"InstitutionAccount"> | $Enums.ApprovalMode
+    approvalThreshold?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: StringNullableListFilter<"InstitutionAccount">
+    whitelistEnforced?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    notificationEmail?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    webhookUrl?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    notifyOnEscrowCreated?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowFunded?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowReleased?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    notifyOnComplianceAlert?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    isDefault?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    isActive?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
   }
 
   export type InstitutionRefreshTokenWhereInput = {
@@ -44403,6 +46331,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -44476,6 +46405,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -44549,6 +46479,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -44622,6 +46553,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -44913,6 +46845,257 @@ export namespace Prisma {
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     isPrimary?: BoolFieldUpdateOperationsInput | boolean
     isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountCreateInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutAccountsInput
+  }
+
+  export type InstitutionAccountUncheckedCreateInput = {
+    id?: string
+    clientId: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput
+  }
+
+  export type InstitutionAccountUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountCreateManyInput = {
+    id?: string
+    clientId: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -47827,6 +50010,12 @@ export namespace Prisma {
     none?: InstitutionWalletWhereInput
   }
 
+  export type InstitutionAccountListRelationFilter = {
+    every?: InstitutionAccountWhereInput
+    some?: InstitutionAccountWhereInput
+    none?: InstitutionAccountWhereInput
+  }
+
   export type InstitutionAiAnalysisListRelationFilter = {
     every?: InstitutionAiAnalysisWhereInput
     some?: InstitutionAiAnalysisWhereInput
@@ -47854,6 +50043,10 @@ export namespace Prisma {
   }
 
   export type InstitutionWalletOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionAccountOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -48217,6 +50410,188 @@ export namespace Prisma {
     isSettlement?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type EnumInstitutionAccountTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionAccountType | EnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel> | $Enums.InstitutionAccountType
+  }
+
+  export type EnumAccountVerificationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccountVerificationStatus | EnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccountVerificationStatusFilter<$PrismaModel> | $Enums.AccountVerificationStatus
+  }
+
+  export type EnumApprovalModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ApprovalMode | EnumApprovalModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumApprovalModeFilter<$PrismaModel> | $Enums.ApprovalMode
+  }
+
+  export type InstitutionAccountClientIdNameCompoundUniqueInput = {
+    clientId: string
+    name: string
+  }
+
+  export type InstitutionAccountCountOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrder
+    accountType?: SortOrder
+    description?: SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrder
+    custodyType?: SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrder
+    verificationNotes?: SortOrder
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrder
+    whitelistedAddresses?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionAccountAvgOrderByAggregateInput = {
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalThreshold?: SortOrder
+  }
+
+  export type InstitutionAccountMaxOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrder
+    accountType?: SortOrder
+    description?: SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrder
+    custodyType?: SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrder
+    verificationNotes?: SortOrder
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionAccountMinOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrder
+    accountType?: SortOrder
+    description?: SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrder
+    custodyType?: SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrder
+    verificationNotes?: SortOrder
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionAccountSumOrderByAggregateInput = {
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalThreshold?: SortOrder
+  }
+
+  export type EnumInstitutionAccountTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionAccountType | EnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionAccountTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionAccountType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel>
+  }
+
+  export type EnumAccountVerificationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccountVerificationStatus | EnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccountVerificationStatusWithAggregatesFilter<$PrismaModel> | $Enums.AccountVerificationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAccountVerificationStatusFilter<$PrismaModel>
+    _max?: NestedEnumAccountVerificationStatusFilter<$PrismaModel>
+  }
+
+  export type EnumApprovalModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ApprovalMode | EnumApprovalModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumApprovalModeWithAggregatesFilter<$PrismaModel> | $Enums.ApprovalMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumApprovalModeFilter<$PrismaModel>
+    _max?: NestedEnumApprovalModeFilter<$PrismaModel>
   }
 
   export type InstitutionRefreshTokenCountOrderByAggregateInput = {
@@ -49817,6 +52192,13 @@ export namespace Prisma {
     connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
   }
 
+  export type InstitutionAccountCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput> | InstitutionAccountCreateWithoutClientInput[] | InstitutionAccountUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutClientInput | InstitutionAccountCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionAccountCreateManyClientInputEnvelope
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+  }
+
   export type InstitutionAiAnalysisCreateNestedManyWithoutClientInput = {
     create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
@@ -49870,6 +52252,13 @@ export namespace Prisma {
     connectOrCreate?: InstitutionWalletCreateOrConnectWithoutClientInput | InstitutionWalletCreateOrConnectWithoutClientInput[]
     createMany?: InstitutionWalletCreateManyClientInputEnvelope
     connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+  }
+
+  export type InstitutionAccountUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput> | InstitutionAccountCreateWithoutClientInput[] | InstitutionAccountUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutClientInput | InstitutionAccountCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionAccountCreateManyClientInputEnvelope
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
   }
 
   export type InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput = {
@@ -50022,6 +52411,20 @@ export namespace Prisma {
     deleteMany?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
   }
 
+  export type InstitutionAccountUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput> | InstitutionAccountCreateWithoutClientInput[] | InstitutionAccountUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutClientInput | InstitutionAccountCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionAccountUpsertWithWhereUniqueWithoutClientInput | InstitutionAccountUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionAccountCreateManyClientInputEnvelope
+    set?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    disconnect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    delete?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    update?: InstitutionAccountUpdateWithWhereUniqueWithoutClientInput | InstitutionAccountUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionAccountUpdateManyWithWhereWithoutClientInput | InstitutionAccountUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+  }
+
   export type InstitutionAiAnalysisUpdateManyWithoutClientNestedInput = {
     create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
@@ -50130,6 +52533,20 @@ export namespace Prisma {
     deleteMany?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
   }
 
+  export type InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput> | InstitutionAccountCreateWithoutClientInput[] | InstitutionAccountUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutClientInput | InstitutionAccountCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionAccountUpsertWithWhereUniqueWithoutClientInput | InstitutionAccountUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionAccountCreateManyClientInputEnvelope
+    set?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    disconnect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    delete?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    update?: InstitutionAccountUpdateWithWhereUniqueWithoutClientInput | InstitutionAccountUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionAccountUpdateManyWithWhereWithoutClientInput | InstitutionAccountUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+  }
+
   export type InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput = {
     create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
@@ -50156,6 +52573,41 @@ export namespace Prisma {
     upsert?: InstitutionClientUpsertWithoutWalletsInput
     connect?: InstitutionClientWhereUniqueInput
     update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutWalletsInput, InstitutionClientUpdateWithoutWalletsInput>, InstitutionClientUncheckedUpdateWithoutWalletsInput>
+  }
+
+  export type InstitutionAccountCreatewhitelistedAddressesInput = {
+    set: string[]
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutAccountsInput = {
+    create?: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutAccountsInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type EnumInstitutionAccountTypeFieldUpdateOperationsInput = {
+    set?: $Enums.InstitutionAccountType
+  }
+
+  export type EnumAccountVerificationStatusFieldUpdateOperationsInput = {
+    set?: $Enums.AccountVerificationStatus
+  }
+
+  export type EnumApprovalModeFieldUpdateOperationsInput = {
+    set?: $Enums.ApprovalMode
+  }
+
+  export type InstitutionAccountUpdatewhitelistedAddressesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutAccountsInput
+    upsert?: InstitutionClientUpsertWithoutAccountsInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutAccountsInput, InstitutionClientUpdateWithoutAccountsInput>, InstitutionClientUncheckedUpdateWithoutAccountsInput>
   }
 
   export type InstitutionClientCreateNestedOneWithoutRefreshTokensInput = {
@@ -51285,6 +53737,57 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel>
     _max?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumInstitutionAccountTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionAccountType | EnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel> | $Enums.InstitutionAccountType
+  }
+
+  export type NestedEnumAccountVerificationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccountVerificationStatus | EnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccountVerificationStatusFilter<$PrismaModel> | $Enums.AccountVerificationStatus
+  }
+
+  export type NestedEnumApprovalModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ApprovalMode | EnumApprovalModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumApprovalModeFilter<$PrismaModel> | $Enums.ApprovalMode
+  }
+
+  export type NestedEnumInstitutionAccountTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionAccountType | EnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionAccountTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionAccountType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAccountVerificationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccountVerificationStatus | EnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccountVerificationStatusWithAggregatesFilter<$PrismaModel> | $Enums.AccountVerificationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAccountVerificationStatusFilter<$PrismaModel>
+    _max?: NestedEnumAccountVerificationStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumApprovalModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ApprovalMode | EnumApprovalModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumApprovalModeWithAggregatesFilter<$PrismaModel> | $Enums.ApprovalMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumApprovalModeFilter<$PrismaModel>
+    _max?: NestedEnumApprovalModeFilter<$PrismaModel>
   }
 
   export type NestedEnumInstitutionConditionTypeFilter<$PrismaModel = never> = {
@@ -54791,6 +57294,86 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type InstitutionAccountCreateWithoutClientInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountUncheckedCreateWithoutClientInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountCreateOrConnectWithoutClientInput = {
+    where: InstitutionAccountWhereUniqueInput
+    create: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionAccountCreateManyClientInputEnvelope = {
+    data: InstitutionAccountCreateManyClientInput | InstitutionAccountCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
   export type InstitutionAiAnalysisCreateWithoutClientInput = {
     id?: string
     analysisType?: $Enums.AiAnalysisType
@@ -55071,6 +57654,61 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
   }
 
+  export type InstitutionAccountUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionAccountWhereUniqueInput
+    update: XOR<InstitutionAccountUpdateWithoutClientInput, InstitutionAccountUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionAccountUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionAccountWhereUniqueInput
+    data: XOR<InstitutionAccountUpdateWithoutClientInput, InstitutionAccountUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionAccountUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionAccountScalarWhereInput
+    data: XOR<InstitutionAccountUpdateManyMutationInput, InstitutionAccountUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionAccountScalarWhereInput = {
+    AND?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+    OR?: InstitutionAccountScalarWhereInput[]
+    NOT?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+    id?: StringFilter<"InstitutionAccount"> | string
+    clientId?: StringFilter<"InstitutionAccount"> | string
+    name?: StringFilter<"InstitutionAccount"> | string
+    label?: StringNullableFilter<"InstitutionAccount"> | string | null
+    accountType?: EnumInstitutionAccountTypeFilter<"InstitutionAccount"> | $Enums.InstitutionAccountType
+    description?: StringNullableFilter<"InstitutionAccount"> | string | null
+    walletAddress?: StringFilter<"InstitutionAccount"> | string
+    chain?: StringFilter<"InstitutionAccount"> | string
+    walletProvider?: StringNullableFilter<"InstitutionAccount"> | string | null
+    custodyType?: EnumWalletCustodyTypeNullableFilter<"InstitutionAccount"> | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFilter<"InstitutionAccount"> | $Enums.AccountVerificationStatus
+    verifiedAt?: DateTimeNullableFilter<"InstitutionAccount"> | Date | string | null
+    verificationNotes?: StringNullableFilter<"InstitutionAccount"> | string | null
+    maxTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    monthlyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    approvalMode?: EnumApprovalModeFilter<"InstitutionAccount"> | $Enums.ApprovalMode
+    approvalThreshold?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: StringNullableListFilter<"InstitutionAccount">
+    whitelistEnforced?: BoolFilter<"InstitutionAccount"> | boolean
+    notificationEmail?: StringNullableFilter<"InstitutionAccount"> | string | null
+    webhookUrl?: StringNullableFilter<"InstitutionAccount"> | string | null
+    notifyOnEscrowCreated?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    isDefault?: BoolFilter<"InstitutionAccount"> | boolean
+    isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+  }
+
   export type InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput = {
     where: InstitutionAiAnalysisWhereUniqueInput
     update: XOR<InstitutionAiAnalysisUpdateWithoutClientInput, InstitutionAiAnalysisUncheckedUpdateWithoutClientInput>
@@ -55175,6 +57813,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -55247,6 +57886,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -55335,6 +57975,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -55407,6 +58048,315 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientCreateWithoutAccountsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutAccountsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutAccountsInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+  }
+
+  export type InstitutionClientUpsertWithoutAccountsInput = {
+    update: XOR<InstitutionClientUpdateWithoutAccountsInput, InstitutionClientUncheckedUpdateWithoutAccountsInput>
+    create: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutAccountsInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutAccountsInput, InstitutionClientUncheckedUpdateWithoutAccountsInput>
+  }
+
+  export type InstitutionClientUpdateWithoutAccountsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutAccountsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -55479,6 +58429,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -55551,6 +58502,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -55639,6 +58591,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -55711,6 +58664,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -55783,6 +58737,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -55855,6 +58810,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -55943,6 +58899,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -56015,6 +58972,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -56087,6 +59045,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -56159,6 +59118,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -56247,6 +59207,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -56319,6 +59280,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -56391,6 +59353,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -56463,6 +59426,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -56681,6 +59645,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -56753,6 +59718,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -57097,6 +60063,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -57169,6 +60136,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -57326,6 +60294,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -57398,6 +60367,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -57534,6 +60504,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutAiAnalysesInput = {
@@ -57606,6 +60577,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutAiAnalysesInput = {
@@ -57763,6 +60735,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutAiAnalysesInput = {
@@ -57835,6 +60808,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutFilesInput = {
@@ -57906,6 +60880,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -57978,6 +60953,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -58129,6 +61105,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -58201,6 +61178,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -59499,6 +62477,41 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type InstitutionAccountCreateManyClientInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type InstitutionAiAnalysisCreateManyClientInput = {
     id?: string
     analysisType?: $Enums.AiAnalysisType
@@ -59761,6 +62774,111 @@ export namespace Prisma {
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     isPrimary?: BoolFieldUpdateOperationsInput | boolean
     isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

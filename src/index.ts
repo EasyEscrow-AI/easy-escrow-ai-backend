@@ -30,6 +30,8 @@ import {
   adminAuthRoutes,
   institutionReceiptRoutes,
   institutionTokensRoutes,
+  aiChatRoutes,
+  institutionAccountRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -237,6 +239,8 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.aiAnalysis = '/api/v1/ai';
     response.endpoints.aiAnalyzeEscrowDoc = '/api/v1/ai/analyze-escrow-doc/:escrow_id';
     response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis/:escrow_id';
+    response.endpoints.aiChat = '/api/v1/ai/chat';
+    response.endpoints.institutionAccounts = '/api/v1/institution/accounts';
   }
 
   // Only include documentation field if OpenAPI spec loaded successfully
@@ -522,6 +526,8 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionEscrowAdminRoutes);
   app.use(institutionReceiptRoutes);
   app.use(institutionTokensRoutes);
+  app.use(aiChatRoutes);
+  app.use(institutionAccountRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled

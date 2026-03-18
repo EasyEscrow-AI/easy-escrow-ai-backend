@@ -27,6 +27,8 @@ import institutionClientsRoutes from './institution-clients.routes';
 import adminAuthRoutes from './admin/admin-auth.routes';
 import institutionReceiptRoutes from './institution-receipt.routes';
 import institutionTokensRoutes from './institution-tokens.routes';
+import aiChatRoutes from './ai-chat.routes';
+import institutionAccountRoutes from './institution-account.routes';
 
 export {
   expiryCancellationRoutes,
@@ -51,4 +53,6 @@ export {
   adminAuthRoutes,
   institutionReceiptRoutes,
   institutionTokensRoutes,
+  aiChatRoutes,
+  institutionAccountRoutes,
 };
