@@ -23,8 +23,9 @@ CREATE TABLE IF NOT EXISTS "institution_approved_tokens" (
 CREATE UNIQUE INDEX IF NOT EXISTS "institution_approved_tokens_symbol_key" ON "institution_approved_tokens"("symbol");
 CREATE UNIQUE INDEX IF NOT EXISTS "institution_approved_tokens_mint_address_key" ON "institution_approved_tokens"("mint_address");
 
--- Performance indexes
-CREATE INDEX IF NOT EXISTS "institution_approved_tokens_symbol_idx" ON "institution_approved_tokens"("symbol");
-CREATE INDEX IF NOT EXISTS "institution_approved_tokens_mint_address_idx" ON "institution_approved_tokens"("mint_address");
+-- Enforce at most one default token
+CREATE UNIQUE INDEX IF NOT EXISTS "institution_approved_tokens_one_default_idx" ON "institution_approved_tokens"("is_default") WHERE "is_default" IS TRUE;
+
+-- Performance indexes (symbol and mint_address already covered by unique indexes above)
 CREATE INDEX IF NOT EXISTS "institution_approved_tokens_is_active_idx" ON "institution_approved_tokens"("is_active");
 CREATE INDEX IF NOT EXISTS "institution_approved_tokens_amina_approved_idx" ON "institution_approved_tokens"("amina_approved");

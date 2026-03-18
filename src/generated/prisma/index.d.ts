@@ -99,6 +99,11 @@ export type InstitutionClient = $Result.DefaultSelection<Prisma.$InstitutionClie
  */
 export type InstitutionWallet = $Result.DefaultSelection<Prisma.$InstitutionWalletPayload>
 /**
+ * Model InstitutionAccount
+ * 
+ */
+export type InstitutionAccount = $Result.DefaultSelection<Prisma.$InstitutionAccountPayload>
+/**
  * Model InstitutionRefreshToken
  * 
  */
@@ -143,6 +148,16 @@ export type InstitutionCorridor = $Result.DefaultSelection<Prisma.$InstitutionCo
  * 
  */
 export type InstitutionApprovedToken = $Result.DefaultSelection<Prisma.$InstitutionApprovedTokenPayload>
+/**
+ * Model AdminUser
+ * 
+ */
+export type AdminUser = $Result.DefaultSelection<Prisma.$AdminUserPayload>
+/**
+ * Model AdminRefreshToken
+ * 
+ */
+export type AdminRefreshToken = $Result.DefaultSelection<Prisma.$AdminRefreshTokenPayload>
 /**
  * Model InstitutionFile
  * 
@@ -431,6 +446,36 @@ export const WalletCustodyType: {
 export type WalletCustodyType = (typeof WalletCustodyType)[keyof typeof WalletCustodyType]
 
 
+export const InstitutionAccountType: {
+  TREASURY: 'TREASURY',
+  OPERATIONS: 'OPERATIONS',
+  SETTLEMENT: 'SETTLEMENT',
+  COLLATERAL: 'COLLATERAL',
+  GENERAL: 'GENERAL'
+};
+
+export type InstitutionAccountType = (typeof InstitutionAccountType)[keyof typeof InstitutionAccountType]
+
+
+export const AccountVerificationStatus: {
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  SUSPENDED: 'SUSPENDED',
+  REJECTED: 'REJECTED'
+};
+
+export type AccountVerificationStatus = (typeof AccountVerificationStatus)[keyof typeof AccountVerificationStatus]
+
+
+export const ApprovalMode: {
+  AUTO: 'AUTO',
+  SINGLE_APPROVAL: 'SINGLE_APPROVAL',
+  MULTI_APPROVAL: 'MULTI_APPROVAL'
+};
+
+export type ApprovalMode = (typeof ApprovalMode)[keyof typeof ApprovalMode]
+
+
 export const EmployeeCountRange: {
   RANGE_1_10: 'RANGE_1_10',
   RANGE_11_50: 'RANGE_11_50',
@@ -464,6 +509,13 @@ export const AiAnalysisType: {
 };
 
 export type AiAnalysisType = (typeof AiAnalysisType)[keyof typeof AiAnalysisType]
+
+
+export const AdminRole: {
+  SUPER_ADMIN: 'SUPER_ADMIN'
+};
+
+export type AdminRole = (typeof AdminRole)[keyof typeof AdminRole]
 
 }
 
@@ -567,6 +619,18 @@ export type WalletCustodyType = $Enums.WalletCustodyType
 
 export const WalletCustodyType: typeof $Enums.WalletCustodyType
 
+export type InstitutionAccountType = $Enums.InstitutionAccountType
+
+export const InstitutionAccountType: typeof $Enums.InstitutionAccountType
+
+export type AccountVerificationStatus = $Enums.AccountVerificationStatus
+
+export const AccountVerificationStatus: typeof $Enums.AccountVerificationStatus
+
+export type ApprovalMode = $Enums.ApprovalMode
+
+export const ApprovalMode: typeof $Enums.ApprovalMode
+
 export type EmployeeCountRange = $Enums.EmployeeCountRange
 
 export const EmployeeCountRange: typeof $Enums.EmployeeCountRange
@@ -578,6 +642,10 @@ export const AnnualRevenueRange: typeof $Enums.AnnualRevenueRange
 export type AiAnalysisType = $Enums.AiAnalysisType
 
 export const AiAnalysisType: typeof $Enums.AiAnalysisType
+
+export type AdminRole = $Enums.AdminRole
+
+export const AdminRole: typeof $Enums.AdminRole
 
 /**
  * ##  Prisma Client ʲˢ
@@ -868,6 +936,16 @@ export class PrismaClient<
   get institutionWallet(): Prisma.InstitutionWalletDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.institutionAccount`: Exposes CRUD operations for the **InstitutionAccount** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionAccounts
+    * const institutionAccounts = await prisma.institutionAccount.findMany()
+    * ```
+    */
+  get institutionAccount(): Prisma.InstitutionAccountDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.institutionRefreshToken`: Exposes CRUD operations for the **InstitutionRefreshToken** model.
     * Example usage:
     * ```ts
@@ -956,6 +1034,26 @@ export class PrismaClient<
     * ```
     */
   get institutionApprovedToken(): Prisma.InstitutionApprovedTokenDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.adminUser`: Exposes CRUD operations for the **AdminUser** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AdminUsers
+    * const adminUsers = await prisma.adminUser.findMany()
+    * ```
+    */
+  get adminUser(): Prisma.AdminUserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.adminRefreshToken`: Exposes CRUD operations for the **AdminRefreshToken** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AdminRefreshTokens
+    * const adminRefreshTokens = await prisma.adminRefreshToken.findMany()
+    * ```
+    */
+  get adminRefreshToken(): Prisma.AdminRefreshTokenDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.institutionFile`: Exposes CRUD operations for the **InstitutionFile** model.
@@ -1423,6 +1521,7 @@ export namespace Prisma {
     TwoPhaseSwap: 'TwoPhaseSwap',
     InstitutionClient: 'InstitutionClient',
     InstitutionWallet: 'InstitutionWallet',
+    InstitutionAccount: 'InstitutionAccount',
     InstitutionRefreshToken: 'InstitutionRefreshToken',
     InstitutionClientSettings: 'InstitutionClientSettings',
     InstitutionApiKey: 'InstitutionApiKey',
@@ -1432,6 +1531,8 @@ export namespace Prisma {
     InstitutionAiAnalysis: 'InstitutionAiAnalysis',
     InstitutionCorridor: 'InstitutionCorridor',
     InstitutionApprovedToken: 'InstitutionApprovedToken',
+    AdminUser: 'AdminUser',
+    AdminRefreshToken: 'AdminRefreshToken',
     InstitutionFile: 'InstitutionFile'
   };
 
@@ -1451,7 +1552,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionApprovedToken" | "institutionFile"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionAccount" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionApprovedToken" | "adminUser" | "adminRefreshToken" | "institutionFile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2713,6 +2814,80 @@ export namespace Prisma {
           }
         }
       }
+      InstitutionAccount: {
+        payload: Prisma.$InstitutionAccountPayload<ExtArgs>
+        fields: Prisma.InstitutionAccountFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionAccountFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionAccountFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionAccountFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionAccountFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionAccountFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionAccountCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionAccountCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionAccountCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionAccountDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          update: {
+            args: Prisma.InstitutionAccountUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionAccountDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionAccountUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionAccountUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionAccountUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionAccountPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionAccountAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionAccount>
+          }
+          groupBy: {
+            args: Prisma.InstitutionAccountGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionAccountGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionAccountCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionAccountCountAggregateOutputType> | number
+          }
+        }
+      }
       InstitutionRefreshToken: {
         payload: Prisma.$InstitutionRefreshTokenPayload<ExtArgs>
         fields: Prisma.InstitutionRefreshTokenFieldRefs
@@ -3379,6 +3554,154 @@ export namespace Prisma {
           }
         }
       }
+      AdminUser: {
+        payload: Prisma.$AdminUserPayload<ExtArgs>
+        fields: Prisma.AdminUserFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AdminUserFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AdminUserFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>
+          }
+          findFirst: {
+            args: Prisma.AdminUserFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AdminUserFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>
+          }
+          findMany: {
+            args: Prisma.AdminUserFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>[]
+          }
+          create: {
+            args: Prisma.AdminUserCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>
+          }
+          createMany: {
+            args: Prisma.AdminUserCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AdminUserCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>[]
+          }
+          delete: {
+            args: Prisma.AdminUserDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>
+          }
+          update: {
+            args: Prisma.AdminUserUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>
+          }
+          deleteMany: {
+            args: Prisma.AdminUserDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AdminUserUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AdminUserUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>[]
+          }
+          upsert: {
+            args: Prisma.AdminUserUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminUserPayload>
+          }
+          aggregate: {
+            args: Prisma.AdminUserAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAdminUser>
+          }
+          groupBy: {
+            args: Prisma.AdminUserGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AdminUserGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AdminUserCountArgs<ExtArgs>
+            result: $Utils.Optional<AdminUserCountAggregateOutputType> | number
+          }
+        }
+      }
+      AdminRefreshToken: {
+        payload: Prisma.$AdminRefreshTokenPayload<ExtArgs>
+        fields: Prisma.AdminRefreshTokenFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AdminRefreshTokenFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AdminRefreshTokenFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>
+          }
+          findFirst: {
+            args: Prisma.AdminRefreshTokenFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AdminRefreshTokenFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>
+          }
+          findMany: {
+            args: Prisma.AdminRefreshTokenFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>[]
+          }
+          create: {
+            args: Prisma.AdminRefreshTokenCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>
+          }
+          createMany: {
+            args: Prisma.AdminRefreshTokenCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AdminRefreshTokenCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>[]
+          }
+          delete: {
+            args: Prisma.AdminRefreshTokenDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>
+          }
+          update: {
+            args: Prisma.AdminRefreshTokenUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>
+          }
+          deleteMany: {
+            args: Prisma.AdminRefreshTokenDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AdminRefreshTokenUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AdminRefreshTokenUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>[]
+          }
+          upsert: {
+            args: Prisma.AdminRefreshTokenUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminRefreshTokenPayload>
+          }
+          aggregate: {
+            args: Prisma.AdminRefreshTokenAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAdminRefreshToken>
+          }
+          groupBy: {
+            args: Prisma.AdminRefreshTokenGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AdminRefreshTokenGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AdminRefreshTokenCountArgs<ExtArgs>
+            result: $Utils.Optional<AdminRefreshTokenCountAggregateOutputType> | number
+          }
+        }
+      }
       InstitutionFile: {
         payload: Prisma.$InstitutionFilePayload<ExtArgs>
         fields: Prisma.InstitutionFileFieldRefs
@@ -3566,6 +3889,7 @@ export namespace Prisma {
     twoPhaseSwap?: TwoPhaseSwapOmit
     institutionClient?: InstitutionClientOmit
     institutionWallet?: InstitutionWalletOmit
+    institutionAccount?: InstitutionAccountOmit
     institutionRefreshToken?: InstitutionRefreshTokenOmit
     institutionClientSettings?: InstitutionClientSettingsOmit
     institutionApiKey?: InstitutionApiKeyOmit
@@ -3575,6 +3899,8 @@ export namespace Prisma {
     institutionAiAnalysis?: InstitutionAiAnalysisOmit
     institutionCorridor?: InstitutionCorridorOmit
     institutionApprovedToken?: InstitutionApprovedTokenOmit
+    adminUser?: AdminUserOmit
+    adminRefreshToken?: AdminRefreshTokenOmit
     institutionFile?: InstitutionFileOmit
   }
 
@@ -3902,6 +4228,7 @@ export namespace Prisma {
     auditLogs: number
     files: number
     wallets: number
+    accounts: number
     aiAnalyses: number
   }
 
@@ -3912,6 +4239,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClientCountOutputTypeCountAuditLogsArgs
     files?: boolean | InstitutionClientCountOutputTypeCountFilesArgs
     wallets?: boolean | InstitutionClientCountOutputTypeCountWalletsArgs
+    accounts?: boolean | InstitutionClientCountOutputTypeCountAccountsArgs
     aiAnalyses?: boolean | InstitutionClientCountOutputTypeCountAiAnalysesArgs
   }
 
@@ -3966,6 +4294,13 @@ export namespace Prisma {
    */
   export type InstitutionClientCountOutputTypeCountWalletsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InstitutionWalletWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountAccountsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAccountWhereInput
   }
 
   /**
@@ -4031,6 +4366,37 @@ export namespace Prisma {
    */
   export type InstitutionEscrowCountOutputTypeCountFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InstitutionFileWhereInput
+  }
+
+
+  /**
+   * Count Type AdminUserCountOutputType
+   */
+
+  export type AdminUserCountOutputType = {
+    refreshTokens: number
+  }
+
+  export type AdminUserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    refreshTokens?: boolean | AdminUserCountOutputTypeCountRefreshTokensArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * AdminUserCountOutputType without action
+   */
+  export type AdminUserCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUserCountOutputType
+     */
+    select?: AdminUserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * AdminUserCountOutputType without action
+   */
+  export type AdminUserCountOutputTypeCountRefreshTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AdminRefreshTokenWhereInput
   }
 
 
@@ -23725,6 +24091,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
     files?: boolean | InstitutionClient$filesArgs<ExtArgs>
     wallets?: boolean | InstitutionClient$walletsArgs<ExtArgs>
+    accounts?: boolean | InstitutionClient$accountsArgs<ExtArgs>
     aiAnalyses?: boolean | InstitutionClient$aiAnalysesArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionClient"]>
@@ -23933,6 +24300,7 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionClient$auditLogsArgs<ExtArgs>
     files?: boolean | InstitutionClient$filesArgs<ExtArgs>
     wallets?: boolean | InstitutionClient$walletsArgs<ExtArgs>
+    accounts?: boolean | InstitutionClient$accountsArgs<ExtArgs>
     aiAnalyses?: boolean | InstitutionClient$aiAnalysesArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -23949,6 +24317,7 @@ export namespace Prisma {
       auditLogs: Prisma.$InstitutionAuditLogPayload<ExtArgs>[]
       files: Prisma.$InstitutionFilePayload<ExtArgs>[]
       wallets: Prisma.$InstitutionWalletPayload<ExtArgs>[]
+      accounts: Prisma.$InstitutionAccountPayload<ExtArgs>[]
       aiAnalyses: Prisma.$InstitutionAiAnalysisPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -24415,6 +24784,7 @@ export namespace Prisma {
     auditLogs<T extends InstitutionClient$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     files<T extends InstitutionClient$filesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     wallets<T extends InstitutionClient$walletsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$walletsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionWalletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    accounts<T extends InstitutionClient$accountsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     aiAnalyses<T extends InstitutionClient$aiAnalysesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$aiAnalysesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -25055,6 +25425,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: InstitutionWalletScalarFieldEnum | InstitutionWalletScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.accounts
+   */
+  export type InstitutionClient$accountsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    where?: InstitutionAccountWhereInput
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    cursor?: InstitutionAccountWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
   }
 
   /**
@@ -26233,6 +26627,1482 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: InstitutionWalletInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionAccount
+   */
+
+  export type AggregateInstitutionAccount = {
+    _count: InstitutionAccountCountAggregateOutputType | null
+    _avg: InstitutionAccountAvgAggregateOutputType | null
+    _sum: InstitutionAccountSumAggregateOutputType | null
+    _min: InstitutionAccountMinAggregateOutputType | null
+    _max: InstitutionAccountMaxAggregateOutputType | null
+  }
+
+  export type InstitutionAccountAvgAggregateOutputType = {
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalThreshold: Decimal | null
+  }
+
+  export type InstitutionAccountSumAggregateOutputType = {
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalThreshold: Decimal | null
+  }
+
+  export type InstitutionAccountMinAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    name: string | null
+    label: string | null
+    accountType: $Enums.InstitutionAccountType | null
+    description: string | null
+    walletAddress: string | null
+    chain: string | null
+    walletProvider: string | null
+    custodyType: $Enums.WalletCustodyType | null
+    verificationStatus: $Enums.AccountVerificationStatus | null
+    verifiedAt: Date | null
+    verificationNotes: string | null
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalMode: $Enums.ApprovalMode | null
+    approvalThreshold: Decimal | null
+    whitelistEnforced: boolean | null
+    notificationEmail: string | null
+    webhookUrl: string | null
+    notifyOnEscrowCreated: boolean | null
+    notifyOnEscrowFunded: boolean | null
+    notifyOnEscrowReleased: boolean | null
+    notifyOnComplianceAlert: boolean | null
+    isDefault: boolean | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionAccountMaxAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    name: string | null
+    label: string | null
+    accountType: $Enums.InstitutionAccountType | null
+    description: string | null
+    walletAddress: string | null
+    chain: string | null
+    walletProvider: string | null
+    custodyType: $Enums.WalletCustodyType | null
+    verificationStatus: $Enums.AccountVerificationStatus | null
+    verifiedAt: Date | null
+    verificationNotes: string | null
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalMode: $Enums.ApprovalMode | null
+    approvalThreshold: Decimal | null
+    whitelistEnforced: boolean | null
+    notificationEmail: string | null
+    webhookUrl: string | null
+    notifyOnEscrowCreated: boolean | null
+    notifyOnEscrowFunded: boolean | null
+    notifyOnEscrowReleased: boolean | null
+    notifyOnComplianceAlert: boolean | null
+    isDefault: boolean | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionAccountCountAggregateOutputType = {
+    id: number
+    clientId: number
+    name: number
+    label: number
+    accountType: number
+    description: number
+    walletAddress: number
+    chain: number
+    walletProvider: number
+    custodyType: number
+    verificationStatus: number
+    verifiedAt: number
+    verificationNotes: number
+    maxTransactionAmount: number
+    minTransactionAmount: number
+    dailyVolumeLimit: number
+    monthlyVolumeLimit: number
+    dailyTransactionCountLimit: number
+    monthlyTransactionCountLimit: number
+    approvalMode: number
+    approvalThreshold: number
+    whitelistedAddresses: number
+    whitelistEnforced: number
+    notificationEmail: number
+    webhookUrl: number
+    notifyOnEscrowCreated: number
+    notifyOnEscrowFunded: number
+    notifyOnEscrowReleased: number
+    notifyOnComplianceAlert: number
+    isDefault: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionAccountAvgAggregateInputType = {
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalThreshold?: true
+  }
+
+  export type InstitutionAccountSumAggregateInputType = {
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalThreshold?: true
+  }
+
+  export type InstitutionAccountMinAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    label?: true
+    accountType?: true
+    description?: true
+    walletAddress?: true
+    chain?: true
+    walletProvider?: true
+    custodyType?: true
+    verificationStatus?: true
+    verifiedAt?: true
+    verificationNotes?: true
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalMode?: true
+    approvalThreshold?: true
+    whitelistEnforced?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    notifyOnEscrowCreated?: true
+    notifyOnEscrowFunded?: true
+    notifyOnEscrowReleased?: true
+    notifyOnComplianceAlert?: true
+    isDefault?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionAccountMaxAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    label?: true
+    accountType?: true
+    description?: true
+    walletAddress?: true
+    chain?: true
+    walletProvider?: true
+    custodyType?: true
+    verificationStatus?: true
+    verifiedAt?: true
+    verificationNotes?: true
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalMode?: true
+    approvalThreshold?: true
+    whitelistEnforced?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    notifyOnEscrowCreated?: true
+    notifyOnEscrowFunded?: true
+    notifyOnEscrowReleased?: true
+    notifyOnComplianceAlert?: true
+    isDefault?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionAccountCountAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    label?: true
+    accountType?: true
+    description?: true
+    walletAddress?: true
+    chain?: true
+    walletProvider?: true
+    custodyType?: true
+    verificationStatus?: true
+    verifiedAt?: true
+    verificationNotes?: true
+    maxTransactionAmount?: true
+    minTransactionAmount?: true
+    dailyVolumeLimit?: true
+    monthlyVolumeLimit?: true
+    dailyTransactionCountLimit?: true
+    monthlyTransactionCountLimit?: true
+    approvalMode?: true
+    approvalThreshold?: true
+    whitelistedAddresses?: true
+    whitelistEnforced?: true
+    notificationEmail?: true
+    webhookUrl?: true
+    notifyOnEscrowCreated?: true
+    notifyOnEscrowFunded?: true
+    notifyOnEscrowReleased?: true
+    notifyOnComplianceAlert?: true
+    isDefault?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionAccountAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionAccount to aggregate.
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAccounts to fetch.
+     */
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionAccounts
+    **/
+    _count?: true | InstitutionAccountCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionAccountAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionAccountSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionAccountMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionAccountMaxAggregateInputType
+  }
+
+  export type GetInstitutionAccountAggregateType<T extends InstitutionAccountAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionAccount]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionAccount[P]>
+      : GetScalarType<T[P], AggregateInstitutionAccount[P]>
+  }
+
+
+
+
+  export type InstitutionAccountGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAccountWhereInput
+    orderBy?: InstitutionAccountOrderByWithAggregationInput | InstitutionAccountOrderByWithAggregationInput[]
+    by: InstitutionAccountScalarFieldEnum[] | InstitutionAccountScalarFieldEnum
+    having?: InstitutionAccountScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionAccountCountAggregateInputType | true
+    _avg?: InstitutionAccountAvgAggregateInputType
+    _sum?: InstitutionAccountSumAggregateInputType
+    _min?: InstitutionAccountMinAggregateInputType
+    _max?: InstitutionAccountMaxAggregateInputType
+  }
+
+  export type InstitutionAccountGroupByOutputType = {
+    id: string
+    clientId: string
+    name: string
+    label: string | null
+    accountType: $Enums.InstitutionAccountType
+    description: string | null
+    walletAddress: string
+    chain: string
+    walletProvider: string | null
+    custodyType: $Enums.WalletCustodyType | null
+    verificationStatus: $Enums.AccountVerificationStatus
+    verifiedAt: Date | null
+    verificationNotes: string | null
+    maxTransactionAmount: Decimal | null
+    minTransactionAmount: Decimal | null
+    dailyVolumeLimit: Decimal | null
+    monthlyVolumeLimit: Decimal | null
+    dailyTransactionCountLimit: number | null
+    monthlyTransactionCountLimit: number | null
+    approvalMode: $Enums.ApprovalMode
+    approvalThreshold: Decimal | null
+    whitelistedAddresses: string[]
+    whitelistEnforced: boolean
+    notificationEmail: string | null
+    webhookUrl: string | null
+    notifyOnEscrowCreated: boolean
+    notifyOnEscrowFunded: boolean
+    notifyOnEscrowReleased: boolean
+    notifyOnComplianceAlert: boolean
+    isDefault: boolean
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: InstitutionAccountCountAggregateOutputType | null
+    _avg: InstitutionAccountAvgAggregateOutputType | null
+    _sum: InstitutionAccountSumAggregateOutputType | null
+    _min: InstitutionAccountMinAggregateOutputType | null
+    _max: InstitutionAccountMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionAccountGroupByPayload<T extends InstitutionAccountGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionAccountGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionAccountGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionAccountGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionAccountGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionAccountSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    label?: boolean
+    accountType?: boolean
+    description?: boolean
+    walletAddress?: boolean
+    chain?: boolean
+    walletProvider?: boolean
+    custodyType?: boolean
+    verificationStatus?: boolean
+    verifiedAt?: boolean
+    verificationNotes?: boolean
+    maxTransactionAmount?: boolean
+    minTransactionAmount?: boolean
+    dailyVolumeLimit?: boolean
+    monthlyVolumeLimit?: boolean
+    dailyTransactionCountLimit?: boolean
+    monthlyTransactionCountLimit?: boolean
+    approvalMode?: boolean
+    approvalThreshold?: boolean
+    whitelistedAddresses?: boolean
+    whitelistEnforced?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAccount"]>
+
+  export type InstitutionAccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    label?: boolean
+    accountType?: boolean
+    description?: boolean
+    walletAddress?: boolean
+    chain?: boolean
+    walletProvider?: boolean
+    custodyType?: boolean
+    verificationStatus?: boolean
+    verifiedAt?: boolean
+    verificationNotes?: boolean
+    maxTransactionAmount?: boolean
+    minTransactionAmount?: boolean
+    dailyVolumeLimit?: boolean
+    monthlyVolumeLimit?: boolean
+    dailyTransactionCountLimit?: boolean
+    monthlyTransactionCountLimit?: boolean
+    approvalMode?: boolean
+    approvalThreshold?: boolean
+    whitelistedAddresses?: boolean
+    whitelistEnforced?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAccount"]>
+
+  export type InstitutionAccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    label?: boolean
+    accountType?: boolean
+    description?: boolean
+    walletAddress?: boolean
+    chain?: boolean
+    walletProvider?: boolean
+    custodyType?: boolean
+    verificationStatus?: boolean
+    verifiedAt?: boolean
+    verificationNotes?: boolean
+    maxTransactionAmount?: boolean
+    minTransactionAmount?: boolean
+    dailyVolumeLimit?: boolean
+    monthlyVolumeLimit?: boolean
+    dailyTransactionCountLimit?: boolean
+    monthlyTransactionCountLimit?: boolean
+    approvalMode?: boolean
+    approvalThreshold?: boolean
+    whitelistedAddresses?: boolean
+    whitelistEnforced?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionAccount"]>
+
+  export type InstitutionAccountSelectScalar = {
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    label?: boolean
+    accountType?: boolean
+    description?: boolean
+    walletAddress?: boolean
+    chain?: boolean
+    walletProvider?: boolean
+    custodyType?: boolean
+    verificationStatus?: boolean
+    verifiedAt?: boolean
+    verificationNotes?: boolean
+    maxTransactionAmount?: boolean
+    minTransactionAmount?: boolean
+    dailyVolumeLimit?: boolean
+    monthlyVolumeLimit?: boolean
+    dailyTransactionCountLimit?: boolean
+    monthlyTransactionCountLimit?: boolean
+    approvalMode?: boolean
+    approvalThreshold?: boolean
+    whitelistedAddresses?: boolean
+    whitelistEnforced?: boolean
+    notificationEmail?: boolean
+    webhookUrl?: boolean
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "isDefault" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionAccount"]>
+  export type InstitutionAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionAccountIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionAccountIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionAccountPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionAccount"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      clientId: string
+      name: string
+      label: string | null
+      accountType: $Enums.InstitutionAccountType
+      description: string | null
+      walletAddress: string
+      chain: string
+      walletProvider: string | null
+      custodyType: $Enums.WalletCustodyType | null
+      verificationStatus: $Enums.AccountVerificationStatus
+      verifiedAt: Date | null
+      verificationNotes: string | null
+      maxTransactionAmount: Prisma.Decimal | null
+      minTransactionAmount: Prisma.Decimal | null
+      dailyVolumeLimit: Prisma.Decimal | null
+      monthlyVolumeLimit: Prisma.Decimal | null
+      dailyTransactionCountLimit: number | null
+      monthlyTransactionCountLimit: number | null
+      approvalMode: $Enums.ApprovalMode
+      approvalThreshold: Prisma.Decimal | null
+      whitelistedAddresses: string[]
+      whitelistEnforced: boolean
+      notificationEmail: string | null
+      webhookUrl: string | null
+      notifyOnEscrowCreated: boolean
+      notifyOnEscrowFunded: boolean
+      notifyOnEscrowReleased: boolean
+      notifyOnComplianceAlert: boolean
+      isDefault: boolean
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["institutionAccount"]>
+    composites: {}
+  }
+
+  type InstitutionAccountGetPayload<S extends boolean | null | undefined | InstitutionAccountDefaultArgs> = $Result.GetResult<Prisma.$InstitutionAccountPayload, S>
+
+  type InstitutionAccountCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionAccountFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionAccountCountAggregateInputType | true
+    }
+
+  export interface InstitutionAccountDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionAccount'], meta: { name: 'InstitutionAccount' } }
+    /**
+     * Find zero or one InstitutionAccount that matches the filter.
+     * @param {InstitutionAccountFindUniqueArgs} args - Arguments to find a InstitutionAccount
+     * @example
+     * // Get one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionAccountFindUniqueArgs>(args: SelectSubset<T, InstitutionAccountFindUniqueArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionAccount that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionAccountFindUniqueOrThrowArgs} args - Arguments to find a InstitutionAccount
+     * @example
+     * // Get one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionAccountFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionAccountFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionAccount that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountFindFirstArgs} args - Arguments to find a InstitutionAccount
+     * @example
+     * // Get one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionAccountFindFirstArgs>(args?: SelectSubset<T, InstitutionAccountFindFirstArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionAccount that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountFindFirstOrThrowArgs} args - Arguments to find a InstitutionAccount
+     * @example
+     * // Get one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionAccountFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionAccountFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionAccounts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionAccounts
+     * const institutionAccounts = await prisma.institutionAccount.findMany()
+     * 
+     * // Get first 10 InstitutionAccounts
+     * const institutionAccounts = await prisma.institutionAccount.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionAccountWithIdOnly = await prisma.institutionAccount.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionAccountFindManyArgs>(args?: SelectSubset<T, InstitutionAccountFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionAccount.
+     * @param {InstitutionAccountCreateArgs} args - Arguments to create a InstitutionAccount.
+     * @example
+     * // Create one InstitutionAccount
+     * const InstitutionAccount = await prisma.institutionAccount.create({
+     *   data: {
+     *     // ... data to create a InstitutionAccount
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionAccountCreateArgs>(args: SelectSubset<T, InstitutionAccountCreateArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionAccounts.
+     * @param {InstitutionAccountCreateManyArgs} args - Arguments to create many InstitutionAccounts.
+     * @example
+     * // Create many InstitutionAccounts
+     * const institutionAccount = await prisma.institutionAccount.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionAccountCreateManyArgs>(args?: SelectSubset<T, InstitutionAccountCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionAccounts and returns the data saved in the database.
+     * @param {InstitutionAccountCreateManyAndReturnArgs} args - Arguments to create many InstitutionAccounts.
+     * @example
+     * // Create many InstitutionAccounts
+     * const institutionAccount = await prisma.institutionAccount.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionAccounts and only return the `id`
+     * const institutionAccountWithIdOnly = await prisma.institutionAccount.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionAccountCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionAccountCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionAccount.
+     * @param {InstitutionAccountDeleteArgs} args - Arguments to delete one InstitutionAccount.
+     * @example
+     * // Delete one InstitutionAccount
+     * const InstitutionAccount = await prisma.institutionAccount.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionAccount
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionAccountDeleteArgs>(args: SelectSubset<T, InstitutionAccountDeleteArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionAccount.
+     * @param {InstitutionAccountUpdateArgs} args - Arguments to update one InstitutionAccount.
+     * @example
+     * // Update one InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionAccountUpdateArgs>(args: SelectSubset<T, InstitutionAccountUpdateArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionAccounts.
+     * @param {InstitutionAccountDeleteManyArgs} args - Arguments to filter InstitutionAccounts to delete.
+     * @example
+     * // Delete a few InstitutionAccounts
+     * const { count } = await prisma.institutionAccount.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionAccountDeleteManyArgs>(args?: SelectSubset<T, InstitutionAccountDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionAccounts
+     * const institutionAccount = await prisma.institutionAccount.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionAccountUpdateManyArgs>(args: SelectSubset<T, InstitutionAccountUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionAccounts and returns the data updated in the database.
+     * @param {InstitutionAccountUpdateManyAndReturnArgs} args - Arguments to update many InstitutionAccounts.
+     * @example
+     * // Update many InstitutionAccounts
+     * const institutionAccount = await prisma.institutionAccount.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionAccounts and only return the `id`
+     * const institutionAccountWithIdOnly = await prisma.institutionAccount.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionAccountUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionAccountUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionAccount.
+     * @param {InstitutionAccountUpsertArgs} args - Arguments to update or create a InstitutionAccount.
+     * @example
+     * // Update or create a InstitutionAccount
+     * const institutionAccount = await prisma.institutionAccount.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionAccount
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionAccount we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionAccountUpsertArgs>(args: SelectSubset<T, InstitutionAccountUpsertArgs<ExtArgs>>): Prisma__InstitutionAccountClient<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountCountArgs} args - Arguments to filter InstitutionAccounts to count.
+     * @example
+     * // Count the number of InstitutionAccounts
+     * const count = await prisma.institutionAccount.count({
+     *   where: {
+     *     // ... the filter for the InstitutionAccounts we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionAccountCountArgs>(
+      args?: Subset<T, InstitutionAccountCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionAccountCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionAccountAggregateArgs>(args: Subset<T, InstitutionAccountAggregateArgs>): Prisma.PrismaPromise<GetInstitutionAccountAggregateType<T>>
+
+    /**
+     * Group by InstitutionAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionAccountGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionAccountGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionAccountGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionAccountGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionAccountGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionAccountGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionAccount model
+   */
+  readonly fields: InstitutionAccountFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionAccount.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionAccountClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionAccount model
+   */
+  interface InstitutionAccountFieldRefs {
+    readonly id: FieldRef<"InstitutionAccount", 'String'>
+    readonly clientId: FieldRef<"InstitutionAccount", 'String'>
+    readonly name: FieldRef<"InstitutionAccount", 'String'>
+    readonly label: FieldRef<"InstitutionAccount", 'String'>
+    readonly accountType: FieldRef<"InstitutionAccount", 'InstitutionAccountType'>
+    readonly description: FieldRef<"InstitutionAccount", 'String'>
+    readonly walletAddress: FieldRef<"InstitutionAccount", 'String'>
+    readonly chain: FieldRef<"InstitutionAccount", 'String'>
+    readonly walletProvider: FieldRef<"InstitutionAccount", 'String'>
+    readonly custodyType: FieldRef<"InstitutionAccount", 'WalletCustodyType'>
+    readonly verificationStatus: FieldRef<"InstitutionAccount", 'AccountVerificationStatus'>
+    readonly verifiedAt: FieldRef<"InstitutionAccount", 'DateTime'>
+    readonly verificationNotes: FieldRef<"InstitutionAccount", 'String'>
+    readonly maxTransactionAmount: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly minTransactionAmount: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly dailyVolumeLimit: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly monthlyVolumeLimit: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly dailyTransactionCountLimit: FieldRef<"InstitutionAccount", 'Int'>
+    readonly monthlyTransactionCountLimit: FieldRef<"InstitutionAccount", 'Int'>
+    readonly approvalMode: FieldRef<"InstitutionAccount", 'ApprovalMode'>
+    readonly approvalThreshold: FieldRef<"InstitutionAccount", 'Decimal'>
+    readonly whitelistedAddresses: FieldRef<"InstitutionAccount", 'String[]'>
+    readonly whitelistEnforced: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly notificationEmail: FieldRef<"InstitutionAccount", 'String'>
+    readonly webhookUrl: FieldRef<"InstitutionAccount", 'String'>
+    readonly notifyOnEscrowCreated: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly notifyOnEscrowFunded: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly notifyOnEscrowReleased: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly notifyOnComplianceAlert: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly isDefault: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly isActive: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly createdAt: FieldRef<"InstitutionAccount", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionAccount", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionAccount findUnique
+   */
+  export type InstitutionAccountFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccount to fetch.
+     */
+    where: InstitutionAccountWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAccount findUniqueOrThrow
+   */
+  export type InstitutionAccountFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccount to fetch.
+     */
+    where: InstitutionAccountWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAccount findFirst
+   */
+  export type InstitutionAccountFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccount to fetch.
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAccounts to fetch.
+     */
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionAccounts.
+     */
+    cursor?: InstitutionAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionAccounts.
+     */
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAccount findFirstOrThrow
+   */
+  export type InstitutionAccountFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccount to fetch.
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAccounts to fetch.
+     */
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionAccounts.
+     */
+    cursor?: InstitutionAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionAccounts.
+     */
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAccount findMany
+   */
+  export type InstitutionAccountFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionAccounts to fetch.
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionAccounts to fetch.
+     */
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionAccounts.
+     */
+    cursor?: InstitutionAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionAccounts.
+     */
+    skip?: number
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionAccount create
+   */
+  export type InstitutionAccountCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionAccount.
+     */
+    data: XOR<InstitutionAccountCreateInput, InstitutionAccountUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionAccount createMany
+   */
+  export type InstitutionAccountCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionAccounts.
+     */
+    data: InstitutionAccountCreateManyInput | InstitutionAccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionAccount createManyAndReturn
+   */
+  export type InstitutionAccountCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionAccounts.
+     */
+    data: InstitutionAccountCreateManyInput | InstitutionAccountCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionAccount update
+   */
+  export type InstitutionAccountUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionAccount.
+     */
+    data: XOR<InstitutionAccountUpdateInput, InstitutionAccountUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionAccount to update.
+     */
+    where: InstitutionAccountWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAccount updateMany
+   */
+  export type InstitutionAccountUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionAccounts.
+     */
+    data: XOR<InstitutionAccountUpdateManyMutationInput, InstitutionAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionAccounts to update
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * Limit how many InstitutionAccounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionAccount updateManyAndReturn
+   */
+  export type InstitutionAccountUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionAccounts.
+     */
+    data: XOR<InstitutionAccountUpdateManyMutationInput, InstitutionAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionAccounts to update
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * Limit how many InstitutionAccounts to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionAccount upsert
+   */
+  export type InstitutionAccountUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionAccount to update in case it exists.
+     */
+    where: InstitutionAccountWhereUniqueInput
+    /**
+     * In case the InstitutionAccount found by the `where` argument doesn't exist, create a new InstitutionAccount with this data.
+     */
+    create: XOR<InstitutionAccountCreateInput, InstitutionAccountUncheckedCreateInput>
+    /**
+     * In case the InstitutionAccount was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionAccountUpdateInput, InstitutionAccountUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionAccount delete
+   */
+  export type InstitutionAccountDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionAccount to delete.
+     */
+    where: InstitutionAccountWhereUniqueInput
+  }
+
+  /**
+   * InstitutionAccount deleteMany
+   */
+  export type InstitutionAccountDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionAccounts to delete
+     */
+    where?: InstitutionAccountWhereInput
+    /**
+     * Limit how many InstitutionAccounts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionAccount without action
+   */
+  export type InstitutionAccountDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
   }
 
 
@@ -36853,6 +38723,2199 @@ export namespace Prisma {
 
 
   /**
+   * Model AdminUser
+   */
+
+  export type AggregateAdminUser = {
+    _count: AdminUserCountAggregateOutputType | null
+    _min: AdminUserMinAggregateOutputType | null
+    _max: AdminUserMaxAggregateOutputType | null
+  }
+
+  export type AdminUserMinAggregateOutputType = {
+    id: string | null
+    email: string | null
+    passwordHash: string | null
+    name: string | null
+    role: $Enums.AdminRole | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    lastLoginAt: Date | null
+  }
+
+  export type AdminUserMaxAggregateOutputType = {
+    id: string | null
+    email: string | null
+    passwordHash: string | null
+    name: string | null
+    role: $Enums.AdminRole | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    lastLoginAt: Date | null
+  }
+
+  export type AdminUserCountAggregateOutputType = {
+    id: number
+    email: number
+    passwordHash: number
+    name: number
+    role: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    lastLoginAt: number
+    _all: number
+  }
+
+
+  export type AdminUserMinAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    name?: true
+    role?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+  }
+
+  export type AdminUserMaxAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    name?: true
+    role?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+  }
+
+  export type AdminUserCountAggregateInputType = {
+    id?: true
+    email?: true
+    passwordHash?: true
+    name?: true
+    role?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+    _all?: true
+  }
+
+  export type AdminUserAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AdminUser to aggregate.
+     */
+    where?: AdminUserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminUsers to fetch.
+     */
+    orderBy?: AdminUserOrderByWithRelationInput | AdminUserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AdminUserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminUsers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminUsers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AdminUsers
+    **/
+    _count?: true | AdminUserCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AdminUserMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AdminUserMaxAggregateInputType
+  }
+
+  export type GetAdminUserAggregateType<T extends AdminUserAggregateArgs> = {
+        [P in keyof T & keyof AggregateAdminUser]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAdminUser[P]>
+      : GetScalarType<T[P], AggregateAdminUser[P]>
+  }
+
+
+
+
+  export type AdminUserGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AdminUserWhereInput
+    orderBy?: AdminUserOrderByWithAggregationInput | AdminUserOrderByWithAggregationInput[]
+    by: AdminUserScalarFieldEnum[] | AdminUserScalarFieldEnum
+    having?: AdminUserScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AdminUserCountAggregateInputType | true
+    _min?: AdminUserMinAggregateInputType
+    _max?: AdminUserMaxAggregateInputType
+  }
+
+  export type AdminUserGroupByOutputType = {
+    id: string
+    email: string
+    passwordHash: string
+    name: string
+    role: $Enums.AdminRole
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    lastLoginAt: Date | null
+    _count: AdminUserCountAggregateOutputType | null
+    _min: AdminUserMinAggregateOutputType | null
+    _max: AdminUserMaxAggregateOutputType | null
+  }
+
+  type GetAdminUserGroupByPayload<T extends AdminUserGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AdminUserGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AdminUserGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AdminUserGroupByOutputType[P]>
+            : GetScalarType<T[P], AdminUserGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AdminUserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    name?: boolean
+    role?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+    refreshTokens?: boolean | AdminUser$refreshTokensArgs<ExtArgs>
+    _count?: boolean | AdminUserCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["adminUser"]>
+
+  export type AdminUserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    name?: boolean
+    role?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }, ExtArgs["result"]["adminUser"]>
+
+  export type AdminUserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    name?: boolean
+    role?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }, ExtArgs["result"]["adminUser"]>
+
+  export type AdminUserSelectScalar = {
+    id?: boolean
+    email?: boolean
+    passwordHash?: boolean
+    name?: boolean
+    role?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }
+
+  export type AdminUserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "role" | "isActive" | "createdAt" | "updatedAt" | "lastLoginAt", ExtArgs["result"]["adminUser"]>
+  export type AdminUserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    refreshTokens?: boolean | AdminUser$refreshTokensArgs<ExtArgs>
+    _count?: boolean | AdminUserCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type AdminUserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type AdminUserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $AdminUserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AdminUser"
+    objects: {
+      refreshTokens: Prisma.$AdminRefreshTokenPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      email: string
+      passwordHash: string
+      name: string
+      role: $Enums.AdminRole
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+      lastLoginAt: Date | null
+    }, ExtArgs["result"]["adminUser"]>
+    composites: {}
+  }
+
+  type AdminUserGetPayload<S extends boolean | null | undefined | AdminUserDefaultArgs> = $Result.GetResult<Prisma.$AdminUserPayload, S>
+
+  type AdminUserCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AdminUserFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AdminUserCountAggregateInputType | true
+    }
+
+  export interface AdminUserDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AdminUser'], meta: { name: 'AdminUser' } }
+    /**
+     * Find zero or one AdminUser that matches the filter.
+     * @param {AdminUserFindUniqueArgs} args - Arguments to find a AdminUser
+     * @example
+     * // Get one AdminUser
+     * const adminUser = await prisma.adminUser.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AdminUserFindUniqueArgs>(args: SelectSubset<T, AdminUserFindUniqueArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AdminUser that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AdminUserFindUniqueOrThrowArgs} args - Arguments to find a AdminUser
+     * @example
+     * // Get one AdminUser
+     * const adminUser = await prisma.adminUser.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AdminUserFindUniqueOrThrowArgs>(args: SelectSubset<T, AdminUserFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AdminUser that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminUserFindFirstArgs} args - Arguments to find a AdminUser
+     * @example
+     * // Get one AdminUser
+     * const adminUser = await prisma.adminUser.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AdminUserFindFirstArgs>(args?: SelectSubset<T, AdminUserFindFirstArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AdminUser that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminUserFindFirstOrThrowArgs} args - Arguments to find a AdminUser
+     * @example
+     * // Get one AdminUser
+     * const adminUser = await prisma.adminUser.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AdminUserFindFirstOrThrowArgs>(args?: SelectSubset<T, AdminUserFindFirstOrThrowArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AdminUsers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminUserFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AdminUsers
+     * const adminUsers = await prisma.adminUser.findMany()
+     * 
+     * // Get first 10 AdminUsers
+     * const adminUsers = await prisma.adminUser.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const adminUserWithIdOnly = await prisma.adminUser.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AdminUserFindManyArgs>(args?: SelectSubset<T, AdminUserFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AdminUser.
+     * @param {AdminUserCreateArgs} args - Arguments to create a AdminUser.
+     * @example
+     * // Create one AdminUser
+     * const AdminUser = await prisma.adminUser.create({
+     *   data: {
+     *     // ... data to create a AdminUser
+     *   }
+     * })
+     * 
+     */
+    create<T extends AdminUserCreateArgs>(args: SelectSubset<T, AdminUserCreateArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AdminUsers.
+     * @param {AdminUserCreateManyArgs} args - Arguments to create many AdminUsers.
+     * @example
+     * // Create many AdminUsers
+     * const adminUser = await prisma.adminUser.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AdminUserCreateManyArgs>(args?: SelectSubset<T, AdminUserCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AdminUsers and returns the data saved in the database.
+     * @param {AdminUserCreateManyAndReturnArgs} args - Arguments to create many AdminUsers.
+     * @example
+     * // Create many AdminUsers
+     * const adminUser = await prisma.adminUser.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AdminUsers and only return the `id`
+     * const adminUserWithIdOnly = await prisma.adminUser.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AdminUserCreateManyAndReturnArgs>(args?: SelectSubset<T, AdminUserCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AdminUser.
+     * @param {AdminUserDeleteArgs} args - Arguments to delete one AdminUser.
+     * @example
+     * // Delete one AdminUser
+     * const AdminUser = await prisma.adminUser.delete({
+     *   where: {
+     *     // ... filter to delete one AdminUser
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AdminUserDeleteArgs>(args: SelectSubset<T, AdminUserDeleteArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AdminUser.
+     * @param {AdminUserUpdateArgs} args - Arguments to update one AdminUser.
+     * @example
+     * // Update one AdminUser
+     * const adminUser = await prisma.adminUser.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AdminUserUpdateArgs>(args: SelectSubset<T, AdminUserUpdateArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AdminUsers.
+     * @param {AdminUserDeleteManyArgs} args - Arguments to filter AdminUsers to delete.
+     * @example
+     * // Delete a few AdminUsers
+     * const { count } = await prisma.adminUser.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AdminUserDeleteManyArgs>(args?: SelectSubset<T, AdminUserDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AdminUsers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminUserUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AdminUsers
+     * const adminUser = await prisma.adminUser.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AdminUserUpdateManyArgs>(args: SelectSubset<T, AdminUserUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AdminUsers and returns the data updated in the database.
+     * @param {AdminUserUpdateManyAndReturnArgs} args - Arguments to update many AdminUsers.
+     * @example
+     * // Update many AdminUsers
+     * const adminUser = await prisma.adminUser.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AdminUsers and only return the `id`
+     * const adminUserWithIdOnly = await prisma.adminUser.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AdminUserUpdateManyAndReturnArgs>(args: SelectSubset<T, AdminUserUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AdminUser.
+     * @param {AdminUserUpsertArgs} args - Arguments to update or create a AdminUser.
+     * @example
+     * // Update or create a AdminUser
+     * const adminUser = await prisma.adminUser.upsert({
+     *   create: {
+     *     // ... data to create a AdminUser
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AdminUser we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AdminUserUpsertArgs>(args: SelectSubset<T, AdminUserUpsertArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AdminUsers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminUserCountArgs} args - Arguments to filter AdminUsers to count.
+     * @example
+     * // Count the number of AdminUsers
+     * const count = await prisma.adminUser.count({
+     *   where: {
+     *     // ... the filter for the AdminUsers we want to count
+     *   }
+     * })
+    **/
+    count<T extends AdminUserCountArgs>(
+      args?: Subset<T, AdminUserCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AdminUserCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AdminUser.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminUserAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AdminUserAggregateArgs>(args: Subset<T, AdminUserAggregateArgs>): Prisma.PrismaPromise<GetAdminUserAggregateType<T>>
+
+    /**
+     * Group by AdminUser.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminUserGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AdminUserGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AdminUserGroupByArgs['orderBy'] }
+        : { orderBy?: AdminUserGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AdminUserGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAdminUserGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AdminUser model
+   */
+  readonly fields: AdminUserFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AdminUser.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AdminUserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    refreshTokens<T extends AdminUser$refreshTokensArgs<ExtArgs> = {}>(args?: Subset<T, AdminUser$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AdminUser model
+   */
+  interface AdminUserFieldRefs {
+    readonly id: FieldRef<"AdminUser", 'String'>
+    readonly email: FieldRef<"AdminUser", 'String'>
+    readonly passwordHash: FieldRef<"AdminUser", 'String'>
+    readonly name: FieldRef<"AdminUser", 'String'>
+    readonly role: FieldRef<"AdminUser", 'AdminRole'>
+    readonly isActive: FieldRef<"AdminUser", 'Boolean'>
+    readonly createdAt: FieldRef<"AdminUser", 'DateTime'>
+    readonly updatedAt: FieldRef<"AdminUser", 'DateTime'>
+    readonly lastLoginAt: FieldRef<"AdminUser", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AdminUser findUnique
+   */
+  export type AdminUserFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminUser to fetch.
+     */
+    where: AdminUserWhereUniqueInput
+  }
+
+  /**
+   * AdminUser findUniqueOrThrow
+   */
+  export type AdminUserFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminUser to fetch.
+     */
+    where: AdminUserWhereUniqueInput
+  }
+
+  /**
+   * AdminUser findFirst
+   */
+  export type AdminUserFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminUser to fetch.
+     */
+    where?: AdminUserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminUsers to fetch.
+     */
+    orderBy?: AdminUserOrderByWithRelationInput | AdminUserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AdminUsers.
+     */
+    cursor?: AdminUserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminUsers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminUsers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AdminUsers.
+     */
+    distinct?: AdminUserScalarFieldEnum | AdminUserScalarFieldEnum[]
+  }
+
+  /**
+   * AdminUser findFirstOrThrow
+   */
+  export type AdminUserFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminUser to fetch.
+     */
+    where?: AdminUserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminUsers to fetch.
+     */
+    orderBy?: AdminUserOrderByWithRelationInput | AdminUserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AdminUsers.
+     */
+    cursor?: AdminUserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminUsers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminUsers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AdminUsers.
+     */
+    distinct?: AdminUserScalarFieldEnum | AdminUserScalarFieldEnum[]
+  }
+
+  /**
+   * AdminUser findMany
+   */
+  export type AdminUserFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminUsers to fetch.
+     */
+    where?: AdminUserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminUsers to fetch.
+     */
+    orderBy?: AdminUserOrderByWithRelationInput | AdminUserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AdminUsers.
+     */
+    cursor?: AdminUserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminUsers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminUsers.
+     */
+    skip?: number
+    distinct?: AdminUserScalarFieldEnum | AdminUserScalarFieldEnum[]
+  }
+
+  /**
+   * AdminUser create
+   */
+  export type AdminUserCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AdminUser.
+     */
+    data: XOR<AdminUserCreateInput, AdminUserUncheckedCreateInput>
+  }
+
+  /**
+   * AdminUser createMany
+   */
+  export type AdminUserCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AdminUsers.
+     */
+    data: AdminUserCreateManyInput | AdminUserCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AdminUser createManyAndReturn
+   */
+  export type AdminUserCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * The data used to create many AdminUsers.
+     */
+    data: AdminUserCreateManyInput | AdminUserCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AdminUser update
+   */
+  export type AdminUserUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AdminUser.
+     */
+    data: XOR<AdminUserUpdateInput, AdminUserUncheckedUpdateInput>
+    /**
+     * Choose, which AdminUser to update.
+     */
+    where: AdminUserWhereUniqueInput
+  }
+
+  /**
+   * AdminUser updateMany
+   */
+  export type AdminUserUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AdminUsers.
+     */
+    data: XOR<AdminUserUpdateManyMutationInput, AdminUserUncheckedUpdateManyInput>
+    /**
+     * Filter which AdminUsers to update
+     */
+    where?: AdminUserWhereInput
+    /**
+     * Limit how many AdminUsers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AdminUser updateManyAndReturn
+   */
+  export type AdminUserUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * The data used to update AdminUsers.
+     */
+    data: XOR<AdminUserUpdateManyMutationInput, AdminUserUncheckedUpdateManyInput>
+    /**
+     * Filter which AdminUsers to update
+     */
+    where?: AdminUserWhereInput
+    /**
+     * Limit how many AdminUsers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AdminUser upsert
+   */
+  export type AdminUserUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AdminUser to update in case it exists.
+     */
+    where: AdminUserWhereUniqueInput
+    /**
+     * In case the AdminUser found by the `where` argument doesn't exist, create a new AdminUser with this data.
+     */
+    create: XOR<AdminUserCreateInput, AdminUserUncheckedCreateInput>
+    /**
+     * In case the AdminUser was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AdminUserUpdateInput, AdminUserUncheckedUpdateInput>
+  }
+
+  /**
+   * AdminUser delete
+   */
+  export type AdminUserDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+    /**
+     * Filter which AdminUser to delete.
+     */
+    where: AdminUserWhereUniqueInput
+  }
+
+  /**
+   * AdminUser deleteMany
+   */
+  export type AdminUserDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AdminUsers to delete
+     */
+    where?: AdminUserWhereInput
+    /**
+     * Limit how many AdminUsers to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AdminUser.refreshTokens
+   */
+  export type AdminUser$refreshTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    where?: AdminRefreshTokenWhereInput
+    orderBy?: AdminRefreshTokenOrderByWithRelationInput | AdminRefreshTokenOrderByWithRelationInput[]
+    cursor?: AdminRefreshTokenWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AdminRefreshTokenScalarFieldEnum | AdminRefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * AdminUser without action
+   */
+  export type AdminUserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminUser
+     */
+    select?: AdminUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminUser
+     */
+    omit?: AdminUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminUserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AdminRefreshToken
+   */
+
+  export type AggregateAdminRefreshToken = {
+    _count: AdminRefreshTokenCountAggregateOutputType | null
+    _min: AdminRefreshTokenMinAggregateOutputType | null
+    _max: AdminRefreshTokenMaxAggregateOutputType | null
+  }
+
+  export type AdminRefreshTokenMinAggregateOutputType = {
+    id: string | null
+    tokenHash: string | null
+    adminId: string | null
+    expiresAt: Date | null
+    revokedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type AdminRefreshTokenMaxAggregateOutputType = {
+    id: string | null
+    tokenHash: string | null
+    adminId: string | null
+    expiresAt: Date | null
+    revokedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type AdminRefreshTokenCountAggregateOutputType = {
+    id: number
+    tokenHash: number
+    adminId: number
+    expiresAt: number
+    revokedAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AdminRefreshTokenMinAggregateInputType = {
+    id?: true
+    tokenHash?: true
+    adminId?: true
+    expiresAt?: true
+    revokedAt?: true
+    createdAt?: true
+  }
+
+  export type AdminRefreshTokenMaxAggregateInputType = {
+    id?: true
+    tokenHash?: true
+    adminId?: true
+    expiresAt?: true
+    revokedAt?: true
+    createdAt?: true
+  }
+
+  export type AdminRefreshTokenCountAggregateInputType = {
+    id?: true
+    tokenHash?: true
+    adminId?: true
+    expiresAt?: true
+    revokedAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AdminRefreshTokenAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AdminRefreshToken to aggregate.
+     */
+    where?: AdminRefreshTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminRefreshTokens to fetch.
+     */
+    orderBy?: AdminRefreshTokenOrderByWithRelationInput | AdminRefreshTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AdminRefreshTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminRefreshTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminRefreshTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AdminRefreshTokens
+    **/
+    _count?: true | AdminRefreshTokenCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AdminRefreshTokenMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AdminRefreshTokenMaxAggregateInputType
+  }
+
+  export type GetAdminRefreshTokenAggregateType<T extends AdminRefreshTokenAggregateArgs> = {
+        [P in keyof T & keyof AggregateAdminRefreshToken]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAdminRefreshToken[P]>
+      : GetScalarType<T[P], AggregateAdminRefreshToken[P]>
+  }
+
+
+
+
+  export type AdminRefreshTokenGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AdminRefreshTokenWhereInput
+    orderBy?: AdminRefreshTokenOrderByWithAggregationInput | AdminRefreshTokenOrderByWithAggregationInput[]
+    by: AdminRefreshTokenScalarFieldEnum[] | AdminRefreshTokenScalarFieldEnum
+    having?: AdminRefreshTokenScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AdminRefreshTokenCountAggregateInputType | true
+    _min?: AdminRefreshTokenMinAggregateInputType
+    _max?: AdminRefreshTokenMaxAggregateInputType
+  }
+
+  export type AdminRefreshTokenGroupByOutputType = {
+    id: string
+    tokenHash: string
+    adminId: string
+    expiresAt: Date
+    revokedAt: Date | null
+    createdAt: Date
+    _count: AdminRefreshTokenCountAggregateOutputType | null
+    _min: AdminRefreshTokenMinAggregateOutputType | null
+    _max: AdminRefreshTokenMaxAggregateOutputType | null
+  }
+
+  type GetAdminRefreshTokenGroupByPayload<T extends AdminRefreshTokenGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AdminRefreshTokenGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AdminRefreshTokenGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AdminRefreshTokenGroupByOutputType[P]>
+            : GetScalarType<T[P], AdminRefreshTokenGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AdminRefreshTokenSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tokenHash?: boolean
+    adminId?: boolean
+    expiresAt?: boolean
+    revokedAt?: boolean
+    createdAt?: boolean
+    admin?: boolean | AdminUserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["adminRefreshToken"]>
+
+  export type AdminRefreshTokenSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tokenHash?: boolean
+    adminId?: boolean
+    expiresAt?: boolean
+    revokedAt?: boolean
+    createdAt?: boolean
+    admin?: boolean | AdminUserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["adminRefreshToken"]>
+
+  export type AdminRefreshTokenSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tokenHash?: boolean
+    adminId?: boolean
+    expiresAt?: boolean
+    revokedAt?: boolean
+    createdAt?: boolean
+    admin?: boolean | AdminUserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["adminRefreshToken"]>
+
+  export type AdminRefreshTokenSelectScalar = {
+    id?: boolean
+    tokenHash?: boolean
+    adminId?: boolean
+    expiresAt?: boolean
+    revokedAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type AdminRefreshTokenOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tokenHash" | "adminId" | "expiresAt" | "revokedAt" | "createdAt", ExtArgs["result"]["adminRefreshToken"]>
+  export type AdminRefreshTokenInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    admin?: boolean | AdminUserDefaultArgs<ExtArgs>
+  }
+  export type AdminRefreshTokenIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    admin?: boolean | AdminUserDefaultArgs<ExtArgs>
+  }
+  export type AdminRefreshTokenIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    admin?: boolean | AdminUserDefaultArgs<ExtArgs>
+  }
+
+  export type $AdminRefreshTokenPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AdminRefreshToken"
+    objects: {
+      admin: Prisma.$AdminUserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tokenHash: string
+      adminId: string
+      expiresAt: Date
+      revokedAt: Date | null
+      createdAt: Date
+    }, ExtArgs["result"]["adminRefreshToken"]>
+    composites: {}
+  }
+
+  type AdminRefreshTokenGetPayload<S extends boolean | null | undefined | AdminRefreshTokenDefaultArgs> = $Result.GetResult<Prisma.$AdminRefreshTokenPayload, S>
+
+  type AdminRefreshTokenCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AdminRefreshTokenFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AdminRefreshTokenCountAggregateInputType | true
+    }
+
+  export interface AdminRefreshTokenDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AdminRefreshToken'], meta: { name: 'AdminRefreshToken' } }
+    /**
+     * Find zero or one AdminRefreshToken that matches the filter.
+     * @param {AdminRefreshTokenFindUniqueArgs} args - Arguments to find a AdminRefreshToken
+     * @example
+     * // Get one AdminRefreshToken
+     * const adminRefreshToken = await prisma.adminRefreshToken.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AdminRefreshTokenFindUniqueArgs>(args: SelectSubset<T, AdminRefreshTokenFindUniqueArgs<ExtArgs>>): Prisma__AdminRefreshTokenClient<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AdminRefreshToken that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AdminRefreshTokenFindUniqueOrThrowArgs} args - Arguments to find a AdminRefreshToken
+     * @example
+     * // Get one AdminRefreshToken
+     * const adminRefreshToken = await prisma.adminRefreshToken.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AdminRefreshTokenFindUniqueOrThrowArgs>(args: SelectSubset<T, AdminRefreshTokenFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AdminRefreshTokenClient<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AdminRefreshToken that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminRefreshTokenFindFirstArgs} args - Arguments to find a AdminRefreshToken
+     * @example
+     * // Get one AdminRefreshToken
+     * const adminRefreshToken = await prisma.adminRefreshToken.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AdminRefreshTokenFindFirstArgs>(args?: SelectSubset<T, AdminRefreshTokenFindFirstArgs<ExtArgs>>): Prisma__AdminRefreshTokenClient<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AdminRefreshToken that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminRefreshTokenFindFirstOrThrowArgs} args - Arguments to find a AdminRefreshToken
+     * @example
+     * // Get one AdminRefreshToken
+     * const adminRefreshToken = await prisma.adminRefreshToken.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AdminRefreshTokenFindFirstOrThrowArgs>(args?: SelectSubset<T, AdminRefreshTokenFindFirstOrThrowArgs<ExtArgs>>): Prisma__AdminRefreshTokenClient<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AdminRefreshTokens that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminRefreshTokenFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AdminRefreshTokens
+     * const adminRefreshTokens = await prisma.adminRefreshToken.findMany()
+     * 
+     * // Get first 10 AdminRefreshTokens
+     * const adminRefreshTokens = await prisma.adminRefreshToken.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const adminRefreshTokenWithIdOnly = await prisma.adminRefreshToken.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AdminRefreshTokenFindManyArgs>(args?: SelectSubset<T, AdminRefreshTokenFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AdminRefreshToken.
+     * @param {AdminRefreshTokenCreateArgs} args - Arguments to create a AdminRefreshToken.
+     * @example
+     * // Create one AdminRefreshToken
+     * const AdminRefreshToken = await prisma.adminRefreshToken.create({
+     *   data: {
+     *     // ... data to create a AdminRefreshToken
+     *   }
+     * })
+     * 
+     */
+    create<T extends AdminRefreshTokenCreateArgs>(args: SelectSubset<T, AdminRefreshTokenCreateArgs<ExtArgs>>): Prisma__AdminRefreshTokenClient<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AdminRefreshTokens.
+     * @param {AdminRefreshTokenCreateManyArgs} args - Arguments to create many AdminRefreshTokens.
+     * @example
+     * // Create many AdminRefreshTokens
+     * const adminRefreshToken = await prisma.adminRefreshToken.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AdminRefreshTokenCreateManyArgs>(args?: SelectSubset<T, AdminRefreshTokenCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AdminRefreshTokens and returns the data saved in the database.
+     * @param {AdminRefreshTokenCreateManyAndReturnArgs} args - Arguments to create many AdminRefreshTokens.
+     * @example
+     * // Create many AdminRefreshTokens
+     * const adminRefreshToken = await prisma.adminRefreshToken.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AdminRefreshTokens and only return the `id`
+     * const adminRefreshTokenWithIdOnly = await prisma.adminRefreshToken.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AdminRefreshTokenCreateManyAndReturnArgs>(args?: SelectSubset<T, AdminRefreshTokenCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AdminRefreshToken.
+     * @param {AdminRefreshTokenDeleteArgs} args - Arguments to delete one AdminRefreshToken.
+     * @example
+     * // Delete one AdminRefreshToken
+     * const AdminRefreshToken = await prisma.adminRefreshToken.delete({
+     *   where: {
+     *     // ... filter to delete one AdminRefreshToken
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AdminRefreshTokenDeleteArgs>(args: SelectSubset<T, AdminRefreshTokenDeleteArgs<ExtArgs>>): Prisma__AdminRefreshTokenClient<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AdminRefreshToken.
+     * @param {AdminRefreshTokenUpdateArgs} args - Arguments to update one AdminRefreshToken.
+     * @example
+     * // Update one AdminRefreshToken
+     * const adminRefreshToken = await prisma.adminRefreshToken.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AdminRefreshTokenUpdateArgs>(args: SelectSubset<T, AdminRefreshTokenUpdateArgs<ExtArgs>>): Prisma__AdminRefreshTokenClient<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AdminRefreshTokens.
+     * @param {AdminRefreshTokenDeleteManyArgs} args - Arguments to filter AdminRefreshTokens to delete.
+     * @example
+     * // Delete a few AdminRefreshTokens
+     * const { count } = await prisma.adminRefreshToken.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AdminRefreshTokenDeleteManyArgs>(args?: SelectSubset<T, AdminRefreshTokenDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AdminRefreshTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminRefreshTokenUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AdminRefreshTokens
+     * const adminRefreshToken = await prisma.adminRefreshToken.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AdminRefreshTokenUpdateManyArgs>(args: SelectSubset<T, AdminRefreshTokenUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AdminRefreshTokens and returns the data updated in the database.
+     * @param {AdminRefreshTokenUpdateManyAndReturnArgs} args - Arguments to update many AdminRefreshTokens.
+     * @example
+     * // Update many AdminRefreshTokens
+     * const adminRefreshToken = await prisma.adminRefreshToken.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AdminRefreshTokens and only return the `id`
+     * const adminRefreshTokenWithIdOnly = await prisma.adminRefreshToken.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AdminRefreshTokenUpdateManyAndReturnArgs>(args: SelectSubset<T, AdminRefreshTokenUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AdminRefreshToken.
+     * @param {AdminRefreshTokenUpsertArgs} args - Arguments to update or create a AdminRefreshToken.
+     * @example
+     * // Update or create a AdminRefreshToken
+     * const adminRefreshToken = await prisma.adminRefreshToken.upsert({
+     *   create: {
+     *     // ... data to create a AdminRefreshToken
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AdminRefreshToken we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AdminRefreshTokenUpsertArgs>(args: SelectSubset<T, AdminRefreshTokenUpsertArgs<ExtArgs>>): Prisma__AdminRefreshTokenClient<$Result.GetResult<Prisma.$AdminRefreshTokenPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AdminRefreshTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminRefreshTokenCountArgs} args - Arguments to filter AdminRefreshTokens to count.
+     * @example
+     * // Count the number of AdminRefreshTokens
+     * const count = await prisma.adminRefreshToken.count({
+     *   where: {
+     *     // ... the filter for the AdminRefreshTokens we want to count
+     *   }
+     * })
+    **/
+    count<T extends AdminRefreshTokenCountArgs>(
+      args?: Subset<T, AdminRefreshTokenCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AdminRefreshTokenCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AdminRefreshToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminRefreshTokenAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AdminRefreshTokenAggregateArgs>(args: Subset<T, AdminRefreshTokenAggregateArgs>): Prisma.PrismaPromise<GetAdminRefreshTokenAggregateType<T>>
+
+    /**
+     * Group by AdminRefreshToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminRefreshTokenGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AdminRefreshTokenGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AdminRefreshTokenGroupByArgs['orderBy'] }
+        : { orderBy?: AdminRefreshTokenGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AdminRefreshTokenGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAdminRefreshTokenGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AdminRefreshToken model
+   */
+  readonly fields: AdminRefreshTokenFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AdminRefreshToken.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AdminRefreshTokenClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    admin<T extends AdminUserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AdminUserDefaultArgs<ExtArgs>>): Prisma__AdminUserClient<$Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AdminRefreshToken model
+   */
+  interface AdminRefreshTokenFieldRefs {
+    readonly id: FieldRef<"AdminRefreshToken", 'String'>
+    readonly tokenHash: FieldRef<"AdminRefreshToken", 'String'>
+    readonly adminId: FieldRef<"AdminRefreshToken", 'String'>
+    readonly expiresAt: FieldRef<"AdminRefreshToken", 'DateTime'>
+    readonly revokedAt: FieldRef<"AdminRefreshToken", 'DateTime'>
+    readonly createdAt: FieldRef<"AdminRefreshToken", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AdminRefreshToken findUnique
+   */
+  export type AdminRefreshTokenFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminRefreshToken to fetch.
+     */
+    where: AdminRefreshTokenWhereUniqueInput
+  }
+
+  /**
+   * AdminRefreshToken findUniqueOrThrow
+   */
+  export type AdminRefreshTokenFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminRefreshToken to fetch.
+     */
+    where: AdminRefreshTokenWhereUniqueInput
+  }
+
+  /**
+   * AdminRefreshToken findFirst
+   */
+  export type AdminRefreshTokenFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminRefreshToken to fetch.
+     */
+    where?: AdminRefreshTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminRefreshTokens to fetch.
+     */
+    orderBy?: AdminRefreshTokenOrderByWithRelationInput | AdminRefreshTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AdminRefreshTokens.
+     */
+    cursor?: AdminRefreshTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminRefreshTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminRefreshTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AdminRefreshTokens.
+     */
+    distinct?: AdminRefreshTokenScalarFieldEnum | AdminRefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * AdminRefreshToken findFirstOrThrow
+   */
+  export type AdminRefreshTokenFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminRefreshToken to fetch.
+     */
+    where?: AdminRefreshTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminRefreshTokens to fetch.
+     */
+    orderBy?: AdminRefreshTokenOrderByWithRelationInput | AdminRefreshTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AdminRefreshTokens.
+     */
+    cursor?: AdminRefreshTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminRefreshTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminRefreshTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AdminRefreshTokens.
+     */
+    distinct?: AdminRefreshTokenScalarFieldEnum | AdminRefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * AdminRefreshToken findMany
+   */
+  export type AdminRefreshTokenFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminRefreshTokens to fetch.
+     */
+    where?: AdminRefreshTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminRefreshTokens to fetch.
+     */
+    orderBy?: AdminRefreshTokenOrderByWithRelationInput | AdminRefreshTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AdminRefreshTokens.
+     */
+    cursor?: AdminRefreshTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminRefreshTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminRefreshTokens.
+     */
+    skip?: number
+    distinct?: AdminRefreshTokenScalarFieldEnum | AdminRefreshTokenScalarFieldEnum[]
+  }
+
+  /**
+   * AdminRefreshToken create
+   */
+  export type AdminRefreshTokenCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AdminRefreshToken.
+     */
+    data: XOR<AdminRefreshTokenCreateInput, AdminRefreshTokenUncheckedCreateInput>
+  }
+
+  /**
+   * AdminRefreshToken createMany
+   */
+  export type AdminRefreshTokenCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AdminRefreshTokens.
+     */
+    data: AdminRefreshTokenCreateManyInput | AdminRefreshTokenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AdminRefreshToken createManyAndReturn
+   */
+  export type AdminRefreshTokenCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * The data used to create many AdminRefreshTokens.
+     */
+    data: AdminRefreshTokenCreateManyInput | AdminRefreshTokenCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AdminRefreshToken update
+   */
+  export type AdminRefreshTokenUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AdminRefreshToken.
+     */
+    data: XOR<AdminRefreshTokenUpdateInput, AdminRefreshTokenUncheckedUpdateInput>
+    /**
+     * Choose, which AdminRefreshToken to update.
+     */
+    where: AdminRefreshTokenWhereUniqueInput
+  }
+
+  /**
+   * AdminRefreshToken updateMany
+   */
+  export type AdminRefreshTokenUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AdminRefreshTokens.
+     */
+    data: XOR<AdminRefreshTokenUpdateManyMutationInput, AdminRefreshTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which AdminRefreshTokens to update
+     */
+    where?: AdminRefreshTokenWhereInput
+    /**
+     * Limit how many AdminRefreshTokens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AdminRefreshToken updateManyAndReturn
+   */
+  export type AdminRefreshTokenUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * The data used to update AdminRefreshTokens.
+     */
+    data: XOR<AdminRefreshTokenUpdateManyMutationInput, AdminRefreshTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which AdminRefreshTokens to update
+     */
+    where?: AdminRefreshTokenWhereInput
+    /**
+     * Limit how many AdminRefreshTokens to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AdminRefreshToken upsert
+   */
+  export type AdminRefreshTokenUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AdminRefreshToken to update in case it exists.
+     */
+    where: AdminRefreshTokenWhereUniqueInput
+    /**
+     * In case the AdminRefreshToken found by the `where` argument doesn't exist, create a new AdminRefreshToken with this data.
+     */
+    create: XOR<AdminRefreshTokenCreateInput, AdminRefreshTokenUncheckedCreateInput>
+    /**
+     * In case the AdminRefreshToken was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AdminRefreshTokenUpdateInput, AdminRefreshTokenUncheckedUpdateInput>
+  }
+
+  /**
+   * AdminRefreshToken delete
+   */
+  export type AdminRefreshTokenDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+    /**
+     * Filter which AdminRefreshToken to delete.
+     */
+    where: AdminRefreshTokenWhereUniqueInput
+  }
+
+  /**
+   * AdminRefreshToken deleteMany
+   */
+  export type AdminRefreshTokenDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AdminRefreshTokens to delete
+     */
+    where?: AdminRefreshTokenWhereInput
+    /**
+     * Limit how many AdminRefreshTokens to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AdminRefreshToken without action
+   */
+  export type AdminRefreshTokenDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminRefreshToken
+     */
+    select?: AdminRefreshTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminRefreshToken
+     */
+    omit?: AdminRefreshTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminRefreshTokenInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model InstitutionFile
    */
 
@@ -38455,6 +42518,45 @@ export namespace Prisma {
   export type InstitutionWalletScalarFieldEnum = (typeof InstitutionWalletScalarFieldEnum)[keyof typeof InstitutionWalletScalarFieldEnum]
 
 
+  export const InstitutionAccountScalarFieldEnum: {
+    id: 'id',
+    clientId: 'clientId',
+    name: 'name',
+    label: 'label',
+    accountType: 'accountType',
+    description: 'description',
+    walletAddress: 'walletAddress',
+    chain: 'chain',
+    walletProvider: 'walletProvider',
+    custodyType: 'custodyType',
+    verificationStatus: 'verificationStatus',
+    verifiedAt: 'verifiedAt',
+    verificationNotes: 'verificationNotes',
+    maxTransactionAmount: 'maxTransactionAmount',
+    minTransactionAmount: 'minTransactionAmount',
+    dailyVolumeLimit: 'dailyVolumeLimit',
+    monthlyVolumeLimit: 'monthlyVolumeLimit',
+    dailyTransactionCountLimit: 'dailyTransactionCountLimit',
+    monthlyTransactionCountLimit: 'monthlyTransactionCountLimit',
+    approvalMode: 'approvalMode',
+    approvalThreshold: 'approvalThreshold',
+    whitelistedAddresses: 'whitelistedAddresses',
+    whitelistEnforced: 'whitelistEnforced',
+    notificationEmail: 'notificationEmail',
+    webhookUrl: 'webhookUrl',
+    notifyOnEscrowCreated: 'notifyOnEscrowCreated',
+    notifyOnEscrowFunded: 'notifyOnEscrowFunded',
+    notifyOnEscrowReleased: 'notifyOnEscrowReleased',
+    notifyOnComplianceAlert: 'notifyOnComplianceAlert',
+    isDefault: 'isDefault',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InstitutionAccountScalarFieldEnum = (typeof InstitutionAccountScalarFieldEnum)[keyof typeof InstitutionAccountScalarFieldEnum]
+
+
   export const InstitutionRefreshTokenScalarFieldEnum: {
     id: 'id',
     tokenHash: 'tokenHash',
@@ -38614,6 +42716,33 @@ export namespace Prisma {
   };
 
   export type InstitutionApprovedTokenScalarFieldEnum = (typeof InstitutionApprovedTokenScalarFieldEnum)[keyof typeof InstitutionApprovedTokenScalarFieldEnum]
+
+
+  export const AdminUserScalarFieldEnum: {
+    id: 'id',
+    email: 'email',
+    passwordHash: 'passwordHash',
+    name: 'name',
+    role: 'role',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    lastLoginAt: 'lastLoginAt'
+  };
+
+  export type AdminUserScalarFieldEnum = (typeof AdminUserScalarFieldEnum)[keyof typeof AdminUserScalarFieldEnum]
+
+
+  export const AdminRefreshTokenScalarFieldEnum: {
+    id: 'id',
+    tokenHash: 'tokenHash',
+    adminId: 'adminId',
+    expiresAt: 'expiresAt',
+    revokedAt: 'revokedAt',
+    createdAt: 'createdAt'
+  };
+
+  export type AdminRefreshTokenScalarFieldEnum = (typeof AdminRefreshTokenScalarFieldEnum)[keyof typeof AdminRefreshTokenScalarFieldEnum]
 
 
   export const InstitutionFileScalarFieldEnum: {
@@ -39098,6 +43227,48 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'InstitutionAccountType'
+   */
+  export type EnumInstitutionAccountTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionAccountType'>
+    
+
+
+  /**
+   * Reference to a field of type 'InstitutionAccountType[]'
+   */
+  export type ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionAccountType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'AccountVerificationStatus'
+   */
+  export type EnumAccountVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccountVerificationStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'AccountVerificationStatus[]'
+   */
+  export type ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccountVerificationStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ApprovalMode'
+   */
+  export type EnumApprovalModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'ApprovalMode[]'
+   */
+  export type ListEnumApprovalModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalMode[]'>
+    
+
+
+  /**
    * Reference to a field of type 'InstitutionConditionType'
    */
   export type EnumInstitutionConditionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionConditionType'>
@@ -39150,6 +43321,20 @@ export namespace Prisma {
    * Reference to a field of type 'CorridorStatus[]'
    */
   export type ListEnumCorridorStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CorridorStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'AdminRole'
+   */
+  export type EnumAdminRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AdminRole'>
+    
+
+
+  /**
+   * Reference to a field of type 'AdminRole[]'
+   */
+  export type ListEnumAdminRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AdminRole[]'>
     
 
 
@@ -40997,6 +45182,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     files?: InstitutionFileListRelationFilter
     wallets?: InstitutionWalletListRelationFilter
+    accounts?: InstitutionAccountListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
   }
 
@@ -41070,6 +45256,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogOrderByRelationAggregateInput
     files?: InstitutionFileOrderByRelationAggregateInput
     wallets?: InstitutionWalletOrderByRelationAggregateInput
+    accounts?: InstitutionAccountOrderByRelationAggregateInput
     aiAnalyses?: InstitutionAiAnalysisOrderByRelationAggregateInput
   }
 
@@ -41146,6 +45333,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     files?: InstitutionFileListRelationFilter
     wallets?: InstitutionWalletListRelationFilter
+    accounts?: InstitutionAccountListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
   }, "id" | "email">
 
@@ -41370,6 +45558,204 @@ export namespace Prisma {
     isSettlement?: BoolWithAggregatesFilter<"InstitutionWallet"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionWallet"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionWallet"> | Date | string
+  }
+
+  export type InstitutionAccountWhereInput = {
+    AND?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
+    OR?: InstitutionAccountWhereInput[]
+    NOT?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
+    id?: StringFilter<"InstitutionAccount"> | string
+    clientId?: StringFilter<"InstitutionAccount"> | string
+    name?: StringFilter<"InstitutionAccount"> | string
+    label?: StringNullableFilter<"InstitutionAccount"> | string | null
+    accountType?: EnumInstitutionAccountTypeFilter<"InstitutionAccount"> | $Enums.InstitutionAccountType
+    description?: StringNullableFilter<"InstitutionAccount"> | string | null
+    walletAddress?: StringFilter<"InstitutionAccount"> | string
+    chain?: StringFilter<"InstitutionAccount"> | string
+    walletProvider?: StringNullableFilter<"InstitutionAccount"> | string | null
+    custodyType?: EnumWalletCustodyTypeNullableFilter<"InstitutionAccount"> | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFilter<"InstitutionAccount"> | $Enums.AccountVerificationStatus
+    verifiedAt?: DateTimeNullableFilter<"InstitutionAccount"> | Date | string | null
+    verificationNotes?: StringNullableFilter<"InstitutionAccount"> | string | null
+    maxTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    monthlyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    approvalMode?: EnumApprovalModeFilter<"InstitutionAccount"> | $Enums.ApprovalMode
+    approvalThreshold?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: StringNullableListFilter<"InstitutionAccount">
+    whitelistEnforced?: BoolFilter<"InstitutionAccount"> | boolean
+    notificationEmail?: StringNullableFilter<"InstitutionAccount"> | string | null
+    webhookUrl?: StringNullableFilter<"InstitutionAccount"> | string | null
+    notifyOnEscrowCreated?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    isDefault?: BoolFilter<"InstitutionAccount"> | boolean
+    isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }
+
+  export type InstitutionAccountOrderByWithRelationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrderInput | SortOrder
+    accountType?: SortOrder
+    description?: SortOrderInput | SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrderInput | SortOrder
+    custodyType?: SortOrderInput | SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    verificationNotes?: SortOrderInput | SortOrder
+    maxTransactionAmount?: SortOrderInput | SortOrder
+    minTransactionAmount?: SortOrderInput | SortOrder
+    dailyVolumeLimit?: SortOrderInput | SortOrder
+    monthlyVolumeLimit?: SortOrderInput | SortOrder
+    dailyTransactionCountLimit?: SortOrderInput | SortOrder
+    monthlyTransactionCountLimit?: SortOrderInput | SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrderInput | SortOrder
+    whitelistedAddresses?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrderInput | SortOrder
+    webhookUrl?: SortOrderInput | SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+  }
+
+  export type InstitutionAccountWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    clientId_name?: InstitutionAccountClientIdNameCompoundUniqueInput
+    AND?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
+    OR?: InstitutionAccountWhereInput[]
+    NOT?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
+    clientId?: StringFilter<"InstitutionAccount"> | string
+    name?: StringFilter<"InstitutionAccount"> | string
+    label?: StringNullableFilter<"InstitutionAccount"> | string | null
+    accountType?: EnumInstitutionAccountTypeFilter<"InstitutionAccount"> | $Enums.InstitutionAccountType
+    description?: StringNullableFilter<"InstitutionAccount"> | string | null
+    walletAddress?: StringFilter<"InstitutionAccount"> | string
+    chain?: StringFilter<"InstitutionAccount"> | string
+    walletProvider?: StringNullableFilter<"InstitutionAccount"> | string | null
+    custodyType?: EnumWalletCustodyTypeNullableFilter<"InstitutionAccount"> | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFilter<"InstitutionAccount"> | $Enums.AccountVerificationStatus
+    verifiedAt?: DateTimeNullableFilter<"InstitutionAccount"> | Date | string | null
+    verificationNotes?: StringNullableFilter<"InstitutionAccount"> | string | null
+    maxTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    monthlyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    approvalMode?: EnumApprovalModeFilter<"InstitutionAccount"> | $Enums.ApprovalMode
+    approvalThreshold?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: StringNullableListFilter<"InstitutionAccount">
+    whitelistEnforced?: BoolFilter<"InstitutionAccount"> | boolean
+    notificationEmail?: StringNullableFilter<"InstitutionAccount"> | string | null
+    webhookUrl?: StringNullableFilter<"InstitutionAccount"> | string | null
+    notifyOnEscrowCreated?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    isDefault?: BoolFilter<"InstitutionAccount"> | boolean
+    isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }, "id" | "clientId_name">
+
+  export type InstitutionAccountOrderByWithAggregationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrderInput | SortOrder
+    accountType?: SortOrder
+    description?: SortOrderInput | SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrderInput | SortOrder
+    custodyType?: SortOrderInput | SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    verificationNotes?: SortOrderInput | SortOrder
+    maxTransactionAmount?: SortOrderInput | SortOrder
+    minTransactionAmount?: SortOrderInput | SortOrder
+    dailyVolumeLimit?: SortOrderInput | SortOrder
+    monthlyVolumeLimit?: SortOrderInput | SortOrder
+    dailyTransactionCountLimit?: SortOrderInput | SortOrder
+    monthlyTransactionCountLimit?: SortOrderInput | SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrderInput | SortOrder
+    whitelistedAddresses?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrderInput | SortOrder
+    webhookUrl?: SortOrderInput | SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InstitutionAccountCountOrderByAggregateInput
+    _avg?: InstitutionAccountAvgOrderByAggregateInput
+    _max?: InstitutionAccountMaxOrderByAggregateInput
+    _min?: InstitutionAccountMinOrderByAggregateInput
+    _sum?: InstitutionAccountSumOrderByAggregateInput
+  }
+
+  export type InstitutionAccountScalarWhereWithAggregatesInput = {
+    AND?: InstitutionAccountScalarWhereWithAggregatesInput | InstitutionAccountScalarWhereWithAggregatesInput[]
+    OR?: InstitutionAccountScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionAccountScalarWhereWithAggregatesInput | InstitutionAccountScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    name?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    label?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    accountType?: EnumInstitutionAccountTypeWithAggregatesFilter<"InstitutionAccount"> | $Enums.InstitutionAccountType
+    description?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    walletAddress?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    chain?: StringWithAggregatesFilter<"InstitutionAccount"> | string
+    walletProvider?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    custodyType?: EnumWalletCustodyTypeNullableWithAggregatesFilter<"InstitutionAccount"> | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusWithAggregatesFilter<"InstitutionAccount"> | $Enums.AccountVerificationStatus
+    verifiedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionAccount"> | Date | string | null
+    verificationNotes?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    maxTransactionAmount?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: IntNullableWithAggregatesFilter<"InstitutionAccount"> | number | null
+    monthlyTransactionCountLimit?: IntNullableWithAggregatesFilter<"InstitutionAccount"> | number | null
+    approvalMode?: EnumApprovalModeWithAggregatesFilter<"InstitutionAccount"> | $Enums.ApprovalMode
+    approvalThreshold?: DecimalNullableWithAggregatesFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: StringNullableListFilter<"InstitutionAccount">
+    whitelistEnforced?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    notificationEmail?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    webhookUrl?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+    notifyOnEscrowCreated?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowFunded?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowReleased?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    notifyOnComplianceAlert?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    isDefault?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    isActive?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
   }
 
   export type InstitutionRefreshTokenWhereInput = {
@@ -42199,6 +46585,141 @@ export namespace Prisma {
     aminaApproved?: BoolWithAggregatesFilter<"InstitutionApprovedToken"> | boolean
     addedAt?: DateTimeWithAggregatesFilter<"InstitutionApprovedToken"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionApprovedToken"> | Date | string
+  }
+
+  export type AdminUserWhereInput = {
+    AND?: AdminUserWhereInput | AdminUserWhereInput[]
+    OR?: AdminUserWhereInput[]
+    NOT?: AdminUserWhereInput | AdminUserWhereInput[]
+    id?: StringFilter<"AdminUser"> | string
+    email?: StringFilter<"AdminUser"> | string
+    passwordHash?: StringFilter<"AdminUser"> | string
+    name?: StringFilter<"AdminUser"> | string
+    role?: EnumAdminRoleFilter<"AdminUser"> | $Enums.AdminRole
+    isActive?: BoolFilter<"AdminUser"> | boolean
+    createdAt?: DateTimeFilter<"AdminUser"> | Date | string
+    updatedAt?: DateTimeFilter<"AdminUser"> | Date | string
+    lastLoginAt?: DateTimeNullableFilter<"AdminUser"> | Date | string | null
+    refreshTokens?: AdminRefreshTokenListRelationFilter
+  }
+
+  export type AdminUserOrderByWithRelationInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
+    refreshTokens?: AdminRefreshTokenOrderByRelationAggregateInput
+  }
+
+  export type AdminUserWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    email?: string
+    AND?: AdminUserWhereInput | AdminUserWhereInput[]
+    OR?: AdminUserWhereInput[]
+    NOT?: AdminUserWhereInput | AdminUserWhereInput[]
+    passwordHash?: StringFilter<"AdminUser"> | string
+    name?: StringFilter<"AdminUser"> | string
+    role?: EnumAdminRoleFilter<"AdminUser"> | $Enums.AdminRole
+    isActive?: BoolFilter<"AdminUser"> | boolean
+    createdAt?: DateTimeFilter<"AdminUser"> | Date | string
+    updatedAt?: DateTimeFilter<"AdminUser"> | Date | string
+    lastLoginAt?: DateTimeNullableFilter<"AdminUser"> | Date | string | null
+    refreshTokens?: AdminRefreshTokenListRelationFilter
+  }, "id" | "email">
+
+  export type AdminUserOrderByWithAggregationInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
+    _count?: AdminUserCountOrderByAggregateInput
+    _max?: AdminUserMaxOrderByAggregateInput
+    _min?: AdminUserMinOrderByAggregateInput
+  }
+
+  export type AdminUserScalarWhereWithAggregatesInput = {
+    AND?: AdminUserScalarWhereWithAggregatesInput | AdminUserScalarWhereWithAggregatesInput[]
+    OR?: AdminUserScalarWhereWithAggregatesInput[]
+    NOT?: AdminUserScalarWhereWithAggregatesInput | AdminUserScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AdminUser"> | string
+    email?: StringWithAggregatesFilter<"AdminUser"> | string
+    passwordHash?: StringWithAggregatesFilter<"AdminUser"> | string
+    name?: StringWithAggregatesFilter<"AdminUser"> | string
+    role?: EnumAdminRoleWithAggregatesFilter<"AdminUser"> | $Enums.AdminRole
+    isActive?: BoolWithAggregatesFilter<"AdminUser"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"AdminUser"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AdminUser"> | Date | string
+    lastLoginAt?: DateTimeNullableWithAggregatesFilter<"AdminUser"> | Date | string | null
+  }
+
+  export type AdminRefreshTokenWhereInput = {
+    AND?: AdminRefreshTokenWhereInput | AdminRefreshTokenWhereInput[]
+    OR?: AdminRefreshTokenWhereInput[]
+    NOT?: AdminRefreshTokenWhereInput | AdminRefreshTokenWhereInput[]
+    id?: StringFilter<"AdminRefreshToken"> | string
+    tokenHash?: StringFilter<"AdminRefreshToken"> | string
+    adminId?: StringFilter<"AdminRefreshToken"> | string
+    expiresAt?: DateTimeFilter<"AdminRefreshToken"> | Date | string
+    revokedAt?: DateTimeNullableFilter<"AdminRefreshToken"> | Date | string | null
+    createdAt?: DateTimeFilter<"AdminRefreshToken"> | Date | string
+    admin?: XOR<AdminUserScalarRelationFilter, AdminUserWhereInput>
+  }
+
+  export type AdminRefreshTokenOrderByWithRelationInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    adminId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    admin?: AdminUserOrderByWithRelationInput
+  }
+
+  export type AdminRefreshTokenWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tokenHash?: string
+    AND?: AdminRefreshTokenWhereInput | AdminRefreshTokenWhereInput[]
+    OR?: AdminRefreshTokenWhereInput[]
+    NOT?: AdminRefreshTokenWhereInput | AdminRefreshTokenWhereInput[]
+    adminId?: StringFilter<"AdminRefreshToken"> | string
+    expiresAt?: DateTimeFilter<"AdminRefreshToken"> | Date | string
+    revokedAt?: DateTimeNullableFilter<"AdminRefreshToken"> | Date | string | null
+    createdAt?: DateTimeFilter<"AdminRefreshToken"> | Date | string
+    admin?: XOR<AdminUserScalarRelationFilter, AdminUserWhereInput>
+  }, "id" | "tokenHash">
+
+  export type AdminRefreshTokenOrderByWithAggregationInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    adminId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: AdminRefreshTokenCountOrderByAggregateInput
+    _max?: AdminRefreshTokenMaxOrderByAggregateInput
+    _min?: AdminRefreshTokenMinOrderByAggregateInput
+  }
+
+  export type AdminRefreshTokenScalarWhereWithAggregatesInput = {
+    AND?: AdminRefreshTokenScalarWhereWithAggregatesInput | AdminRefreshTokenScalarWhereWithAggregatesInput[]
+    OR?: AdminRefreshTokenScalarWhereWithAggregatesInput[]
+    NOT?: AdminRefreshTokenScalarWhereWithAggregatesInput | AdminRefreshTokenScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AdminRefreshToken"> | string
+    tokenHash?: StringWithAggregatesFilter<"AdminRefreshToken"> | string
+    adminId?: StringWithAggregatesFilter<"AdminRefreshToken"> | string
+    expiresAt?: DateTimeWithAggregatesFilter<"AdminRefreshToken"> | Date | string
+    revokedAt?: DateTimeNullableWithAggregatesFilter<"AdminRefreshToken"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AdminRefreshToken"> | Date | string
   }
 
   export type InstitutionFileWhereInput = {
@@ -44403,6 +48924,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -44476,6 +48998,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -44549,6 +49072,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -44622,6 +49146,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -44913,6 +49438,257 @@ export namespace Prisma {
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     isPrimary?: BoolFieldUpdateOperationsInput | boolean
     isSettlement?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountCreateInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutAccountsInput
+  }
+
+  export type InstitutionAccountUncheckedCreateInput = {
+    id?: string
+    clientId: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput
+  }
+
+  export type InstitutionAccountUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountCreateManyInput = {
+    id?: string
+    clientId: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -45860,6 +50636,156 @@ export namespace Prisma {
     aminaApproved?: BoolFieldUpdateOperationsInput | boolean
     addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminUserCreateInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    name: string
+    role?: $Enums.AdminRole
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: AdminRefreshTokenCreateNestedManyWithoutAdminInput
+  }
+
+  export type AdminUserUncheckedCreateInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    name: string
+    role?: $Enums.AdminRole
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    refreshTokens?: AdminRefreshTokenUncheckedCreateNestedManyWithoutAdminInput
+  }
+
+  export type AdminUserUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: AdminRefreshTokenUpdateManyWithoutAdminNestedInput
+  }
+
+  export type AdminUserUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refreshTokens?: AdminRefreshTokenUncheckedUpdateManyWithoutAdminNestedInput
+  }
+
+  export type AdminUserCreateManyInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    name: string
+    role?: $Enums.AdminRole
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+  }
+
+  export type AdminUserUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AdminUserUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AdminRefreshTokenCreateInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+    admin: AdminUserCreateNestedOneWithoutRefreshTokensInput
+  }
+
+  export type AdminRefreshTokenUncheckedCreateInput = {
+    id?: string
+    tokenHash: string
+    adminId: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type AdminRefreshTokenUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    admin?: AdminUserUpdateOneRequiredWithoutRefreshTokensNestedInput
+  }
+
+  export type AdminRefreshTokenUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    adminId?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminRefreshTokenCreateManyInput = {
+    id?: string
+    tokenHash: string
+    adminId: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type AdminRefreshTokenUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminRefreshTokenUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    adminId?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type InstitutionFileCreateInput = {
@@ -47827,6 +52753,12 @@ export namespace Prisma {
     none?: InstitutionWalletWhereInput
   }
 
+  export type InstitutionAccountListRelationFilter = {
+    every?: InstitutionAccountWhereInput
+    some?: InstitutionAccountWhereInput
+    none?: InstitutionAccountWhereInput
+  }
+
   export type InstitutionAiAnalysisListRelationFilter = {
     every?: InstitutionAiAnalysisWhereInput
     some?: InstitutionAiAnalysisWhereInput
@@ -47854,6 +52786,10 @@ export namespace Prisma {
   }
 
   export type InstitutionWalletOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionAccountOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -48217,6 +53153,188 @@ export namespace Prisma {
     isSettlement?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type EnumInstitutionAccountTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionAccountType | EnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel> | $Enums.InstitutionAccountType
+  }
+
+  export type EnumAccountVerificationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccountVerificationStatus | EnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccountVerificationStatusFilter<$PrismaModel> | $Enums.AccountVerificationStatus
+  }
+
+  export type EnumApprovalModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ApprovalMode | EnumApprovalModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumApprovalModeFilter<$PrismaModel> | $Enums.ApprovalMode
+  }
+
+  export type InstitutionAccountClientIdNameCompoundUniqueInput = {
+    clientId: string
+    name: string
+  }
+
+  export type InstitutionAccountCountOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrder
+    accountType?: SortOrder
+    description?: SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrder
+    custodyType?: SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrder
+    verificationNotes?: SortOrder
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrder
+    whitelistedAddresses?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionAccountAvgOrderByAggregateInput = {
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalThreshold?: SortOrder
+  }
+
+  export type InstitutionAccountMaxOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrder
+    accountType?: SortOrder
+    description?: SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrder
+    custodyType?: SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrder
+    verificationNotes?: SortOrder
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionAccountMinOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    label?: SortOrder
+    accountType?: SortOrder
+    description?: SortOrder
+    walletAddress?: SortOrder
+    chain?: SortOrder
+    walletProvider?: SortOrder
+    custodyType?: SortOrder
+    verificationStatus?: SortOrder
+    verifiedAt?: SortOrder
+    verificationNotes?: SortOrder
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalMode?: SortOrder
+    approvalThreshold?: SortOrder
+    whitelistEnforced?: SortOrder
+    notificationEmail?: SortOrder
+    webhookUrl?: SortOrder
+    notifyOnEscrowCreated?: SortOrder
+    notifyOnEscrowFunded?: SortOrder
+    notifyOnEscrowReleased?: SortOrder
+    notifyOnComplianceAlert?: SortOrder
+    isDefault?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionAccountSumOrderByAggregateInput = {
+    maxTransactionAmount?: SortOrder
+    minTransactionAmount?: SortOrder
+    dailyVolumeLimit?: SortOrder
+    monthlyVolumeLimit?: SortOrder
+    dailyTransactionCountLimit?: SortOrder
+    monthlyTransactionCountLimit?: SortOrder
+    approvalThreshold?: SortOrder
+  }
+
+  export type EnumInstitutionAccountTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionAccountType | EnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionAccountTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionAccountType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel>
+  }
+
+  export type EnumAccountVerificationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccountVerificationStatus | EnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccountVerificationStatusWithAggregatesFilter<$PrismaModel> | $Enums.AccountVerificationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAccountVerificationStatusFilter<$PrismaModel>
+    _max?: NestedEnumAccountVerificationStatusFilter<$PrismaModel>
+  }
+
+  export type EnumApprovalModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ApprovalMode | EnumApprovalModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumApprovalModeWithAggregatesFilter<$PrismaModel> | $Enums.ApprovalMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumApprovalModeFilter<$PrismaModel>
+    _max?: NestedEnumApprovalModeFilter<$PrismaModel>
   }
 
   export type InstitutionRefreshTokenCountOrderByAggregateInput = {
@@ -48762,6 +53880,101 @@ export namespace Prisma {
 
   export type InstitutionApprovedTokenSumOrderByAggregateInput = {
     decimals?: SortOrder
+  }
+
+  export type EnumAdminRoleFilter<$PrismaModel = never> = {
+    equals?: $Enums.AdminRole | EnumAdminRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.AdminRole[] | ListEnumAdminRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AdminRole[] | ListEnumAdminRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumAdminRoleFilter<$PrismaModel> | $Enums.AdminRole
+  }
+
+  export type AdminRefreshTokenListRelationFilter = {
+    every?: AdminRefreshTokenWhereInput
+    some?: AdminRefreshTokenWhereInput
+    none?: AdminRefreshTokenWhereInput
+  }
+
+  export type AdminRefreshTokenOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AdminUserCountOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type AdminUserMaxOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type AdminUserMinOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    passwordHash?: SortOrder
+    name?: SortOrder
+    role?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type EnumAdminRoleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AdminRole | EnumAdminRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.AdminRole[] | ListEnumAdminRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AdminRole[] | ListEnumAdminRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumAdminRoleWithAggregatesFilter<$PrismaModel> | $Enums.AdminRole
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAdminRoleFilter<$PrismaModel>
+    _max?: NestedEnumAdminRoleFilter<$PrismaModel>
+  }
+
+  export type AdminUserScalarRelationFilter = {
+    is?: AdminUserWhereInput
+    isNot?: AdminUserWhereInput
+  }
+
+  export type AdminRefreshTokenCountOrderByAggregateInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    adminId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AdminRefreshTokenMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    adminId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AdminRefreshTokenMinOrderByAggregateInput = {
+    id?: SortOrder
+    tokenHash?: SortOrder
+    adminId?: SortOrder
+    expiresAt?: SortOrder
+    revokedAt?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type EnumDocumentTypeFilter<$PrismaModel = never> = {
@@ -49817,6 +55030,13 @@ export namespace Prisma {
     connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
   }
 
+  export type InstitutionAccountCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput> | InstitutionAccountCreateWithoutClientInput[] | InstitutionAccountUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutClientInput | InstitutionAccountCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionAccountCreateManyClientInputEnvelope
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+  }
+
   export type InstitutionAiAnalysisCreateNestedManyWithoutClientInput = {
     create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
@@ -49870,6 +55090,13 @@ export namespace Prisma {
     connectOrCreate?: InstitutionWalletCreateOrConnectWithoutClientInput | InstitutionWalletCreateOrConnectWithoutClientInput[]
     createMany?: InstitutionWalletCreateManyClientInputEnvelope
     connect?: InstitutionWalletWhereUniqueInput | InstitutionWalletWhereUniqueInput[]
+  }
+
+  export type InstitutionAccountUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput> | InstitutionAccountCreateWithoutClientInput[] | InstitutionAccountUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutClientInput | InstitutionAccountCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionAccountCreateManyClientInputEnvelope
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
   }
 
   export type InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput = {
@@ -50022,6 +55249,20 @@ export namespace Prisma {
     deleteMany?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
   }
 
+  export type InstitutionAccountUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput> | InstitutionAccountCreateWithoutClientInput[] | InstitutionAccountUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutClientInput | InstitutionAccountCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionAccountUpsertWithWhereUniqueWithoutClientInput | InstitutionAccountUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionAccountCreateManyClientInputEnvelope
+    set?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    disconnect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    delete?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    update?: InstitutionAccountUpdateWithWhereUniqueWithoutClientInput | InstitutionAccountUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionAccountUpdateManyWithWhereWithoutClientInput | InstitutionAccountUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+  }
+
   export type InstitutionAiAnalysisUpdateManyWithoutClientNestedInput = {
     create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
@@ -50130,6 +55371,20 @@ export namespace Prisma {
     deleteMany?: InstitutionWalletScalarWhereInput | InstitutionWalletScalarWhereInput[]
   }
 
+  export type InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput> | InstitutionAccountCreateWithoutClientInput[] | InstitutionAccountUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutClientInput | InstitutionAccountCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionAccountUpsertWithWhereUniqueWithoutClientInput | InstitutionAccountUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionAccountCreateManyClientInputEnvelope
+    set?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    disconnect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    delete?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    update?: InstitutionAccountUpdateWithWhereUniqueWithoutClientInput | InstitutionAccountUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionAccountUpdateManyWithWhereWithoutClientInput | InstitutionAccountUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+  }
+
   export type InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput = {
     create?: XOR<InstitutionAiAnalysisCreateWithoutClientInput, InstitutionAiAnalysisUncheckedCreateWithoutClientInput> | InstitutionAiAnalysisCreateWithoutClientInput[] | InstitutionAiAnalysisUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionAiAnalysisCreateOrConnectWithoutClientInput | InstitutionAiAnalysisCreateOrConnectWithoutClientInput[]
@@ -50156,6 +55411,41 @@ export namespace Prisma {
     upsert?: InstitutionClientUpsertWithoutWalletsInput
     connect?: InstitutionClientWhereUniqueInput
     update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutWalletsInput, InstitutionClientUpdateWithoutWalletsInput>, InstitutionClientUncheckedUpdateWithoutWalletsInput>
+  }
+
+  export type InstitutionAccountCreatewhitelistedAddressesInput = {
+    set: string[]
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutAccountsInput = {
+    create?: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutAccountsInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type EnumInstitutionAccountTypeFieldUpdateOperationsInput = {
+    set?: $Enums.InstitutionAccountType
+  }
+
+  export type EnumAccountVerificationStatusFieldUpdateOperationsInput = {
+    set?: $Enums.AccountVerificationStatus
+  }
+
+  export type EnumApprovalModeFieldUpdateOperationsInput = {
+    set?: $Enums.ApprovalMode
+  }
+
+  export type InstitutionAccountUpdatewhitelistedAddressesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutAccountsInput
+    upsert?: InstitutionClientUpsertWithoutAccountsInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutAccountsInput, InstitutionClientUpdateWithoutAccountsInput>, InstitutionClientUncheckedUpdateWithoutAccountsInput>
   }
 
   export type InstitutionClientCreateNestedOneWithoutRefreshTokensInput = {
@@ -50492,6 +55782,66 @@ export namespace Prisma {
 
   export type EnumCorridorStatusFieldUpdateOperationsInput = {
     set?: $Enums.CorridorStatus
+  }
+
+  export type AdminRefreshTokenCreateNestedManyWithoutAdminInput = {
+    create?: XOR<AdminRefreshTokenCreateWithoutAdminInput, AdminRefreshTokenUncheckedCreateWithoutAdminInput> | AdminRefreshTokenCreateWithoutAdminInput[] | AdminRefreshTokenUncheckedCreateWithoutAdminInput[]
+    connectOrCreate?: AdminRefreshTokenCreateOrConnectWithoutAdminInput | AdminRefreshTokenCreateOrConnectWithoutAdminInput[]
+    createMany?: AdminRefreshTokenCreateManyAdminInputEnvelope
+    connect?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+  }
+
+  export type AdminRefreshTokenUncheckedCreateNestedManyWithoutAdminInput = {
+    create?: XOR<AdminRefreshTokenCreateWithoutAdminInput, AdminRefreshTokenUncheckedCreateWithoutAdminInput> | AdminRefreshTokenCreateWithoutAdminInput[] | AdminRefreshTokenUncheckedCreateWithoutAdminInput[]
+    connectOrCreate?: AdminRefreshTokenCreateOrConnectWithoutAdminInput | AdminRefreshTokenCreateOrConnectWithoutAdminInput[]
+    createMany?: AdminRefreshTokenCreateManyAdminInputEnvelope
+    connect?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+  }
+
+  export type EnumAdminRoleFieldUpdateOperationsInput = {
+    set?: $Enums.AdminRole
+  }
+
+  export type AdminRefreshTokenUpdateManyWithoutAdminNestedInput = {
+    create?: XOR<AdminRefreshTokenCreateWithoutAdminInput, AdminRefreshTokenUncheckedCreateWithoutAdminInput> | AdminRefreshTokenCreateWithoutAdminInput[] | AdminRefreshTokenUncheckedCreateWithoutAdminInput[]
+    connectOrCreate?: AdminRefreshTokenCreateOrConnectWithoutAdminInput | AdminRefreshTokenCreateOrConnectWithoutAdminInput[]
+    upsert?: AdminRefreshTokenUpsertWithWhereUniqueWithoutAdminInput | AdminRefreshTokenUpsertWithWhereUniqueWithoutAdminInput[]
+    createMany?: AdminRefreshTokenCreateManyAdminInputEnvelope
+    set?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+    disconnect?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+    delete?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+    connect?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+    update?: AdminRefreshTokenUpdateWithWhereUniqueWithoutAdminInput | AdminRefreshTokenUpdateWithWhereUniqueWithoutAdminInput[]
+    updateMany?: AdminRefreshTokenUpdateManyWithWhereWithoutAdminInput | AdminRefreshTokenUpdateManyWithWhereWithoutAdminInput[]
+    deleteMany?: AdminRefreshTokenScalarWhereInput | AdminRefreshTokenScalarWhereInput[]
+  }
+
+  export type AdminRefreshTokenUncheckedUpdateManyWithoutAdminNestedInput = {
+    create?: XOR<AdminRefreshTokenCreateWithoutAdminInput, AdminRefreshTokenUncheckedCreateWithoutAdminInput> | AdminRefreshTokenCreateWithoutAdminInput[] | AdminRefreshTokenUncheckedCreateWithoutAdminInput[]
+    connectOrCreate?: AdminRefreshTokenCreateOrConnectWithoutAdminInput | AdminRefreshTokenCreateOrConnectWithoutAdminInput[]
+    upsert?: AdminRefreshTokenUpsertWithWhereUniqueWithoutAdminInput | AdminRefreshTokenUpsertWithWhereUniqueWithoutAdminInput[]
+    createMany?: AdminRefreshTokenCreateManyAdminInputEnvelope
+    set?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+    disconnect?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+    delete?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+    connect?: AdminRefreshTokenWhereUniqueInput | AdminRefreshTokenWhereUniqueInput[]
+    update?: AdminRefreshTokenUpdateWithWhereUniqueWithoutAdminInput | AdminRefreshTokenUpdateWithWhereUniqueWithoutAdminInput[]
+    updateMany?: AdminRefreshTokenUpdateManyWithWhereWithoutAdminInput | AdminRefreshTokenUpdateManyWithWhereWithoutAdminInput[]
+    deleteMany?: AdminRefreshTokenScalarWhereInput | AdminRefreshTokenScalarWhereInput[]
+  }
+
+  export type AdminUserCreateNestedOneWithoutRefreshTokensInput = {
+    create?: XOR<AdminUserCreateWithoutRefreshTokensInput, AdminUserUncheckedCreateWithoutRefreshTokensInput>
+    connectOrCreate?: AdminUserCreateOrConnectWithoutRefreshTokensInput
+    connect?: AdminUserWhereUniqueInput
+  }
+
+  export type AdminUserUpdateOneRequiredWithoutRefreshTokensNestedInput = {
+    create?: XOR<AdminUserCreateWithoutRefreshTokensInput, AdminUserUncheckedCreateWithoutRefreshTokensInput>
+    connectOrCreate?: AdminUserCreateOrConnectWithoutRefreshTokensInput
+    upsert?: AdminUserUpsertWithoutRefreshTokensInput
+    connect?: AdminUserWhereUniqueInput
+    update?: XOR<XOR<AdminUserUpdateToOneWithWhereWithoutRefreshTokensInput, AdminUserUpdateWithoutRefreshTokensInput>, AdminUserUncheckedUpdateWithoutRefreshTokensInput>
   }
 
   export type InstitutionClientCreateNestedOneWithoutFilesInput = {
@@ -51287,6 +56637,57 @@ export namespace Prisma {
     _max?: NestedEnumWalletCustodyTypeNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumInstitutionAccountTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionAccountType | EnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel> | $Enums.InstitutionAccountType
+  }
+
+  export type NestedEnumAccountVerificationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccountVerificationStatus | EnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccountVerificationStatusFilter<$PrismaModel> | $Enums.AccountVerificationStatus
+  }
+
+  export type NestedEnumApprovalModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ApprovalMode | EnumApprovalModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumApprovalModeFilter<$PrismaModel> | $Enums.ApprovalMode
+  }
+
+  export type NestedEnumInstitutionAccountTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionAccountType | EnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InstitutionAccountType[] | ListEnumInstitutionAccountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumInstitutionAccountTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionAccountType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionAccountTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAccountVerificationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccountVerificationStatus | EnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccountVerificationStatus[] | ListEnumAccountVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccountVerificationStatusWithAggregatesFilter<$PrismaModel> | $Enums.AccountVerificationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAccountVerificationStatusFilter<$PrismaModel>
+    _max?: NestedEnumAccountVerificationStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumApprovalModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ApprovalMode | EnumApprovalModeFieldRefInput<$PrismaModel>
+    in?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ApprovalMode[] | ListEnumApprovalModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumApprovalModeWithAggregatesFilter<$PrismaModel> | $Enums.ApprovalMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumApprovalModeFilter<$PrismaModel>
+    _max?: NestedEnumApprovalModeFilter<$PrismaModel>
+  }
+
   export type NestedEnumInstitutionConditionTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
     in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
@@ -51353,6 +56754,23 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCorridorStatusFilter<$PrismaModel>
     _max?: NestedEnumCorridorStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAdminRoleFilter<$PrismaModel = never> = {
+    equals?: $Enums.AdminRole | EnumAdminRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.AdminRole[] | ListEnumAdminRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AdminRole[] | ListEnumAdminRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumAdminRoleFilter<$PrismaModel> | $Enums.AdminRole
+  }
+
+  export type NestedEnumAdminRoleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AdminRole | EnumAdminRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.AdminRole[] | ListEnumAdminRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AdminRole[] | ListEnumAdminRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumAdminRoleWithAggregatesFilter<$PrismaModel> | $Enums.AdminRole
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAdminRoleFilter<$PrismaModel>
+    _max?: NestedEnumAdminRoleFilter<$PrismaModel>
   }
 
   export type NestedEnumDocumentTypeFilter<$PrismaModel = never> = {
@@ -54791,6 +60209,86 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type InstitutionAccountCreateWithoutClientInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountUncheckedCreateWithoutClientInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountCreateOrConnectWithoutClientInput = {
+    where: InstitutionAccountWhereUniqueInput
+    create: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionAccountCreateManyClientInputEnvelope = {
+    data: InstitutionAccountCreateManyClientInput | InstitutionAccountCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
   export type InstitutionAiAnalysisCreateWithoutClientInput = {
     id?: string
     analysisType?: $Enums.AiAnalysisType
@@ -55071,6 +60569,61 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"InstitutionWallet"> | Date | string
   }
 
+  export type InstitutionAccountUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionAccountWhereUniqueInput
+    update: XOR<InstitutionAccountUpdateWithoutClientInput, InstitutionAccountUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionAccountCreateWithoutClientInput, InstitutionAccountUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionAccountUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionAccountWhereUniqueInput
+    data: XOR<InstitutionAccountUpdateWithoutClientInput, InstitutionAccountUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionAccountUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionAccountScalarWhereInput
+    data: XOR<InstitutionAccountUpdateManyMutationInput, InstitutionAccountUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionAccountScalarWhereInput = {
+    AND?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+    OR?: InstitutionAccountScalarWhereInput[]
+    NOT?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+    id?: StringFilter<"InstitutionAccount"> | string
+    clientId?: StringFilter<"InstitutionAccount"> | string
+    name?: StringFilter<"InstitutionAccount"> | string
+    label?: StringNullableFilter<"InstitutionAccount"> | string | null
+    accountType?: EnumInstitutionAccountTypeFilter<"InstitutionAccount"> | $Enums.InstitutionAccountType
+    description?: StringNullableFilter<"InstitutionAccount"> | string | null
+    walletAddress?: StringFilter<"InstitutionAccount"> | string
+    chain?: StringFilter<"InstitutionAccount"> | string
+    walletProvider?: StringNullableFilter<"InstitutionAccount"> | string | null
+    custodyType?: EnumWalletCustodyTypeNullableFilter<"InstitutionAccount"> | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFilter<"InstitutionAccount"> | $Enums.AccountVerificationStatus
+    verifiedAt?: DateTimeNullableFilter<"InstitutionAccount"> | Date | string | null
+    verificationNotes?: StringNullableFilter<"InstitutionAccount"> | string | null
+    maxTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    monthlyTransactionCountLimit?: IntNullableFilter<"InstitutionAccount"> | number | null
+    approvalMode?: EnumApprovalModeFilter<"InstitutionAccount"> | $Enums.ApprovalMode
+    approvalThreshold?: DecimalNullableFilter<"InstitutionAccount"> | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: StringNullableListFilter<"InstitutionAccount">
+    whitelistEnforced?: BoolFilter<"InstitutionAccount"> | boolean
+    notificationEmail?: StringNullableFilter<"InstitutionAccount"> | string | null
+    webhookUrl?: StringNullableFilter<"InstitutionAccount"> | string | null
+    notifyOnEscrowCreated?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
+    notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    isDefault?: BoolFilter<"InstitutionAccount"> | boolean
+    isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+  }
+
   export type InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput = {
     where: InstitutionAiAnalysisWhereUniqueInput
     update: XOR<InstitutionAiAnalysisUpdateWithoutClientInput, InstitutionAiAnalysisUncheckedUpdateWithoutClientInput>
@@ -55175,6 +60728,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -55247,6 +60801,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -55335,6 +60890,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -55407,6 +60963,315 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientCreateWithoutAccountsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutAccountsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutAccountsInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+  }
+
+  export type InstitutionClientUpsertWithoutAccountsInput = {
+    update: XOR<InstitutionClientUpdateWithoutAccountsInput, InstitutionClientUncheckedUpdateWithoutAccountsInput>
+    create: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutAccountsInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutAccountsInput, InstitutionClientUncheckedUpdateWithoutAccountsInput>
+  }
+
+  export type InstitutionClientUpdateWithoutAccountsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutAccountsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -55479,6 +61344,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -55551,6 +61417,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -55639,6 +61506,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -55711,6 +61579,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -55783,6 +61652,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -55855,6 +61725,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -55943,6 +61814,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -56015,6 +61887,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -56087,6 +61960,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -56159,6 +62033,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -56247,6 +62122,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -56319,6 +62195,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -56391,6 +62268,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -56463,6 +62341,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -56681,6 +62560,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -56753,6 +62633,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -57097,6 +62978,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -57169,6 +63051,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -57326,6 +63209,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -57398,6 +63282,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -57534,6 +63419,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     files?: InstitutionFileCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutAiAnalysesInput = {
@@ -57606,6 +63492,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutAiAnalysesInput = {
@@ -57763,6 +63650,7 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutAiAnalysesInput = {
@@ -57835,6 +63723,125 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type AdminRefreshTokenCreateWithoutAdminInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type AdminRefreshTokenUncheckedCreateWithoutAdminInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type AdminRefreshTokenCreateOrConnectWithoutAdminInput = {
+    where: AdminRefreshTokenWhereUniqueInput
+    create: XOR<AdminRefreshTokenCreateWithoutAdminInput, AdminRefreshTokenUncheckedCreateWithoutAdminInput>
+  }
+
+  export type AdminRefreshTokenCreateManyAdminInputEnvelope = {
+    data: AdminRefreshTokenCreateManyAdminInput | AdminRefreshTokenCreateManyAdminInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AdminRefreshTokenUpsertWithWhereUniqueWithoutAdminInput = {
+    where: AdminRefreshTokenWhereUniqueInput
+    update: XOR<AdminRefreshTokenUpdateWithoutAdminInput, AdminRefreshTokenUncheckedUpdateWithoutAdminInput>
+    create: XOR<AdminRefreshTokenCreateWithoutAdminInput, AdminRefreshTokenUncheckedCreateWithoutAdminInput>
+  }
+
+  export type AdminRefreshTokenUpdateWithWhereUniqueWithoutAdminInput = {
+    where: AdminRefreshTokenWhereUniqueInput
+    data: XOR<AdminRefreshTokenUpdateWithoutAdminInput, AdminRefreshTokenUncheckedUpdateWithoutAdminInput>
+  }
+
+  export type AdminRefreshTokenUpdateManyWithWhereWithoutAdminInput = {
+    where: AdminRefreshTokenScalarWhereInput
+    data: XOR<AdminRefreshTokenUpdateManyMutationInput, AdminRefreshTokenUncheckedUpdateManyWithoutAdminInput>
+  }
+
+  export type AdminRefreshTokenScalarWhereInput = {
+    AND?: AdminRefreshTokenScalarWhereInput | AdminRefreshTokenScalarWhereInput[]
+    OR?: AdminRefreshTokenScalarWhereInput[]
+    NOT?: AdminRefreshTokenScalarWhereInput | AdminRefreshTokenScalarWhereInput[]
+    id?: StringFilter<"AdminRefreshToken"> | string
+    tokenHash?: StringFilter<"AdminRefreshToken"> | string
+    adminId?: StringFilter<"AdminRefreshToken"> | string
+    expiresAt?: DateTimeFilter<"AdminRefreshToken"> | Date | string
+    revokedAt?: DateTimeNullableFilter<"AdminRefreshToken"> | Date | string | null
+    createdAt?: DateTimeFilter<"AdminRefreshToken"> | Date | string
+  }
+
+  export type AdminUserCreateWithoutRefreshTokensInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    name: string
+    role?: $Enums.AdminRole
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+  }
+
+  export type AdminUserUncheckedCreateWithoutRefreshTokensInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    name: string
+    role?: $Enums.AdminRole
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+  }
+
+  export type AdminUserCreateOrConnectWithoutRefreshTokensInput = {
+    where: AdminUserWhereUniqueInput
+    create: XOR<AdminUserCreateWithoutRefreshTokensInput, AdminUserUncheckedCreateWithoutRefreshTokensInput>
+  }
+
+  export type AdminUserUpsertWithoutRefreshTokensInput = {
+    update: XOR<AdminUserUpdateWithoutRefreshTokensInput, AdminUserUncheckedUpdateWithoutRefreshTokensInput>
+    create: XOR<AdminUserCreateWithoutRefreshTokensInput, AdminUserUncheckedCreateWithoutRefreshTokensInput>
+    where?: AdminUserWhereInput
+  }
+
+  export type AdminUserUpdateToOneWithWhereWithoutRefreshTokensInput = {
+    where?: AdminUserWhereInput
+    data: XOR<AdminUserUpdateWithoutRefreshTokensInput, AdminUserUncheckedUpdateWithoutRefreshTokensInput>
+  }
+
+  export type AdminUserUpdateWithoutRefreshTokensInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AdminUserUncheckedUpdateWithoutRefreshTokensInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type InstitutionClientCreateWithoutFilesInput = {
@@ -57906,6 +63913,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
   }
 
@@ -57978,6 +63986,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
   }
 
@@ -58129,6 +64138,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
   }
 
@@ -58201,6 +64211,7 @@ export namespace Prisma {
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
   }
 
@@ -59499,6 +65510,41 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type InstitutionAccountCreateManyClientInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type InstitutionAiAnalysisCreateManyClientInput = {
     id?: string
     analysisType?: $Enums.AiAnalysisType
@@ -59765,6 +65811,111 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type InstitutionAccountUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type InstitutionAiAnalysisUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     analysisType?: EnumAiAnalysisTypeFieldUpdateOperationsInput | $Enums.AiAnalysisType
@@ -59988,6 +66139,38 @@ export namespace Prisma {
     sizeBytes?: IntFieldUpdateOperationsInput | number
     documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminRefreshTokenCreateManyAdminInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    revokedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type AdminRefreshTokenUpdateWithoutAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminRefreshTokenUncheckedUpdateWithoutAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminRefreshTokenUncheckedUpdateManyWithoutAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

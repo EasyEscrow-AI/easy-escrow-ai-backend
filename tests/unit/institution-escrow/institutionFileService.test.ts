@@ -14,15 +14,30 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
-process.env.USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-process.env.INSTITUTION_ESCROW_ENABLED = 'true';
-process.env.DO_SPACES_ENDPOINT = 'nyc3.digitaloceanspaces.com';
-process.env.DO_SPACES_REGION = 'nyc3';
-process.env.DO_SPACES_BUCKET = 'test-bucket';
-process.env.DO_SPACES_KEY = 'test-key';
-process.env.DO_SPACES_SECRET = 'test-secret';
+const savedEnv: Record<string, string | undefined> = {};
+const envOverrides: Record<string, string> = {
+  NODE_ENV: 'test',
+  JWT_SECRET: 'test-jwt-secret-for-testing-only-32chars!',
+  USDC_MINT_ADDRESS: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  INSTITUTION_ESCROW_ENABLED: 'true',
+  DO_SPACES_ENDPOINT: 'nyc3.digitaloceanspaces.com',
+  DO_SPACES_REGION: 'nyc3',
+  DO_SPACES_BUCKET: 'test-bucket',
+  DO_SPACES_KEY: 'test-key',
+  DO_SPACES_SECRET: 'test-secret',
+};
+
+for (const key of Object.keys(envOverrides)) {
+  savedEnv[key] = process.env[key];
+  process.env[key] = envOverrides[key];
+}
+
+after(() => {
+  for (const [key, val] of Object.entries(savedEnv)) {
+    if (val === undefined) delete process.env[key];
+    else process.env[key] = val;
+  }
+});
 
 import { InstitutionFileService } from '../../../src/services/institution-file.service';
 
