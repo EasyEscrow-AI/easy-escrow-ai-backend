@@ -634,7 +634,7 @@ if (openApiDocument) {
             }
             if (el) {
               var y = el.getBoundingClientRect().top + window.scrollY - topbarH - 10;
-              window.scrollTo({ top: y, behavior: 'smooth' });
+              window.scrollTo({ top: y, behavior: 'instant' });
             }
           }, 250);
           return;
@@ -645,7 +645,7 @@ if (openApiDocument) {
           if ((headings[j].textContent || '').toLowerCase().indexOf(result.title.toLowerCase()) !== -1) {
             var topH = 56;
             var yPos = headings[j].getBoundingClientRect().top + window.scrollY - topH - 10;
-            window.scrollTo({ top: yPos, behavior: 'smooth' });
+            window.scrollTo({ top: yPos, behavior: 'instant' });
             return;
           }
         }
