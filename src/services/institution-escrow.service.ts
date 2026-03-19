@@ -14,6 +14,7 @@ import { redisClient } from '../config/redis';
 import { AllowlistService, getAllowlistService } from './allowlist.service';
 import { ComplianceService, getComplianceService } from './compliance.service';
 import { getTokenWhitelistService } from './institution-token-whitelist.service';
+import { getInstitutionNotificationService } from './institution-notification.service';
 import type { NoncePoolManager } from './noncePoolManager';
 import crypto from 'crypto';
 import { Connection, PublicKey } from '@solana/web3.js';
@@ -152,9 +153,7 @@ export class InstitutionEscrowService {
       // If compliance fails with HIGH risk (above reject threshold), reject immediately
       const thresholds = await this.complianceService.getComplianceThresholds();
       if (complianceResult.riskScore >= thresholds.rejectScore) {
-        throw new Error(
-          `Compliance check failed: ${complianceResult.reasons.join('; ')}`,
-        );
+        throw new Error(`Compliance check failed: ${complianceResult.reasons.join('; ')}`);
       }
       // For medium risk (above hold threshold), create with COMPLIANCE_HOLD status
     }
@@ -200,7 +199,9 @@ export class InstitutionEscrowService {
         throw new Error(`Failed to assign durable nonce for escrow: ${(error as Error).message}`);
       }
     } else {
-      console.warn('[InstitutionEscrow] NoncePoolManager not available — escrow will lack atomic settlement');
+      console.warn(
+        '[InstitutionEscrow] NoncePoolManager not available — escrow will lack atomic settlement'
+      );
     }
 
     // 10. Store in Prisma
@@ -487,7 +488,7 @@ export class InstitutionEscrowService {
   async recordDeposit(
     clientId: string,
     idOrCode: string,
-    txSignature: string,
+    txSignature: string
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -615,7 +616,7 @@ export class InstitutionEscrowService {
   async releaseFunds(
     clientId: string,
     idOrCode: string,
-    notes?: string,
+    notes?: string
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -624,7 +625,7 @@ export class InstitutionEscrowService {
     const releasableStatuses: InstitutionEscrowStatus[] = ['FUNDED', 'INSUFFICIENT_FUNDS'];
     if (!releasableStatuses.includes(escrow.status)) {
       throw new Error(
-        `Cannot release: escrow status is ${escrow.status}, expected FUNDED or INSUFFICIENT_FUNDS`,
+        `Cannot release: escrow status is ${escrow.status}, expected FUNDED or INSUFFICIENT_FUNDS`
       );
     }
 
@@ -688,20 +689,21 @@ export class InstitutionEscrowService {
       notes,
     });
 
-    // Transition to COMPLETE: create notification and finalize
+    // Transition to COMPLETE: send notification and finalize
     try {
-      await this.prisma.institutionNotification.create({
-        data: {
-          clientId,
-          escrowId,
-          type: 'SETTLEMENT_COMPLETE',
-          title: 'Settlement Complete',
-          message: `Escrow ${escrow.escrowCode || escrowId} has been settled. ${Number(escrow.amount)} USDC released to recipient.`,
-          metadata: {
-            amount: Number(escrow.amount),
-            recipient: escrow.recipientWallet,
-            releaseTxSignature: releaseTxSig,
-          } as any,
+      await getInstitutionNotificationService().notify({
+        clientId,
+        escrowId,
+        type: 'SETTLEMENT_COMPLETE',
+        priority: 'HIGH',
+        title: 'Settlement Complete',
+        message: `Escrow ${escrow.escrowCode || escrowId} has been settled. ${Number(
+          escrow.amount
+        )} USDC released to recipient.`,
+        metadata: {
+          amount: Number(escrow.amount),
+          recipient: escrow.recipientWallet,
+          releaseTxSignature: releaseTxSig,
         },
       });
 
@@ -710,9 +712,15 @@ export class InstitutionEscrowService {
         data: { status: 'COMPLETE' },
       });
 
-      await this.createAuditLog(escrowId, clientId, 'ESCROW_COMPLETED', escrow.settlementAuthority, {
-        previousStatus: 'RELEASED',
-      });
+      await this.createAuditLog(
+        escrowId,
+        clientId,
+        'ESCROW_COMPLETED',
+        escrow.settlementAuthority,
+        {
+          previousStatus: 'RELEASED',
+        }
+      );
 
       await this.cacheEscrow(completed);
       return this.formatEscrow(completed);
@@ -730,7 +738,7 @@ export class InstitutionEscrowService {
   async cancelEscrow(
     clientId: string,
     idOrCode: string,
-    reason?: string,
+    reason?: string
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -847,7 +855,7 @@ export class InstitutionEscrowService {
         const requiredMicroUsdc = BigInt(Math.round(Number(escrow.amount) * 1_000_000));
         if (tokenAccount.amount < requiredMicroUsdc) {
           console.warn(
-            `[InstitutionEscrow] Insufficient balance for ${escrowId}: has ${tokenAccount.amount}, needs ${requiredMicroUsdc}`,
+            `[InstitutionEscrow] Insufficient balance for ${escrowId}: has ${tokenAccount.amount}, needs ${requiredMicroUsdc}`
           );
           await this.prisma.institutionEscrow.update({
             where: { escrowId },
@@ -858,7 +866,9 @@ export class InstitutionEscrowService {
             required: requiredMicroUsdc.toString(),
           });
           throw new Error(
-            `Insufficient USDC balance: has ${Number(tokenAccount.amount) / 1_000_000}, needs ${Number(escrow.amount)}`,
+            `Insufficient USDC balance: has ${
+              Number(tokenAccount.amount) / 1_000_000
+            }, needs ${Number(escrow.amount)}`
           );
         }
       } catch (err: any) {
@@ -875,7 +885,10 @@ export class InstitutionEscrowService {
         throw new Error('Insufficient USDC balance: payer token account does not exist');
       }
     } catch (err: any) {
-      if (err.message?.includes('Insufficient USDC balance') || err.message?.includes('payer token account')) {
+      if (
+        err.message?.includes('Insufficient USDC balance') ||
+        err.message?.includes('payer token account')
+      ) {
         throw err;
       }
       // For RPC/network errors, revert to previous status so release can be retried
@@ -892,11 +905,7 @@ export class InstitutionEscrowService {
   /**
    * Get a single escrow by code or ID (scoped to client)
    */
-  private async checkPayerBalance(
-    escrow: any,
-    clientId: string,
-    idOrCode: string,
-  ): Promise<Record<string, unknown>> {
+  async getEscrow(clientId: string, idOrCode: string): Promise<Record<string, unknown>> {
     // Try Redis cache first (cache keyed by escrowCode)
     try {
       const cached = await redisClient.get(`${ESCROW_CACHE_PREFIX}${idOrCode}`);
@@ -953,7 +962,11 @@ export class InstitutionEscrowService {
    * @param allowCounterpartyRead - When true, counterparties can view but not mutate.
    *   Mutation callers (recordDeposit, releaseFunds, cancelEscrow) pass false.
    */
-  private async getEscrowInternal(clientId: string, idOrCode: string, allowCounterpartyRead = false) {
+  private async getEscrowInternal(
+    clientId: string,
+    idOrCode: string,
+    allowCounterpartyRead = false
+  ) {
     const isCode = idOrCode.startsWith('EE-');
     const escrow = await this.prisma.institutionEscrow.findUnique({
       where: isCode ? { escrowCode: idOrCode } : { escrowId: idOrCode },
@@ -984,7 +997,7 @@ export class InstitutionEscrowService {
       ].filter(Boolean);
 
       const isCounterparty = callerWallets.some(
-        (w) => w === escrow.recipientWallet || w === escrow.payerWallet,
+        (w) => w === escrow.recipientWallet || w === escrow.payerWallet
       );
       if (!isCounterparty) {
         throw new Error('Access denied: escrow belongs to another client');

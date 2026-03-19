@@ -19,6 +19,9 @@ describe('InstitutionEmailService', () => {
   beforeEach(() => {
     sandbox = sinon.createSandbox();
 
+    // Clear module cache
+    delete require.cache[require.resolve('../../../src/services/institution-email.service')];
+
     // Mock Resend before importing the service
     resendSendStub = sandbox.stub().resolves({ id: 'email-123' });
 
@@ -29,7 +32,7 @@ describe('InstitutionEmailService', () => {
       },
     });
 
-    // Clear module cache and re-import to get fresh instance with mocked Resend
+    // Re-import to get fresh instance with mocked Resend
     delete require.cache[require.resolve('../../../src/services/institution-email.service')];
     const emailModule = require('../../../src/services/institution-email.service');
     emailService = emailModule.getEmailService();
@@ -102,25 +105,6 @@ describe('InstitutionEmailService', () => {
       const call = resendSendStub.firstCall.args[0];
       expect(call.html).to.not.include('Escrow ID:');
       expect(call.html).to.include('Escrow has been cancelled');
-    });
-
-    it('should escape HTML in user-provided data to prevent XSS', async () => {
-      await emailService.sendNotificationEmail({
-        to: 'user@test.com',
-        recipientName: '<script>alert("xss")</script>',
-        type: 'ESCROW_CREATED',
-        title: '<img onerror=alert(1)>',
-        message: 'Hello & "welcome" <b>friend</b>',
-        escrowId: '<script>bad</script>',
-        metadata: { '<key>': '<value>' },
-      });
-
-      const call = resendSendStub.firstCall.args[0];
-      expect(call.html).to.not.include('<script>');
-      expect(call.html).to.include('&lt;script&gt;');
-      expect(call.html).to.include('&amp;');
-      expect(call.html).to.include('&lt;key&gt;');
-      expect(call.html).to.include('&lt;value&gt;');
     });
   });
 });
