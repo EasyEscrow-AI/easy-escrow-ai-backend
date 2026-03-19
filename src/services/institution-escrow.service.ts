@@ -419,7 +419,26 @@ export class InstitutionEscrowService {
     }
 
     if (escrow.clientId !== clientId) {
-      throw new Error('Access denied: escrow belongs to another client');
+      // Check if caller is a counterparty (payer or recipient via wallet match)
+      const client = await this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { primaryWallet: true },
+      });
+      const accounts = await this.prisma.institutionAccount.findMany({
+        where: { clientId, isActive: true },
+        select: { walletAddress: true },
+      });
+      const callerWallets = [
+        client?.primaryWallet,
+        ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+      ].filter(Boolean);
+
+      const isCounterparty = callerWallets.some(
+        (w) => w === escrow.recipientWallet || w === escrow.payerWallet,
+      );
+      if (!isCounterparty) {
+        throw new Error('Access denied: escrow belongs to another client');
+      }
     }
 
     return escrow;
