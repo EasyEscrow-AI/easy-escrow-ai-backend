@@ -29,6 +29,8 @@ import {
   institutionClientsRoutes,
   institutionReceiptRoutes,
   institutionTokensRoutes,
+  aiChatRoutes,
+  institutionAccountRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -238,6 +240,8 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis/:escrow_id';
     response.endpoints.institutionReceipts = '/api/v1/institution-escrow/:escrowId/receipt';
     response.endpoints.institutionTokens = '/api/v1/institution/tokens';
+    response.endpoints.institutionAccounts = '/api/v1/institution/accounts';
+    response.endpoints.aiChat = '/api/v1/ai/chat';
   }
 
   // Only include documentation field if OpenAPI spec loaded successfully
@@ -268,6 +272,52 @@ if (openApiDocument) {
   <style>
     /* Base dark mode */
     body, html { margin: 0; padding: 0; background: #0f172a !important; }
+    /* Topbar */
+    #topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 56px; background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    #topbar .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 18px; font-weight: 700; color: #f1f5f9;
+      text-decoration: none; white-space: nowrap;
+    }
+    #topbar .brand span { color: #818cf8; }
+    #topbar .search-wrapper {
+      flex: 1; max-width: 480px; margin: 0 32px; position: relative;
+    }
+    #topbar .search-wrapper svg {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; color: #64748b; pointer-events: none;
+    }
+    #topbar-search {
+      width: 100%; height: 38px;
+      padding: 0 14px 0 40px;
+      font-size: 14px; font-family: Inter, sans-serif;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a; color: #e2e8f0;
+      outline: none; box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #topbar-search::placeholder { color: #64748b; }
+    #topbar-search:focus {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(129,140,248,0.25);
+    }
+    #topbar .version-badge {
+      font-size: 12px; color: #94a3b8;
+      background: #0f172a; padding: 4px 10px;
+      border-radius: 12px; border: 1px solid #334155;
+      white-space: nowrap;
+    }
+    /* Push content below fixed topbar */
+    #redoc-container { padding-top: 56px; }
     /* Force ALL Redoc elements dark */
     .redoc-wrap, .redoc-wrap > div { background: #0f172a !important; }
     /* Sidebar offset for topbar */
@@ -329,75 +379,8 @@ if (openApiDocument) {
     .redoc-wrap [role="search"] [class*="content"] { background: #1e293b !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
-    /* Search container */
-    .redoc-wrap [role="search"] { margin-top: 20px !important; padding: 0 10px !important; }
-    /* Search input */
-    .redoc-wrap [role="search"] input[type="text"],
-    .redoc-wrap [role="search"] input[type="search"],
-    .redoc-wrap [role="search"] input:not([type]) {
-      width: 100% !important;
-      min-height: 44px !important;
-      padding: 12px 16px !important;
-      font-size: 14px !important;
-      border-radius: 8px !important;
-      border: 1px solid #475569 !important;
-      background: #1e293b !important;
-      color: #e2e8f0 !important;
-      box-sizing: border-box !important;
-      outline: none !important;
-      transition: border-color 0.2s, box-shadow 0.2s !important;
-    }
-    .redoc-wrap [role="search"] input::placeholder {
-      color: #64748b !important;
-    }
-    .redoc-wrap [role="search"] input:focus {
-      border-color: #818cf8 !important;
-      box-shadow: 0 0 0 3px rgba(129,140,248,0.25) !important;
-    }
-    /* Search results dropdown */
-    .redoc-wrap [role="search"] > div:not(:first-child),
-    .redoc-wrap [role="search"] ul,
-    .redoc-wrap [role="search"] [class*="results"],
-    .redoc-wrap [role="search"] [class*="menu"] {
-      background: #1e293b !important;
-      border: 1px solid #475569 !important;
-      border-radius: 8px !important;
-      margin-top: 4px !important;
-      color: #e2e8f0 !important;
-      z-index: 200 !important;
-      max-height: 400px !important;
-      overflow-y: auto !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-    }
-    /* Search result items */
-    .redoc-wrap [role="search"] li,
-    .redoc-wrap [role="search"] [class*="result"] {
-      padding: 10px 14px !important;
-      color: #e2e8f0 !important;
-      background: transparent !important;
-      cursor: pointer !important;
-      border-bottom: 1px solid rgba(51,65,85,0.5) !important;
-    }
-    .redoc-wrap [role="search"] li:last-child {
-      border-bottom: none !important;
-    }
-    .redoc-wrap [role="search"] li:hover,
-    .redoc-wrap [role="search"] li[class*="active"],
-    .redoc-wrap [role="search"] [class*="result"]:hover {
-      background: #334155 !important;
-    }
-    /* Search result text highlights */
-    .redoc-wrap [role="search"] mark,
-    .redoc-wrap [role="search"] [class*="highlight"],
-    .redoc-wrap [role="search"] em,
-    .redoc-wrap mark {
-      background: rgba(129,140,248,0.3) !important;
-      color: #c7d2fe !important;
-      padding: 1px 3px !important;
-      border-radius: 2px !important;
-      font-style: normal !important;
-    }
-    .redoc-wrap [role="search"] label { display: none !important; }
+    /* Hide Redoc's built-in sidebar search (we have the topbar instead) */
+    .redoc-wrap [role="search"] { display: none !important; }
     /* Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -406,6 +389,14 @@ if (openApiDocument) {
   </style>
 </head>
 <body>
+  <div id="topbar">
+    <a class="brand" href="/">EasyEscrow<span>.ai</span></a>
+    <div class="search-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="topbar-search" type="text" placeholder="Search endpoints, schemas, tags..." autocomplete="off" />
+    </div>
+    <span class="version-badge">v1.1.0</span>
+  </div>
   <div id="redoc-container"></div>
   <script src="https://unpkg.com/redoc@2.1.3/bundles/redoc.standalone.js"></script>
   <script>
@@ -445,6 +436,61 @@ if (openApiDocument) {
       nativeScrollbars: true,
       hideHostname: true
     }, document.getElementById('redoc-container'));
+
+    // Topbar search — filters sidebar menu items and scrolls to matches
+    (function() {
+      var input = document.getElementById('topbar-search');
+      if (!input) return;
+
+      input.addEventListener('input', function() {
+        var query = this.value.toLowerCase().trim();
+        // Find all sidebar menu items
+        var items = document.querySelectorAll('.redoc-wrap [role="menuitem"], .redoc-wrap .menu-content label, .redoc-wrap [data-item-id]');
+        if (!items.length) items = document.querySelectorAll('.redoc-wrap li[class*="scrollbar"] a, .redoc-wrap ul li a');
+
+        items.forEach(function(el) {
+          var text = (el.textContent || '').toLowerCase();
+          if (!query) {
+            el.style.removeProperty('display');
+            if (el.closest('li')) el.closest('li').style.removeProperty('display');
+          } else if (text.indexOf(query) === -1) {
+            if (el.closest('li')) el.closest('li').style.display = 'none';
+            else el.style.display = 'none';
+          } else {
+            if (el.closest('li')) el.closest('li').style.removeProperty('display');
+            else el.style.removeProperty('display');
+          }
+        });
+      });
+
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          var query = this.value.toLowerCase().trim();
+          if (!query) return;
+          // Find first visible matching heading or operation in the main content
+          var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap [class*="operation-type"]');
+          for (var i = 0; i < headings.length; i++) {
+            if ((headings[i].textContent || '').toLowerCase().indexOf(query) !== -1) {
+              headings[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+              break;
+            }
+          }
+        }
+        if (e.key === 'Escape') {
+          this.value = '';
+          this.dispatchEvent(new Event('input'));
+        }
+      });
+
+      // Ctrl+K / Cmd+K shortcut to focus search
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          input.focus();
+          input.select();
+        }
+      });
+    })();
   </script>
 </body>
 </html>`;
@@ -491,6 +537,8 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionEscrowAdminRoutes);
   app.use(institutionReceiptRoutes);
   app.use(institutionTokensRoutes);
+  app.use(aiChatRoutes);
+  app.use(institutionAccountRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled
