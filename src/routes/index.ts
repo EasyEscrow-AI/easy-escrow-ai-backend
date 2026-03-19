@@ -29,6 +29,7 @@ import institutionReceiptRoutes from './institution-receipt.routes';
 import institutionTokensRoutes from './institution-tokens.routes';
 import aiChatRoutes from './ai-chat.routes';
 import institutionAccountRoutes from './institution-account.routes';
+import institutionNotificationRoutes from './institution-notification.routes';
 
 export {
   expiryCancellationRoutes,
@@ -55,4 +56,5 @@ export {
   institutionTokensRoutes,
   aiChatRoutes,
   institutionAccountRoutes,
+  institutionNotificationRoutes,
 };
