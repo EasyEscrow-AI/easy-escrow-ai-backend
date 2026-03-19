@@ -17,7 +17,6 @@ import { getTokenWhitelistService } from './institution-token-whitelist.service'
 import type { NoncePoolManager } from './noncePoolManager';
 import crypto from 'crypto';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { config } from '../config';
 import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
@@ -132,7 +131,9 @@ export class InstitutionEscrowService {
       // If compliance fails with HIGH risk (above reject threshold), reject immediately
       const thresholds = await this.complianceService.getComplianceThresholds();
       if (complianceResult.riskScore >= thresholds.rejectScore) {
-        throw new Error(`Compliance check failed: ${complianceResult.reasons.join('; ')}`);
+        throw new Error(
+          `Compliance check failed: ${complianceResult.reasons.join('; ')}`,
+        );
       }
       // For medium risk (above hold threshold), create with COMPLIANCE_HOLD status
     }
@@ -667,7 +668,7 @@ export class InstitutionEscrowService {
     const releasableStatuses: InstitutionEscrowStatus[] = ['FUNDED', 'INSUFFICIENT_FUNDS'];
     if (!releasableStatuses.includes(escrow.status)) {
       throw new Error(
-        `Cannot release: escrow status is ${escrow.status}, expected FUNDED or INSUFFICIENT_FUNDS`
+        `Cannot release: escrow status is ${escrow.status}, expected FUNDED or INSUFFICIENT_FUNDS`,
       );
     }
 
@@ -679,6 +680,9 @@ export class InstitutionEscrowService {
       where: { escrowId },
       data: { status: 'RELEASING' },
     });
+
+    // Check payer's token balance before settlement
+    await this.checkPayerBalance(escrow, clientId);
 
     // Advance durable nonce to prove atomic settlement on-chain
     let releaseTxSig: string | null = null;
@@ -728,21 +732,20 @@ export class InstitutionEscrowService {
       notes,
     });
 
-    // Transition to COMPLETE: send notification and finalize
+    // Transition to COMPLETE: create notification and finalize
     try {
-      await getInstitutionNotificationService().notify({
-        clientId,
-        escrowId,
-        type: 'SETTLEMENT_COMPLETE',
-        priority: 'HIGH',
-        title: 'Settlement Complete',
-        message: `Escrow ${escrow.escrowCode || escrowId} has been settled. ${Number(
-          escrow.amount
-        )} USDC released to recipient.`,
-        metadata: {
-          amount: Number(escrow.amount),
-          recipient: escrow.recipientWallet,
-          releaseTxSignature: releaseTxSig,
+      await this.prisma.institutionNotification.create({
+        data: {
+          clientId,
+          escrowId,
+          type: 'SETTLEMENT_COMPLETE',
+          title: 'Settlement Complete',
+          message: `Escrow ${escrow.escrowCode || escrowId} has been settled. ${Number(escrow.amount)} USDC released to recipient.`,
+          metadata: {
+            amount: Number(escrow.amount),
+            recipient: escrow.recipientWallet,
+            releaseTxSignature: releaseTxSig,
+          } as any,
         },
       });
 
@@ -751,15 +754,9 @@ export class InstitutionEscrowService {
         data: { status: 'COMPLETE' },
       });
 
-      await this.createAuditLog(
-        escrowId,
-        clientId,
-        'ESCROW_COMPLETED',
-        escrow.settlementAuthority,
-        {
-          previousStatus: 'RELEASED',
-        }
-      );
+      await this.createAuditLog(escrowId, clientId, 'ESCROW_COMPLETED', escrow.settlementAuthority, {
+        previousStatus: 'RELEASED',
+      });
 
       await this.cacheEscrow(completed);
       return this.formatEscrow(completed);
@@ -874,6 +871,66 @@ export class InstitutionEscrowService {
     await this.cacheEscrow(updated);
 
     return this.formatEscrow(updated);
+  }
+
+  /**
+   * Check payer's USDC balance before settlement.
+   * Sets INSUFFICIENT_FUNDS if balance is too low or token account doesn't exist.
+   */
+  private async checkPayerBalance(escrow: any, clientId: string): Promise<void> {
+    const { escrowId } = escrow;
+    try {
+      const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+      const connection = new Connection(rpcUrl, 'confirmed');
+      const usdcMint = new PublicKey(escrow.usdcMint);
+      const payerWallet = new PublicKey(escrow.payerWallet);
+      const payerAta = await getAssociatedTokenAddress(usdcMint, payerWallet);
+
+      try {
+        const tokenAccount = await getAccount(connection, payerAta);
+        const requiredMicroUsdc = BigInt(Math.round(Number(escrow.amount) * 1_000_000));
+        if (tokenAccount.amount < requiredMicroUsdc) {
+          console.warn(
+            `[InstitutionEscrow] Insufficient balance for ${escrowId}: has ${tokenAccount.amount}, needs ${requiredMicroUsdc}`,
+          );
+          await this.prisma.institutionEscrow.update({
+            where: { escrowId },
+            data: { status: 'INSUFFICIENT_FUNDS' },
+          });
+          await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
+            available: tokenAccount.amount.toString(),
+            required: requiredMicroUsdc.toString(),
+          });
+          throw new Error(
+            `Insufficient USDC balance: has ${Number(tokenAccount.amount) / 1_000_000}, needs ${Number(escrow.amount)}`,
+          );
+        }
+      } catch (err: any) {
+        if (err.message?.startsWith('Insufficient USDC balance')) throw err;
+        // Token account doesn't exist
+        console.warn(`[InstitutionEscrow] Payer token account not found for ${escrowId}`);
+        await this.prisma.institutionEscrow.update({
+          where: { escrowId },
+          data: { status: 'INSUFFICIENT_FUNDS' },
+        });
+        await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
+          reason: 'Token account does not exist',
+        });
+        throw new Error('Insufficient USDC balance: payer token account does not exist');
+      }
+    } catch (err: any) {
+      if (err.message?.includes('Insufficient USDC balance') || err.message?.includes('payer token account')) {
+        throw err;
+      }
+      // For RPC/network errors, revert to previous status so release can be retried
+      console.error('[InstitutionEscrow] Balance check failed due to RPC error:', err);
+      const revertStatus = escrow.status as InstitutionEscrowStatus;
+      await this.prisma.institutionEscrow.update({
+        where: { escrowId },
+        data: { status: revertStatus },
+      });
+      throw new Error(`Balance check failed: ${err.message}`);
+    }
   }
 
   /**

@@ -71,8 +71,7 @@ export class ComplianceService {
       } else {
         this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
       }
-    } catch (err) {
-      console.error('[ComplianceService] Failed to load risk thresholds from DB, using defaults:', (err as Error).message);
+    } catch {
       this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
     }
 
