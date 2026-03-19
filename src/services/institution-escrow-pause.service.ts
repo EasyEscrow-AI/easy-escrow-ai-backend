@@ -2,6 +2,7 @@ import { prisma } from '../config/database';
 import { redisClient } from '../config/redis';
 
 const REDIS_KEY = 'institution:escrow:system:paused';
+const REDIS_TTL_SECONDS = 300; // 5 minutes
 const DB_KEY = 'institution_escrow_pause';
 
 export interface PauseState {
@@ -25,7 +26,9 @@ class InstitutionEscrowPauseService {
 
     // Fall back to DB
     try {
-      const setting = await prisma.systemSetting.findUnique({ where: { key: DB_KEY } });
+      const setting = await prisma.systemSetting.findUnique({
+        where: { key: DB_KEY },
+      });
       if (setting) {
         const value = setting.value as any;
         if (value.paused) {
@@ -35,9 +38,9 @@ class InstitutionEscrowPauseService {
             pausedBy: setting.updatedBy || undefined,
             pausedAt: value.pausedAt,
           };
-          // Re-populate Redis cache
+          // Re-populate Redis cache with TTL
           try {
-            await redisClient.set(REDIS_KEY, JSON.stringify(state));
+            await redisClient.set(REDIS_KEY, JSON.stringify(state), 'EX', REDIS_TTL_SECONDS);
           } catch {
             // Ignore Redis write failure
           }
@@ -52,39 +55,51 @@ class InstitutionEscrowPauseService {
   }
 
   async pause(reason: string, adminIdentifier: string): Promise<PauseState> {
-    // Check if already paused
-    const current = await this.isPaused();
-    if (current.paused) {
+    const pausedAt = new Date().toISOString();
+
+    // Atomic check-and-set inside a serializable transaction
+    const state = await prisma.$transaction(
+      async (tx) => {
+        const setting = await tx.systemSetting.findUnique({
+          where: { key: DB_KEY },
+        });
+        const value = setting?.value as any;
+        if (value?.paused === true) {
+          return null; // Already paused
+        }
+
+        await tx.systemSetting.upsert({
+          where: { key: DB_KEY },
+          create: {
+            key: DB_KEY,
+            value: { paused: true, reason, pausedAt } as any,
+            updatedBy: adminIdentifier,
+          },
+          update: {
+            value: { paused: true, reason, pausedAt } as any,
+            updatedBy: adminIdentifier,
+          },
+        });
+
+        return {
+          paused: true,
+          reason,
+          pausedBy: adminIdentifier,
+          pausedAt,
+        } as PauseState;
+      },
+      { isolationLevel: 'Serializable' }
+    );
+
+    if (!state) {
       const error = new Error('Institution escrow operations are already paused');
       (error as any).code = 'ALREADY_PAUSED';
       throw error;
     }
 
-    const pausedAt = new Date().toISOString();
-    const state: PauseState = {
-      paused: true,
-      reason,
-      pausedBy: adminIdentifier,
-      pausedAt,
-    };
-
-    // Write to DB
-    await prisma.systemSetting.upsert({
-      where: { key: DB_KEY },
-      create: {
-        key: DB_KEY,
-        value: { paused: true, reason, pausedAt } as any,
-        updatedBy: adminIdentifier,
-      },
-      update: {
-        value: { paused: true, reason, pausedAt } as any,
-        updatedBy: adminIdentifier,
-      },
-    });
-
-    // Write to Redis
+    // Write to Redis with TTL
     try {
-      await redisClient.set(REDIS_KEY, JSON.stringify(state));
+      await redisClient.set(REDIS_KEY, JSON.stringify(state), 'EX', REDIS_TTL_SECONDS);
     } catch (err) {
       console.warn('[PauseService] Redis write failed on pause:', (err as Error).message);
     }
@@ -106,27 +121,35 @@ class InstitutionEscrowPauseService {
   }
 
   async unpause(adminIdentifier: string): Promise<void> {
-    // Check if actually paused
-    const current = await this.isPaused();
-    if (!current.paused) {
+    // Atomic check-and-set inside a serializable transaction
+    const wasPaused = await prisma.$transaction(
+      async (tx) => {
+        const setting = await tx.systemSetting.findUnique({
+          where: { key: DB_KEY },
+        });
+        const value = setting?.value as any;
+        if (!value?.paused) {
+          return false; // Not currently paused
+        }
+
+        await tx.systemSetting.update({
+          where: { key: DB_KEY },
+          data: {
+            value: { paused: false } as any,
+            updatedBy: adminIdentifier,
+          },
+        });
+
+        return true;
+      },
+      { isolationLevel: 'Serializable' }
+    );
+
+    if (!wasPaused) {
       const error = new Error('Institution escrow operations are not currently paused');
       (error as any).code = 'NOT_PAUSED';
       throw error;
     }
-
-    // Update DB
-    await prisma.systemSetting.upsert({
-      where: { key: DB_KEY },
-      create: {
-        key: DB_KEY,
-        value: { paused: false } as any,
-        updatedBy: adminIdentifier,
-      },
-      update: {
-        value: { paused: false } as any,
-        updatedBy: adminIdentifier,
-      },
-    });
 
     // Clear Redis cache
     try {

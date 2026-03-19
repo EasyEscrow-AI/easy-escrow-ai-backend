@@ -14,7 +14,10 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { validationResult } from 'express-validator';
-import { requireAdminOrApiKey } from '../../middleware/admin-jwt.middleware';
+import {
+  requireAdminOrApiKey,
+  AdminAuthenticatedRequest,
+} from '../../middleware/admin-jwt.middleware';
 import { getAllowlistService } from '../../services/allowlist.service';
 import {
   validateAddToAllowlist,
@@ -226,7 +229,10 @@ router.post(
 
     try {
       const pauseService = getInstitutionEscrowPauseService();
-      const adminIdentifier = (req as any).adminUser?.email || 'api-key';
+      const adminIdentifier =
+        (req as AdminAuthenticatedRequest).adminUser?.email ||
+        (req as AdminAuthenticatedRequest).apiKeyFingerprint ||
+        'unknown';
       const state = await pauseService.pause(req.body.reason, adminIdentifier);
 
       res.status(201).json({
@@ -260,7 +266,10 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const pauseService = getInstitutionEscrowPauseService();
-      const adminIdentifier = (req as any).adminUser?.email || 'api-key';
+      const adminIdentifier =
+        (req as AdminAuthenticatedRequest).adminUser?.email ||
+        (req as AdminAuthenticatedRequest).apiKeyFingerprint ||
+        'unknown';
       await pauseService.unpause(adminIdentifier);
 
       res.status(200).json({
