@@ -9,6 +9,7 @@ export interface AdminAuthenticatedRequest extends Request {
     email: string;
     role: string;
   };
+  apiKeyFingerprint?: string;
 }
 
 interface AdminJwtPayload {
@@ -55,7 +56,7 @@ function extractAndVerifyAdminToken(req: Request): AdminJwtPayload | null {
   }
 }
 
-function checkApiKey(req: Request): boolean {
+function checkApiKey(req: AdminAuthenticatedRequest): boolean {
   const apiKey = (req.headers['x-api-key'] || req.headers['x-admin-key']) as string;
 
   if (!apiKey) {
@@ -64,12 +65,20 @@ function checkApiKey(req: Request): boolean {
 
   if (process.env.NODE_ENV === 'development' && apiKey === 'test-admin-key-dev') {
     console.warn('[Admin Auth] Dev-only API key bypass used — do not use in production');
+    req.apiKeyFingerprint = 'dev-key';
     return true;
   }
 
   const adminKeys = process.env.ADMIN_API_KEYS?.split(',').map((k) => k.trim()) || [];
 
-  return adminKeys.some((key) => constantTimeCompare(apiKey, key));
+  const matched = adminKeys.some((key) => constantTimeCompare(apiKey, key));
+  if (matched && apiKey.length >= 8) {
+    req.apiKeyFingerprint = `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}`;
+  } else if (matched) {
+    req.apiKeyFingerprint = 'api-key';
+  }
+
+  return matched;
 }
 
 export const requireAdminAuth = (

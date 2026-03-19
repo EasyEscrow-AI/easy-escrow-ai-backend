@@ -1389,3 +1389,18 @@ model InstitutionNotification {
   @@index([createdAt])
   @@map("institution_notifications")
 }
+
+// ============================================
+// SYSTEM SETTINGS
+// ============================================
+
+// Key-value store for runtime system settings (e.g., pause state)
+model SystemSetting {
+  key       String   @id
+  value     Json     @default("{}")
+  updatedBy String?  @map("updated_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("system_settings")
+}
