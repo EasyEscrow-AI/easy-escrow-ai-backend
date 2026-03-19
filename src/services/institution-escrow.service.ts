@@ -14,6 +14,7 @@ import { redisClient } from '../config/redis';
 import { AllowlistService, getAllowlistService } from './allowlist.service';
 import { ComplianceService, getComplianceService } from './compliance.service';
 import { getTokenWhitelistService } from './institution-token-whitelist.service';
+import type { NoncePoolManager } from './noncePoolManager';
 import crypto from 'crypto';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { config } from '../config';
@@ -57,6 +58,20 @@ export class InstitutionEscrowService {
     this.prisma = new PrismaClient();
     this.allowlistService = getAllowlistService();
     this.complianceService = getComplianceService();
+  }
+
+  /**
+   * Lazy getter for NoncePoolManager to avoid circular import at load time.
+   * The singleton is created in offers.routes.ts and exported from there.
+   */
+  private getNoncePoolManager(): NoncePoolManager | null {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { noncePoolManager } = require('../routes/offers.routes');
+      return noncePoolManager || null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -152,66 +167,19 @@ export class InstitutionEscrowService {
     // 8. Determine settlement authority
     const resolvedSettlementAuthority = settlementAuthority || client.primaryWallet || payerWallet;
 
-    // 9. Assign durable nonce for atomic settlement (required for on-chain proof)
+    // 9. Assign durable nonce for atomic settlement
     let nonceAccount: string | null = null;
-    const npm = this.getNoncePoolManager();
-    if (npm) {
-      try {
+    try {
+      const npm = this.getNoncePoolManager();
+      if (npm) {
         nonceAccount = await npm.assignNonceToOffer();
         console.log(`[InstitutionEscrow] Assigned nonce ${nonceAccount} to escrow ${escrowCode}`);
-      } catch (error) {
-        throw new Error(`Failed to assign durable nonce for escrow: ${(error as Error).message}`);
       }
-    } else {
-      console.warn(
-        '[InstitutionEscrow] NoncePoolManager not available — escrow will lack atomic settlement'
-      );
+    } catch (error) {
+      console.warn('[InstitutionEscrow] Nonce assignment failed (proceeding without):', error);
     }
 
-    // 10. Initialize escrow on-chain
-    let escrowPda: string | null = null;
-    let vaultPda: string | null = null;
-    let initTxSignature: string | null = null;
-    const programService = this.getProgramService();
-    if (programService) {
-      try {
-        const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
-        const result = await programService.initEscrowOnChain({
-          escrowId,
-          payerWallet: new PublicKey(payerWallet),
-          recipientWallet: new PublicKey(recipientWallet),
-          usdcMint: new PublicKey(resolvedMint),
-          feeCollector,
-          settlementAuthority: new PublicKey(resolvedSettlementAuthority),
-          amount,
-          platformFee,
-          conditionType: conditionType as string,
-          corridor,
-          expiryTimestamp: Math.floor(expiresAt.getTime() / 1000),
-        });
-        escrowPda = result.escrowPda;
-        vaultPda = result.vaultPda;
-        initTxSignature = result.txSignature;
-        console.log(
-          `[InstitutionEscrow] On-chain init success for ${escrowCode}, tx: ${initTxSignature}`
-        );
-      } catch (error) {
-        console.error('[InstitutionEscrow] On-chain init failed:', error);
-        if (nonceAccount && npm) {
-          try {
-            await npm.releaseNonce(nonceAccount);
-          } catch {
-            /* non-critical */
-          }
-        }
-        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', payerWallet, {
-          error: (error as Error).message,
-        });
-        throw new Error(`On-chain escrow initialization failed: ${(error as Error).message}`);
-      }
-    }
-
-    // 11. Store in Prisma
+    // 10. Store in Prisma
     const escrow = await this.prisma.institutionEscrow.create({
       data: {
         escrowId,
@@ -228,8 +196,6 @@ export class InstitutionEscrowService {
         settlementAuthority: resolvedSettlementAuthority,
         riskScore: complianceResult.riskScore,
         nonceAccount,
-        escrowPda,
-        vaultPda,
         expiresAt,
       },
     });
@@ -712,43 +678,9 @@ export class InstitutionEscrowService {
       data: { status: 'RELEASING' },
     });
 
-    // Check payer's token balance before settlement
-    await this.checkPayerBalance(escrow, clientId, originalStatus);
-
-    // Execute on-chain release (transfer USDC from vault to recipient)
+    // Advance durable nonce to prove atomic settlement on-chain
     let releaseTxSig: string | null = null;
-    const releaseProgramService = this.getProgramService();
-    if (releaseProgramService && escrow.escrowPda) {
-      try {
-        const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
-        releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
-          escrowId,
-          recipientWallet: new PublicKey(escrow.recipientWallet!),
-          feeCollector,
-          usdcMint: new PublicKey(escrow.usdcMint),
-        });
-        console.log(
-          `[InstitutionEscrow] On-chain release success for ${escrowId}, tx: ${releaseTxSig}`
-        );
-      } catch (error) {
-        console.error('[InstitutionEscrow] On-chain release failed:', error);
-        await this.prisma.institutionEscrow.update({
-          where: { escrowId },
-          data: { status: 'FUNDED' },
-        });
-        await this.createAuditLog(
-          escrowId,
-          clientId,
-          'ON_CHAIN_RELEASE_FAILED',
-          escrow.settlementAuthority,
-          {
-            error: (error as Error).message,
-          }
-        );
-        throw new Error(`On-chain release failed: ${(error as Error).message}`);
-      }
-    } else if (escrow.nonceAccount) {
-      // Fallback: advance nonce if no PDA (legacy escrows created before on-chain wiring)
+    if (escrow.nonceAccount) {
       try {
         const npm = this.getNoncePoolManager();
         if (npm) {
@@ -757,6 +689,7 @@ export class InstitutionEscrowService {
         }
       } catch (error) {
         console.error('[InstitutionEscrow] Nonce advance failed during release:', error);
+        // Revert to FUNDED on failure so release can be retried
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
           data: { status: 'FUNDED' },
@@ -774,15 +707,15 @@ export class InstitutionEscrowService {
       },
     });
 
-    // Return nonce to pool without re-advancing (already advanced above)
+    // Release nonce back to pool
     if (escrow.nonceAccount) {
       try {
         const npm = this.getNoncePoolManager();
         if (npm) {
-          await npm.returnNonceToPool(escrow.nonceAccount);
+          await npm.releaseNonce(escrow.nonceAccount);
         }
       } catch (error) {
-        console.warn('[InstitutionEscrow] Nonce pool return failed (non-critical):', error);
+        console.warn('[InstitutionEscrow] Nonce release failed (non-critical):', error);
       }
     }
 
@@ -1017,7 +950,7 @@ export class InstitutionEscrowService {
       // Check if caller is a counterparty (payer or recipient via wallet match)
       const client = await this.prisma.institutionClient.findUnique({
         where: { id: clientId },
-        select: { primaryWallet: true },
+        select: { primaryWallet: true, settledWallets: true },
       });
       const accounts = await this.prisma.institutionAccount.findMany({
         where: { clientId, isActive: true },
@@ -1025,6 +958,7 @@ export class InstitutionEscrowService {
       });
       const callerWallets = [
         client?.primaryWallet,
+        ...(client?.settledWallets || []),
         ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
       ].filter(Boolean);
 
