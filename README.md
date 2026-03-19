@@ -4,8 +4,6 @@
 
 Non-custodial digital escrow platform on Solana. Backend API service powering institutional cross-border stablecoin escrow payments and atomic swaps.
 
-**Live Documentation:** [api.easyescrow.ai/docs](https://api.easyescrow.ai/docs)
-
 ---
 
 ## Environments
@@ -13,14 +11,14 @@ Non-custodial digital escrow platform on Solana. Backend API service powering in
 | Environment | Institutional Portal | Backend API |
 |-------------|---------------------|-------------|
 | **STAGING** | [staging-portal.easyescrow.ai](https://staging-portal.easyescrow.ai) | [staging-api.easyescrow.ai/docs](https://staging-api.easyescrow.ai/docs) |
-| **PROD** | [portal.easyescrow.ai](https://portal.easyescrow.ai) | [api.easyescrow.ai/docs](https://api.easyescrow.ai/docs) |
+| **PRODUCTION** | [portal.easyescrow.ai](https://portal.easyescrow.ai) | [api.easyescrow.ai/docs](https://api.easyescrow.ai/docs) |
 
 ## Solana Program
 
 | Environment | Network | Program ID | Status |
 |-------------|---------|------------|--------|
-| **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | ✅ Active |
-| **PROD** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | ✅ LIVE |
+| **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | ✅ ACTIVE |
+| **PRODUCTION** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | ✅ LIVE |
 
 ---
 
