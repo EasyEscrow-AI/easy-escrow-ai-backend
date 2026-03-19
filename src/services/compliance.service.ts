@@ -29,13 +29,54 @@ export interface ComplianceCheckParams {
   corridor: string;
 }
 
+interface ComplianceThresholds {
+  rejectScore: number;
+  holdScore: number;
+}
+
+const DEFAULT_THRESHOLDS: ComplianceThresholds = { rejectScore: 90, holdScore: 70 };
+const THRESHOLD_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export class ComplianceService {
   private prisma: PrismaClient;
   private allowlistService: AllowlistService;
+  private cachedThresholds: ComplianceThresholds | null = null;
+  private thresholdsCachedAt = 0;
 
   constructor() {
     this.prisma = new PrismaClient();
     this.allowlistService = getAllowlistService();
+  }
+
+  /**
+   * Get compliance thresholds from SystemSetting (cached 5 min).
+   * Default: rejectScore=90, holdScore=70
+   */
+  async getComplianceThresholds(): Promise<ComplianceThresholds> {
+    const now = Date.now();
+    if (this.cachedThresholds && now - this.thresholdsCachedAt < THRESHOLD_CACHE_TTL_MS) {
+      return this.cachedThresholds;
+    }
+
+    try {
+      const setting = await this.prisma.systemSetting.findUnique({
+        where: { key: 'compliance.riskThresholds' },
+      });
+      if (setting && setting.value) {
+        const val = setting.value as Record<string, unknown>;
+        this.cachedThresholds = {
+          rejectScore: typeof val.rejectScore === 'number' ? val.rejectScore : DEFAULT_THRESHOLDS.rejectScore,
+          holdScore: typeof val.holdScore === 'number' ? val.holdScore : DEFAULT_THRESHOLDS.holdScore,
+        };
+      } else {
+        this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
+      }
+    } catch {
+      this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
+    }
+
+    this.thresholdsCachedAt = now;
+    return this.cachedThresholds;
   }
 
   /**
@@ -73,11 +114,12 @@ export class ComplianceService {
     // 4. Calculate risk score
     const riskScore = await this.calculateRiskScore(params);
 
-    // Add risk flag if score is high
-    if (riskScore >= 75) {
+    // Add risk flag based on configurable thresholds
+    const thresholds = await this.getComplianceThresholds();
+    if (riskScore >= thresholds.rejectScore) {
       flags.push('HIGH_RISK');
-      reasons.push(`Risk score ${riskScore} exceeds threshold`);
-    } else if (riskScore >= 50) {
+      reasons.push(`Risk score ${riskScore} exceeds reject threshold (${thresholds.rejectScore})`);
+    } else if (riskScore >= thresholds.holdScore) {
       flags.push('MEDIUM_RISK');
     }
 
@@ -85,7 +127,7 @@ export class ComplianceService {
       corridorResult.valid &&
       walletsResult.valid &&
       limitsResult.valid &&
-      riskScore < 75;
+      riskScore < thresholds.rejectScore;
 
     return {
       passed,
