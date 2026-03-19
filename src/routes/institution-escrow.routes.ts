@@ -24,6 +24,7 @@ import {
   validateCancelEscrow,
   validateListEscrows,
 } from '../middleware/institution-escrow-validation.middleware';
+import { requireNotPaused } from '../middleware/institution-escrow-pause.middleware';
 import { getInstitutionEscrowService } from '../services/institution-escrow.service';
 
 const router = Router();
@@ -62,6 +63,7 @@ router.post(
   '/api/v1/institution-escrow',
   standardRateLimiter,
   requireInstitutionAuth,
+  requireNotPaused,
   validateCreateInstitutionEscrow,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
@@ -92,7 +94,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // POST /api/v1/institution-escrow/:id/deposit
@@ -100,6 +102,7 @@ router.post(
   '/api/v1/institution-escrow/:id/deposit',
   standardRateLimiter,
   requireInstitutionAuth,
+  requireNotPaused,
   validateRecordDeposit,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
@@ -109,7 +112,7 @@ router.post(
       const result = await service.recordDeposit(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.txSignature,
+        req.body.txSignature
       );
 
       res.status(200).json({
@@ -125,7 +128,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // POST /api/v1/institution-escrow/:id/release
@@ -134,6 +137,7 @@ router.post(
   strictRateLimiter,
   requireInstitutionAuth,
   requireSettlementAuthority,
+  requireNotPaused,
   validateReleaseFunds,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
@@ -143,7 +147,7 @@ router.post(
       const result = await service.releaseFunds(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.notes,
+        req.body.notes
       );
 
       res.status(200).json({
@@ -158,7 +162,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // POST /api/v1/institution-escrow/:id/cancel
@@ -166,6 +170,7 @@ router.post(
   '/api/v1/institution-escrow/:id/cancel',
   standardRateLimiter,
   requireInstitutionAuth,
+  requireNotPaused,
   validateCancelEscrow,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
@@ -175,7 +180,7 @@ router.post(
       const result = await service.cancelEscrow(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.reason,
+        req.body.reason
       );
 
       res.status(200).json({
@@ -190,7 +195,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // GET /api/v1/institution-escrow/:id
@@ -201,10 +206,7 @@ router.get(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionEscrowService();
-      const escrow = await service.getEscrow(
-        req.institutionClient!.clientId,
-        req.params.id,
-      );
+      const escrow = await service.getEscrow(req.institutionClient!.clientId, req.params.id);
 
       res.status(200).json({
         success: true,
@@ -212,8 +214,10 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('not found') ? 404
-        : error.message.includes('Access denied') ? 403
+      const status = error.message.includes('not found')
+        ? 404
+        : error.message.includes('Access denied')
+        ? 403
         : 400;
       res.status(status).json({
         error: 'Not Found',
@@ -221,7 +225,7 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // GET /api/v1/institution-escrow
@@ -255,7 +259,7 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 export default router;
