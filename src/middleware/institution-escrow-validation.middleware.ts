@@ -51,6 +51,87 @@ export const validateCreateInstitutionEscrow = [
 ];
 
 /**
+ * Validate save draft request body (only payerWallet required)
+ */
+export const validateSaveDraft = [
+  body('payerWallet')
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('payerWallet must be a valid Solana address (base58, 32-44 chars)'),
+  body('recipientWallet')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('recipientWallet must be a valid Solana address'),
+  body('amount')
+    .optional()
+    .isFloat({ min: 0, max: 10000000 })
+    .withMessage('amount must be between 0 and 10,000,000 USDC'),
+  body('corridor')
+    .optional()
+    .isString()
+    .matches(CORRIDOR_REGEX)
+    .withMessage('corridor must be in format XX-XX (e.g. SG-CH)'),
+  body('conditionType')
+    .optional()
+    .isString()
+    .isIn(CONDITION_TYPES)
+    .withMessage(`conditionType must be one of: ${CONDITION_TYPES.join(', ')}`),
+  body('settlementAuthority')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('settlementAuthority must be a valid Solana address'),
+];
+
+/**
+ * Validate update draft request body (all fields optional)
+ */
+export const validateUpdateDraft = [
+  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  body('payerWallet')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('payerWallet must be a valid Solana address'),
+  body('recipientWallet')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('recipientWallet must be a valid Solana address'),
+  body('amount')
+    .optional()
+    .isFloat({ min: 0, max: 10000000 })
+    .withMessage('amount must be between 0 and 10,000,000 USDC'),
+  body('corridor')
+    .optional()
+    .isString()
+    .matches(CORRIDOR_REGEX)
+    .withMessage('corridor must be in format XX-XX (e.g. SG-CH)'),
+  body('conditionType')
+    .optional()
+    .isString()
+    .isIn(CONDITION_TYPES)
+    .withMessage(`conditionType must be one of: ${CONDITION_TYPES.join(', ')}`),
+  body('settlementAuthority')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('settlementAuthority must be a valid Solana address'),
+];
+
+/**
+ * Validate submit draft request
+ */
+export const validateSubmitDraft = [
+  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  body('expiryHours')
+    .optional()
+    .isInt({ min: 1, max: 2160 })
+    .withMessage('expiryHours must be between 1 and 2160 (90 days)'),
+];
+
+/**
  * Validate deposit recording
  */
 export const validateRecordDeposit = [
@@ -111,11 +192,14 @@ export const validateListEscrows = [
     .optional()
     .isString()
     .isIn([
+      'DRAFT',
       'CREATED',
       'FUNDED',
       'COMPLIANCE_HOLD',
       'RELEASING',
       'RELEASED',
+      'INSUFFICIENT_FUNDS',
+      'COMPLETE',
       'CANCELLING',
       'CANCELLED',
       'EXPIRED',

@@ -327,7 +327,7 @@ export class AiAnalysisService {
       depositCount: escrow.deposits.length,
       fileCount: escrow.files.length,
       fileTypes: escrow.files.map(f => f.documentType),
-      expiresAt: escrow.expiresAt.toISOString(),
+      expiresAt: escrow.expiresAt?.toISOString() ?? null,
       createdAt: escrow.createdAt.toISOString(),
       fundedAt: escrow.fundedAt?.toISOString() || null,
       resolvedAt: escrow.resolvedAt?.toISOString() || null,
