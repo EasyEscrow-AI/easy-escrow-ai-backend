@@ -51,7 +51,7 @@ import bs58 from 'bs58';
 
 const STAGING_API = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
-const SETTLEMENT_KEY = process.env.SETTLEMENT_AUTHORITY_API_KEY || '';
+const SETTLEMENT_KEY = process.env.SETTLEMENT_AUTHORITY_API_KEY || 'inst-settlement-key-staging-2026';
 
 // USDC mint on devnet/staging
 const USDC_MINT = new PublicKey(
@@ -212,11 +212,6 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     if (!BUYER_PRIVATE_KEY || !SUPPLIER_PRIVATE_KEY) {
       console.log('  Missing DEVNET_STAGING_SENDER_PRIVATE_KEY or DEVNET_STAGING_RECEIVER_PRIVATE_KEY');
       console.log('  Set these env vars or load .env.staging to run this test');
-      return this.skip();
-    }
-
-    if (!SETTLEMENT_KEY) {
-      console.log('  Missing SETTLEMENT_AUTHORITY_API_KEY — required for release tests');
       return this.skip();
     }
 
@@ -632,8 +627,7 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     expect(res.data.success).to.be.true;
 
     const escrow = res.data.data;
-    // After release, escrow transitions RELEASING → RELEASED → COMPLETE
-    expect(escrow.status).to.be.oneOf(['RELEASED', 'COMPLETE']);
+    expect(escrow.status).to.equal('RELEASED');
     expect(escrow.resolvedAt).to.be.a('string');
 
     // Capture release tx signature if present
@@ -658,16 +652,16 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     expect(res.status).to.equal(200);
     const escrow = res.data.data;
 
-    if (!['RELEASED', 'COMPLETE'].includes(escrow.status)) {
-      console.log(`  [8] Escrow status is ${escrow.status}, not RELEASED/COMPLETE — skipping verification`);
+    if (escrow.status !== 'RELEASED') {
+      console.log(`  [8] Escrow status is ${escrow.status}, not RELEASED — skipping verification`);
       console.log('      (release may have been skipped due to server config or COMPLIANCE_HOLD)');
       return this.skip();
     }
 
     console.log('  [8] Verifying final escrow state after atomic settlement...');
 
-    // Core status assertions — expect COMPLETE (or RELEASED if notification failed)
-    expect(escrow.status).to.be.oneOf(['RELEASED', 'COMPLETE']);
+    // Core status assertions
+    expect(escrow.status).to.equal('RELEASED');
     expect(escrow.escrowId).to.equal(escrowId);
     expect(escrow.depositTxSignature).to.equal(depositTxSignature);
     expect(escrow.resolvedAt).to.not.be.null;
@@ -825,12 +819,12 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     expect(receipt).to.have.property('escrow');
     expect(receipt.escrow.escrowId).to.equal(escrowId);
 
-    if (!['RELEASED', 'COMPLETE'].includes(receipt.escrow.status)) {
-      console.log(`      Escrow status: ${receipt.escrow.status} (not RELEASED/COMPLETE — release may have been skipped)`);
+    if (receipt.escrow.status !== 'RELEASED') {
+      console.log(`      Escrow status: ${receipt.escrow.status} (not RELEASED — release may have been skipped)`);
       return this.skip();
     }
 
-    expect(receipt.escrow.status).to.be.oneOf(['RELEASED', 'COMPLETE']);
+    expect(receipt.escrow.status).to.equal('RELEASED');
 
     console.log(`      Receipt #:        ${receipt.receiptNumber}`);
     console.log(`      Escrow status:    ${receipt.escrow.status}`);
@@ -938,7 +932,7 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
       },
     );
 
-    // Should fail: escrow already RELEASED/COMPLETE (400), or settlement not configured (500)
+    // Should fail: escrow already RELEASED (400), or settlement not configured (500)
     expect(res.status).to.be.oneOf([400, 409, 422, 500]);
 
     console.log(`      Correctly rejected (${res.status}): ${res.data.message || res.data.error}`);
@@ -992,7 +986,7 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
           headers: { Authorization: `Bearer ${buyerToken}` },
         });
         const status = res.data?.data?.status;
-        if (status && !['RELEASED', 'COMPLETE', 'CANCELLED', 'EXPIRED'].includes(status)) {
+        if (status && !['RELEASED', 'CANCELLED', 'EXPIRED'].includes(status)) {
           await api.post(
             `/api/v1/institution-escrow/${internalId}/cancel`,
             { reason: 'E2E test cleanup' },

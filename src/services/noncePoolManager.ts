@@ -618,7 +618,53 @@ export class NoncePoolManager {
    * Advance a nonce account to invalidate pending transactions
    */
   async advanceNonce(nonceAccount: string, retryCount = 0): Promise<void> {
-    await this.advanceNonceWithSignature(nonceAccount, retryCount);
+    try {
+      console.log(`[NoncePoolManager] Advancing nonce for account: ${nonceAccount}`);
+      
+      const noncePubkey = new PublicKey(nonceAccount);
+      
+      const transaction = new Transaction().add(
+        SystemProgram.nonceAdvance({
+          noncePubkey,
+          authorizedPubkey: this.authority.publicKey,
+        })
+      );
+      
+      // Use recent blockhash for nonce advance
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = this.authority.publicKey;
+      
+      const signature = await this.connection.sendTransaction(transaction, [this.authority]);
+      
+      console.log(`[NoncePoolManager] Nonce advance tx: ${signature}`);
+      
+      await this.connection.confirmTransaction(signature, 'confirmed');
+      
+      // Clear cache for this nonce
+      this.nonceCache.delete(nonceAccount);
+      
+      // Update last used timestamp
+      await this.prisma.noncePool.update({
+        where: { nonceAccount },
+        data: { lastUsedAt: new Date() },
+      });
+      
+      console.log(`[NoncePoolManager] Successfully advanced nonce for ${nonceAccount}`);
+    } catch (error) {
+      console.error(
+        `[NoncePoolManager] Failed to advance nonce (attempt ${retryCount + 1}):`,
+        error
+      );
+      
+      if (retryCount < this.config.maxCreationRetries) {
+        console.log(`[NoncePoolManager] Retrying nonce advance in ${this.config.retryDelayMs}ms...`);
+        await this.sleep(this.config.retryDelayMs);
+        return this.advanceNonce(nonceAccount, retryCount + 1);
+      }
+      
+      throw error;
+    }
   }
 
   /**
@@ -627,7 +673,7 @@ export class NoncePoolManager {
    */
   async advanceNonceWithSignature(nonceAccount: string, retryCount = 0): Promise<string> {
     try {
-      console.log(`[NoncePoolManager] Advancing nonce for account: ${nonceAccount}`);
+      console.log(`[NoncePoolManager] Advancing nonce (with sig) for account: ${nonceAccount}`);
 
       const noncePubkey = new PublicKey(nonceAccount);
 
@@ -638,7 +684,7 @@ export class NoncePoolManager {
         })
       );
 
-      const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('confirmed');
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = this.authority.publicKey;
 
@@ -646,10 +692,7 @@ export class NoncePoolManager {
 
       console.log(`[NoncePoolManager] Nonce advance tx: ${signature}`);
 
-      await this.connection.confirmTransaction(
-        { signature, blockhash, lastValidBlockHeight },
-        'confirmed',
-      );
+      await this.connection.confirmTransaction(signature, 'confirmed');
 
       // Clear cache for this nonce
       this.nonceCache.delete(nonceAccount);
@@ -664,7 +707,7 @@ export class NoncePoolManager {
       return signature;
     } catch (error) {
       console.error(
-        `[NoncePoolManager] Failed to advance nonce (attempt ${retryCount + 1}):`,
+        `[NoncePoolManager] Failed to advance nonce with sig (attempt ${retryCount + 1}):`,
         error
       );
 
@@ -675,26 +718,6 @@ export class NoncePoolManager {
       }
 
       throw error;
-    }
-  }
-
-  /**
-   * Return a nonce to the pool without advancing it on-chain.
-   * Use when the nonce was already advanced (e.g., after advanceNonceWithSignature).
-   */
-  async returnNonceToPool(nonceAccount: string): Promise<void> {
-    try {
-      await this.prisma.noncePool.update({
-        where: { nonceAccount },
-        data: {
-          status: NonceStatus.AVAILABLE,
-          lastUsedAt: new Date(),
-        },
-      });
-      this.nonceCache.delete(nonceAccount);
-      console.log(`[NoncePoolManager] Returned nonce ${nonceAccount} to pool (no advance)`);
-    } catch (error) {
-      console.error(`[NoncePoolManager] Failed to return nonce ${nonceAccount} to pool:`, error);
     }
   }
 
