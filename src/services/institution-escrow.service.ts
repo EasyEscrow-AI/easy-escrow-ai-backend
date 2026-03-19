@@ -167,16 +167,18 @@ export class InstitutionEscrowService {
     // 8. Determine settlement authority
     const resolvedSettlementAuthority = settlementAuthority || client.primaryWallet || payerWallet;
 
-    // 9. Assign durable nonce for atomic settlement
+    // 9. Assign durable nonce for atomic settlement (required for on-chain proof)
     let nonceAccount: string | null = null;
-    try {
-      const npm = this.getNoncePoolManager();
-      if (npm) {
+    const npm = this.getNoncePoolManager();
+    if (npm) {
+      try {
         nonceAccount = await npm.assignNonceToOffer();
         console.log(`[InstitutionEscrow] Assigned nonce ${nonceAccount} to escrow ${escrowCode}`);
+      } catch (error) {
+        throw new Error(`Failed to assign durable nonce for escrow: ${(error as Error).message}`);
       }
-    } catch (error) {
-      console.warn('[InstitutionEscrow] Nonce assignment failed (proceeding without):', error);
+    } else {
+      console.warn('[InstitutionEscrow] NoncePoolManager not available — escrow will lack atomic settlement');
     }
 
     // 10. Store in Prisma
@@ -707,15 +709,15 @@ export class InstitutionEscrowService {
       },
     });
 
-    // Release nonce back to pool
+    // Return nonce to pool without re-advancing (already advanced above)
     if (escrow.nonceAccount) {
       try {
         const npm = this.getNoncePoolManager();
         if (npm) {
-          await npm.releaseNonce(escrow.nonceAccount);
+          await npm.returnNonceToPool(escrow.nonceAccount);
         }
       } catch (error) {
-        console.warn('[InstitutionEscrow] Nonce release failed (non-critical):', error);
+        console.warn('[InstitutionEscrow] Nonce pool return failed (non-critical):', error);
       }
     }
 
@@ -895,7 +897,7 @@ export class InstitutionEscrowService {
       // Cache miss
     }
 
-    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
     return this.formatEscrow(escrow);
   }
 
@@ -935,8 +937,10 @@ export class InstitutionEscrowService {
   /**
    * Internal: Get escrow with client ownership check.
    * Accepts either escrowCode (EE-XXXX-XXXX) or escrowId (UUID).
+   * @param allowCounterpartyRead - When true, counterparties can view but not mutate.
+   *   Mutation callers (recordDeposit, releaseFunds, cancelEscrow) pass false.
    */
-  private async getEscrowInternal(clientId: string, idOrCode: string) {
+  private async getEscrowInternal(clientId: string, idOrCode: string, allowCounterpartyRead = false) {
     const isCode = idOrCode.startsWith('EE-');
     const escrow = await this.prisma.institutionEscrow.findUnique({
       where: isCode ? { escrowCode: idOrCode } : { escrowId: idOrCode },
@@ -947,6 +951,10 @@ export class InstitutionEscrowService {
     }
 
     if (escrow.clientId !== clientId) {
+      if (!allowCounterpartyRead) {
+        throw new Error('Access denied: escrow belongs to another client');
+      }
+
       // Check if caller is a counterparty (payer or recipient via wallet match)
       const client = await this.prisma.institutionClient.findUnique({
         where: { id: clientId },
