@@ -598,6 +598,8 @@ if (openApiDocument) {
 
       function navigateTo(result) {
         dropdown.classList.remove('active');
+        input.value = '';
+        updateClearBtn();
         // Build Redoc hash anchor based on result type
         var hash = '';
         if (result.type === 'tag') {
@@ -607,22 +609,42 @@ if (openApiDocument) {
         } else if (result.type === 'endpoint' && result.operationId) {
           hash = '#tag/' + encodeURIComponent(result.tag) + '/operation/' + encodeURIComponent(result.operationId);
         } else if (result.type === 'endpoint') {
-          hash = '#tag/' + encodeURIComponent(result.tag) + '/paths/' + encodeURIComponent(result.path) + '/' + result.method;
+          // Redoc expects JSON Pointer encoding (RFC 6901): ~ becomes ~0, / becomes ~1
+          var pointer = result.path.split('~').join('~0').split('/').join('~1');
+          hash = '#tag/' + encodeURIComponent(result.tag) + '/paths/' + encodeURIComponent(pointer) + '/' + result.method;
         }
         if (hash) {
           window.location.hash = hash;
-          // Offset scroll for fixed topbar
+          // Give Redoc time to process hash change, then ensure scroll with topbar offset
           setTimeout(function() {
-            var el = document.getElementById(decodeURIComponent(hash.slice(1)));
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 100);
+            var topbarH = 56;
+            var hashId = decodeURIComponent(hash.slice(1));
+            // Try finding element by ID (Redoc generates anchor IDs matching the hash)
+            var el = document.getElementById(hashId);
+            // Fallback: find heading matching result title
+            if (!el) {
+              var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h5');
+              var target = result.title.toLowerCase();
+              for (var i = 0; i < headings.length; i++) {
+                if ((headings[i].textContent || '').toLowerCase().indexOf(target) !== -1) {
+                  el = headings[i]; break;
+                }
+              }
+            }
+            if (el) {
+              var y = el.getBoundingClientRect().top + window.scrollY - topbarH - 10;
+              window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+          }, 250);
           return;
         }
         // Last-resort fallback: find heading in content and scroll
         var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h5');
         for (var j = 0; j < headings.length; j++) {
           if ((headings[j].textContent || '').toLowerCase().indexOf(result.title.toLowerCase()) !== -1) {
-            headings[j].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            var topH = 56;
+            var yPos = headings[j].getBoundingClientRect().top + window.scrollY - topH - 10;
+            window.scrollTo({ top: yPos, behavior: 'smooth' });
             return;
           }
         }
