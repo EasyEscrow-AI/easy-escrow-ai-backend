@@ -297,7 +297,7 @@ if (openApiDocument) {
     }
     #topbar-search {
       width: 100%; height: 38px;
-      padding: 0 14px 0 40px;
+      padding: 0 32px 0 40px;
       font-size: 14px; font-family: Inter, sans-serif;
       border-radius: 8px;
       border: 1px solid #475569;
@@ -355,16 +355,20 @@ if (openApiDocument) {
       background: rgba(129,140,248,0.3); color: #c7d2fe;
       padding: 0 2px; border-radius: 2px;
     }
+    #search-clear {
+      display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #64748b; font-size: 18px; line-height: 1;
+      cursor: pointer; padding: 2px 6px; border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    #search-clear:hover { color: #e2e8f0; background: rgba(255,255,255,0.1); }
+    #search-clear.visible { display: block; }
     #topbar .spacer { flex: 1; }
     #topbar .version-badge {
       font-size: 12px; color: #94a3b8;
       background: #0f172a; padding: 4px 10px;
       border-radius: 12px; border: 1px solid #334155;
       white-space: nowrap; flex-shrink: 0;
-    }
-    #search-count {
-      font-size: 12px; color: #94a3b8;
-      white-space: nowrap; min-width: 60px; text-align: right; flex-shrink: 0;
     }
     /* Push content below fixed topbar */
     #redoc-container { padding-top: 56px; }
@@ -457,9 +461,9 @@ if (openApiDocument) {
     <div class="search-wrapper">
       <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input id="topbar-search" type="text" placeholder="Search endpoints, schemas, tags...  (Ctrl+K)" autocomplete="off" />
+      <button id="search-clear" type="button" aria-label="Clear search">&times;</button>
       <div id="search-results"></div>
     </div>
-    <span id="search-count"></span>
     <div class="spacer"></div>
     <span class="version-badge">v1.1.0</span>
   </div>
@@ -507,10 +511,23 @@ if (openApiDocument) {
     (function() {
       var input = document.getElementById('topbar-search');
       var dropdown = document.getElementById('search-results');
-      var badge = document.getElementById('search-count');
+      var clearBtn = document.getElementById('search-clear');
       if (!input || !dropdown) return;
       var searchIndex = [];
       var activeIdx = -1;
+
+      function updateClearBtn() {
+        if (clearBtn) clearBtn.classList.toggle('visible', input.value.length > 0);
+      }
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+          input.value = '';
+          dropdown.innerHTML = '';
+          dropdown.classList.remove('active');
+          updateClearBtn();
+          input.focus();
+        });
+      }
 
       // Build search index from the OpenAPI spec
       fetch('/openapi.json').then(function(r) { return r.json(); }).then(function(spec) {
@@ -530,7 +547,8 @@ if (openApiDocument) {
                 title: op.summary || path,
                 path: path,
                 tag: (op.tags || [''])[0],
-                description: op.description || ''
+                description: op.description || '',
+                operationId: op.operationId || ''
               });
             }
           });
@@ -548,7 +566,7 @@ if (openApiDocument) {
       }
 
       function renderResults(query) {
-        if (!query) { dropdown.innerHTML = ''; dropdown.classList.remove('active'); badge.textContent = ''; return; }
+        if (!query) { dropdown.innerHTML = ''; dropdown.classList.remove('active'); return; }
         var results = searchIndex.filter(function(item) {
           var haystack = (item.title + ' ' + item.path + ' ' + item.tag + ' ' + item.method).toLowerCase();
           return haystack.indexOf(query) !== -1;
@@ -557,12 +575,10 @@ if (openApiDocument) {
         if (!results.length) {
           dropdown.innerHTML = '<div class="sr-empty">No results for &ldquo;' + query + '&rdquo;</div>';
           dropdown.classList.add('active');
-          badge.textContent = '0 results';
           activeIdx = -1;
           return;
         }
 
-        badge.textContent = results.length + (results.length === 20 ? '+' : '') + ' found';
         activeIdx = -1;
         dropdown.innerHTML = results.map(function(r, i) {
           return '<div class="sr-item" data-idx="' + i + '">' +
@@ -582,17 +598,27 @@ if (openApiDocument) {
 
       function navigateTo(result) {
         dropdown.classList.remove('active');
-        // Find matching sidebar link and click it
-        var links = document.querySelectorAll('.redoc-wrap a');
-        for (var i = 0; i < links.length; i++) {
-          var text = (links[i].textContent || '').toLowerCase();
-          var title = result.title.toLowerCase();
-          if (text.indexOf(title) !== -1 || title.indexOf(text) !== -1) {
-            links[i].click();
-            return;
-          }
+        // Build Redoc hash anchor based on result type
+        var hash = '';
+        if (result.type === 'tag') {
+          hash = '#tag/' + encodeURIComponent(result.title);
+        } else if (result.type === 'schema') {
+          hash = '#schema/' + encodeURIComponent(result.title);
+        } else if (result.type === 'endpoint' && result.operationId) {
+          hash = '#tag/' + encodeURIComponent(result.tag) + '/operation/' + encodeURIComponent(result.operationId);
+        } else if (result.type === 'endpoint') {
+          hash = '#tag/' + encodeURIComponent(result.tag) + '/paths/' + encodeURIComponent(result.path) + '/' + result.method;
         }
-        // Fallback: find heading in content and scroll
+        if (hash) {
+          window.location.hash = hash;
+          // Offset scroll for fixed topbar
+          setTimeout(function() {
+            var el = document.getElementById(decodeURIComponent(hash.slice(1)));
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+          return;
+        }
+        // Last-resort fallback: find heading in content and scroll
         var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h5');
         for (var j = 0; j < headings.length; j++) {
           if ((headings[j].textContent || '').toLowerCase().indexOf(result.title.toLowerCase()) !== -1) {
@@ -615,6 +641,7 @@ if (openApiDocument) {
       var debounceTimer;
       input.addEventListener('input', function() {
         var query = this.value.toLowerCase().trim();
+        updateClearBtn();
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(function() { renderResults(query); }, 150);
       });
@@ -637,7 +664,7 @@ if (openApiDocument) {
         } else if (e.key === 'Escape') {
           this.value = '';
           dropdown.classList.remove('active');
-          badge.textContent = '';
+          updateClearBtn();
           this.blur();
         }
       });
@@ -680,8 +707,8 @@ if (openApiDocument) {
   });
 }
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from media directory (logo, etc.)
+app.use(express.static(path.join(__dirname, '../media')));
 
 // API Routes
 app.use(offersRoutes);
