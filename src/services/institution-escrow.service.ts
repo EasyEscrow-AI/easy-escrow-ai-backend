@@ -35,6 +35,27 @@ export interface CreateEscrowParams {
   tokenMint?: string;
 }
 
+export interface SaveDraftParams {
+  clientId: string;
+  payerWallet: string;
+  recipientWallet?: string;
+  amount?: number;
+  corridor?: string;
+  conditionType?: string;
+  settlementAuthority?: string;
+  tokenMint?: string;
+}
+
+export interface UpdateDraftParams {
+  payerWallet?: string;
+  recipientWallet?: string;
+  amount?: number;
+  corridor?: string;
+  conditionType?: string;
+  settlementAuthority?: string;
+  tokenMint?: string;
+}
+
 export interface CreateEscrowResult {
   escrow: Record<string, unknown>;
   complianceResult: Record<string, unknown>;
@@ -230,6 +251,212 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Save a new escrow as DRAFT — no compliance check, no nonce, no expiry.
+   * Only payerWallet is required; other fields can be filled in later.
+   */
+  async saveDraft(params: SaveDraftParams): Promise<Record<string, unknown>> {
+    const { clientId, payerWallet, recipientWallet, amount, corridor, conditionType, settlementAuthority, tokenMint } = params;
+
+    // Validate client exists and is active
+    const client = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+    });
+    if (!client) throw new Error('Client not found');
+    if (client.status !== 'ACTIVE') throw new Error(`Client account is ${client.status}. Must be ACTIVE.`);
+
+    const escrowId = crypto.randomUUID();
+    const escrowCode = this.generateEscrowCode();
+
+    // Resolve token mint (default USDC)
+    const tokenWhitelist = getTokenWhitelistService();
+    let resolvedMint: string;
+    if (tokenMint) {
+      await tokenWhitelist.validateMint(tokenMint);
+      resolvedMint = tokenMint;
+    } else {
+      resolvedMint = await tokenWhitelist.getDefaultMint();
+    }
+
+    const resolvedAmount = amount || 0;
+    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '50', 10);
+    const platformFee = (resolvedAmount * feeBps) / 10000;
+
+    const escrow = await this.prisma.institutionEscrow.create({
+      data: {
+        escrowId,
+        escrowCode,
+        clientId,
+        payerWallet,
+        recipientWallet: recipientWallet || null,
+        usdcMint: resolvedMint,
+        amount: resolvedAmount,
+        platformFee,
+        corridor: corridor || null,
+        conditionType: conditionType ? (conditionType as any) : null,
+        status: 'DRAFT',
+        settlementAuthority: settlementAuthority || client.primaryWallet || payerWallet,
+        expiresAt: null,
+      },
+    });
+
+    await this.createAuditLog(escrowId, clientId, 'DRAFT_SAVED', payerWallet, {
+      amount: resolvedAmount,
+      corridor: corridor || null,
+    });
+
+    await this.cacheEscrow(escrow);
+
+    return this.formatEscrow(escrow);
+  }
+
+  /**
+   * Update fields on a DRAFT escrow. Only DRAFT status escrows can be updated.
+   */
+  async updateDraft(
+    clientId: string,
+    idOrCode: string,
+    params: UpdateDraftParams,
+  ): Promise<Record<string, unknown>> {
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
+
+    if (escrow.status !== 'DRAFT') {
+      throw new Error(`Cannot update: escrow status is ${escrow.status}, expected DRAFT`);
+    }
+
+    const updateData: Record<string, unknown> = {};
+
+    if (params.payerWallet !== undefined) updateData.payerWallet = params.payerWallet;
+    if (params.recipientWallet !== undefined) updateData.recipientWallet = params.recipientWallet;
+    if (params.corridor !== undefined) updateData.corridor = params.corridor;
+    if (params.conditionType !== undefined) updateData.conditionType = params.conditionType;
+    if (params.settlementAuthority !== undefined) updateData.settlementAuthority = params.settlementAuthority;
+
+    if (params.amount !== undefined) {
+      updateData.amount = params.amount;
+      const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '50', 10);
+      updateData.platformFee = (params.amount * feeBps) / 10000;
+    }
+
+    if (params.tokenMint !== undefined) {
+      const tokenWhitelist = getTokenWhitelistService();
+      await tokenWhitelist.validateMint(params.tokenMint);
+      updateData.usdcMint = params.tokenMint;
+    }
+
+    const updated = await this.prisma.institutionEscrow.update({
+      where: { escrowId },
+      data: updateData as any,
+    });
+
+    await this.createAuditLog(escrowId, clientId, 'DRAFT_UPDATED', escrow.payerWallet, {
+      updatedFields: Object.keys(updateData),
+    });
+
+    await this.cacheEscrow(updated);
+
+    return this.formatEscrow(updated);
+  }
+
+  /**
+   * Submit a DRAFT escrow — validates all required fields are present,
+   * runs compliance checks, assigns nonce, and transitions to CREATED (or COMPLIANCE_HOLD).
+   */
+  async submitDraft(
+    clientId: string,
+    idOrCode: string,
+    expiryHours = 72,
+  ): Promise<CreateEscrowResult> {
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
+
+    if (escrow.status !== 'DRAFT') {
+      throw new Error(`Cannot submit: escrow status is ${escrow.status}, expected DRAFT`);
+    }
+
+    // Validate all required fields are present
+    if (!escrow.recipientWallet) throw new Error('Cannot submit draft: recipientWallet is required');
+    if (!escrow.corridor) throw new Error('Cannot submit draft: corridor is required');
+    if (!escrow.conditionType) throw new Error('Cannot submit draft: conditionType is required');
+    if (!escrow.amount || Number(escrow.amount) <= 0) throw new Error('Cannot submit draft: amount must be greater than 0');
+    if (escrow.payerWallet === escrow.recipientWallet) throw new Error('Cannot submit draft: payerWallet and recipientWallet must be different');
+
+    // Validate KYC
+    const client = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+    });
+    if (!client) throw new Error('Client not found');
+    if (client.kycStatus !== 'VERIFIED') throw new Error(`KYC status is ${client.kycStatus}. Must be VERIFIED.`);
+
+    // Run compliance checks
+    const complianceResult = await this.complianceService.validateTransaction({
+      clientId,
+      payerWallet: escrow.payerWallet,
+      recipientWallet: escrow.recipientWallet,
+      amount: Number(escrow.amount),
+      corridor: escrow.corridor,
+    });
+
+    if (!complianceResult.passed) {
+      const thresholds = await this.complianceService.getComplianceThresholds();
+      if (complianceResult.riskScore >= thresholds.rejectScore) {
+        throw new Error(`Compliance check failed: ${complianceResult.reasons.join('; ')}`);
+      }
+    }
+
+    // Determine status
+    const newStatus: InstitutionEscrowStatus = complianceResult.passed ? 'CREATED' : 'COMPLIANCE_HOLD';
+
+    // Calculate expiry
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiryHours);
+
+    // Assign durable nonce
+    let nonceAccount: string | null = null;
+    const npm = this.getNoncePoolManager();
+    if (npm) {
+      try {
+        nonceAccount = await npm.assignNonceToOffer();
+        console.log(`[InstitutionEscrow] Assigned nonce ${nonceAccount} to draft ${escrow.escrowCode}`);
+      } catch (error) {
+        throw new Error(`Failed to assign durable nonce: ${(error as Error).message}`);
+      }
+    }
+
+    const updated = await this.prisma.institutionEscrow.update({
+      where: { escrowId },
+      data: {
+        status: newStatus,
+        riskScore: complianceResult.riskScore,
+        nonceAccount,
+        expiresAt,
+      },
+    });
+
+    await this.createAuditLog(escrowId, clientId, 'DRAFT_SUBMITTED', escrow.payerWallet, {
+      amount: Number(escrow.amount),
+      corridor: escrow.corridor,
+      conditionType: escrow.conditionType,
+      complianceResult: {
+        passed: complianceResult.passed,
+        riskScore: complianceResult.riskScore,
+        flags: complianceResult.flags,
+      },
+    });
+
+    await this.cacheEscrow(updated);
+
+    return {
+      escrow: this.formatEscrow(updated),
+      complianceResult: {
+        passed: complianceResult.passed,
+        riskScore: complianceResult.riskScore,
+        flags: complianceResult.flags,
+      },
+    };
+  }
+
+  /**
    * Record a deposit for an escrow
    */
   async recordDeposit(
@@ -247,7 +474,7 @@ export class InstitutionEscrowService {
     }
 
     // Check if expired
-    if (new Date() > escrow.expiresAt) {
+    if (escrow.expiresAt && new Date() > escrow.expiresAt) {
       await this.prisma.institutionEscrow.update({
         where: { escrowId },
         data: { status: 'EXPIRED', resolvedAt: new Date() },
@@ -409,6 +636,7 @@ export class InstitutionEscrowService {
     const { escrowId } = escrow;
 
     const cancellableStatuses: InstitutionEscrowStatus[] = [
+      'DRAFT',
       'CREATED',
       'FUNDED',
       'COMPLIANCE_HOLD',

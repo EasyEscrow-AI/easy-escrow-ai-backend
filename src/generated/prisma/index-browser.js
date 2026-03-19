@@ -962,6 +962,7 @@ exports.InstitutionConditionType = exports.$Enums.InstitutionConditionType = {
 };
 
 exports.InstitutionEscrowStatus = exports.$Enums.InstitutionEscrowStatus = {
+  DRAFT: 'DRAFT',
   CREATED: 'CREATED',
   FUNDED: 'FUNDED',
   COMPLIANCE_HOLD: 'COMPLIANCE_HOLD',
