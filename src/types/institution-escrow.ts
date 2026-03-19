@@ -9,18 +9,15 @@
 /**
  * Lifecycle status of an institution escrow.
  *
- * Flow: DRAFT -> CREATED (submit draft with compliance check)
- *       CREATED -> FUNDED -> RELEASING -> RELEASED -> COMPLETE (happy path)
+ * Flow: CREATED -> FUNDED -> RELEASING -> RELEASED -> COMPLETE (happy path)
  *       CREATED -> FUNDED -> COMPLIANCE_HOLD -> RELEASING -> RELEASED -> COMPLETE
  *       CREATED -> FUNDED -> RELEASING -> INSUFFICIENT_FUNDS (balance check fails)
  *       INSUFFICIENT_FUNDS -> RELEASING (retry after funding)
  *       CREATED -> FUNDED -> CANCELLING -> CANCELLED
- *       DRAFT -> CANCELLED (discard draft)
  *       CREATED -> EXPIRED (timeout)
  *       Any -> FAILED (unrecoverable error)
  */
 export enum InstitutionEscrowStatus {
-  DRAFT = 'DRAFT',
   CREATED = 'CREATED',
   FUNDED = 'FUNDED',
   COMPLIANCE_HOLD = 'COMPLIANCE_HOLD',
