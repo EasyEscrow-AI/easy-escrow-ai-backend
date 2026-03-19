@@ -26,6 +26,7 @@ import { InstitutionEscrowService } from '../../../src/services/institution-escr
  * Encodes the business rules tested below.
  */
 const VALID_TRANSITIONS: Record<string, string[]> = {
+  DRAFT: ['CREATED', 'COMPLIANCE_HOLD', 'CANCELLED'],
   CREATED: ['FUNDED', 'CANCELLED', 'EXPIRED'],
   FUNDED: ['RELEASING', 'CANCELLED'],
   COMPLIANCE_HOLD: ['CREATED', 'CANCELLED'],
@@ -40,7 +41,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 };
 
 const TERMINAL_STATES = ['COMPLETE', 'CANCELLED', 'EXPIRED', 'FAILED'];
-const CANCELLABLE_STATES = ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS'];
+const CANCELLABLE_STATES = ['DRAFT', 'CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS'];
 
 describe('InstitutionEscrowStateMachine', () => {
   let sandbox: sinon.SinonSandbox;
@@ -84,11 +85,25 @@ describe('InstitutionEscrowStateMachine', () => {
     prismaStub = {
       institutionEscrow: {
         findUnique: sandbox.stub(),
+        create: sandbox.stub().callsFake(async (params: any) => ({
+          ...makeEscrow(params.data.status || 'CREATED'),
+          ...params.data,
+          escrowCode: params.data.escrowCode || 'EE-TEST-CODE',
+          updatedAt: new Date(),
+        })),
         update: sandbox.stub().callsFake(async (params: any) => ({
           ...makeEscrow(params.data.status || 'CREATED'),
           ...params.data,
           updatedAt: new Date(),
         })),
+      },
+      institutionClient: {
+        findUnique: sandbox.stub().resolves({
+          id: CLIENT_ID,
+          status: 'ACTIVE',
+          kycStatus: 'VERIFIED',
+          primaryWallet: PAYER_WALLET,
+        }),
       },
       institutionDeposit: {
         create: sandbox.stub().resolves({}),
@@ -110,6 +125,63 @@ describe('InstitutionEscrowStateMachine', () => {
 
   afterEach(() => {
     sandbox.restore();
+  });
+
+  // ─── DRAFT transitions ─────────────────────────────────────
+
+  describe('DRAFT state transitions', () => {
+    it('DRAFT -> CANCELLED (via cancel)', async () => {
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow('DRAFT'));
+
+      const result = await service.cancelEscrow(CLIENT_ID, ESCROW_ID, 'Discarded');
+
+      expect(result).to.have.property('status', 'CANCELLED');
+    });
+
+    it('should reject deposit on DRAFT escrow', async () => {
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow('DRAFT'));
+
+      try {
+        await service.recordDeposit(CLIENT_ID, ESCROW_ID, 'txsig');
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('Cannot record deposit');
+      }
+    });
+
+    it('should reject release on DRAFT escrow', async () => {
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow('DRAFT'));
+
+      try {
+        await service.releaseFunds(CLIENT_ID, ESCROW_ID);
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('Cannot release');
+      }
+    });
+
+    it('should allow update on DRAFT escrow', async () => {
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow('DRAFT'));
+
+      const result = await service.updateDraft(CLIENT_ID, ESCROW_ID, {
+        amount: 5000,
+        corridor: 'SG-CH',
+      });
+
+      expect(result).to.exist;
+    });
+
+    it('should reject update on non-DRAFT escrow', async () => {
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow('CREATED'));
+
+      try {
+        await service.updateDraft(CLIENT_ID, ESCROW_ID, { amount: 5000 });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('Cannot update');
+        expect(err.message).to.include('CREATED');
+      }
+    });
   });
 
   // ─── CREATED transitions ────────────────────────────────────
@@ -370,6 +442,10 @@ describe('InstitutionEscrowStateMachine', () => {
       }
     });
 
+    it('should have DRAFT leading to CREATED, COMPLIANCE_HOLD, CANCELLED', () => {
+      expect(VALID_TRANSITIONS['DRAFT']).to.include.members(['CREATED', 'COMPLIANCE_HOLD', 'CANCELLED']);
+    });
+
     it('should have CREATED leading to FUNDED, CANCELLED, EXPIRED', () => {
       expect(VALID_TRANSITIONS['CREATED']).to.include.members(['FUNDED', 'CANCELLED', 'EXPIRED']);
     });
@@ -394,8 +470,8 @@ describe('InstitutionEscrowStateMachine', () => {
       expect(VALID_TRANSITIONS['COMPLIANCE_HOLD']).to.include.members(['CREATED', 'CANCELLED']);
     });
 
-    it('should only allow cancel from CREATED, FUNDED, COMPLIANCE_HOLD, INSUFFICIENT_FUNDS', () => {
-      expect(CANCELLABLE_STATES).to.deep.equal(['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS']);
+    it('should only allow cancel from DRAFT, CREATED, FUNDED, COMPLIANCE_HOLD, INSUFFICIENT_FUNDS', () => {
+      expect(CANCELLABLE_STATES).to.deep.equal(['DRAFT', 'CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS']);
     });
   });
 });

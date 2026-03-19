@@ -324,6 +324,7 @@ export type TwoPhaseSwapStatus = (typeof TwoPhaseSwapStatus)[keyof typeof TwoPha
 
 
 export const InstitutionEscrowStatus: {
+  DRAFT: 'DRAFT',
   CREATED: 'CREATED',
   FUNDED: 'FUNDED',
   COMPLIANCE_HOLD: 'COMPLIANCE_HOLD',
@@ -32073,12 +32074,12 @@ export namespace Prisma {
     escrowCode: string
     clientId: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet: string | null
     usdcMint: string
     amount: Decimal
     platformFee: Decimal
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor: string | null
+    conditionType: $Enums.InstitutionConditionType | null
     status: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore: number | null
@@ -32088,7 +32089,7 @@ export namespace Prisma {
     depositTxSignature: string | null
     releaseTxSignature: string | null
     cancelTxSignature: string | null
-    expiresAt: Date
+    expiresAt: Date | null
     createdAt: Date
     updatedAt: Date
     resolvedAt: Date | null
@@ -32265,12 +32266,12 @@ export namespace Prisma {
       escrowCode: string
       clientId: string
       payerWallet: string
-      recipientWallet: string
+      recipientWallet: string | null
       usdcMint: string
       amount: Prisma.Decimal
       platformFee: Prisma.Decimal
-      corridor: string
-      conditionType: $Enums.InstitutionConditionType
+      corridor: string | null
+      conditionType: $Enums.InstitutionConditionType | null
       status: $Enums.InstitutionEscrowStatus
       settlementAuthority: string
       riskScore: number | null
@@ -32280,7 +32281,7 @@ export namespace Prisma {
       depositTxSignature: string | null
       releaseTxSignature: string | null
       cancelTxSignature: string | null
-      expiresAt: Date
+      expiresAt: Date | null
       createdAt: Date
       updatedAt: Date
       resolvedAt: Date | null
@@ -48488,12 +48489,12 @@ export namespace Prisma {
     escrowCode?: StringFilter<"InstitutionEscrow"> | string
     clientId?: StringFilter<"InstitutionEscrow"> | string
     payerWallet?: StringFilter<"InstitutionEscrow"> | string
-    recipientWallet?: StringFilter<"InstitutionEscrow"> | string
+    recipientWallet?: StringNullableFilter<"InstitutionEscrow"> | string | null
     usdcMint?: StringFilter<"InstitutionEscrow"> | string
     amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
-    corridor?: StringFilter<"InstitutionEscrow"> | string
-    conditionType?: EnumInstitutionConditionTypeFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType
+    corridor?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    conditionType?: EnumInstitutionConditionTypeNullableFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
@@ -48503,7 +48504,7 @@ export namespace Prisma {
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
-    expiresAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    expiresAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
     createdAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
@@ -48521,12 +48522,12 @@ export namespace Prisma {
     escrowCode?: SortOrder
     clientId?: SortOrder
     payerWallet?: SortOrder
-    recipientWallet?: SortOrder
+    recipientWallet?: SortOrderInput | SortOrder
     usdcMint?: SortOrder
     amount?: SortOrder
     platformFee?: SortOrder
-    corridor?: SortOrder
-    conditionType?: SortOrder
+    corridor?: SortOrderInput | SortOrder
+    conditionType?: SortOrderInput | SortOrder
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrderInput | SortOrder
@@ -48536,7 +48537,7 @@ export namespace Prisma {
     depositTxSignature?: SortOrderInput | SortOrder
     releaseTxSignature?: SortOrderInput | SortOrder
     cancelTxSignature?: SortOrderInput | SortOrder
-    expiresAt?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     resolvedAt?: SortOrderInput | SortOrder
@@ -48557,12 +48558,12 @@ export namespace Prisma {
     NOT?: InstitutionEscrowWhereInput | InstitutionEscrowWhereInput[]
     clientId?: StringFilter<"InstitutionEscrow"> | string
     payerWallet?: StringFilter<"InstitutionEscrow"> | string
-    recipientWallet?: StringFilter<"InstitutionEscrow"> | string
+    recipientWallet?: StringNullableFilter<"InstitutionEscrow"> | string | null
     usdcMint?: StringFilter<"InstitutionEscrow"> | string
     amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
-    corridor?: StringFilter<"InstitutionEscrow"> | string
-    conditionType?: EnumInstitutionConditionTypeFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType
+    corridor?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    conditionType?: EnumInstitutionConditionTypeNullableFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
@@ -48572,7 +48573,7 @@ export namespace Prisma {
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
-    expiresAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    expiresAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
     createdAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
@@ -48590,12 +48591,12 @@ export namespace Prisma {
     escrowCode?: SortOrder
     clientId?: SortOrder
     payerWallet?: SortOrder
-    recipientWallet?: SortOrder
+    recipientWallet?: SortOrderInput | SortOrder
     usdcMint?: SortOrder
     amount?: SortOrder
     platformFee?: SortOrder
-    corridor?: SortOrder
-    conditionType?: SortOrder
+    corridor?: SortOrderInput | SortOrder
+    conditionType?: SortOrderInput | SortOrder
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrderInput | SortOrder
@@ -48605,7 +48606,7 @@ export namespace Prisma {
     depositTxSignature?: SortOrderInput | SortOrder
     releaseTxSignature?: SortOrderInput | SortOrder
     cancelTxSignature?: SortOrderInput | SortOrder
-    expiresAt?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     resolvedAt?: SortOrderInput | SortOrder
@@ -48626,12 +48627,12 @@ export namespace Prisma {
     escrowCode?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     clientId?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     payerWallet?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
-    recipientWallet?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
+    recipientWallet?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     usdcMint?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     amount?: DecimalWithAggregatesFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalWithAggregatesFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
-    corridor?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
-    conditionType?: EnumInstitutionConditionTypeWithAggregatesFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType
+    corridor?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    conditionType?: EnumInstitutionConditionTypeNullableWithAggregatesFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusWithAggregatesFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableWithAggregatesFilter<"InstitutionEscrow"> | number | null
@@ -48641,7 +48642,7 @@ export namespace Prisma {
     depositTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
-    expiresAt?: DateTimeWithAggregatesFilter<"InstitutionEscrow"> | Date | string
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"InstitutionEscrow"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionEscrow"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionEscrow"> | Date | string
     resolvedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionEscrow"> | Date | string | null
@@ -52598,12 +52599,12 @@ export namespace Prisma {
     escrowId: string
     escrowCode: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -52613,7 +52614,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -52631,12 +52632,12 @@ export namespace Prisma {
     escrowCode: string
     clientId: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -52646,7 +52647,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -52662,12 +52663,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -52677,7 +52678,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -52695,12 +52696,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -52710,7 +52711,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -52727,12 +52728,12 @@ export namespace Prisma {
     escrowCode: string
     clientId: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -52742,7 +52743,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -52754,12 +52755,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -52769,7 +52770,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -52782,12 +52783,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -52797,7 +52798,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -56267,11 +56268,11 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type EnumInstitutionConditionTypeFilter<$PrismaModel = never> = {
-    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    not?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel> | $Enums.InstitutionConditionType
+  export type EnumInstitutionConditionTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel> | $Enums.InstitutionConditionType | null
   }
 
   export type EnumInstitutionEscrowStatusFilter<$PrismaModel = never> = {
@@ -56387,14 +56388,14 @@ export namespace Prisma {
     riskScore?: SortOrder
   }
 
-  export type EnumInstitutionConditionTypeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    not?: NestedEnumInstitutionConditionTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionConditionType
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel>
-    _max?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel>
+  export type EnumInstitutionConditionTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumInstitutionConditionTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionConditionType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel>
   }
 
   export type EnumInstitutionEscrowStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -58512,8 +58513,8 @@ export namespace Prisma {
     connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
   }
 
-  export type EnumInstitutionConditionTypeFieldUpdateOperationsInput = {
-    set?: $Enums.InstitutionConditionType
+  export type NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput = {
+    set?: $Enums.InstitutionConditionType | null
   }
 
   export type EnumInstitutionEscrowStatusFieldUpdateOperationsInput = {
@@ -59661,11 +59662,11 @@ export namespace Prisma {
     _max?: NestedEnumApprovalModeFilter<$PrismaModel>
   }
 
-  export type NestedEnumInstitutionConditionTypeFilter<$PrismaModel = never> = {
-    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    not?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel> | $Enums.InstitutionConditionType
+  export type NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel> | $Enums.InstitutionConditionType | null
   }
 
   export type NestedEnumInstitutionEscrowStatusFilter<$PrismaModel = never> = {
@@ -59675,14 +59676,14 @@ export namespace Prisma {
     not?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel> | $Enums.InstitutionEscrowStatus
   }
 
-  export type NestedEnumInstitutionConditionTypeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    not?: NestedEnumInstitutionConditionTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionConditionType
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel>
-    _max?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel>
+  export type NestedEnumInstitutionConditionTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumInstitutionConditionTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionConditionType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumInstitutionEscrowStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -63055,12 +63056,12 @@ export namespace Prisma {
     escrowId: string
     escrowCode: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -63070,7 +63071,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -63086,12 +63087,12 @@ export namespace Prisma {
     escrowId: string
     escrowCode: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -63101,7 +63102,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -63502,12 +63503,12 @@ export namespace Prisma {
     escrowCode?: StringFilter<"InstitutionEscrow"> | string
     clientId?: StringFilter<"InstitutionEscrow"> | string
     payerWallet?: StringFilter<"InstitutionEscrow"> | string
-    recipientWallet?: StringFilter<"InstitutionEscrow"> | string
+    recipientWallet?: StringNullableFilter<"InstitutionEscrow"> | string | null
     usdcMint?: StringFilter<"InstitutionEscrow"> | string
     amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
-    corridor?: StringFilter<"InstitutionEscrow"> | string
-    conditionType?: EnumInstitutionConditionTypeFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType
+    corridor?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    conditionType?: EnumInstitutionConditionTypeNullableFilter<"InstitutionEscrow"> | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
@@ -63517,7 +63518,7 @@ export namespace Prisma {
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
-    expiresAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
+    expiresAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
     createdAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
@@ -65825,12 +65826,12 @@ export namespace Prisma {
     escrowId: string
     escrowCode: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -65840,7 +65841,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -65857,12 +65858,12 @@ export namespace Prisma {
     escrowCode: string
     clientId: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -65872,7 +65873,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -65903,12 +65904,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -65918,7 +65919,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -65935,12 +65936,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -65950,7 +65951,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -65965,12 +65966,12 @@ export namespace Prisma {
     escrowId: string
     escrowCode: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -65980,7 +65981,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -65997,12 +65998,12 @@ export namespace Prisma {
     escrowCode: string
     clientId: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -66012,7 +66013,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -66196,12 +66197,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -66211,7 +66212,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -66228,12 +66229,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -66243,7 +66244,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -66417,12 +66418,12 @@ export namespace Prisma {
     escrowId: string
     escrowCode: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -66432,7 +66433,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -66449,12 +66450,12 @@ export namespace Prisma {
     escrowCode: string
     clientId: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -66464,7 +66465,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -66648,12 +66649,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -66663,7 +66664,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -66680,12 +66681,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -66695,7 +66696,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -67140,12 +67141,12 @@ export namespace Prisma {
     escrowId: string
     escrowCode: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -67155,7 +67156,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -67172,12 +67173,12 @@ export namespace Prisma {
     escrowCode: string
     clientId: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -67187,7 +67188,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -67377,12 +67378,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -67392,7 +67393,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -67409,12 +67410,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -67424,7 +67425,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -68918,12 +68919,12 @@ export namespace Prisma {
     escrowId: string
     escrowCode: string
     payerWallet: string
-    recipientWallet: string
+    recipientWallet?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
-    corridor: string
-    conditionType: $Enums.InstitutionConditionType
+    corridor?: string | null
+    conditionType?: $Enums.InstitutionConditionType | null
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
@@ -68933,7 +68934,7 @@ export namespace Prisma {
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
-    expiresAt: Date | string
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
@@ -69108,12 +69109,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -69123,7 +69124,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -69139,12 +69140,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -69154,7 +69155,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -69170,12 +69171,12 @@ export namespace Prisma {
     escrowId?: StringFieldUpdateOperationsInput | string
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: StringFieldUpdateOperationsInput | string
-    conditionType?: EnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType
+    corridor?: NullableStringFieldUpdateOperationsInput | string | null
+    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
@@ -69185,7 +69186,7 @@ export namespace Prisma {
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
