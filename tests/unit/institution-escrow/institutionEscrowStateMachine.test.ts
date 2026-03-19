@@ -41,7 +41,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 };
 
 const TERMINAL_STATES = ['COMPLETE', 'CANCELLED', 'EXPIRED', 'FAILED'];
-const CANCELLABLE_STATES = ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS'];
+const CANCELLABLE_STATES = ['DRAFT', 'CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS'];
 
 describe('InstitutionEscrowStateMachine', () => {
   let sandbox: sinon.SinonSandbox;
@@ -470,8 +470,8 @@ describe('InstitutionEscrowStateMachine', () => {
       expect(VALID_TRANSITIONS['COMPLIANCE_HOLD']).to.include.members(['CREATED', 'CANCELLED']);
     });
 
-    it('should only allow cancel from CREATED, FUNDED, COMPLIANCE_HOLD, INSUFFICIENT_FUNDS', () => {
-      expect(CANCELLABLE_STATES).to.deep.equal(['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS']);
+    it('should only allow cancel from DRAFT, CREATED, FUNDED, COMPLIANCE_HOLD, INSUFFICIENT_FUNDS', () => {
+      expect(CANCELLABLE_STATES).to.deep.equal(['DRAFT', 'CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS']);
     });
   });
 });

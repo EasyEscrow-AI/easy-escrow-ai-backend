@@ -59662,11 +59662,11 @@ export namespace Prisma {
     _max?: NestedEnumApprovalModeFilter<$PrismaModel>
   }
 
-  export type NestedEnumInstitutionConditionTypeFilter<$PrismaModel = never> = {
-    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel>
-    not?: NestedEnumInstitutionConditionTypeFilter<$PrismaModel> | $Enums.InstitutionConditionType
+  export type NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumInstitutionConditionTypeNullableFilter<$PrismaModel> | $Enums.InstitutionConditionType | null
   }
 
   export type NestedEnumInstitutionEscrowStatusFilter<$PrismaModel = never> = {

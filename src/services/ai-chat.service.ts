@@ -364,11 +364,11 @@ export class AiChatService {
       conditionType: e.conditionType,
       riskScore: e.riskScore,
       createdAt: e.createdAt.toISOString(),
-      expiresAt: e.expiresAt.toISOString(),
+      expiresAt: e.expiresAt?.toISOString() ?? null,
       fundedAt: e.fundedAt?.toISOString() ?? null,
       resolvedAt: e.resolvedAt?.toISOString() ?? null,
       payerWallet: anonymizer.anonymizeText(e.payerWallet),
-      recipientWallet: anonymizer.anonymizeText(e.recipientWallet),
+      recipientWallet: anonymizer.anonymizeText(e.recipientWallet ?? ''),
     }));
 
     return JSON.stringify({
@@ -436,9 +436,9 @@ export class AiChatService {
       conditionType: escrow.conditionType,
       riskScore: escrow.riskScore,
       payerWallet: anonymizer.anonymizeText(escrow.payerWallet),
-      recipientWallet: anonymizer.anonymizeText(escrow.recipientWallet),
+      recipientWallet: anonymizer.anonymizeText(escrow.recipientWallet ?? ''),
       createdAt: escrow.createdAt.toISOString(),
-      expiresAt: escrow.expiresAt.toISOString(),
+      expiresAt: escrow.expiresAt?.toISOString() ?? null,
       fundedAt: escrow.fundedAt?.toISOString() ?? null,
       resolvedAt: escrow.resolvedAt?.toISOString() ?? null,
       deposits: escrow.deposits.map((d) => ({

@@ -2087,6 +2087,179 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /api/v1/institution-escrow/draft:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Save escrow as draft
+      description: |
+        Save an escrow as a draft with partial information. Only `payerWallet` is required;
+        all other fields can be filled in later via the update draft endpoint.
+
+        Drafts are created in `DRAFT` status. No compliance checks, nonce assignment, or
+        expiry timers are set. The draft can be updated multiple times before submission.
+
+        Use `POST /api/v1/institution-escrow/{id}/submit` to validate and submit the draft.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionEscrowDraftRequest'
+            example:
+              payerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+              amount: 50000
+              corridor: "SG-CH"
+      responses:
+        '201':
+          description: Draft saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution-escrow/{id}/draft:
+    put:
+      tags:
+        - Institution Escrow
+      summary: Update draft
+      description: |
+        Update fields on a `DRAFT` escrow. Only escrows in `DRAFT` status can be updated.
+        All fields are optional — only provided fields will be changed.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID (UUID)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionEscrowDraftUpdateRequest'
+            example:
+              recipientWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+              amount: 75000
+              conditionType: "ADMIN_RELEASE"
+      responses:
+        '200':
+          description: Draft updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution-escrow/{id}/submit:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Submit draft
+      description: |
+        Submit a `DRAFT` escrow for processing. Validates that all required fields are present
+        (`recipientWallet`, `amount > 0`, `corridor`, `conditionType`), runs compliance checks,
+        assigns a durable nonce, and transitions the escrow to `CREATED` (or `COMPLIANCE_HOLD`).
+
+        After submission, the escrow follows the normal lifecycle: deposit → release → complete.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID (UUID)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                expiryHours:
+                  type: integer
+                  minimum: 1
+                  maximum: 2160
+                  description: Escrow expiry in hours (default 72)
+                  example: 72
+      responses:
+        '200':
+          description: Draft submitted and escrow created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Missing required fields or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Compliance check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/v1/institution-escrow/{id}:
     get:
       tags:

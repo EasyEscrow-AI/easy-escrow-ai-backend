@@ -35,6 +35,27 @@ export interface CreateEscrowParams {
   tokenMint?: string;
 }
 
+export interface SaveDraftParams {
+  clientId: string;
+  payerWallet: string;
+  recipientWallet?: string;
+  amount?: number;
+  corridor?: string;
+  conditionType?: string;
+  settlementAuthority?: string;
+  tokenMint?: string;
+}
+
+export interface UpdateDraftParams {
+  payerWallet?: string;
+  recipientWallet?: string;
+  amount?: number;
+  corridor?: string;
+  conditionType?: string;
+  settlementAuthority?: string;
+  tokenMint?: string;
+}
+
 export interface CreateEscrowResult {
   escrow: Record<string, unknown>;
   complianceResult: Record<string, unknown>;
@@ -259,24 +280,14 @@ export class InstitutionEscrowService {
    * Only payerWallet is required; other fields can be filled in later.
    */
   async saveDraft(params: SaveDraftParams): Promise<Record<string, unknown>> {
-    const {
-      clientId,
-      payerWallet,
-      recipientWallet,
-      amount,
-      corridor,
-      conditionType,
-      settlementAuthority,
-      tokenMint,
-    } = params;
+    const { clientId, payerWallet, recipientWallet, amount, corridor, conditionType, settlementAuthority, tokenMint } = params;
 
     // Validate client exists and is active
     const client = await this.prisma.institutionClient.findUnique({
       where: { id: clientId },
     });
     if (!client) throw new Error('Client not found');
-    if (client.status !== 'ACTIVE')
-      throw new Error(`Client account is ${client.status}. Must be ACTIVE.`);
+    if (client.status !== 'ACTIVE') throw new Error(`Client account is ${client.status}. Must be ACTIVE.`);
 
     const escrowId = crypto.randomUUID();
     const escrowCode = this.generateEscrowCode();
@@ -329,7 +340,7 @@ export class InstitutionEscrowService {
   async updateDraft(
     clientId: string,
     idOrCode: string,
-    params: UpdateDraftParams
+    params: UpdateDraftParams,
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -344,8 +355,7 @@ export class InstitutionEscrowService {
     if (params.recipientWallet !== undefined) updateData.recipientWallet = params.recipientWallet;
     if (params.corridor !== undefined) updateData.corridor = params.corridor;
     if (params.conditionType !== undefined) updateData.conditionType = params.conditionType;
-    if (params.settlementAuthority !== undefined)
-      updateData.settlementAuthority = params.settlementAuthority;
+    if (params.settlementAuthority !== undefined) updateData.settlementAuthority = params.settlementAuthority;
 
     if (params.amount !== undefined) {
       updateData.amount = params.amount;
@@ -380,7 +390,7 @@ export class InstitutionEscrowService {
   async submitDraft(
     clientId: string,
     idOrCode: string,
-    expiryHours = 72
+    expiryHours = 72,
   ): Promise<CreateEscrowResult> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -390,22 +400,18 @@ export class InstitutionEscrowService {
     }
 
     // Validate all required fields are present
-    if (!escrow.recipientWallet)
-      throw new Error('Cannot submit draft: recipientWallet is required');
+    if (!escrow.recipientWallet) throw new Error('Cannot submit draft: recipientWallet is required');
     if (!escrow.corridor) throw new Error('Cannot submit draft: corridor is required');
     if (!escrow.conditionType) throw new Error('Cannot submit draft: conditionType is required');
-    if (!escrow.amount || Number(escrow.amount) <= 0)
-      throw new Error('Cannot submit draft: amount must be greater than 0');
-    if (escrow.payerWallet === escrow.recipientWallet)
-      throw new Error('Cannot submit draft: payerWallet and recipientWallet must be different');
+    if (!escrow.amount || Number(escrow.amount) <= 0) throw new Error('Cannot submit draft: amount must be greater than 0');
+    if (escrow.payerWallet === escrow.recipientWallet) throw new Error('Cannot submit draft: payerWallet and recipientWallet must be different');
 
     // Validate KYC
     const client = await this.prisma.institutionClient.findUnique({
       where: { id: clientId },
     });
     if (!client) throw new Error('Client not found');
-    if (client.kycStatus !== 'VERIFIED')
-      throw new Error(`KYC status is ${client.kycStatus}. Must be VERIFIED.`);
+    if (client.kycStatus !== 'VERIFIED') throw new Error(`KYC status is ${client.kycStatus}. Must be VERIFIED.`);
 
     // Run compliance checks
     const complianceResult = await this.complianceService.validateTransaction({
@@ -424,9 +430,7 @@ export class InstitutionEscrowService {
     }
 
     // Determine status
-    const newStatus: InstitutionEscrowStatus = complianceResult.passed
-      ? 'CREATED'
-      : 'COMPLIANCE_HOLD';
+    const newStatus: InstitutionEscrowStatus = complianceResult.passed ? 'CREATED' : 'COMPLIANCE_HOLD';
 
     // Calculate expiry
     const expiresAt = new Date();
@@ -438,55 +442,9 @@ export class InstitutionEscrowService {
     if (npm) {
       try {
         nonceAccount = await npm.assignNonceToOffer();
-        console.log(
-          `[InstitutionEscrow] Assigned nonce ${nonceAccount} to draft ${escrow.escrowCode}`
-        );
+        console.log(`[InstitutionEscrow] Assigned nonce ${nonceAccount} to draft ${escrow.escrowCode}`);
       } catch (error) {
         throw new Error(`Failed to assign durable nonce: ${(error as Error).message}`);
-      }
-    }
-
-    // Initialize escrow on-chain
-    let escrowPda: string | null = null;
-    let vaultPda: string | null = null;
-    let initTxSignature: string | null = null;
-    const programService = this.getProgramService();
-    if (programService) {
-      try {
-        const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
-        const resolvedSettlementAuthority = escrow.settlementAuthority || escrow.payerWallet;
-        const result = await programService.initEscrowOnChain({
-          escrowId,
-          payerWallet: new PublicKey(escrow.payerWallet),
-          recipientWallet: new PublicKey(escrow.recipientWallet!),
-          usdcMint: new PublicKey(escrow.usdcMint),
-          feeCollector,
-          settlementAuthority: new PublicKey(resolvedSettlementAuthority),
-          amount: Number(escrow.amount),
-          platformFee: Number(escrow.platformFee),
-          conditionType: escrow.conditionType as string,
-          corridor: escrow.corridor!,
-          expiryTimestamp: Math.floor(expiresAt.getTime() / 1000),
-        });
-        escrowPda = result.escrowPda;
-        vaultPda = result.vaultPda;
-        initTxSignature = result.txSignature;
-        console.log(
-          `[InstitutionEscrow] On-chain init success for draft ${escrow.escrowCode}, tx: ${initTxSignature}`
-        );
-      } catch (error) {
-        console.error('[InstitutionEscrow] On-chain init failed for draft:', error);
-        if (nonceAccount && npm) {
-          try {
-            await npm.releaseNonce(nonceAccount);
-          } catch {
-            /* non-critical */
-          }
-        }
-        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', escrow.payerWallet, {
-          error: (error as Error).message,
-        });
-        throw new Error(`On-chain escrow initialization failed: ${(error as Error).message}`);
       }
     }
 
@@ -496,8 +454,6 @@ export class InstitutionEscrowService {
         status: newStatus,
         riskScore: complianceResult.riskScore,
         nonceAccount,
-        escrowPda,
-        vaultPda,
         expiresAt,
       },
     });

@@ -9,7 +9,8 @@
 /**
  * Lifecycle status of an institution escrow.
  *
- * Flow: CREATED -> FUNDED -> RELEASING -> RELEASED -> COMPLETE (happy path)
+ * Flow: DRAFT -> CREATED (submit draft with compliance check)
+ *       CREATED -> FUNDED -> RELEASING -> RELEASED -> COMPLETE (happy path)
  *       CREATED -> FUNDED -> COMPLIANCE_HOLD -> RELEASING -> RELEASED -> COMPLETE
  *       CREATED -> FUNDED -> RELEASING -> INSUFFICIENT_FUNDS (balance check fails)
  *       INSUFFICIENT_FUNDS -> RELEASING (retry after funding)
