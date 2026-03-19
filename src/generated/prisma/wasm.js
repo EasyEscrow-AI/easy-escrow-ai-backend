@@ -1051,7 +1051,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\websites\\VENTURE\\escrow-19mar-draft-escrow\\src\\generated\\prisma",
+      "value": "C:\\websites\\VENTURE\\escrow-19mar-notifications\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -1065,7 +1065,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\websites\\VENTURE\\escrow-19mar-draft-escrow\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\websites\\VENTURE\\escrow-19mar-notifications\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
