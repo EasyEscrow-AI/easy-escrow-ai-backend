@@ -2,9 +2,6 @@
  * Institution Escrow Routes
  *
  * POST   /api/v1/institution-escrow              → createEscrow
- * POST   /api/v1/institution-escrow/draft        → saveDraft
- * PUT    /api/v1/institution-escrow/:id/draft    → updateDraft
- * POST   /api/v1/institution-escrow/:id/submit   → submitDraft
  * POST   /api/v1/institution-escrow/:id/deposit  → recordDeposit
  * POST   /api/v1/institution-escrow/:id/release  → releaseFunds
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
@@ -22,9 +19,6 @@ import {
 } from '../middleware/institution-jwt.middleware';
 import {
   validateCreateInstitutionEscrow,
-  validateSaveDraft,
-  validateUpdateDraft,
-  validateSubmitDraft,
   validateRecordDeposit,
   validateReleaseFunds,
   validateCancelEscrow,
@@ -96,121 +90,6 @@ router.post(
       const status = error.message.includes('Compliance') ? 422 : 400;
       res.status(status).json({
         error: 'Escrow Creation Failed',
-        message: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
-);
-
-// POST /api/v1/institution-escrow/draft
-router.post(
-  '/api/v1/institution-escrow/draft',
-  standardRateLimiter,
-  requireInstitutionAuth,
-  requireNotPaused,
-  validateSaveDraft,
-  async (req: InstitutionAuthenticatedRequest, res: Response) => {
-    if (handleValidation(req, res)) return;
-
-    try {
-      const service = getInstitutionEscrowService();
-      const result = await service.saveDraft({
-        clientId: req.institutionClient!.clientId,
-        payerWallet: req.body.payerWallet,
-        recipientWallet: req.body.recipientWallet,
-        amount: req.body.amount,
-        corridor: req.body.corridor,
-        conditionType: req.body.conditionType,
-        settlementAuthority: req.body.settlementAuthority,
-        tokenMint: req.body.tokenMint,
-      });
-
-      res.status(201).json({
-        success: true,
-        data: result,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      res.status(400).json({
-        error: 'Draft Creation Failed',
-        message: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
-);
-
-// PUT /api/v1/institution-escrow/:id/draft
-router.put(
-  '/api/v1/institution-escrow/:id/draft',
-  standardRateLimiter,
-  requireInstitutionAuth,
-  requireNotPaused,
-  validateUpdateDraft,
-  async (req: InstitutionAuthenticatedRequest, res: Response) => {
-    if (handleValidation(req, res)) return;
-
-    try {
-      const service = getInstitutionEscrowService();
-      const result = await service.updateDraft(
-        req.institutionClient!.clientId,
-        req.params.id,
-        {
-          payerWallet: req.body.payerWallet,
-          recipientWallet: req.body.recipientWallet,
-          amount: req.body.amount,
-          corridor: req.body.corridor,
-          conditionType: req.body.conditionType,
-          settlementAuthority: req.body.settlementAuthority,
-          tokenMint: req.body.tokenMint,
-        },
-      );
-
-      res.status(200).json({
-        success: true,
-        data: result,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      res.status(400).json({
-        error: 'Draft Update Failed',
-        message: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }
-);
-
-// POST /api/v1/institution-escrow/:id/submit
-router.post(
-  '/api/v1/institution-escrow/:id/submit',
-  standardRateLimiter,
-  requireInstitutionAuth,
-  requireNotPaused,
-  validateSubmitDraft,
-  async (req: InstitutionAuthenticatedRequest, res: Response) => {
-    if (handleValidation(req, res)) return;
-
-    try {
-      const service = getInstitutionEscrowService();
-      const result = await service.submitDraft(
-        req.institutionClient!.clientId,
-        req.params.id,
-        req.body.expiryHours,
-      );
-
-      res.status(200).json({
-        success: true,
-        data: result,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      const status = error.message.includes('Compliance') ? 422
-        : error.message.includes('Cannot submit') ? 400
-        : 400;
-      res.status(status).json({
-        error: 'Draft Submission Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
