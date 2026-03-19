@@ -31722,6 +31722,7 @@ export namespace Prisma {
     riskScore: number | null
     escrowPda: string | null
     vaultPda: string | null
+    nonceAccount: string | null
     depositTxSignature: string | null
     releaseTxSignature: string | null
     cancelTxSignature: string | null
@@ -31749,6 +31750,7 @@ export namespace Prisma {
     riskScore: number | null
     escrowPda: string | null
     vaultPda: string | null
+    nonceAccount: string | null
     depositTxSignature: string | null
     releaseTxSignature: string | null
     cancelTxSignature: string | null
@@ -31776,6 +31778,7 @@ export namespace Prisma {
     riskScore: number
     escrowPda: number
     vaultPda: number
+    nonceAccount: number
     depositTxSignature: number
     releaseTxSignature: number
     cancelTxSignature: number
@@ -31817,6 +31820,7 @@ export namespace Prisma {
     riskScore?: true
     escrowPda?: true
     vaultPda?: true
+    nonceAccount?: true
     depositTxSignature?: true
     releaseTxSignature?: true
     cancelTxSignature?: true
@@ -31844,6 +31848,7 @@ export namespace Prisma {
     riskScore?: true
     escrowPda?: true
     vaultPda?: true
+    nonceAccount?: true
     depositTxSignature?: true
     releaseTxSignature?: true
     cancelTxSignature?: true
@@ -31871,6 +31876,7 @@ export namespace Prisma {
     riskScore?: true
     escrowPda?: true
     vaultPda?: true
+    nonceAccount?: true
     depositTxSignature?: true
     releaseTxSignature?: true
     cancelTxSignature?: true
@@ -31985,6 +31991,7 @@ export namespace Prisma {
     riskScore: number | null
     escrowPda: string | null
     vaultPda: string | null
+    nonceAccount: string | null
     depositTxSignature: string | null
     releaseTxSignature: string | null
     cancelTxSignature: string | null
@@ -32031,6 +32038,7 @@ export namespace Prisma {
     riskScore?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
+    nonceAccount?: boolean
     depositTxSignature?: boolean
     releaseTxSignature?: boolean
     cancelTxSignature?: boolean
@@ -32064,6 +32072,7 @@ export namespace Prisma {
     riskScore?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
+    nonceAccount?: boolean
     depositTxSignature?: boolean
     releaseTxSignature?: boolean
     cancelTxSignature?: boolean
@@ -32092,6 +32101,7 @@ export namespace Prisma {
     riskScore?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
+    nonceAccount?: boolean
     depositTxSignature?: boolean
     releaseTxSignature?: boolean
     cancelTxSignature?: boolean
@@ -32120,6 +32130,7 @@ export namespace Prisma {
     riskScore?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
+    nonceAccount?: boolean
     depositTxSignature?: boolean
     releaseTxSignature?: boolean
     cancelTxSignature?: boolean
@@ -32130,7 +32141,7 @@ export namespace Prisma {
     fundedAt?: boolean
   }
 
-  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "escrowPda" | "vaultPda" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
+  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "escrowPda" | "vaultPda" | "nonceAccount" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
   export type InstitutionEscrowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
@@ -32172,6 +32183,7 @@ export namespace Prisma {
       riskScore: number | null
       escrowPda: string | null
       vaultPda: string | null
+      nonceAccount: string | null
       depositTxSignature: string | null
       releaseTxSignature: string | null
       cancelTxSignature: string | null
@@ -32624,6 +32636,7 @@ export namespace Prisma {
     readonly riskScore: FieldRef<"InstitutionEscrow", 'Int'>
     readonly escrowPda: FieldRef<"InstitutionEscrow", 'String'>
     readonly vaultPda: FieldRef<"InstitutionEscrow", 'String'>
+    readonly nonceAccount: FieldRef<"InstitutionEscrow", 'String'>
     readonly depositTxSignature: FieldRef<"InstitutionEscrow", 'String'>
     readonly releaseTxSignature: FieldRef<"InstitutionEscrow", 'String'>
     readonly cancelTxSignature: FieldRef<"InstitutionEscrow", 'String'>
@@ -43943,6 +43956,7 @@ export namespace Prisma {
     riskScore: 'riskScore',
     escrowPda: 'escrowPda',
     vaultPda: 'vaultPda',
+    nonceAccount: 'nonceAccount',
     depositTxSignature: 'depositTxSignature',
     releaseTxSignature: 'releaseTxSignature',
     cancelTxSignature: 'cancelTxSignature',
@@ -47390,6 +47404,7 @@ export namespace Prisma {
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -47422,6 +47437,7 @@ export namespace Prisma {
     riskScore?: SortOrderInput | SortOrder
     escrowPda?: SortOrderInput | SortOrder
     vaultPda?: SortOrderInput | SortOrder
+    nonceAccount?: SortOrderInput | SortOrder
     depositTxSignature?: SortOrderInput | SortOrder
     releaseTxSignature?: SortOrderInput | SortOrder
     cancelTxSignature?: SortOrderInput | SortOrder
@@ -47457,6 +47473,7 @@ export namespace Prisma {
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -47489,6 +47506,7 @@ export namespace Prisma {
     riskScore?: SortOrderInput | SortOrder
     escrowPda?: SortOrderInput | SortOrder
     vaultPda?: SortOrderInput | SortOrder
+    nonceAccount?: SortOrderInput | SortOrder
     depositTxSignature?: SortOrderInput | SortOrder
     releaseTxSignature?: SortOrderInput | SortOrder
     cancelTxSignature?: SortOrderInput | SortOrder
@@ -47524,6 +47542,7 @@ export namespace Prisma {
     riskScore?: IntNullableWithAggregatesFilter<"InstitutionEscrow"> | number | null
     escrowPda?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    nonceAccount?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     depositTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
@@ -51443,6 +51462,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -51475,6 +51495,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -51505,6 +51526,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -51537,6 +51559,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -51568,6 +51591,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -51594,6 +51618,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -51621,6 +51646,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -55079,6 +55105,7 @@ export namespace Prisma {
     riskScore?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
+    nonceAccount?: SortOrder
     depositTxSignature?: SortOrder
     releaseTxSignature?: SortOrder
     cancelTxSignature?: SortOrder
@@ -55112,6 +55139,7 @@ export namespace Prisma {
     riskScore?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
+    nonceAccount?: SortOrder
     depositTxSignature?: SortOrder
     releaseTxSignature?: SortOrder
     cancelTxSignature?: SortOrder
@@ -55139,6 +55167,7 @@ export namespace Prisma {
     riskScore?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
+    nonceAccount?: SortOrder
     depositTxSignature?: SortOrder
     releaseTxSignature?: SortOrder
     cancelTxSignature?: SortOrder
@@ -61812,6 +61841,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -61842,6 +61872,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -62257,6 +62288,7 @@ export namespace Prisma {
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -64579,6 +64611,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -64610,6 +64643,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -64655,6 +64689,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -64686,6 +64721,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -64715,6 +64751,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -64746,6 +64783,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -64944,6 +64982,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -64975,6 +65014,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -65163,6 +65203,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -65194,6 +65235,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -65392,6 +65434,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -65423,6 +65466,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -65882,6 +65926,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -65913,6 +65958,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -66117,6 +66163,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -66148,6 +66195,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -67656,6 +67704,7 @@ export namespace Prisma {
     riskScore?: number | null
     escrowPda?: string | null
     vaultPda?: string | null
+    nonceAccount?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -67845,6 +67894,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -67875,6 +67925,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -67905,6 +67956,7 @@ export namespace Prisma {
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null

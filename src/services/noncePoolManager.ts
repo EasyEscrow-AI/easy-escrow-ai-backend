@@ -666,7 +666,61 @@ export class NoncePoolManager {
       throw error;
     }
   }
-  
+
+  /**
+   * Advance a nonce account and return the transaction signature.
+   * Used by institution escrow settlement to prove atomic execution on-chain.
+   */
+  async advanceNonceWithSignature(nonceAccount: string, retryCount = 0): Promise<string> {
+    try {
+      console.log(`[NoncePoolManager] Advancing nonce (with sig) for account: ${nonceAccount}`);
+
+      const noncePubkey = new PublicKey(nonceAccount);
+
+      const transaction = new Transaction().add(
+        SystemProgram.nonceAdvance({
+          noncePubkey,
+          authorizedPubkey: this.authority.publicKey,
+        })
+      );
+
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = this.authority.publicKey;
+
+      const signature = await this.connection.sendTransaction(transaction, [this.authority]);
+
+      console.log(`[NoncePoolManager] Nonce advance tx: ${signature}`);
+
+      await this.connection.confirmTransaction(signature, 'confirmed');
+
+      // Clear cache for this nonce
+      this.nonceCache.delete(nonceAccount);
+
+      // Update last used timestamp
+      await this.prisma.noncePool.update({
+        where: { nonceAccount },
+        data: { lastUsedAt: new Date() },
+      });
+
+      console.log(`[NoncePoolManager] Successfully advanced nonce for ${nonceAccount} (sig: ${signature})`);
+      return signature;
+    } catch (error) {
+      console.error(
+        `[NoncePoolManager] Failed to advance nonce with sig (attempt ${retryCount + 1}):`,
+        error
+      );
+
+      if (retryCount < this.config.maxCreationRetries) {
+        console.log(`[NoncePoolManager] Retrying nonce advance in ${this.config.retryDelayMs}ms...`);
+        await this.sleep(this.config.retryDelayMs);
+        return this.advanceNonceWithSignature(nonceAccount, retryCount + 1);
+      }
+
+      throw error;
+    }
+  }
+
   /**
    * Start periodic cleanup job
    */
