@@ -21,7 +21,7 @@ async function main() {
       code: 'SG-CH',
       sourceCountry: 'SG',
       destCountry: 'CH',
-      minAmount: 100,
+      minAmount: 1,
       maxAmount: 1000000,
       dailyLimit: 5000000,
       monthlyLimit: 50000000,
@@ -87,6 +87,10 @@ async function main() {
   console.log('\n👥 Seeding demo institution clients...');
   const demoPassword = await bcrypt.hash('DemoPass123!', 12);
 
+  // Staging test wallets (from env or .env.staging DEVNET_STAGING_SENDER/RECEIVER)
+  const STAGING_SENDER_WALLET = process.env.DEVNET_STAGING_SENDER_ADDRESS || 'AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z';
+  const STAGING_RECEIVER_WALLET = process.env.DEVNET_STAGING_RECEIVER_ADDRESS || '5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4';
+
   const clients = [
     {
       email: 'demo-enterprise@bank.com',
@@ -96,6 +100,7 @@ async function main() {
       kycStatus: 'VERIFIED',
       jurisdiction: 'SG',
       primaryWallet: '7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u',
+      settledWallets: [STAGING_SENDER_WALLET],
     },
     {
       email: 'demo-premium@trade.com',
@@ -105,6 +110,7 @@ async function main() {
       kycStatus: 'VERIFIED',
       jurisdiction: 'US',
       primaryWallet: '498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R',
+      settledWallets: [STAGING_RECEIVER_WALLET],
     },
     {
       email: 'demo-standard@company.com',
@@ -114,6 +120,7 @@ async function main() {
       kycStatus: 'VERIFIED',
       jurisdiction: 'UK',
       primaryWallet: 'HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2',
+      settledWallets: [] as string[],
     },
     {
       email: 'demo-pending@newco.com',
@@ -123,6 +130,7 @@ async function main() {
       kycStatus: 'PENDING',
       jurisdiction: 'MX',
       primaryWallet: null,
+      settledWallets: [] as string[],
     },
     {
       email: 'demo-suspended@risk.com',
@@ -132,6 +140,7 @@ async function main() {
       kycStatus: 'VERIFIED',
       jurisdiction: 'PH',
       primaryWallet: null,
+      settledWallets: [] as string[],
     },
   ];
 
@@ -140,34 +149,52 @@ async function main() {
       where: { email: c.email },
     });
 
+    let client;
     if (existing) {
-      console.log(`  ⏭️  Client ${c.email} already exists, skipping`);
-      continue;
+      // Update existing client: ensure settledWallets includes the staging test wallets
+      const merged = Array.from(new Set([
+        ...existing.settledWallets,
+        ...c.settledWallets,
+      ]));
+      client = await prisma.institutionClient.update({
+        where: { email: c.email },
+        data: {
+          settledWallets: merged,
+          primaryWallet: c.primaryWallet ?? existing.primaryWallet,
+        },
+      });
+      console.log(`  ✅ Client ${c.email} updated (settledWallets: ${merged.length})`);
+      // Still create settings below
+    } else {
+      client = await prisma.institutionClient.create({
+        data: {
+          email: c.email,
+          passwordHash: demoPassword,
+          companyName: c.companyName,
+          tier: c.tier,
+          status: c.status,
+          kycStatus: c.kycStatus,
+          jurisdiction: c.jurisdiction,
+          primaryWallet: c.primaryWallet,
+          settledWallets: c.settledWallets,
+        },
+      });
+      console.log(`  ✅ Client ${c.email} created (${c.tier}, ${c.status})`);
     }
 
-    const client = await prisma.institutionClient.create({
-      data: {
-        email: c.email,
-        passwordHash: demoPassword,
-        companyName: c.companyName,
-        tier: c.tier,
-        status: c.status,
-        kycStatus: c.kycStatus,
-        jurisdiction: c.jurisdiction,
-        primaryWallet: c.primaryWallet,
-      },
+    // Create default settings (skip if already exists)
+    const existingSettings = await prisma.institutionClientSettings.findUnique({
+      where: { clientId: client.id },
     });
-
-    // Create default settings
-    await prisma.institutionClientSettings.create({
-      data: {
-        clientId: client.id,
-        defaultCorridor: c.jurisdiction === 'SG' ? 'SG-CH' : c.jurisdiction === 'US' ? 'US-MX' : null,
-        timezone: c.jurisdiction === 'SG' ? 'Asia/Singapore' : c.jurisdiction === 'US' ? 'America/New_York' : 'UTC',
-      },
-    });
-
-    console.log(`  ✅ Client ${c.email} (${c.tier}, ${c.status})`);
+    if (!existingSettings) {
+      await prisma.institutionClientSettings.create({
+        data: {
+          clientId: client.id,
+          defaultCorridor: c.jurisdiction === 'SG' ? 'SG-CH' : c.jurisdiction === 'US' ? 'US-MX' : null,
+          timezone: c.jurisdiction === 'SG' ? 'Asia/Singapore' : c.jurisdiction === 'US' ? 'America/New_York' : 'UTC',
+        },
+      });
+    }
   }
 
   console.log('\n✅ Institution escrow seed data complete!');

@@ -1,12 +1,21 @@
 /**
- * AI Analysis Routes
+ * AI Analysis Routes — "EasyEscrow AI"
  *
- * POST   /api/v1/ai/analyze-escrow-doc/:escrow_id    → analyzeDocument (primary)
- * GET    /api/v1/ai/escrow-doc-analysis/:escrow_id   → getAnalysisResults (primary)
+ * Escrow Analysis:
+ * POST   /api/v1/ai/analyze-escrow/:escrow_id          → analyzeEscrow
+ * GET    /api/v1/ai/escrow-analysis/:escrow_id          → getEscrowAnalysis
+ *
+ * Document Analysis:
+ * POST   /api/v1/ai/analyze-escrow-doc/:escrow_id       → analyzeDocument (primary)
+ * GET    /api/v1/ai/escrow-doc-analysis/:escrow_id      → getDocumentAnalysisResults (primary)
+ *
+ * Client Analysis:
+ * POST   /api/v1/ai/analyze-client                      → analyzeClient
+ * GET    /api/v1/ai/client-analysis                     → getClientAnalysis
  *
  * Legacy aliases (backward compatibility):
- * POST   /api/v1/ai/analyze/:escrow_id               → analyzeDocument
- * GET    /api/v1/ai/analysis/:escrow_id              → getAnalysisResults
+ * POST   /api/v1/ai/analyze/:escrow_id                  → analyzeDocument
+ * GET    /api/v1/ai/analysis/:escrow_id                 → getDocumentAnalysisResults
  */
 
 import { Router, Response } from 'express';
@@ -42,7 +51,8 @@ const standardRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Shared handler for POST analyze
+// ─── Shared Handlers ────────────────────────────────────────────
+
 async function handleAnalyzeDocument(req: InstitutionAuthenticatedRequest, res: Response) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -81,8 +91,7 @@ async function handleAnalyzeDocument(req: InstitutionAuthenticatedRequest, res: 
   }
 }
 
-// Shared handler for GET analysis results
-async function handleGetAnalysis(req: InstitutionAuthenticatedRequest, res: Response) {
+async function handleGetDocumentAnalysis(req: InstitutionAuthenticatedRequest, res: Response) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({
@@ -115,7 +124,87 @@ async function handleGetAnalysis(req: InstitutionAuthenticatedRequest, res: Resp
   }
 }
 
-// Primary routes (new names)
+// ─── Escrow Analysis ────────────────────────────────────────────
+
+// POST /api/v1/ai/analyze-escrow/:escrow_id — full AI analysis of escrow details
+router.post(
+  '/api/v1/ai/analyze-escrow/:escrow_id',
+  strictRateLimiter,
+  requireInstitutionAuth,
+  validateEscrowIdParam,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ error: 'Validation Error', details: errors.array(), timestamp: new Date().toISOString() });
+      return;
+    }
+
+    try {
+      const service = getAiAnalysisService();
+      const result = await service.analyzeEscrow(
+        req.params.escrow_id,
+        req.institutionClient!.clientId,
+        { anonymize: true },
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('rate limit') ? 429
+        : error.message.includes('not found') ? 404
+        : error.message.includes('not configured') ? 503
+        : 500;
+      res.status(status).json({
+        error: 'Escrow Analysis Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
+// GET /api/v1/ai/escrow-analysis/:escrow_id — get stored escrow analysis results
+router.get(
+  '/api/v1/ai/escrow-analysis/:escrow_id',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  validateEscrowIdParam,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ error: 'Validation Error', details: errors.array(), timestamp: new Date().toISOString() });
+      return;
+    }
+
+    try {
+      const service = getAiAnalysisService();
+      const results = await service.getEscrowAnalysis(
+        req.params.escrow_id,
+        req.institutionClient!.clientId,
+      );
+
+      res.status(200).json({
+        success: true,
+        data: results,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('not found') ? 404 : 500;
+      res.status(status).json({
+        error: status === 404 ? 'Not Found' : 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
+// ─── Document Analysis ──────────────────────────────────────────
+
+// POST /api/v1/ai/analyze-escrow-doc/:escrow_id (primary)
 router.post(
   '/api/v1/ai/analyze-escrow-doc/:escrow_id',
   strictRateLimiter,
@@ -124,12 +213,13 @@ router.post(
   handleAnalyzeDocument,
 );
 
+// GET /api/v1/ai/escrow-doc-analysis/:escrow_id (primary)
 router.get(
   '/api/v1/ai/escrow-doc-analysis/:escrow_id',
   standardRateLimiter,
   requireInstitutionAuth,
   validateEscrowIdParam,
-  handleGetAnalysis,
+  handleGetDocumentAnalysis,
 );
 
 // Legacy aliases (backward compatibility)
@@ -146,7 +236,68 @@ router.get(
   standardRateLimiter,
   requireInstitutionAuth,
   validateEscrowIdParam,
-  handleGetAnalysis,
+  handleGetDocumentAnalysis,
+);
+
+// ─── Client Analysis ────────────────────────────────────────────
+
+// POST /api/v1/ai/analyze-client — AI analysis of the authenticated client's profile
+router.post(
+  '/api/v1/ai/analyze-client',
+  strictRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getAiAnalysisService();
+      const result = await service.analyzeClient(
+        req.institutionClient!.clientId,
+        { anonymize: true },
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('rate limit') ? 429
+        : error.message.includes('not found') ? 404
+        : error.message.includes('not configured') ? 503
+        : 500;
+      res.status(status).json({
+        error: 'Client Analysis Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
+// GET /api/v1/ai/client-analysis — get stored client analysis results
+router.get(
+  '/api/v1/ai/client-analysis',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getAiAnalysisService();
+      const results = await service.getClientAnalysis(
+        req.institutionClient!.clientId,
+      );
+
+      res.status(200).json({
+        success: true,
+        data: results,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
 );
 
 export default router;

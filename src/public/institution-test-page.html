@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institution Escrow Test Page - EasyEscrow.ai</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Password Protection Overlay */
+        #passwordOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        #passwordOverlay.hidden {
+            display: none;
+        }
+
+        .password-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .password-modal h2 {
+            color: #10b981;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .password-modal input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .password-modal input:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .password-modal button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .password-modal button:hover {
+            transform: translateY(-2px);
+        }
+
+        .password-modal .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .password-modal .error.visible {
+            display: block;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Auth status bar */
+        .auth-status-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .auth-status-text {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .auth-status-text.logged-in {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .auth-status-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Section panels */
+        .section-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #059669;
+        }
+
+        .section-subtitle {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: white;
+            transition: border-color 0.3s;
+            cursor: pointer;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #d97706;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background: #f8fafb;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e9ecef;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .data-table tr:hover {
+            background: #f8fdfb;
+        }
+
+        .data-table .mono {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Status badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-funded {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-released {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-expired {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-revoked {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Token display area */
+        .token-display {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.8rem;
+            word-break: break-all;
+            color: #555;
+            max-height: 120px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .token-display.visible {
+            display: block;
+        }
+
+        .token-label {
+            font-weight: 600;
+            color: #059669;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin-bottom: 4px;
+        }
+
+        /* Profile display */
+        .profile-display {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .profile-display.visible {
+            display: block;
+        }
+
+        .profile-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #dcfce7;
+            font-size: 0.9rem;
+        }
+
+        .profile-field:last-child {
+            border-bottom: none;
+        }
+
+        .profile-field-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .profile-field-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* Settings display */
+        .settings-display {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        /* Risk score colors */
+        .risk-low {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .risk-medium {
+            color: #d97706;
+            font-weight: 700;
+        }
+
+        .risk-high {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        /* AI results display */
+        .ai-results {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .ai-results.visible {
+            display: block;
+        }
+
+        .ai-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .ai-score-badge {
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 12px;
+        }
+
+        .ai-section {
+            margin-bottom: 12px;
+        }
+
+        .ai-section-title {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .ai-factor {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Collapsible section */
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible-header .chevron {
+            transition: transform 0.3s;
+            font-size: 1.2rem;
+            color: #999;
+        }
+
+        .collapsible-header.expanded .chevron {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .collapsible-content.expanded {
+            display: block;
+        }
+
+        /* Response Log */
+        .response-log {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin-top: 20px;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .log-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #059669;
+        }
+
+        #response-log-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #f8f8f8;
+            border-left: 4px solid #10b981;
+            overflow: hidden;
+        }
+
+        .log-entry.error {
+            border-left-color: #e74c3c;
+            background: #fef2f2;
+        }
+
+        .log-entry.success {
+            border-left-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        .log-timestamp {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .log-method {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: white;
+            margin-left: 8px;
+        }
+
+        .log-method.get { background: #3b82f6; }
+        .log-method.post { background: #10b981; }
+        .log-method.put { background: #f59e0b; }
+        .log-method.patch { background: #8b5cf6; }
+        .log-method.delete { background: #ef4444; }
+
+        .log-url {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #666;
+            margin-left: 8px;
+        }
+
+        .log-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .log-status.ok {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .log-status.err {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .log-body {
+            margin-top: 8px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #555;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f1f5f9;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        /* Spinner for loading states */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #10b981;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        .spinner-sm {
+            width: 14px;
+            height: 14px;
+            border-width: 2px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* API Key list */
+        .api-key-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .api-key-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .api-key-value {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .api-key-meta {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        .upload-area:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .upload-area.dragover {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        /* Divider */
+        .section-divider {
+            border: none;
+            border-top: 1px solid #e9ecef;
+            margin: 20px 0;
+        }
+
+        /* Tab-like sub-sections */
+        .sub-section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.6rem;
+            }
+
+            .form-row, .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .auth-status-bar {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+
+            .btn-group {
+                justify-content: center;
+            }
+
+            .data-table {
+                font-size: 0.8rem;
+            }
+
+            .data-table th, .data-table td {
+                padding: 8px 10px;
+            }
+
+            .section-panel {
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Password Protection Overlay -->
+    <div id="passwordOverlay">
+        <div class="password-modal">
+            <h2>Protected Test Page</h2>
+            <p style="color: #666; margin-bottom: 20px; text-align: center;">Please enter the password to access this page</p>
+            <input
+                type="password"
+                id="passwordInput"
+                placeholder="Enter password"
+                autocomplete="off"
+            />
+            <button id="unlockButton">Unlock</button>
+            <div class="error" id="passwordError">Incorrect password. Please try again.</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Institution Escrow Portal</h1>
+            <p>Cross-Border USDC Payment Testing</p>
+        </div>
+
+        <!-- Auth Status Bar -->
+        <div class="auth-status-bar">
+            <div class="auth-status-text" id="auth-status">Not logged in</div>
+            <div class="auth-status-actions" id="auth-actions">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Section 1: Authentication -->
+        <div class="section-panel" id="auth-section">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Authentication</div>
+                    <div class="section-subtitle">Register or log in to access institution features</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <!-- Register Form -->
+                <div>
+                    <div class="sub-section-title">Register New Account</div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="register-email" placeholder="admin@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="register-password" placeholder="Min 8 characters">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" class="form-input" id="register-company" placeholder="Acme Corp">
+                    </div>
+                    <button class="btn btn-primary" id="register-btn" onclick="register()">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <div>
+                    <div class="sub-section-title">Login</div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="login-email" placeholder="admin@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="login-password" placeholder="Your password">
+                    </div>
+                    <div style="margin-top: 28px;">
+                        <button class="btn btn-primary" id="login-btn" onclick="login()">Login</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Display -->
+            <div class="token-display" id="token-display">
+                <div class="token-label">Access Token</div>
+                <div id="access-token-text">--</div>
+                <div class="token-label" style="margin-top: 8px;">Refresh Token</div>
+                <div id="refresh-token-text">--</div>
+            </div>
+
+            <!-- Profile Display -->
+            <div class="profile-display" id="profile-display">
+                <div style="font-weight: 600; color: #059669; margin-bottom: 8px;">Client Profile</div>
+                <div id="profile-fields"></div>
+            </div>
+
+            <!-- Auth Action Buttons -->
+            <div class="btn-group" style="margin-top: 12px; display: none;" id="auth-btn-group">
+                <button class="btn btn-secondary btn-sm" onclick="getProfile()">Refresh Profile</button>
+                <button class="btn btn-warning btn-sm" onclick="refreshAccessToken()">Refresh Token</button>
+                <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Section 2: Client Settings -->
+        <div class="section-panel" id="settings-section" style="display: none;">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Client Settings</div>
+                    <div class="section-subtitle">Manage corridors, wallets, and API keys</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="getSettings()">Reload</button>
+            </div>
+
+            <!-- Current Settings Display -->
+            <div class="settings-display" id="current-settings">
+                <div class="empty-state">Loading settings...</div>
+            </div>
+
+            <!-- Edit Settings -->
+            <div class="sub-section-title">Update Settings</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Default Corridor</label>
+                    <select class="form-select" id="settings-corridor">
+                        <option value="">-- Select --</option>
+                        <option value="SG-CH">SG-CH (Singapore - Switzerland)</option>
+                        <option value="US-MX">US-MX (United States - Mexico)</option>
+                        <option value="US-PH">US-PH (United States - Philippines)</option>
+                        <option value="EU-UK">EU-UK (EU - United Kingdom)</option>
+                        <option value="SG-US">SG-US (Singapore - United States)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Timezone</label>
+                    <input type="text" class="form-input" id="settings-timezone" placeholder="Asia/Singapore">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Notification Email</label>
+                    <input type="email" class="form-input" id="settings-notification-email" placeholder="alerts@company.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Webhook URL</label>
+                    <input type="url" class="form-input" id="settings-webhook" placeholder="https://hooks.company.com/escrow">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="updateSettings()">Save Settings</button>
+
+            <hr class="section-divider">
+
+            <!-- Wallet Management -->
+            <div class="sub-section-title">Wallet Management</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Primary Wallet</label>
+                    <input type="text" class="form-input" id="settings-primary-wallet" placeholder="Solana wallet address">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Settlement Wallet</label>
+                    <input type="text" class="form-input" id="settings-settlement-wallet" placeholder="Settlement wallet address">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="updateWallets()">Update Wallets</button>
+
+            <hr class="section-divider">
+
+            <!-- API Key Management -->
+            <div class="sub-section-title">API Keys</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Key Name</label>
+                    <input type="text" class="form-input" id="apikey-name" placeholder="e.g., Production Key">
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button class="btn btn-primary" onclick="generateApiKey()">Generate API Key</button>
+                </div>
+            </div>
+            <div id="api-keys-list">
+                <div class="empty-state">No API keys generated yet.</div>
+            </div>
+        </div>
+
+        <!-- Section 3: Escrow Management -->
+        <div class="section-panel" id="escrow-section" style="display: none;">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Escrow Management</div>
+                    <div class="section-subtitle">Create and manage USDC escrow transactions</div>
+                </div>
+            </div>
+
+            <!-- Create Escrow Form -->
+            <div class="sub-section-title">Create New Escrow</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Payer Wallet</label>
+                    <input type="text" class="form-input" id="escrow-payer" placeholder="Payer's Solana wallet address">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Recipient Wallet</label>
+                    <input type="text" class="form-input" id="escrow-recipient" placeholder="Recipient's Solana wallet address">
+                </div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label class="form-label">Amount (USDC)</label>
+                    <input type="number" class="form-input" id="escrow-amount" placeholder="1000.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Corridor</label>
+                    <select class="form-select" id="escrow-corridor">
+                        <option value="SG-CH">SG-CH</option>
+                        <option value="US-MX">US-MX</option>
+                        <option value="US-PH">US-PH</option>
+                        <option value="EU-UK">EU-UK</option>
+                        <option value="SG-US">SG-US</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Condition Type</label>
+                    <select class="form-select" id="escrow-condition">
+                        <option value="ADMIN_RELEASE">Admin Release</option>
+                        <option value="TIME_LOCK">Time Lock</option>
+                        <option value="COMPLIANCE_CHECK">Compliance Check</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Expiry Hours</label>
+                    <input type="number" class="form-input" id="escrow-expiry" placeholder="72" value="72" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Settlement Authority Wallet</label>
+                    <input type="text" class="form-input" id="escrow-settlement-authority" placeholder="Settlement authority wallet (optional)">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="create-escrow-btn" onclick="createEscrow()">Create Escrow</button>
+
+            <hr class="section-divider">
+
+            <!-- Escrow List -->
+            <div class="sub-section-title">Escrow List</div>
+            <div class="filter-bar">
+                <select class="form-select" id="escrow-filter-status" style="width: auto; min-width: 140px;">
+                    <option value="">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="FUNDED">Funded</option>
+                    <option value="RELEASED">Released</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="CANCELLED">Cancelled</option>
+                    <option value="EXPIRED">Expired</option>
+                </select>
+                <select class="form-select" id="escrow-filter-corridor" style="width: auto; min-width: 120px;">
+                    <option value="">All Corridors</option>
+                    <option value="SG-CH">SG-CH</option>
+                    <option value="US-MX">US-MX</option>
+                    <option value="US-PH">US-PH</option>
+                    <option value="EU-UK">EU-UK</option>
+                    <option value="SG-US">SG-US</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" onclick="listEscrows()">Refresh</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="data-table" id="escrow-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Amount</th>
+                            <th>Corridor</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="escrow-table-body">
+                        <tr>
+                            <td colspan="6" class="empty-state">No escrows found. Create one above.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 4: File Management -->
+        <div class="section-panel" id="files-section" style="display: none;">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">File Management</div>
+                    <div class="section-subtitle">Upload and manage documents for compliance</div>
+                </div>
+            </div>
+
+            <!-- Upload Form -->
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label class="form-label">Document</label>
+                    <input type="file" class="form-input" id="file-input" accept=".pdf,.jpeg,.jpg,.png">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Document Type</label>
+                    <select class="form-select" id="file-doc-type">
+                        <option value="INVOICE">Invoice</option>
+                        <option value="CONTRACT">Contract</option>
+                        <option value="SHIPPING_DOC">Shipping Document</option>
+                        <option value="LETTER_OF_CREDIT">Letter of Credit</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Escrow ID (optional)</label>
+                    <input type="text" class="form-input" id="file-escrow-id" placeholder="Link to escrow">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="upload-btn" onclick="uploadFile()">Upload Document</button>
+
+            <hr class="section-divider">
+
+            <!-- File List -->
+            <div class="sub-section-title">Uploaded Files</div>
+            <div style="overflow-x: auto;">
+                <table class="data-table" id="files-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Uploaded</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="files-table-body">
+                        <tr>
+                            <td colspan="5" class="empty-state">No files uploaded yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 5: AI Analysis -->
+        <div class="section-panel" id="ai-section" style="display: none;">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">AI Document Analysis</div>
+                    <div class="section-subtitle">Analyze uploaded documents for compliance risk assessment</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Escrow ID</label>
+                    <input type="text" class="form-input" id="ai-escrow-id" placeholder="Escrow to analyze">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">File ID</label>
+                    <input type="text" class="form-input" id="ai-file-id" placeholder="Document file ID">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Expected Amount (context)</label>
+                    <input type="number" class="form-input" id="ai-expected-amount" placeholder="e.g., 5000.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">PO Number (context)</label>
+                    <input type="text" class="form-input" id="ai-po-number" placeholder="e.g., PO-2024-001">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="analyze-btn" onclick="analyzeDocument()">Analyze Document</button>
+
+            <!-- AI Results -->
+            <div class="ai-results" id="ai-results">
+                <div class="ai-results-header">
+                    <div>
+                        <div style="font-weight: 600; color: #333; font-size: 1.1rem;">Analysis Results</div>
+                        <div id="ai-recommendation" style="color: #666; margin-top: 4px;"></div>
+                    </div>
+                    <div class="ai-score-badge" id="ai-score-badge">--</div>
+                </div>
+
+                <div class="ai-section">
+                    <div class="ai-section-title">Extracted Fields</div>
+                    <div id="ai-extracted-fields"></div>
+                </div>
+
+                <div class="ai-section">
+                    <div class="ai-section-title">Risk Factors</div>
+                    <div id="ai-risk-factors"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Admin Panel (Collapsible) -->
+        <div class="section-panel" id="admin-section" style="display: none;">
+            <div class="collapsible-header" id="admin-toggle" onclick="toggleAdmin()">
+                <div>
+                    <div class="section-title">Admin Panel</div>
+                    <div class="section-subtitle">Manage allowlists and corridor configuration</div>
+                </div>
+                <span class="chevron">&#9660;</span>
+            </div>
+
+            <div class="collapsible-content" id="admin-content">
+                <!-- Allowlist Management -->
+                <div class="sub-section-title">Wallet Allowlist</div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label class="form-label">Wallet Address</label>
+                        <input type="text" class="form-input" id="allowlist-wallet" placeholder="Solana wallet address">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Client ID</label>
+                        <input type="text" class="form-input" id="allowlist-client-id" placeholder="Client ID">
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary btn-sm" onclick="addToAllowlist()">Add to Allowlist</button>
+                    </div>
+                </div>
+                <div id="allowlist-entries">
+                    <div class="empty-state">No allowlist entries loaded.</div>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- Corridor Configuration -->
+                <div class="sub-section-title">Configure Corridor</div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label class="form-label">Corridor Code</label>
+                        <input type="text" class="form-input" id="corridor-code" placeholder="e.g., JP-SG">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Source Country</label>
+                        <input type="text" class="form-input" id="corridor-source" placeholder="e.g., Japan">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Destination Country</label>
+                        <input type="text" class="form-input" id="corridor-dest" placeholder="e.g., Singapore">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Min Amount (USDC)</label>
+                        <input type="number" class="form-input" id="corridor-min" placeholder="100" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Amount (USDC)</label>
+                        <input type="number" class="form-input" id="corridor-max" placeholder="1000000" step="0.01">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary btn-sm" onclick="configureCorridor()">Save Corridor</button>
+                    <button class="btn btn-secondary btn-sm" onclick="listCorridors()">List All Corridors</button>
+                    <button class="btn btn-secondary btn-sm" onclick="listAllowlist()">List Allowlist</button>
+                </div>
+
+                <div id="corridors-list" style="margin-top: 16px;">
+                    <div class="empty-state">No corridors loaded.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Log -->
+        <div class="response-log">
+            <div class="log-header">
+                <div class="log-title">Response Log</div>
+                <button class="btn btn-secondary btn-sm" onclick="clearLog()">Clear</button>
+            </div>
+            <div id="response-log-content">
+                <div class="empty-state">No API calls yet. Perform an action to see request/response logs.</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/institution-test-page.js"></script>
+</body>
+</html>

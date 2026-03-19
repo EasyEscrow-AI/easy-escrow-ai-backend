@@ -1,16 +1,27 @@
 /**
- * AI Analysis Service
+ * AI Analysis Service — "EasyEscrow AI"
  *
- * Analyzes uploaded documents (invoices, contracts, shipping docs) using Claude API
- * to assess risk and extract relevant fields for institution escrow compliance.
+ * Provides AI-powered analysis helpers for the institutional escrow portal:
  *
- * Pipeline: Fetch file -> Extract text (PDF) -> Anonymize PII -> Claude API -> Parse & store
+ * 1. Analyze Escrow       — full AI analysis of escrow details (amounts, corridor, wallets, risk)
+ * 2. Analyze Document     — single document matched against an escrow (names, amounts, addresses)
+ * 3. Analyze Client       — AI analysis of institution client profile & compliance posture
+ *
+ * Each has a corresponding "get" method to retrieve stored results.
+ *
+ * Pipeline: Collect data -> Anonymize PII -> Claude API -> Parse & store
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { PrismaClient } from '../generated/prisma';
 import { redisClient } from '../config/redis';
 import crypto from 'crypto';
+import {
+  DataAnonymizer,
+  ESCROW_SENSITIVE_FIELDS,
+  CLIENT_SENSITIVE_FIELDS,
+} from '../utils/data-anonymizer';
+import { escrowWhere } from '../utils/uuid-conversion';
 
 const AI_RATE_LIMIT_KEY_PREFIX = 'institution:ai:ratelimit:';
 const AI_RATE_LIMIT_MAX = 5; // 5 requests per minute per client
@@ -67,9 +78,10 @@ export class AiAnalysisService {
 
     // Verify escrow belongs to this client, and fetch non-PII client details for context
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { escrowId, clientId },
+      where: { ...escrowWhere(escrowId), clientId },
       select: {
         escrowId: true,
+        escrowCode: true,
         clientId: true,
         amount: true,
         corridor: true,
@@ -87,9 +99,10 @@ export class AiAnalysisService {
     if (!escrow) {
       throw new Error('Escrow not found or access denied');
     }
+    const resolvedEscrowId = escrow.escrowId; // Internal UUID for FK operations
 
-    // Check cache first
-    const cacheKey = `${AI_CACHE_PREFIX}${escrowId}:${fileId}`;
+    // Check cache first (use internal escrowId for consistency)
+    const cacheKey = `${AI_CACHE_PREFIX}${resolvedEscrowId}:${fileId}`;
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
@@ -142,7 +155,7 @@ export class AiAnalysisService {
 
     // Check if we already analyzed this exact document
     const existingAnalysis = await this.prisma.institutionAiAnalysis.findFirst({
-      where: { escrowId, documentHash },
+      where: { escrowId: resolvedEscrowId, documentHash },
     });
     if (existingAnalysis) {
       const result: AiAnalysisResult = {
@@ -178,7 +191,9 @@ export class AiAnalysisService {
     // Store in database
     await this.prisma.institutionAiAnalysis.create({
       data: {
-        escrowId,
+        analysisType: 'DOCUMENT',
+        escrowId: resolvedEscrowId,
+        clientId,
         fileId,
         documentHash,
         riskScore: analysisResult.riskScore,
@@ -208,14 +223,14 @@ export class AiAnalysisService {
   ): Promise<AiAnalysisResult[]> {
     // Verify escrow belongs to client
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { escrowId, clientId },
+      where: { ...escrowWhere(escrowId), clientId },
     });
     if (!escrow) {
       throw new Error('Escrow not found or access denied');
     }
 
     const analyses = await this.prisma.institutionAiAnalysis.findMany({
-      where: { escrowId },
+      where: { escrowId: escrow.escrowId, analysisType: 'DOCUMENT' },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -225,6 +240,443 @@ export class AiAnalysisService {
       factors: a.factors as Array<{ name: string; weight: number; value: number }>,
       recommendation: a.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
       details: `Analyzed at ${a.createdAt.toISOString()} using ${a.model}`,
+    }));
+  }
+
+  // ─── Escrow Analysis ──────────────────────────────────────────
+
+  /**
+   * Run a full AI analysis on an escrow's details (amounts, corridor, wallets, status, risk).
+   * Does NOT analyze a document — instead evaluates the escrow itself.
+   */
+  async analyzeEscrow(
+    escrowId: string,
+    clientId: string,
+    options: { anonymize?: boolean } = {},
+  ): Promise<AiAnalysisResult & { summary: string }> {
+    const { anonymize = true } = options;
+    await this.checkRateLimit(clientId);
+
+    const escrow = await this.prisma.institutionEscrow.findFirst({
+      where: { ...escrowWhere(escrowId), clientId },
+      include: {
+        client: {
+          select: {
+            companyName: true,
+            legalName: true,
+            country: true,
+            industry: true,
+            tier: true,
+            kycStatus: true,
+            kybStatus: true,
+            riskRating: true,
+            entityType: true,
+          },
+        },
+        deposits: true,
+        files: { select: { id: true, fileName: true, documentType: true, sizeBytes: true } },
+      },
+    });
+    if (!escrow) {
+      throw new Error('Escrow not found or access denied');
+    }
+    const resolvedEscrowId = escrow.escrowId;
+
+    // Check cache
+    const cacheKey = `${AI_CACHE_PREFIX}escrow:${resolvedEscrowId}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch { /* cache miss */ }
+
+    // Check for existing analysis of same escrow (dedup by type)
+    const existing = await this.prisma.institutionAiAnalysis.findFirst({
+      where: { escrowId: resolvedEscrowId, analysisType: 'ESCROW' },
+      orderBy: { createdAt: 'desc' },
+    });
+    // Re-analyze if escrow status changed since last analysis
+    const statusChanged = existing && (existing.extractedFields as any)?.escrow_status !== escrow.status;
+    if (existing && !statusChanged) {
+      const result = {
+        riskScore: existing.riskScore,
+        extractedFields: existing.extractedFields as Record<string, unknown>,
+        factors: existing.factors as Array<{ name: string; weight: number; value: number }>,
+        recommendation: existing.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
+        details: `Previously analyzed (${existing.createdAt.toISOString()})`,
+        summary: (existing as any).summary || '',
+      };
+      return result;
+    }
+
+    const model = process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
+    const client = this.getAnthropicClient();
+    const anonymizer = anonymize ? new DataAnonymizer() : null;
+
+    // Build escrow summary for AI
+    const escrowSummary: Record<string, unknown> = {
+      escrowId: escrow.escrowId,
+      status: escrow.status,
+      amount: Number(escrow.amount),
+      platformFee: Number(escrow.platformFee),
+      corridor: escrow.corridor,
+      conditionType: escrow.conditionType,
+      riskScore: escrow.riskScore,
+      payerWallet: escrow.payerWallet,
+      recipientWallet: escrow.recipientWallet,
+      hasDeposit: escrow.deposits.length > 0,
+      depositCount: escrow.deposits.length,
+      fileCount: escrow.files.length,
+      fileTypes: escrow.files.map(f => f.documentType),
+      expiresAt: escrow.expiresAt.toISOString(),
+      createdAt: escrow.createdAt.toISOString(),
+      fundedAt: escrow.fundedAt?.toISOString() || null,
+      resolvedAt: escrow.resolvedAt?.toISOString() || null,
+      depositTxSignature: escrow.depositTxSignature,
+      client: {
+        companyName: escrow.client.companyName,
+        legalName: escrow.client.legalName,
+        tradingName: (escrow.client as any).tradingName,
+        country: escrow.client.country,
+        industry: escrow.client.industry,
+        tier: escrow.client.tier,
+        kycStatus: escrow.client.kycStatus,
+        kybStatus: (escrow.client as any).kybStatus,
+        riskRating: (escrow.client as any).riskRating,
+        entityType: (escrow.client as any).entityType,
+      },
+    };
+
+    // Anonymize sensitive fields before sending to AI
+    const dataForAi = anonymizer
+      ? anonymizer.anonymizeObject(escrowSummary, ESCROW_SENSITIVE_FIELDS)
+      : escrowSummary;
+
+    const systemPrompt = `You are EasyEscrow AI, an escrow compliance analyst. Analyze the following institutional escrow transaction and provide a comprehensive risk assessment.${anonymize ? '\n\nNote: Some fields have been tokenized for privacy (e.g. [COMPANY_1], [WALLET_1]). Reference these tokens in your analysis — they will be resolved to real values after.' : ''}
+
+Your response MUST be valid JSON with this exact structure:
+{
+  "risk_score": <number 0-100>,
+  "recommendation": "<APPROVE|REVIEW|REJECT>",
+  "summary": "<2-4 sentence human-readable summary of the escrow analysis>",
+  "extracted_fields": {
+    "escrow_status": "<string>",
+    "amount_usd": <number>,
+    "corridor": "<string>",
+    "condition_type": "<string>",
+    "client_tier": "<string>",
+    "kyc_status": "<string>",
+    "days_until_expiry": <number>,
+    "has_supporting_documents": <boolean>,
+    "deposit_confirmed": <boolean>
+  },
+  "factors": [
+    {"name": "<factor_name>", "weight": <0-1>, "value": <0-100>}
+  ],
+  "details": "<brief explanation of risk factors>"
+}
+
+Consider: corridor risk, amount size, client tier/KYC status, document support, escrow timing, condition type.
+Respond with ONLY the JSON object, no additional text.`;
+
+    const response = await client.messages.create({
+      model,
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: `Analyze this escrow transaction:\n\n${JSON.stringify(dataForAi, null, 2)}`,
+      }],
+    });
+
+    const responseText = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map(block => block.text)
+      .join('');
+
+    let result: AiAnalysisResult & { summary: string };
+    try {
+      const parsed = JSON.parse(responseText);
+      result = {
+        riskScore: Math.min(100, Math.max(0, parsed.risk_score || 50)),
+        extractedFields: parsed.extracted_fields || {},
+        factors: (parsed.factors || []).map((f: any) => ({
+          name: f.name,
+          weight: Math.min(1, Math.max(0, f.weight || 0)),
+          value: Math.min(100, Math.max(0, f.value || 0)),
+        })),
+        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation)
+          ? parsed.recommendation
+          : 'REVIEW',
+        details: parsed.details || 'Analysis complete',
+        summary: parsed.summary || '',
+      };
+    } catch {
+      result = {
+        riskScore: 50,
+        extractedFields: {},
+        factors: [{ name: 'parse_error', weight: 1, value: 50 }],
+        recommendation: 'REVIEW',
+        details: 'AI response could not be parsed. Manual review recommended.',
+        summary: 'Analysis could not be completed automatically.',
+      };
+    }
+
+    // De-anonymize: restore real values in AI response
+    if (anonymizer) {
+      result = anonymizer.deanonymizeResult(result);
+    }
+
+    // Store
+    await this.prisma.institutionAiAnalysis.create({
+      data: {
+        analysisType: 'ESCROW',
+        escrowId: resolvedEscrowId,
+        clientId,
+        riskScore: result.riskScore,
+        factors: result.factors,
+        recommendation: result.recommendation,
+        extractedFields: result.extractedFields as any,
+        summary: result.summary,
+        model,
+      },
+    });
+
+    try {
+      await redisClient.set(cacheKey, JSON.stringify(result), 'EX', AI_CACHE_TTL);
+    } catch { /* non-critical */ }
+
+    return result;
+  }
+
+  /**
+   * Get stored escrow-level analysis results
+   */
+  async getEscrowAnalysis(
+    escrowId: string,
+    clientId: string,
+  ): Promise<Array<AiAnalysisResult & { summary: string }>> {
+    const escrow = await this.prisma.institutionEscrow.findFirst({
+      where: { ...escrowWhere(escrowId), clientId },
+    });
+    if (!escrow) {
+      throw new Error('Escrow not found or access denied');
+    }
+
+    const analyses = await this.prisma.institutionAiAnalysis.findMany({
+      where: { escrowId: escrow.escrowId, analysisType: 'ESCROW' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return analyses.map(a => ({
+      riskScore: a.riskScore,
+      extractedFields: a.extractedFields as Record<string, unknown>,
+      factors: a.factors as Array<{ name: string; weight: number; value: number }>,
+      recommendation: a.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
+      details: `Analyzed at ${a.createdAt.toISOString()} using ${a.model}`,
+      summary: (a as any).summary || '',
+    }));
+  }
+
+  // ─── Client Analysis ─────────────────────────────────────────
+
+  /**
+   * Run AI analysis on an institution client's profile and compliance posture.
+   */
+  async analyzeClient(
+    clientId: string,
+    options: { anonymize?: boolean } = {},
+  ): Promise<AiAnalysisResult & { summary: string }> {
+    const { anonymize = true } = options;
+    await this.checkRateLimit(clientId);
+
+    const clientRecord = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+      include: {
+        wallets: { select: { id: true, chain: true, isPrimary: true, isSettlement: true } },
+        escrows: {
+          select: { escrowId: true, status: true, amount: true, corridor: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
+      },
+    });
+    if (!clientRecord) {
+      throw new Error('Client not found');
+    }
+
+    // Check cache
+    const cacheKey = `${AI_CACHE_PREFIX}client:${clientId}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch { /* cache miss */ }
+
+    const model = process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
+    const client = this.getAnthropicClient();
+    const anonymizer = anonymize ? new DataAnonymizer() : null;
+
+    // Build client profile for AI
+    const clientProfile: Record<string, unknown> = {
+      companyName: clientRecord.companyName,
+      legalName: clientRecord.legalName,
+      tradingName: clientRecord.tradingName,
+      entityType: clientRecord.entityType,
+      country: clientRecord.country,
+      industry: clientRecord.industry,
+      tier: clientRecord.tier,
+      status: clientRecord.status,
+      kycStatus: clientRecord.kycStatus,
+      kybStatus: clientRecord.kybStatus,
+      riskRating: clientRecord.riskRating,
+      sanctionsStatus: clientRecord.sanctionsStatus,
+      isRegulatedEntity: clientRecord.isRegulatedEntity,
+      regulatoryStatus: clientRecord.regulatoryStatus,
+      licenseType: clientRecord.licenseType,
+      yearEstablished: clientRecord.yearEstablished,
+      employeeCountRange: clientRecord.employeeCountRange,
+      annualRevenueRange: clientRecord.annualRevenueRange,
+      walletCustodyType: clientRecord.walletCustodyType,
+      preferredSettlementChain: clientRecord.preferredSettlementChain,
+      walletCount: clientRecord.wallets.length,
+      hasPrimaryWallet: clientRecord.wallets.some(w => w.isPrimary),
+      hasSettlementWallet: clientRecord.wallets.some(w => w.isSettlement),
+      onboardingCompleted: !!clientRecord.onboardingCompletedAt,
+      escrowHistory: {
+        totalEscrows: clientRecord.escrows.length,
+        statusBreakdown: clientRecord.escrows.reduce((acc: Record<string, number>, e) => {
+          acc[e.status] = (acc[e.status] || 0) + 1;
+          return acc;
+        }, {}),
+        corridorsUsed: [...new Set(clientRecord.escrows.map(e => e.corridor))],
+        totalVolume: clientRecord.escrows.reduce((sum, e) => sum + Number(e.amount), 0),
+      },
+      accountAge: Math.floor(
+        (Date.now() - clientRecord.createdAt.getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    };
+
+    // Anonymize sensitive fields before sending to AI
+    const dataForAi = anonymizer
+      ? anonymizer.anonymizeObject(clientProfile, CLIENT_SENSITIVE_FIELDS)
+      : clientProfile;
+
+    const systemPrompt = `You are EasyEscrow AI, an institutional compliance analyst. Analyze the following institution client profile and provide a comprehensive compliance and risk assessment.${anonymize ? '\n\nNote: Some fields have been tokenized for privacy (e.g. [COMPANY_1], [PERSON_1]). Reference these tokens in your analysis — they will be resolved to real values after.' : ''}
+
+Your response MUST be valid JSON with this exact structure:
+{
+  "risk_score": <number 0-100>,
+  "recommendation": "<APPROVE|REVIEW|REJECT>",
+  "summary": "<2-4 sentence human-readable summary of the client assessment>",
+  "extracted_fields": {
+    "company_name": "<string>",
+    "entity_type": "<string|null>",
+    "country": "<string|null>",
+    "industry": "<string|null>",
+    "kyc_verified": <boolean>,
+    "kyb_verified": <boolean>,
+    "sanctions_clear": <boolean>,
+    "is_regulated": <boolean>,
+    "account_age_days": <number>,
+    "total_escrow_volume": <number>,
+    "escrow_count": <number>,
+    "has_wallet_configured": <boolean>
+  },
+  "factors": [
+    {"name": "<factor_name>", "weight": <0-1>, "value": <0-100>}
+  ],
+  "details": "<brief explanation of risk factors and compliance status>"
+}
+
+Consider: KYC/KYB status, sanctions screening, entity type, jurisdiction risk, transaction history, wallet configuration, regulatory status, account maturity.
+Respond with ONLY the JSON object, no additional text.`;
+
+    const response = await client.messages.create({
+      model,
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: `Analyze this institution client profile:\n\n${JSON.stringify(dataForAi, null, 2)}`,
+      }],
+    });
+
+    const responseText = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map(block => block.text)
+      .join('');
+
+    let result: AiAnalysisResult & { summary: string };
+    try {
+      const parsed = JSON.parse(responseText);
+      result = {
+        riskScore: Math.min(100, Math.max(0, parsed.risk_score || 50)),
+        extractedFields: parsed.extracted_fields || {},
+        factors: (parsed.factors || []).map((f: any) => ({
+          name: f.name,
+          weight: Math.min(1, Math.max(0, f.weight || 0)),
+          value: Math.min(100, Math.max(0, f.value || 0)),
+        })),
+        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation)
+          ? parsed.recommendation
+          : 'REVIEW',
+        details: parsed.details || 'Analysis complete',
+        summary: parsed.summary || '',
+      };
+    } catch {
+      result = {
+        riskScore: 50,
+        extractedFields: {},
+        factors: [{ name: 'parse_error', weight: 1, value: 50 }],
+        recommendation: 'REVIEW',
+        details: 'AI response could not be parsed. Manual review recommended.',
+        summary: 'Client analysis could not be completed automatically.',
+      };
+    }
+
+    // De-anonymize: restore real values in AI response
+    if (anonymizer) {
+      result = anonymizer.deanonymizeResult(result);
+    }
+
+    // Store
+    await this.prisma.institutionAiAnalysis.create({
+      data: {
+        analysisType: 'CLIENT',
+        clientId,
+        riskScore: result.riskScore,
+        factors: result.factors,
+        recommendation: result.recommendation,
+        extractedFields: result.extractedFields as any,
+        summary: result.summary,
+        model,
+      },
+    });
+
+    try {
+      await redisClient.set(cacheKey, JSON.stringify(result), 'EX', AI_CACHE_TTL);
+    } catch { /* non-critical */ }
+
+    return result;
+  }
+
+  /**
+   * Get stored client-level analysis results
+   */
+  async getClientAnalysis(
+    clientId: string,
+  ): Promise<Array<AiAnalysisResult & { summary: string }>> {
+    const analyses = await this.prisma.institutionAiAnalysis.findMany({
+      where: { clientId, analysisType: 'CLIENT' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return analyses.map(a => ({
+      riskScore: a.riskScore,
+      extractedFields: a.extractedFields as Record<string, unknown>,
+      factors: a.factors as Array<{ name: string; weight: number; value: number }>,
+      recommendation: a.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
+      details: `Analyzed at ${a.createdAt.toISOString()} using ${a.model}`,
+      summary: (a as any).summary || '',
     }));
   }
 

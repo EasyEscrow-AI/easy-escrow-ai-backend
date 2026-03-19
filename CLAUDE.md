@@ -221,9 +221,10 @@ anchor idl build         # Generate IDL separately from project root
 
 ### 7. Pull Request Rules
 
-**Always create PRs in draft mode:**
+**Always create PRs as ready for review (not draft):**
+
 ```bash
-gh pr create --draft --title "..." --body "..."
+gh pr create --title "..." --body "..."
 ```
 
 **Automatically fix merge conflicts when updating PRs:**

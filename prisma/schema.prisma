@@ -779,6 +779,27 @@ enum WalletCustodyType {
   EXCHANGE
 }
 
+enum InstitutionAccountType {
+  TREASURY
+  OPERATIONS
+  SETTLEMENT
+  COLLATERAL
+  GENERAL
+}
+
+enum AccountVerificationStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+  REJECTED
+}
+
+enum ApprovalMode {
+  AUTO
+  SINGLE_APPROVAL
+  MULTI_APPROVAL
+}
+
 enum EmployeeCountRange {
   RANGE_1_10
   RANGE_11_50
@@ -892,6 +913,9 @@ model InstitutionClient {
   auditLogs       InstitutionAuditLog[]
   files           InstitutionFile[]
   wallets         InstitutionWallet[]
+  accounts        InstitutionAccount[]
+  aiAnalyses      InstitutionAiAnalysis[] @relation("ClientAiAnalyses")
+  notifications   InstitutionNotification[]
 
   @@index([email])
   @@index([status])
@@ -926,6 +950,72 @@ model InstitutionWallet {
   @@index([isPrimary])
   @@index([isSettlement])
   @@map("institution_wallets")
+}
+
+// Institution multi-account system (Treasury, Operations, Settlement, etc.)
+model InstitutionAccount {
+  id          String   @id @default(uuid())
+  clientId    String   @map("client_id")
+
+  // Identity
+  name        String
+  label       String?
+  accountType InstitutionAccountType       @default(GENERAL) @map("account_type")
+  description String?
+
+  // Wallet
+  walletAddress  String  @map("wallet_address")
+  chain          String  @default("solana")
+  walletProvider String? @map("wallet_provider")
+  custodyType    WalletCustodyType? @map("custody_type")
+
+  // Verification (per-account, separate from client KYB)
+  verificationStatus AccountVerificationStatus @default(PENDING) @map("verification_status")
+  verifiedAt         DateTime?                 @map("verified_at")
+  verificationNotes  String?                   @map("verification_notes")
+
+  // Transaction limits (per-account overrides)
+  maxTransactionAmount         Decimal? @map("max_transaction_amount") @db.Decimal(20, 6)
+  minTransactionAmount         Decimal? @map("min_transaction_amount") @db.Decimal(20, 6)
+  dailyVolumeLimit             Decimal? @map("daily_volume_limit") @db.Decimal(20, 6)
+  monthlyVolumeLimit           Decimal? @map("monthly_volume_limit") @db.Decimal(20, 6)
+  dailyTransactionCountLimit   Int?     @map("daily_transaction_count_limit")
+  monthlyTransactionCountLimit Int?     @map("monthly_transaction_count_limit")
+
+  // Approval settings
+  approvalMode      ApprovalMode @default(AUTO) @map("approval_mode")
+  approvalThreshold Decimal?     @map("approval_threshold") @db.Decimal(20, 6)
+
+  // Security
+  whitelistedAddresses String[] @default([]) @map("whitelisted_addresses")
+  whitelistEnforced    Boolean  @default(false) @map("whitelist_enforced")
+
+  // Notifications
+  notificationEmail       String?  @map("notification_email")
+  webhookUrl              String?  @map("webhook_url")
+  notifyOnEscrowCreated   Boolean  @default(true) @map("notify_on_escrow_created")
+  notifyOnEscrowFunded    Boolean  @default(true) @map("notify_on_escrow_funded")
+  notifyOnEscrowReleased  Boolean  @default(true) @map("notify_on_escrow_released")
+  notifyOnComplianceAlert Boolean  @default(true) @map("notify_on_compliance_alert")
+
+  // Status
+  isDefault Boolean @default(false) @map("is_default")
+  isActive  Boolean @default(true)  @map("is_active")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  // Relations
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, name])
+  @@index([clientId])
+  @@index([walletAddress])
+  @@index([accountType])
+  @@index([verificationStatus])
+  @@index([isActive])
+  @@map("institution_accounts")
 }
 
 // Refresh token storage (hashed)
@@ -996,6 +1086,7 @@ model InstitutionApiKey {
 model InstitutionEscrow {
   id                    String                    @id @default(uuid())
   escrowId              String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
+  escrowCode            String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
   clientId              String                    @map("client_id")
   payerWallet           String                    @map("payer_wallet")
   recipientWallet       String                    @map("recipient_wallet")
@@ -1011,6 +1102,7 @@ model InstitutionEscrow {
   // On-chain references
   escrowPda             String?                   @map("escrow_pda")
   vaultPda              String?                   @map("vault_pda")
+  nonceAccount          String?                   @map("nonce_account")
   depositTxSignature    String?                   @map("deposit_tx_signature")
   releaseTxSignature    String?                   @map("release_tx_signature")
   cancelTxSignature     String?                   @map("cancel_tx_signature")
@@ -1031,6 +1123,7 @@ model InstitutionEscrow {
 
   @@index([clientId])
   @@index([escrowId])
+  @@index([escrowCode])
   @@index([status])
   @@index([corridor])
   @@index([payerWallet])
@@ -1080,26 +1173,38 @@ model InstitutionAuditLog {
   @@map("institution_audit_logs")
 }
 
-// AI analysis results
+// AI analysis results (document, escrow-level, and client-level)
 model InstitutionAiAnalysis {
-  id              String    @id @default(uuid())
-  escrowId        String    @map("escrow_id")
-  fileId          String?   @map("file_id")
-  documentHash    String?   @map("document_hash")
-  riskScore       Int       @map("risk_score") // 0-100
-  factors         Json      @default("[]") // Array of {name, weight, value}
-  recommendation  String    // APPROVE, REVIEW, REJECT
-  extractedFields Json      @default("{}") @map("extracted_fields")
-  model           String    // AI model used
-  createdAt       DateTime  @default(now()) @map("created_at")
+  id              String          @id @default(uuid())
+  analysisType    AiAnalysisType  @default(DOCUMENT) @map("analysis_type")
+  escrowId        String?         @map("escrow_id")
+  clientId        String?         @map("client_id")
+  fileId          String?         @map("file_id")
+  documentHash    String?         @map("document_hash")
+  riskScore       Int             @map("risk_score") // 0-100
+  factors         Json            @default("[]") // Array of {name, weight, value}
+  recommendation  String          // APPROVE, REVIEW, REJECT
+  extractedFields Json            @default("{}") @map("extracted_fields")
+  summary         String?         // Human-readable analysis summary
+  model           String          // AI model used
+  createdAt       DateTime        @default(now()) @map("created_at")
 
-  escrow          InstitutionEscrow @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  escrow          InstitutionEscrow?  @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  client          InstitutionClient?  @relation("ClientAiAnalyses", fields: [clientId], references: [id], onDelete: Cascade)
 
+  @@index([analysisType])
   @@index([escrowId])
+  @@index([clientId])
   @@index([riskScore])
   @@index([recommendation])
   @@index([createdAt])
   @@map("institution_ai_analyses")
+}
+
+enum AiAnalysisType {
+  DOCUMENT
+  ESCROW
+  CLIENT
 }
 
 // Corridor configuration
@@ -1219,5 +1324,66 @@ model InstitutionFile {
   @@index([documentType])
   @@index([uploadedAt])
   @@map("institution_files")
+}
+
+// ============================================
+// NOTIFICATION MODEL
+// ============================================
+
+enum NotificationType {
+  ESCROW_CREATED
+  ESCROW_FUNDED
+  ESCROW_RELEASED
+  ESCROW_CANCELLED
+  ESCROW_EXPIRED
+  ESCROW_COMPLIANCE_HOLD
+  KYC_APPROVED
+  KYC_REJECTED
+  KYC_EXPIRING
+  KYB_VERIFIED
+  KYB_REJECTED
+  KYB_EXPIRING
+  WALLET_WHITELISTED
+  WALLET_REMOVED
+  WALLET_VERIFICATION_PENDING
+  COMPLIANCE_CHECK_PASSED
+  COMPLIANCE_CHECK_FAILED
+  COMPLIANCE_REVIEW_REQUIRED
+  ACCOUNT_VERIFIED
+  ACCOUNT_SUSPENDED
+  DEPOSIT_CONFIRMED
+  SETTLEMENT_COMPLETE
+  SYSTEM_MAINTENANCE
+  SECURITY_ALERT
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// Institution notifications (in-app notification center)
+model InstitutionNotification {
+  id          String                @id @default(uuid())
+  clientId    String                @map("client_id")
+  escrowId    String?               @map("escrow_id")
+  type        NotificationType
+  priority    NotificationPriority  @default(MEDIUM)
+  title       String
+  message     String
+  metadata    Json                  @default("{}")
+  isRead      Boolean               @default(false) @map("is_read")
+  readAt      DateTime?             @map("read_at")
+  createdAt   DateTime              @default(now()) @map("created_at")
+
+  client      InstitutionClient     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([clientId, isRead])
+  @@index([type])
+  @@index([createdAt])
+  @@map("institution_notifications")
 }
 

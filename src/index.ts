@@ -27,7 +27,10 @@ import {
   institutionEscrowRoutes,
   aiAnalysisRoutes,
   institutionClientsRoutes,
-  adminAuthRoutes,
+  institutionReceiptRoutes,
+  institutionTokensRoutes,
+  aiChatRoutes,
+  institutionAccountRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -211,7 +214,7 @@ try {
 app.get('/', (_req: Request, res: Response) => {
   const response: any = {
     message: 'EasyEscrow.ai Backend API',
-    version: '1.0.0',
+    version: '1.1.0',
     endpoints: {
       health: '/health',
       assets: '/api/assets',
@@ -226,7 +229,7 @@ app.get('/', (_req: Request, res: Response) => {
   };
 
   // Add institution escrow endpoints if enabled
-  if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
+  if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
     response.endpoints.institutionAuth = '/api/v1/institution/auth';
     response.endpoints.institutionSettings = '/api/v1/institution/settings';
     response.endpoints.institutionFiles = '/api/v1/institution/files';
@@ -235,6 +238,10 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.aiAnalysis = '/api/v1/ai';
     response.endpoints.aiAnalyzeEscrowDoc = '/api/v1/ai/analyze-escrow-doc/:escrow_id';
     response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis/:escrow_id';
+    response.endpoints.institutionReceipts = '/api/v1/institution-escrow/:escrowId/receipt';
+    response.endpoints.institutionTokens = '/api/v1/institution/tokens';
+    response.endpoints.institutionAccounts = '/api/v1/institution/accounts';
+    response.endpoints.aiChat = '/api/v1/ai/chat';
   }
 
   // Only include documentation field if OpenAPI spec loaded successfully
@@ -260,63 +267,122 @@ if (openApiDocument) {
   <title>EasyEscrow.ai API Documentation</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700&display=swap" rel="stylesheet">
   <style>
-    /* Base */
-    body, html { margin: 0; padding: 0; background: #0f172a !important; font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
+    /* Base dark mode */
+    body, html { margin: 0; padding: 0; background: #0f172a !important; }
     /* Topbar */
-    #docs-topbar { position: fixed; top: 0; left: 0; right: 0; height: 56px; background: #0f172a; border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 1000; box-sizing: border-box; }
-    .topbar-title { color: #f1f5f9; font-size: 18px; font-weight: 600; white-space: nowrap; }
-    #topbar-search-wrapper { position: relative; flex: 1; max-width: 480px; }
-    #topbar-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none; display: flex; align-items: center; }
+    #topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 56px; background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex; align-items: center; gap: 20px;
+      padding: 0 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    #topbar .brand {
+      display: flex; align-items: center; flex-shrink: 0;
+      text-decoration: none;
+    }
+    #topbar .brand img {
+      height: 28px; filter: invert(1);
+    }
+    #topbar .search-wrapper {
+      flex: 0 1 420px; position: relative;
+    }
+    #topbar .search-wrapper svg.search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; color: #64748b; pointer-events: none;
+    }
     #topbar-search {
-      width: 100%; height: 38px; padding: 0 14px 0 40px;
-      font-size: 14px; font-family: Inter, -apple-system, sans-serif;
-      border-radius: 8px; border: 1px solid #334155;
-      background: #1e293b; color: #e2e8f0;
-      box-sizing: border-box; outline: none;
+      width: 100%; height: 38px;
+      padding: 0 32px 0 40px;
+      font-size: 14px; font-family: Inter, sans-serif;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a; color: #e2e8f0;
+      outline: none; box-sizing: border-box;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     #topbar-search::placeholder { color: #64748b; }
-    #topbar-search:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,0.25); }
-    #topbar-results {
-      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: #1e293b; border: 1px solid #475569; border-radius: 8px;
-      max-height: 400px; overflow-y: auto; z-index: 1001;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    #topbar-search:focus {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(129,140,248,0.25);
     }
-    #topbar-results .result-item {
-      padding: 10px 14px; color: #e2e8f0; cursor: pointer;
-      border-bottom: 1px solid rgba(51,65,85,0.5);
-      font-size: 14px; font-family: Inter, -apple-system, sans-serif;
+    /* Search results dropdown */
+    #search-results {
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      margin-top: 6px; max-height: 400px; overflow-y: auto;
+      background: #1e293b; border: 1px solid #475569; border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 1001;
     }
-    #topbar-results .result-item:last-child { border-bottom: none; }
-    #topbar-results .result-item:hover, #topbar-results .result-item.active { background: #334155; }
-    #topbar-results .result-path { font-size: 12px; color: #64748b; margin-top: 2px; }
-    #topbar-results .result-method {
-      display: inline-block; font-size: 11px; font-weight: 700;
-      padding: 1px 6px; border-radius: 3px; margin-right: 6px; text-transform: uppercase;
+    #search-results.active { display: block; }
+    #search-results .sr-empty {
+      padding: 16px; color: #64748b; text-align: center; font-size: 13px;
     }
-    #topbar-results .result-method.get { background: rgba(34,197,94,0.2); color: #22c55e; }
-    #topbar-results .result-method.post { background: rgba(59,130,246,0.2); color: #3b82f6; }
-    #topbar-results .result-method.put { background: rgba(245,158,11,0.2); color: #f59e0b; }
-    #topbar-results .result-method.delete { background: rgba(239,68,68,0.2); color: #ef4444; }
-    #topbar-results .result-method.patch { background: rgba(168,85,247,0.2); color: #a855f7; }
-    #topbar-results .no-results { padding: 14px; color: #64748b; text-align: center; font-size: 14px; }
-    #topbar-results mark { background: rgba(129,140,248,0.3); color: #c7d2fe; padding: 1px 3px; border-radius: 2px; }
+    #search-results .sr-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #262f3d;
+      transition: background 0.15s;
+    }
+    #search-results .sr-item:last-child { border-bottom: none; }
+    #search-results .sr-item:hover, #search-results .sr-item.active {
+      background: #334155;
+    }
+    #search-results .sr-method {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      padding: 2px 6px; border-radius: 4px; color: #fff; flex-shrink: 0;
+      min-width: 40px; text-align: center; letter-spacing: 0.5px;
+    }
+    #search-results .sr-method.get { background: #22c55e; }
+    #search-results .sr-method.post { background: #3b82f6; }
+    #search-results .sr-method.put { background: #f59e0b; }
+    #search-results .sr-method.delete { background: #ef4444; }
+    #search-results .sr-method.tag { background: #818cf8; }
+    #search-results .sr-text {
+      display: flex; flex-direction: column; min-width: 0;
+    }
+    #search-results .sr-title {
+      font-size: 13px; color: #f1f5f9; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    #search-results .sr-path {
+      font-size: 11px; color: #64748b; font-family: monospace;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #search-results .sr-title mark {
+      background: rgba(129,140,248,0.3); color: #c7d2fe;
+      padding: 0 2px; border-radius: 2px;
+    }
+    #search-clear {
+      display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #64748b; font-size: 18px; line-height: 1;
+      cursor: pointer; padding: 2px 6px; border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    #search-clear:hover { color: #e2e8f0; background: rgba(255,255,255,0.1); }
+    #search-clear.visible { display: block; }
+    #topbar .spacer { flex: 1; }
+    #topbar .version-badge {
+      font-size: 12px; color: #94a3b8;
+      background: #0f172a; padding: 4px 10px;
+      border-radius: 12px; border: 1px solid #334155;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    /* Push content below fixed topbar */
     #redoc-container { padding-top: 56px; }
-    /* Footer */
-    #docs-footer { background: #0f172a; border-top: 1px solid #1e293b; padding: 20px 24px; text-align: center; font-size: 13px; color: #94a3b8; }
-    #docs-footer a { color: #818cf8 !important; text-decoration: none; }
-    #docs-footer a:hover { color: #a5b4fc !important; text-decoration: underline; }
     /* Force ALL Redoc elements dark */
     .redoc-wrap, .redoc-wrap > div { background: #0f172a !important; }
+    /* Sidebar offset for topbar */
+    .redoc-wrap > div > div:first-child { padding-top: 0 !important; margin-top: 0 !important; }
     /* Middle panel - comprehensive targeting */
     .redoc-wrap > div > div:nth-child(2) { background: #0f172a !important; }
     [class*="api-content"], [class*="middle-panel"], [data-section-id] { background: #0f172a !important; }
     /* All text white/light */
-    .redoc-wrap h1 { color: #f1f5f9 !important; font-size: 40px !important; }
-    .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h4, .redoc-wrap h5, .redoc-wrap h6 { color: #f1f5f9 !important; }
+    .redoc-wrap h1 { color: #f1f5f9 !important; font-size: 40px !important; font-weight: 700 !important; margin-top: 32px !important; margin-bottom: 16px !important; letter-spacing: -0.5px !important; }
+    .redoc-wrap h2 { color: #f1f5f9 !important; margin-top: 24px !important; }
+    .redoc-wrap h3, .redoc-wrap h4, .redoc-wrap h5, .redoc-wrap h6 { color: #f1f5f9 !important; }
     .redoc-wrap p, .redoc-wrap span, .redoc-wrap li, .redoc-wrap td, .redoc-wrap th, .redoc-wrap label { color: #e2e8f0 !important; }
     .redoc-wrap div { color: #e2e8f0; }
     .redoc-wrap a { color: #818cf8 !important; }
@@ -351,6 +417,7 @@ if (openApiDocument) {
     .redoc-wrap [class*="operation"], .redoc-wrap [class*="Operation"] { background: #0f172a !important; }
     .redoc-wrap [class*="callback"], .redoc-wrap [class*="Callback"] { background: #0f172a !important; }
     .redoc-wrap [class*="container"] { background: transparent !important; }
+    .redoc-wrap [role="search"] [class*="container"] { background: #1e293b !important; }
     .redoc-wrap [class*="react-tabs__tab-panel"] { background: #0f172a !important; }
     .redoc-wrap [class*="tab-panel"], .redoc-wrap [role="tabpanel"] { background: #0f172a !important; }
     .redoc-wrap [class*="security"] { background: #0f172a !important; }
@@ -361,13 +428,26 @@ if (openApiDocument) {
     /* Enum values and oneOf selectors */
     .redoc-wrap [class*="enum"], .redoc-wrap [class*="oneOf"] { background: #1e293b !important; color: #e2e8f0 !important; }
     /* Any remaining white backgrounds in the middle panel */
-    .redoc-wrap div[class] { background-color: inherit; }
     .redoc-wrap [class*="panel"] { background: #0f172a !important; }
     .redoc-wrap [class*="content"] { background: transparent !important; }
+    .redoc-wrap [role="search"] [class*="content"] { background: #1e293b !important; }
     /* Required badge */
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
-    /* Hide Redoc's built-in sidebar search icon */
+    /* Hide Redoc's built-in sidebar search (we have the topbar instead) */
     .redoc-wrap [role="search"] { display: none !important; }
+    /* Topbar search highlight */
+    .topbar-search-highlight {
+      outline: 2px solid #818cf8 !important;
+      outline-offset: 4px !important;
+      border-radius: 4px !important;
+      animation: search-pulse 1.5s ease-out !important;
+    }
+    @keyframes search-pulse {
+      0% { outline-color: #818cf8; box-shadow: 0 0 0 0 rgba(129,140,248,0.5); }
+      50% { box-shadow: 0 0 12px 4px rgba(129,140,248,0.3); }
+      100% { outline-color: #818cf8; box-shadow: none; }
+    }
+    /* (search-count styles are in topbar block) */
     /* Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -376,20 +456,18 @@ if (openApiDocument) {
   </style>
 </head>
 <body>
-  <div id="docs-topbar">
-    <span class="topbar-title">EasyEscrow.ai API</span>
-    <div id="topbar-search-wrapper">
-      <div id="topbar-search-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </div>
-      <input type="text" id="topbar-search" placeholder="Search endpoints, schemas, descriptions..." autocomplete="off" />
-      <div id="topbar-results"></div>
+  <div id="topbar">
+    <a class="brand" href="/"><img src="/easyescrow-logo.png" alt="EasyEscrow.ai" /></a>
+    <div class="search-wrapper">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="topbar-search" type="text" placeholder="Search endpoints, schemas, tags...  (Ctrl+K)" autocomplete="off" />
+      <button id="search-clear" type="button" aria-label="Clear search">&times;</button>
+      <div id="search-results"></div>
     </div>
+    <div class="spacer"></div>
+    <span class="version-badge">v1.1.0</span>
   </div>
   <div id="redoc-container"></div>
-  <div id="docs-footer">
-    EasyEscrow.ai Support: <a href="mailto:support@easyescrow.ai">support@easyescrow.ai</a>
-  </div>
   <script src="https://unpkg.com/redoc@2.1.3/bundles/redoc.standalone.js"></script>
   <script>
     Redoc.init('/openapi.json', {
@@ -417,196 +495,219 @@ if (openApiDocument) {
           textColor: '#e2e8f0'
         },
         schema: { nestedBackground: '#1e293b' },
-        spacing: { sectionVertical: 16 }
+        spacing: { sectionVertical: 24 }
       },
       hideDownloadButton: true,
-      disableSearch: true,
+      disableSearch: false,
       expandResponses: '200,201',
       pathInMiddlePanel: true,
       sortPropsAlphabetically: false,
       jsonSampleExpandLevel: 2,
       nativeScrollbars: true,
       hideHostname: true
-    }, document.getElementById('redoc-container'), function() {
-      // Adjust sticky elements to account for topbar height
-      setTimeout(function() {
-        document.querySelectorAll('.redoc-wrap *').forEach(function(el) {
-          var cs = window.getComputedStyle(el);
-          if (cs.position === 'sticky') {
-            el.style.setProperty('top', '56px', 'important');
-            el.style.setProperty('height', 'calc(100vh - 56px)', 'important');
-          }
-        });
-      }, 300);
-    });
+    }, document.getElementById('redoc-container'));
 
-    // Custom topbar search
+    // Topbar search — builds searchable index from OpenAPI spec, shows dropdown results
     (function() {
-      var searchInput = document.getElementById('topbar-search');
-      var resultsBox = document.getElementById('topbar-results');
+      var input = document.getElementById('topbar-search');
+      var dropdown = document.getElementById('search-results');
+      var clearBtn = document.getElementById('search-clear');
+      if (!input || !dropdown) return;
       var searchIndex = [];
       var activeIdx = -1;
 
-      fetch('/openapi.json').then(function(r) {
-        if (!r.ok) throw new Error('Failed to load API spec: ' + r.status);
-        return r.json();
-      }).then(function(spec) {
-        var paths = spec.paths || {};
-        Object.keys(paths).forEach(function(p) {
-          Object.keys(paths[p]).forEach(function(method) {
-            if (['get','post','put','delete','patch','options','head'].indexOf(method) === -1) return;
-            var op = paths[p][method];
-            searchIndex.push({
-              method: method, path: p,
-              summary: op.summary || '',
-              operationId: op.operationId || '',
-              tags: (op.tags || []).join(', '),
-              description: (op.description || '').substring(0, 200)
-            });
-          });
+      function updateClearBtn() {
+        if (clearBtn) clearBtn.classList.toggle('visible', input.value.length > 0);
+      }
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+          input.value = '';
+          dropdown.innerHTML = '';
+          dropdown.classList.remove('active');
+          updateClearBtn();
+          input.focus();
         });
-        (spec.tags || []).forEach(function(tag) {
-          searchIndex.push({
-            method: '', path: '', summary: tag.name,
-            operationId: '', tags: tag.name,
-            description: tag.description || '', isTag: true
-          });
-        });
-      }).catch(function(err) {
-        console.error('Search index load failed:', err);
-        searchInput.placeholder = 'Search unavailable';
-        searchInput.disabled = true;
-      });
-
-      function highlight(parent, text, query) {
-        if (!query || !text) { parent.textContent = text || ''; return; }
-        var lower = text.toLowerCase();
-        var ql = query.toLowerCase();
-        var pos = 0;
-        var found = false;
-        var idx = lower.indexOf(ql);
-        while (idx !== -1) {
-          found = true;
-          if (idx > pos) parent.appendChild(document.createTextNode(text.slice(pos, idx)));
-          var mark = document.createElement('mark');
-          mark.textContent = text.slice(idx, idx + ql.length);
-          parent.appendChild(mark);
-          pos = idx + ql.length;
-          idx = lower.indexOf(ql, pos);
-        }
-        if (!found) { parent.textContent = text; return; }
-        if (pos < text.length) parent.appendChild(document.createTextNode(text.slice(pos)));
       }
 
-      function renderResults(matches, query) {
-        activeIdx = -1;
-        resultsBox.innerHTML = '';
-        if (!matches.length) {
-          var noRes = document.createElement('div');
-          noRes.className = 'no-results';
-          noRes.textContent = 'No results found';
-          resultsBox.appendChild(noRes);
-          resultsBox.style.display = 'block';
+      // Build search index from the OpenAPI spec
+      fetch('/openapi.json').then(function(r) { return r.json(); }).then(function(spec) {
+        // Add tags (sections)
+        (spec.tags || []).forEach(function(tag) {
+          searchIndex.push({ type: 'tag', method: 'tag', title: tag.name, path: '', tag: tag.name });
+        });
+        // Add paths (endpoints)
+        Object.keys(spec.paths || {}).forEach(function(path) {
+          var methods = spec.paths[path];
+          ['get','post','put','delete','patch'].forEach(function(method) {
+            if (methods[method]) {
+              var op = methods[method];
+              searchIndex.push({
+                type: 'endpoint',
+                method: method,
+                title: op.summary || path,
+                path: path,
+                tag: (op.tags || [''])[0],
+                description: op.description || '',
+                operationId: op.operationId || ''
+              });
+            }
+          });
+        });
+        // Add schemas
+        Object.keys((spec.components || {}).schemas || {}).forEach(function(name) {
+          searchIndex.push({ type: 'schema', method: 'tag', title: name, path: 'Schema', tag: 'Schema' });
+        });
+      });
+
+      function highlightText(text, query) {
+        var idx = text.toLowerCase().indexOf(query);
+        if (idx === -1) return text;
+        return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + query.length) + '</mark>' + text.slice(idx + query.length);
+      }
+
+      function renderResults(query) {
+        if (!query) { dropdown.innerHTML = ''; dropdown.classList.remove('active'); return; }
+        var results = searchIndex.filter(function(item) {
+          var haystack = (item.title + ' ' + item.path + ' ' + item.tag + ' ' + item.method).toLowerCase();
+          return haystack.indexOf(query) !== -1;
+        }).slice(0, 20);
+
+        if (!results.length) {
+          dropdown.innerHTML = '<div class="sr-empty">No results for &ldquo;' + query + '&rdquo;</div>';
+          dropdown.classList.add('active');
+          activeIdx = -1;
           return;
         }
-        matches.slice(0, 20).forEach(function(m, i) {
-          var item = document.createElement('div');
-          item.className = 'result-item';
-          item.setAttribute('data-index', String(i));
-          if (m.isTag) {
-            item.setAttribute('data-tag', m.summary);
-            var tagTitle = document.createElement('div');
-            highlight(tagTitle, m.summary, query);
-            item.appendChild(tagTitle);
-            if (m.description) {
-              var tagDesc = document.createElement('div');
-              tagDesc.className = 'result-path';
-              highlight(tagDesc, m.description.substring(0, 100), query);
-              item.appendChild(tagDesc);
+
+        activeIdx = -1;
+        dropdown.innerHTML = results.map(function(r, i) {
+          return '<div class="sr-item" data-idx="' + i + '">' +
+            '<span class="sr-method ' + r.method + '">' + (r.type === 'schema' ? 'Schema' : r.type === 'tag' ? 'Section' : r.method.toUpperCase()) + '</span>' +
+            '<div class="sr-text">' +
+              '<span class="sr-title">' + highlightText(r.title, query) + '</span>' +
+              (r.path ? '<span class="sr-path">' + highlightText(r.path, query) + '</span>' : '') +
+            '</div></div>';
+        }).join('');
+        dropdown.classList.add('active');
+
+        // Click handlers
+        dropdown.querySelectorAll('.sr-item').forEach(function(item, i) {
+          item.addEventListener('click', function() { navigateTo(results[i]); });
+        });
+      }
+
+      function navigateTo(result) {
+        dropdown.classList.remove('active');
+        input.value = '';
+        updateClearBtn();
+        // Build Redoc hash anchor based on result type
+        var hash = '';
+        if (result.type === 'tag') {
+          hash = '#tag/' + encodeURIComponent(result.title);
+        } else if (result.type === 'schema') {
+          hash = '#schema/' + encodeURIComponent(result.title);
+        } else if (result.type === 'endpoint' && result.operationId) {
+          hash = '#tag/' + encodeURIComponent(result.tag) + '/operation/' + encodeURIComponent(result.operationId);
+        } else if (result.type === 'endpoint') {
+          // Redoc expects JSON Pointer encoding (RFC 6901): ~ becomes ~0, / becomes ~1
+          var pointer = result.path.split('~').join('~0').split('/').join('~1');
+          hash = '#tag/' + encodeURIComponent(result.tag) + '/paths/' + encodeURIComponent(pointer) + '/' + result.method;
+        }
+        if (hash) {
+          window.location.hash = hash;
+          // Give Redoc time to process hash change, then ensure scroll with topbar offset
+          setTimeout(function() {
+            var topbarH = 56;
+            var hashId = decodeURIComponent(hash.slice(1));
+            // Try finding element by ID (Redoc generates anchor IDs matching the hash)
+            var el = document.getElementById(hashId);
+            // Fallback: find heading matching result title
+            if (!el) {
+              var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h5');
+              var target = result.title.toLowerCase();
+              for (var i = 0; i < headings.length; i++) {
+                if ((headings[i].textContent || '').toLowerCase().indexOf(target) !== -1) {
+                  el = headings[i]; break;
+                }
+              }
             }
-          } else {
-            item.setAttribute('data-path', m.path);
-            item.setAttribute('data-method', m.method);
-            var titleRow = document.createElement('div');
-            var badge = document.createElement('span');
-            badge.className = 'result-method ' + m.method;
-            badge.textContent = m.method;
-            titleRow.appendChild(badge);
-            highlight(titleRow, m.summary || m.path, query);
-            item.appendChild(titleRow);
-            var pathRow = document.createElement('div');
-            pathRow.className = 'result-path';
-            highlight(pathRow, m.path, query);
-            item.appendChild(pathRow);
-          }
-          resultsBox.appendChild(item);
-        });
-        resultsBox.style.display = 'block';
-      }
-
-      function navigateTo(path, method, tagName) {
-        var links = document.querySelectorAll('.redoc-wrap a[href]');
-        var target = tagName ? tagName.toLowerCase() : (method + '-' + path).toLowerCase();
-        for (var i = 0; i < links.length; i++) {
-          var href = (links[i].getAttribute('href') || '').toLowerCase();
-          var text = (links[i].textContent || '').toLowerCase().trim();
-          if (tagName && text === target) { links[i].click(); break; }
-          if (!tagName && href.indexOf('#') === 0) {
-            var id = href.substring(1);
-            if (id.indexOf(method) > -1 || text.indexOf(path.toLowerCase()) > -1) { links[i].click(); break; }
+            if (el) {
+              var y = el.getBoundingClientRect().top + window.scrollY - topbarH - 10;
+              window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+          }, 250);
+          return;
+        }
+        // Last-resort fallback: find heading in content and scroll
+        var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h5');
+        for (var j = 0; j < headings.length; j++) {
+          if ((headings[j].textContent || '').toLowerCase().indexOf(result.title.toLowerCase()) !== -1) {
+            var topH = 56;
+            var yPos = headings[j].getBoundingClientRect().top + window.scrollY - topH - 10;
+            window.scrollTo({ top: yPos, behavior: 'smooth' });
+            return;
           }
         }
-        resultsBox.style.display = 'none';
-        searchInput.blur();
       }
 
-      searchInput.addEventListener('input', function() {
-        var q = this.value.trim().toLowerCase();
-        if (!q) { resultsBox.style.display = 'none'; return; }
-        var matches = searchIndex.filter(function(item) {
-          return item.summary.toLowerCase().indexOf(q) > -1
-            || item.path.toLowerCase().indexOf(q) > -1
-            || item.method.indexOf(q) > -1
-            || item.tags.toLowerCase().indexOf(q) > -1
-            || item.operationId.toLowerCase().indexOf(q) > -1
-            || item.description.toLowerCase().indexOf(q) > -1;
-        });
-        renderResults(matches, q);
+      function setActive(idx) {
+        var items = dropdown.querySelectorAll('.sr-item');
+        items.forEach(function(el) { el.classList.remove('active'); });
+        if (idx >= 0 && idx < items.length) {
+          items[idx].classList.add('active');
+          items[idx].scrollIntoView({ block: 'nearest' });
+        }
+        activeIdx = idx;
+      }
+
+      var debounceTimer;
+      input.addEventListener('input', function() {
+        var query = this.value.toLowerCase().trim();
+        updateClearBtn();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function() { renderResults(query); }, 150);
       });
 
-      searchInput.addEventListener('keydown', function(e) {
-        var items = resultsBox.querySelectorAll('.result-item');
-        if (!items.length) return;
+      input.addEventListener('keydown', function(e) {
+        var items = dropdown.querySelectorAll('.sr-item');
         if (e.key === 'ArrowDown') {
-          e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1);
-          items.forEach(function(el, i) { el.classList.toggle('active', i === activeIdx); });
-          items[activeIdx].scrollIntoView({ block: 'nearest' });
+          e.preventDefault();
+          setActive(Math.min(activeIdx + 1, items.length - 1));
         } else if (e.key === 'ArrowUp') {
-          e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0);
-          items.forEach(function(el, i) { el.classList.toggle('active', i === activeIdx); });
-          items[activeIdx].scrollIntoView({ block: 'nearest' });
-        } else if (e.key === 'Enter' && activeIdx >= 0) {
-          e.preventDefault(); items[activeIdx].click();
+          e.preventDefault();
+          setActive(Math.max(activeIdx - 1, 0));
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (activeIdx >= 0 && items[activeIdx]) {
+            items[activeIdx].click();
+          } else if (items.length) {
+            items[0].click();
+          }
         } else if (e.key === 'Escape') {
-          resultsBox.style.display = 'none'; searchInput.blur();
+          this.value = '';
+          dropdown.classList.remove('active');
+          updateClearBtn();
+          this.blur();
         }
       });
 
-      resultsBox.addEventListener('click', function(e) {
-        var item = e.target.closest('.result-item');
-        if (!item) return;
-        var tag = item.getAttribute('data-tag');
-        if (tag) { navigateTo('', '', tag); return; }
-        navigateTo(item.getAttribute('data-path'), item.getAttribute('data-method'));
-      });
-
+      // Close dropdown on outside click
       document.addEventListener('click', function(e) {
-        if (!e.target.closest('#topbar-search-wrapper')) resultsBox.style.display = 'none';
+        if (!e.target.closest('#topbar .search-wrapper')) {
+          dropdown.classList.remove('active');
+        }
+      });
+      // Reopen on focus if there's a query
+      input.addEventListener('focus', function() {
+        if (this.value.trim()) renderResults(this.value.toLowerCase().trim());
       });
 
+      // Ctrl+K / Cmd+K shortcut
       document.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-          e.preventDefault(); searchInput.focus(); searchInput.select();
+          e.preventDefault();
+          input.focus();
+          input.select();
         }
       });
     })();
@@ -628,8 +729,8 @@ if (openApiDocument) {
   });
 }
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from media directory (logo, etc.)
+app.use(express.static(path.join(__dirname, '../media')));
 
 // API Routes
 app.use(offersRoutes);
@@ -640,14 +741,13 @@ app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
 app.use('/metrics', metricsRoutes); // Prometheus metrics endpoint
-app.use(adminAuthRoutes); // Admin login/auth endpoints
 app.use(authorizedAppsRoutes); // Admin endpoints for zero-fee API key management
 app.use('/admin/nonce-pool', noncePoolAdminRoutes); // Admin endpoints for nonce pool management
 app.use(testRoutes);
 app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with private keys
 
 // Institution Escrow Routes (gated by feature flag)
-if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
+if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionAuthRoutes);
   app.use(institutionSettingsRoutes);
   app.use(institutionFilesRoutes);
@@ -655,6 +755,10 @@ if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
   app.use(aiAnalysisRoutes);
   app.use(institutionClientsRoutes);
   app.use(institutionEscrowAdminRoutes);
+  app.use(institutionReceiptRoutes);
+  app.use(institutionTokensRoutes);
+  app.use(aiChatRoutes);
+  app.use(institutionAccountRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled
@@ -691,7 +795,16 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global error handler
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  // Handle malformed JSON body (body-parser SyntaxError)
+  if (err.type === 'entity.parse.failed' && err instanceof SyntaxError) {
+    return res.status(400).json({
+      error: 'Invalid JSON',
+      message: 'Request body contains invalid JSON. Check for unescaped special characters.',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   console.error('Error:', err);
   res.status(500).json({
     error: 'Internal Server Error',

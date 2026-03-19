@@ -54,7 +54,7 @@ export interface InstitutionEscrowConfig {
  * Load institution escrow configuration from environment variables
  */
 export function loadInstitutionEscrowConfig(): InstitutionEscrowConfig {
-  const enabled = process.env.INSTITUTION_ESCROW_ENABLED === 'true';
+  const enabled = process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true';
 
   return {
     enabled,
@@ -63,7 +63,7 @@ export function loadInstitutionEscrowConfig(): InstitutionEscrowConfig {
     maxUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MAX_USDC || '1000000'),
     defaultExpiryHours: parseInt(process.env.INSTITUTION_ESCROW_DEFAULT_EXPIRY_HOURS || '72', 10),
     jwt: {
-      accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '15m',
+      accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '1h',
       refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
     },
     ai: {

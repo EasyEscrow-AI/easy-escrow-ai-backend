@@ -29,6 +29,7 @@ describe('InstitutionEscrowService', () => {
 
   const CLIENT_ID = 'client-123';
   const ESCROW_ID = 'escrow-456';
+  const ESCROW_CODE = 'EE-AB3D-7KMN';
   const PAYER_WALLET = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
   const RECIPIENT_WALLET = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM';
 
@@ -46,6 +47,7 @@ describe('InstitutionEscrowService', () => {
   const makeEscrow = (overrides: Record<string, unknown> = {}) => ({
     id: 1,
     escrowId: ESCROW_ID,
+    escrowCode: ESCROW_CODE,
     clientId: CLIENT_ID,
     payerWallet: PAYER_WALLET,
     recipientWallet: RECIPIENT_WALLET,
@@ -116,6 +118,9 @@ describe('InstitutionEscrowService', () => {
       },
       institutionAuditLog: {
         create: sandbox.stub().resolves({}),
+      },
+      institutionAccount: {
+        findMany: sandbox.stub().resolves([]),
       },
     };
 
@@ -365,13 +370,17 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
 
-      expect(result).to.have.property('escrowId', ESCROW_ID);
+      expect(result).to.have.property('escrowId', ESCROW_CODE);
       expect(result).to.have.property('clientId', CLIENT_ID);
     });
 
-    it('should reject access by wrong client', async () => {
+    it('should reject access by wrong client with non-matching wallets', async () => {
       prismaStub.institutionEscrow.findUnique.resolves(
-        makeEscrow({ clientId: 'other-client' }),
+        makeEscrow({
+          clientId: 'other-client',
+          payerWallet: 'UnrelatedPayer11111111111111111111111111111111',
+          recipientWallet: 'UnrelatedRecip11111111111111111111111111111111',
+        }),
       );
 
       try {
@@ -383,6 +392,48 @@ describe('InstitutionEscrowService', () => {
       }
     });
 
+    it('should allow counterparty access via primaryWallet matching recipientWallet', async () => {
+      prismaStub.institutionEscrow.findUnique.resolves(
+        makeEscrow({
+          clientId: 'other-client',
+          recipientWallet: PAYER_WALLET, // matches CLIENT_ID's primaryWallet
+        }),
+      );
+
+      const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
+      expect(result).to.have.property('escrowId', ESCROW_CODE);
+    });
+
+    it('should allow counterparty access via InstitutionAccount wallet', async () => {
+      const ACCOUNT_WALLET = 'AccountWallet111111111111111111111111111111111';
+      prismaStub.institutionEscrow.findUnique.resolves(
+        makeEscrow({
+          clientId: 'other-client',
+          payerWallet: 'SomeOtherPayer1111111111111111111111111111111',
+          recipientWallet: ACCOUNT_WALLET,
+        }),
+      );
+      prismaStub.institutionAccount.findMany.resolves([
+        { walletAddress: ACCOUNT_WALLET },
+      ]);
+
+      const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
+      expect(result).to.have.property('escrowId', ESCROW_CODE);
+    });
+
+    it('should allow counterparty access via payerWallet match', async () => {
+      prismaStub.institutionEscrow.findUnique.resolves(
+        makeEscrow({
+          clientId: 'other-client',
+          payerWallet: PAYER_WALLET, // matches CLIENT_ID's primaryWallet
+          recipientWallet: 'SomeRecipient11111111111111111111111111111111',
+        }),
+      );
+
+      const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
+      expect(result).to.have.property('escrowId', ESCROW_CODE);
+    });
+
     it('should return cached escrow from Redis when available', async () => {
       // Restore the cacheEscrow stub so getEscrow can use the original flow
       // For getEscrow, we need to stub the redisClient.get call instead
@@ -391,7 +442,7 @@ describe('InstitutionEscrowService', () => {
 
       // When cache misses, it falls through to getEscrowInternal
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
-      expect(result).to.have.property('escrowId', ESCROW_ID);
+      expect(result).to.have.property('escrowId', ESCROW_CODE);
     });
   });
 
