@@ -187,7 +187,7 @@ try {
 }
 
 // Initialize core services
-export const noncePoolManager = new NoncePoolManager(connection, prisma, platformAuthority);
+const noncePoolManager = new NoncePoolManager(connection, prisma, platformAuthority);
 const feeCalculator = new FeeCalculator();
 const assetValidator = new AssetValidator(connection, {
   heliusApiKey: process.env.HELIUS_API_KEY || '',
