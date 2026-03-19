@@ -381,6 +381,22 @@ if (openApiDocument) {
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
     /* Hide Redoc's built-in sidebar search (we have the topbar instead) */
     .redoc-wrap [role="search"] { display: none !important; }
+    /* Topbar search highlight */
+    .topbar-search-highlight {
+      outline: 2px solid #818cf8 !important;
+      outline-offset: 4px !important;
+      border-radius: 4px !important;
+      animation: search-pulse 1.5s ease-out !important;
+    }
+    @keyframes search-pulse {
+      0% { outline-color: #818cf8; box-shadow: 0 0 0 0 rgba(129,140,248,0.5); }
+      50% { box-shadow: 0 0 12px 4px rgba(129,140,248,0.3); }
+      100% { outline-color: #818cf8; box-shadow: none; }
+    }
+    #search-count {
+      font-size: 12px; color: #94a3b8;
+      white-space: nowrap; min-width: 60px; text-align: right;
+    }
     /* Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -395,6 +411,7 @@ if (openApiDocument) {
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input id="topbar-search" type="text" placeholder="Search endpoints, schemas, tags..." autocomplete="off" />
     </div>
+    <span id="search-count"></span>
     <span class="version-badge">v1.1.0</span>
   </div>
   <div id="redoc-container"></div>
@@ -437,48 +454,93 @@ if (openApiDocument) {
       hideHostname: true
     }, document.getElementById('redoc-container'));
 
-    // Topbar search — filters sidebar menu items and scrolls to matches
+    // Topbar search — scrolls to matching content, never hides sidebar items
     (function() {
       var input = document.getElementById('topbar-search');
       if (!input) return;
+      var matchIndex = -1;
+      var lastMatches = [];
 
-      input.addEventListener('input', function() {
-        var query = this.value.toLowerCase().trim();
-        // Find all sidebar menu items
-        var items = document.querySelectorAll('.redoc-wrap [role="menuitem"], .redoc-wrap .menu-content label, .redoc-wrap [data-item-id]');
-        if (!items.length) items = document.querySelectorAll('.redoc-wrap li[class*="scrollbar"] a, .redoc-wrap ul li a');
-
-        items.forEach(function(el) {
+      function findMatches(query) {
+        if (!query) return [];
+        var matches = [];
+        // Search headings and operation summaries in the main content
+        var els = document.querySelectorAll(
+          '.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap h5, ' +
+          '.redoc-wrap [class*="operation"] > span, .redoc-wrap [class*="http-verb"]'
+        );
+        els.forEach(function(el) {
           var text = (el.textContent || '').toLowerCase();
-          if (!query) {
-            el.style.removeProperty('display');
-            if (el.closest('li')) el.closest('li').style.removeProperty('display');
-          } else if (text.indexOf(query) === -1) {
-            if (el.closest('li')) el.closest('li').style.display = 'none';
-            else el.style.display = 'none';
-          } else {
-            if (el.closest('li')) el.closest('li').style.removeProperty('display');
-            else el.style.removeProperty('display');
+          if (text.indexOf(query) !== -1 && el.offsetParent !== null) {
+            matches.push(el);
           }
         });
+        // Also check sidebar links and click to expand/navigate
+        var sidebarLinks = document.querySelectorAll('.redoc-wrap a[href*="#"]');
+        sidebarLinks.forEach(function(link) {
+          var text = (link.textContent || '').toLowerCase();
+          if (text.indexOf(query) !== -1 && matches.indexOf(link) === -1) {
+            matches.push(link);
+          }
+        });
+        return matches;
+      }
+
+      function highlightMatch(el) {
+        // Remove previous highlights
+        var prev = document.querySelectorAll('.topbar-search-highlight');
+        prev.forEach(function(p) { p.classList.remove('topbar-search-highlight'); });
+        el.classList.add('topbar-search-highlight');
+        // If it's a sidebar link, click it to navigate
+        if (el.tagName === 'A' && el.getAttribute('href')) {
+          el.click();
+        } else {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+
+      var debounceTimer;
+      input.addEventListener('input', function() {
+        var query = this.value.toLowerCase().trim();
+        clearTimeout(debounceTimer);
+        if (!query) {
+          matchIndex = -1;
+          lastMatches = [];
+          var prev = document.querySelectorAll('.topbar-search-highlight');
+          prev.forEach(function(p) { p.classList.remove('topbar-search-highlight'); });
+          return;
+        }
+        debounceTimer = setTimeout(function() {
+          lastMatches = findMatches(query);
+          matchIndex = -1;
+          // Show match count
+          var badge = document.getElementById('search-count');
+          if (badge) badge.textContent = lastMatches.length ? lastMatches.length + ' found' : 'no results';
+        }, 250);
       });
 
       input.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
-          var query = this.value.toLowerCase().trim();
-          if (!query) return;
-          // Find first visible matching heading or operation in the main content
-          var headings = document.querySelectorAll('.redoc-wrap h1, .redoc-wrap h2, .redoc-wrap h3, .redoc-wrap [class*="operation-type"]');
-          for (var i = 0; i < headings.length; i++) {
-            if ((headings[i].textContent || '').toLowerCase().indexOf(query) !== -1) {
-              headings[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
-              break;
-            }
+          e.preventDefault();
+          if (!lastMatches.length) {
+            lastMatches = findMatches(this.value.toLowerCase().trim());
+          }
+          if (lastMatches.length) {
+            matchIndex = (matchIndex + 1) % lastMatches.length;
+            highlightMatch(lastMatches[matchIndex]);
+            var badge = document.getElementById('search-count');
+            if (badge) badge.textContent = (matchIndex + 1) + '/' + lastMatches.length;
           }
         }
         if (e.key === 'Escape') {
           this.value = '';
-          this.dispatchEvent(new Event('input'));
+          matchIndex = -1;
+          lastMatches = [];
+          var prev = document.querySelectorAll('.topbar-search-highlight');
+          prev.forEach(function(p) { p.classList.remove('topbar-search-highlight'); });
+          var badge = document.getElementById('search-count');
+          if (badge) badge.textContent = '';
+          this.blur();
         }
       });
 
