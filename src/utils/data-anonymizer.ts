@@ -41,6 +41,7 @@ export const ESCROW_SENSITIVE_FIELDS: SensitiveFieldMap = {
   'settlementAuthority': 'WALLET',
   'escrowPda': 'WALLET',
   'vaultPda': 'WALLET',
+  'nonceAccount': 'WALLET',
   'depositTxSignature': 'REFERENCE',
   'releaseTxSignature': 'REFERENCE',
 };

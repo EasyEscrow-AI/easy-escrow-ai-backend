@@ -63,6 +63,7 @@ export interface InstitutionEscrowRecord {
   riskScore: number | null;
   escrowPda: string | null;
   vaultPda: string | null;
+  nonceAccount: string | null;
   depositTxSignature: string | null;
   releaseTxSignature: string | null;
   cancelTxSignature: string | null;
@@ -70,6 +71,7 @@ export interface InstitutionEscrowRecord {
   createdAt: Date;
   updatedAt: Date;
   resolvedAt: Date | null;
+  fundedAt: Date | null;
 }
 
 /**

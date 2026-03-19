@@ -51,7 +51,7 @@ import bs58 from 'bs58';
 
 const STAGING_API = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
-const SETTLEMENT_KEY = process.env.SETTLEMENT_AUTHORITY_API_KEY || 'inst-settlement-key-staging-2026';
+const SETTLEMENT_KEY = process.env.SETTLEMENT_AUTHORITY_API_KEY || '';
 
 // USDC mint on devnet/staging
 const USDC_MINT = new PublicKey(
@@ -212,6 +212,11 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     if (!BUYER_PRIVATE_KEY || !SUPPLIER_PRIVATE_KEY) {
       console.log('  Missing DEVNET_STAGING_SENDER_PRIVATE_KEY or DEVNET_STAGING_RECEIVER_PRIVATE_KEY');
       console.log('  Set these env vars or load .env.staging to run this test');
+      return this.skip();
+    }
+
+    if (!SETTLEMENT_KEY) {
+      console.log('  Missing SETTLEMENT_AUTHORITY_API_KEY — required for release tests');
       return this.skip();
     }
 

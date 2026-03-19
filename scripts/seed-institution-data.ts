@@ -87,9 +87,9 @@ async function main() {
   console.log('\n👥 Seeding demo institution clients...');
   const demoPassword = await bcrypt.hash('DemoPass123!', 12);
 
-  // Staging test wallets (from .env.staging DEVNET_STAGING_SENDER/RECEIVER)
-  const STAGING_SENDER_WALLET = 'AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z';
-  const STAGING_RECEIVER_WALLET = '5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4';
+  // Staging test wallets (from env or .env.staging DEVNET_STAGING_SENDER/RECEIVER)
+  const STAGING_SENDER_WALLET = process.env.DEVNET_STAGING_SENDER_ADDRESS || 'AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z';
+  const STAGING_RECEIVER_WALLET = process.env.DEVNET_STAGING_RECEIVER_ADDRESS || '5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4';
 
   const clients = [
     {
