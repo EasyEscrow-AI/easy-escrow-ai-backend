@@ -2031,7 +2031,7 @@ paths:
           name: status
           schema:
             type: string
-            enum: [CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, CANCELLING, CANCELLED, EXPIRED, FAILED]
+            enum: [DRAFT, CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, INSUFFICIENT_FUNDS, COMPLETE, CANCELLING, CANCELLED, EXPIRED, FAILED]
           description: Filter by escrow status
         - in: query
           name: corridor
@@ -2089,6 +2089,179 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/institution-escrow/draft:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Save escrow as draft
+      description: |
+        Save an escrow as a draft with partial information. Only `payerWallet` is required;
+        all other fields can be filled in later via the update draft endpoint.
+
+        Drafts are created in `DRAFT` status. No compliance checks, nonce assignment, or
+        expiry timers are set. The draft can be updated multiple times before submission.
+
+        Use `POST /api/v1/institution-escrow/{id}/submit` to validate and submit the draft.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionEscrowDraftRequest'
+            example:
+              payerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+              amount: 50000
+              corridor: "SG-CH"
+      responses:
+        '201':
+          description: Draft saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution-escrow/{id}/draft:
+    put:
+      tags:
+        - Institution Escrow
+      summary: Update draft
+      description: |
+        Update fields on a `DRAFT` escrow. Only escrows in `DRAFT` status can be updated.
+        All fields are optional — only provided fields will be changed.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID (UUID)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionEscrowDraftUpdateRequest'
+            example:
+              recipientWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+              amount: 75000
+              conditionType: "ADMIN_RELEASE"
+      responses:
+        '200':
+          description: Draft updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution-escrow/{id}/submit:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Submit draft
+      description: |
+        Submit a `DRAFT` escrow for processing. Validates that all required fields are present
+        (`recipientWallet`, `amount > 0`, `corridor`, `conditionType`), runs compliance checks,
+        assigns a durable nonce, and transitions the escrow to `CREATED` (or `COMPLIANCE_HOLD`).
+
+        After submission, the escrow follows the normal lifecycle: deposit → release → complete.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID (UUID)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                expiryHours:
+                  type: integer
+                  minimum: 1
+                  maximum: 2160
+                  description: Escrow expiry in hours (default 72)
+                  example: 72
+      responses:
+        '200':
+          description: Draft submitted and escrow created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Missing required fields or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Compliance check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/institution-escrow/{id}:
     get:
@@ -6087,6 +6260,8 @@ components:
           type: string
         recipientWallet:
           type: string
+          nullable: true
+          description: Null when escrow is in DRAFT status
         amount:
           type: number
           description: USDC amount
@@ -6098,20 +6273,26 @@ components:
           example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
         corridor:
           type: string
+          nullable: true
           example: "SG-CH"
+          description: Null when escrow is in DRAFT status
         conditionType:
           type: string
+          nullable: true
           enum: [ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK]
         status:
           type: string
-          enum: [CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, CANCELLING, CANCELLED, EXPIRED, FAILED]
+          enum: [DRAFT, CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, INSUFFICIENT_FUNDS, COMPLETE, CANCELLING, CANCELLED, EXPIRED, FAILED]
           description: |
             Escrow lifecycle status:
+            - **DRAFT**: Saved as draft, not yet submitted
             - **CREATED**: Escrow created, awaiting deposit
             - **FUNDED**: USDC deposited and verified
             - **COMPLIANCE_HOLD**: Held for compliance review
             - **RELEASING**: Release in progress
             - **RELEASED**: Funds released to recipient
+            - **INSUFFICIENT_FUNDS**: Payer balance too low, can retry after funding
+            - **COMPLETE**: Settlement complete, notification sent
             - **CANCELLING**: Cancellation in progress
             - **CANCELLED**: Escrow cancelled, funds refunded
             - **EXPIRED**: Escrow expired without completion
@@ -6133,12 +6314,80 @@ components:
         expiresAt:
           type: string
           format: date-time
+          nullable: true
+          description: Null when escrow is in DRAFT status (set on submit)
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+
+    InstitutionEscrowDraftRequest:
+      type: object
+      required:
+        - payerWallet
+      properties:
+        payerWallet:
+          type: string
+          description: Solana wallet address of the payer (base58, 32-44 chars)
+          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+        recipientWallet:
+          type: string
+          description: Solana wallet address of the recipient (optional for drafts)
+          example: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+        amount:
+          type: number
+          minimum: 0
+          maximum: 10000000
+          description: Stablecoin amount (optional for drafts, defaults to 0)
+          example: 50000
+        corridor:
+          type: string
+          pattern: '^[A-Z]{2}-[A-Z]{2}$'
+          description: Payment corridor (optional for drafts)
+          example: "SG-CH"
+        conditionType:
+          type: string
+          enum: [ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK]
+          description: Release condition type (optional for drafts)
+          example: "ADMIN_RELEASE"
+        settlementAuthority:
+          type: string
+          description: Optional settlement authority wallet address
+          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        tokenMint:
+          type: string
+          description: Optional SPL token mint address (defaults to USDC)
+
+    InstitutionEscrowDraftUpdateRequest:
+      type: object
+      properties:
+        payerWallet:
+          type: string
+          description: Solana wallet address of the payer
+        recipientWallet:
+          type: string
+          description: Solana wallet address of the recipient
+        amount:
+          type: number
+          minimum: 0
+          maximum: 10000000
+          description: Stablecoin amount
+        corridor:
+          type: string
+          pattern: '^[A-Z]{2}-[A-Z]{2}$'
+          description: Payment corridor
+        conditionType:
+          type: string
+          enum: [ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK]
+          description: Release condition type
+        settlementAuthority:
+          type: string
+          description: Settlement authority wallet address
+        tokenMint:
+          type: string
+          description: SPL token mint address
 
     # ── AI Analysis Schemas ─────────────────────────────────────────────
 
