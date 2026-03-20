@@ -72,10 +72,9 @@ function checkApiKey(req: AdminAuthenticatedRequest): boolean {
   const adminKeys = process.env.ADMIN_API_KEYS?.split(',').map((k) => k.trim()) || [];
 
   const matched = adminKeys.some((key) => constantTimeCompare(apiKey, key));
-  if (matched && apiKey.length >= 8) {
-    req.apiKeyFingerprint = `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}`;
-  } else if (matched) {
-    req.apiKeyFingerprint = 'api-key';
+  if (matched) {
+    const { createHash } = require('crypto');
+    req.apiKeyFingerprint = createHash('sha256').update(apiKey).digest('hex').slice(0, 16);
   }
 
   return matched;

@@ -18,7 +18,7 @@ import { getInstitutionNotificationService } from './institution-notification.se
 import type { NoncePoolManager } from './noncePoolManager';
 import crypto from 'crypto';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
+import { getAssociatedTokenAddress, getAccount, TokenAccountNotFoundError } from '@solana/spl-token';
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
 const ESCROW_CACHE_TTL = 300; // 5 minutes
@@ -476,6 +476,33 @@ export class InstitutionEscrowService {
 
     await this.cacheEscrow(updated);
 
+    // Send notification (same as createEscrow)
+    try {
+      const notificationService = getInstitutionNotificationService();
+      if (newStatus === 'COMPLIANCE_HOLD') {
+        await notificationService.notify({
+          clientId,
+          escrowId,
+          type: 'ESCROW_COMPLIANCE_HOLD',
+          priority: 'HIGH',
+          title: 'Escrow Held for Compliance Review',
+          message: `Escrow ${escrow.escrowCode} (${Number(escrow.amount)} USDC) requires compliance review before proceeding.`,
+          metadata: { amount: Number(escrow.amount), corridor: escrow.corridor, riskScore: complianceResult.riskScore },
+        });
+      } else {
+        await notificationService.notify({
+          clientId,
+          escrowId,
+          type: 'ESCROW_CREATED',
+          title: 'Escrow Created',
+          message: `Escrow ${escrow.escrowCode} created for ${Number(escrow.amount)} USDC on corridor ${escrow.corridor}. Awaiting deposit.`,
+          metadata: { amount: Number(escrow.amount), corridor: escrow.corridor, escrowCode: escrow.escrowCode },
+        });
+      }
+    } catch (error) {
+      console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
+    }
+
     return {
       escrow: this.formatEscrow(updated),
       complianceResult: {
@@ -885,6 +912,7 @@ export class InstitutionEscrowService {
         }
       } catch (err: any) {
         if (err.message?.startsWith('Insufficient USDC balance')) throw err;
+        if (!(err instanceof TokenAccountNotFoundError)) throw err;
         // Token account doesn't exist
         console.warn(`[InstitutionEscrow] Payer token account not found for ${escrowId}`);
         await this.prisma.institutionEscrow.update({

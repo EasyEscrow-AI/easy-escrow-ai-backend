@@ -112,5 +112,22 @@ describe('InstitutionEmailService', function () {
       expect(call.html).to.not.include('Escrow ID:');
       expect(call.html).to.include('Escrow has been cancelled');
     });
+
+    it('should propagate error when Resend API fails', async () => {
+      resendSendStub.rejects(new Error('Resend API error'));
+
+      try {
+        await emailService.sendNotificationEmail({
+          to: 'user@test.com',
+          recipientName: 'Corp',
+          type: 'ESCROW_CREATED',
+          title: 'Test',
+          message: 'Test message',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.equal('Resend API error');
+      }
+    });
   });
 });

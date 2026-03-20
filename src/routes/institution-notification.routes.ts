@@ -8,6 +8,7 @@
 
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
+import { param, query, validationResult } from 'express-validator';
 import {
   requireInstitutionAuth,
   InstitutionAuthenticatedRequest,
@@ -24,12 +25,47 @@ const standardRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const validateListNotifications = [
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('limit must be between 1 and 100'),
+  query('offset')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('offset must be non-negative'),
+  query('unreadOnly')
+    .optional()
+    .isIn(['true', 'false'])
+    .withMessage('unreadOnly must be true or false'),
+];
+
+const validateNotificationId = [
+  param('id').isUUID().withMessage('Notification ID must be a valid UUID'),
+];
+
+function handleValidation(req: any, res: Response): boolean {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({
+      error: 'Validation Error',
+      details: errors.array(),
+      timestamp: new Date().toISOString(),
+    });
+    return true;
+  }
+  return false;
+}
+
 // GET /api/v1/institution-notifications
 router.get(
   '/api/v1/institution-notifications',
   standardRateLimiter,
   requireInstitutionAuth,
+  validateListNotifications,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
     try {
       const service = getInstitutionNotificationService();
       const result = await service.listNotifications(req.institutionClient!.clientId, {
@@ -83,7 +119,10 @@ router.post(
   '/api/v1/institution-notifications/:id/read',
   standardRateLimiter,
   requireInstitutionAuth,
+  validateNotificationId,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
     try {
       const service = getInstitutionNotificationService();
       const notification = await service.markAsRead(req.institutionClient!.clientId, req.params.id);

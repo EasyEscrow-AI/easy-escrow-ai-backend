@@ -15,7 +15,7 @@ export interface SearchParams {
 }
 
 export interface SearchResult {
-  category: 'escrow' | 'client' | 'account' | 'notification' | 'payment';
+  category: 'escrow' | 'client' | 'account' | 'notification';
   id: string;
   title: string;
   subtitle: string;
@@ -31,7 +31,6 @@ export interface SearchResponse {
     clients: number;
     accounts: number;
     notifications: number;
-    payments: number;
     total: number;
   };
 }
@@ -46,15 +45,14 @@ class InstitutionSearchService {
 
     const shouldSearch = (cat: string) => !categories || categories.includes(cat);
 
-    const [escrows, clients, accounts, notifications, payments] = await Promise.all([
+    const [escrows, clients, accounts, notifications] = await Promise.all([
       shouldSearch('escrow') ? this.searchEscrows(clientId, q, perCategory) : [],
       shouldSearch('client') ? this.searchClients(clientId, q, perCategory) : [],
       shouldSearch('account') ? this.searchAccounts(clientId, q, perCategory) : [],
       shouldSearch('notification') ? this.searchNotifications(clientId, q, perCategory) : [],
-      shouldSearch('payment') ? this.searchPayments(clientId, q, perCategory) : [],
     ]);
 
-    const results = [...escrows, ...clients, ...accounts, ...notifications, ...payments];
+    const results = [...escrows, ...clients, ...accounts, ...notifications];
 
     return {
       query: q,
@@ -64,7 +62,6 @@ class InstitutionSearchService {
         clients: clients.length,
         accounts: accounts.length,
         notifications: notifications.length,
-        payments: payments.length,
         total: results.length,
       },
     };
@@ -138,29 +135,21 @@ class InstitutionSearchService {
   private async searchClients(clientId: string, q: string, limit: number): Promise<SearchResult[]> {
     const clients = await prisma.institutionClient.findMany({
       where: {
-        isArchived: false,
-        isTestAccount: false,
+        id: clientId,
         OR: [
           { companyName: { contains: q, mode: 'insensitive' } },
           { legalName: { contains: q, mode: 'insensitive' } },
           { tradingName: { contains: q, mode: 'insensitive' } },
           { contactEmail: { contains: q, mode: 'insensitive' } },
-          { contactFirstName: { contains: q, mode: 'insensitive' } },
-          { contactLastName: { contains: q, mode: 'insensitive' } },
           { email: { contains: q, mode: 'insensitive' } },
           { industry: { contains: q, mode: 'insensitive' } },
           { country: { contains: q, mode: 'insensitive' } },
-          { jurisdiction: { contains: q, mode: 'insensitive' } },
-          { businessDescription: { contains: q, mode: 'insensitive' } },
-          { registrationNumber: { contains: q, mode: 'insensitive' } },
         ],
       },
       select: {
         id: true,
         companyName: true,
         legalName: true,
-        contactFirstName: true,
-        contactLastName: true,
         industry: true,
         country: true,
         tier: true,
@@ -174,13 +163,10 @@ class InstitutionSearchService {
       category: 'client' as const,
       id: c.id,
       title: c.companyName,
-      subtitle: [c.contactFirstName, c.contactLastName].filter(Boolean).join(' ')
-        || [c.industry, c.country].filter(Boolean).join(' · ')
-        || c.tier,
+      subtitle: [c.industry, c.country].filter(Boolean).join(' · ') || c.tier,
       status: c.status,
       metadata: {
         legalName: c.legalName,
-        contactName: [c.contactFirstName, c.contactLastName].filter(Boolean).join(' ') || undefined,
         tier: c.tier,
       },
     }));
@@ -192,8 +178,6 @@ class InstitutionSearchService {
     const or: any[] = [
       { name: { contains: q, mode: 'insensitive' } },
       { label: { contains: q, mode: 'insensitive' } },
-      { description: { contains: q, mode: 'insensitive' } },
-      { notificationEmail: { contains: q, mode: 'insensitive' } },
     ];
 
     if (isWallet) {
@@ -268,77 +252,6 @@ class InstitutionSearchService {
         createdAt: n.createdAt,
       },
     }));
-  }
-
-  private async searchPayments(clientId: string, q: string, limit: number): Promise<SearchResult[]> {
-    const isAmount = /^\d+(\.\d+)?$/.test(q);
-    const isWallet = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(q);
-
-    const or: any[] = [];
-
-    if (isAmount) {
-      or.push({ amount: { equals: parseFloat(q) } });
-    } else if (isWallet) {
-      or.push(
-        { senderWallet: { equals: q } },
-        { recipientWallet: { equals: q } },
-      );
-    } else {
-      or.push(
-        { sender: { contains: q, mode: 'insensitive' } },
-        { recipient: { contains: q, mode: 'insensitive' } },
-        { corridor: { contains: q, mode: 'insensitive' } },
-        { senderWallet: { startsWith: q } },
-        { recipientWallet: { startsWith: q } },
-      );
-
-      const statusMatch = this.matchPaymentStatus(q);
-      if (statusMatch) {
-        or.push({ status: statusMatch });
-      }
-    }
-
-    if (or.length === 0) return [];
-
-    const payments = await prisma.directPayment.findMany({
-      where: { clientId, OR: or },
-      select: {
-        id: true,
-        sender: true,
-        recipient: true,
-        senderWallet: true,
-        recipientWallet: true,
-        amount: true,
-        currency: true,
-        corridor: true,
-        status: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
-
-    return payments.map((p) => ({
-      category: 'payment' as const,
-      id: p.id,
-      title: `${Number(p.amount)} ${p.currency}`,
-      subtitle: `${p.sender} → ${p.recipient}${p.corridor ? ` · ${p.corridor}` : ''}`,
-      status: p.status,
-      metadata: {
-        amount: Number(p.amount),
-        currency: p.currency,
-        corridor: p.corridor,
-        sender: p.sender,
-        recipient: p.recipient,
-        createdAt: p.createdAt,
-      },
-    }));
-  }
-
-  private matchPaymentStatus(q: string): string | null {
-    const statuses = ['completed', 'processing', 'failed'];
-    const lower = q.toLowerCase();
-    return statuses.find((s) => s === lower || s.startsWith(lower)) || null;
   }
 
   private matchStatus(q: string): string | null {
