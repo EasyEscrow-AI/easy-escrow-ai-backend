@@ -8,6 +8,7 @@
 
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
+import { query, validationResult } from 'express-validator';
 import {
   requireInstitutionAuth,
   InstitutionAuthenticatedRequest,
@@ -24,18 +25,49 @@ const standardRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+function handleValidation(req: any, res: Response): boolean {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({
+      error: 'Validation Error',
+      details: errors.array(),
+      timestamp: new Date().toISOString(),
+    });
+    return true;
+  }
+  return false;
+}
+
+const validateListNotifications = [
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('limit must be between 1 and 100'),
+  query('offset')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('offset must be non-negative'),
+  query('unreadOnly')
+    .optional()
+    .isIn(['true', 'false'])
+    .withMessage('unreadOnly must be true or false'),
+];
+
 // GET /api/v1/institution-notifications
 router.get(
   '/api/v1/institution-notifications',
   standardRateLimiter,
   requireInstitutionAuth,
+  validateListNotifications,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
     try {
       const service = getInstitutionNotificationService();
       const result = await service.listNotifications(req.institutionClient!.clientId, {
         unreadOnly: req.query.unreadOnly === 'true',
-        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
-        offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
+        offset: req.query.offset ? parseInt(req.query.offset as string, 10) : undefined,
       });
 
       res.status(200).json({

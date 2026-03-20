@@ -42,19 +42,10 @@ class InstitutionNotificationService {
     const { clientId, escrowId, type, priority, title, message, metadata } = params;
 
     try {
-      // Load preferences from the client's default account + settings
-      const [account, settings, client] = await Promise.all([
-        prisma.institutionAccount.findFirst({
-          where: { clientId, isDefault: true, isActive: true },
-        }),
-        prisma.institutionClientSettings.findUnique({
-          where: { clientId },
-        }),
-        prisma.institutionClient.findUnique({
-          where: { id: clientId },
-          select: { email: true, companyName: true, contactEmail: true },
-        }),
-      ]);
+      // 1. Load account preferences (required for notification gating)
+      const account = await prisma.institutionAccount.findFirst({
+        where: { clientId, isDefault: true, isActive: true },
+      });
 
       // Check if this notification type is enabled
       const prefKey = TYPE_TO_PREF[type];
@@ -65,7 +56,7 @@ class InstitutionNotificationService {
         }
       }
 
-      // 1. Always create in-app notification
+      // 2. Always create in-app notification (must succeed before optional email)
       await prisma.institutionNotification.create({
         data: {
           clientId,
@@ -78,10 +69,24 @@ class InstitutionNotificationService {
         },
       });
 
-      // 2. Send email if configured
+      // 3. Load optional email recipients (failures must not block in-app notification)
+      const [settingsResult, clientResult] = await Promise.allSettled([
+        prisma.institutionClientSettings.findUnique({
+          where: { clientId },
+        }),
+        prisma.institutionClient.findUnique({
+          where: { id: clientId },
+          select: { email: true, companyName: true, contactEmail: true },
+        }),
+      ]);
+
+      const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
+      const client = clientResult.status === 'fulfilled' ? clientResult.value : null;
+
+      // 4. Send email if configured
       const notificationEmail =
         account?.notificationEmail ||
-        settings?.notificationEmail ||
+        (settings as any)?.notificationEmail ||
         client?.contactEmail ||
         client?.email;
 
