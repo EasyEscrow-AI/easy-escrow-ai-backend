@@ -34,8 +34,8 @@ router.get(
       const service = getInstitutionNotificationService();
       const result = await service.listNotifications(req.institutionClient!.clientId, {
         unreadOnly: req.query.unreadOnly === 'true',
-        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
-        offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
+        offset: req.query.offset ? parseInt(req.query.offset as string, 10) : undefined,
       });
 
       res.status(200).json({
@@ -94,11 +94,11 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('not found')
-        ? 404
-        : error.message.includes('Access denied')
-        ? 403
-        : 400;
+      const status = error.statusCode || (
+        error.message?.includes('not found') ? 404
+        : error.message?.includes('Access denied') ? 403
+        : 400
+      );
       res.status(status).json({
         error: 'Error',
         message: error.message,

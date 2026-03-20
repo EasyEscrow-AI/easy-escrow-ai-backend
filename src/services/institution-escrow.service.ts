@@ -238,26 +238,30 @@ export class InstitutionEscrowService {
     });
 
     // 11. Send notifications
-    const notificationService = getInstitutionNotificationService();
-    if (initialStatus === 'COMPLIANCE_HOLD') {
-      await notificationService.notify({
-        clientId,
-        escrowId,
-        type: 'ESCROW_COMPLIANCE_HOLD',
-        priority: 'HIGH',
-        title: 'Escrow Held for Compliance Review',
-        message: `Escrow ${escrowCode} (${amount} USDC) requires compliance review before proceeding.`,
-        metadata: { amount, corridor, riskScore: complianceResult.riskScore },
-      });
-    } else {
-      await notificationService.notify({
-        clientId,
-        escrowId,
-        type: 'ESCROW_CREATED',
-        title: 'Escrow Created',
-        message: `Escrow ${escrowCode} created for ${amount} USDC on corridor ${corridor}. Awaiting deposit.`,
-        metadata: { amount, corridor, escrowCode },
-      });
+    try {
+      const notificationService = getInstitutionNotificationService();
+      if (initialStatus === 'COMPLIANCE_HOLD') {
+        await notificationService.notify({
+          clientId,
+          escrowId,
+          type: 'ESCROW_COMPLIANCE_HOLD',
+          priority: 'HIGH',
+          title: 'Escrow Held for Compliance Review',
+          message: `Escrow ${escrowCode} (${amount} USDC) requires compliance review before proceeding.`,
+          metadata: { amount, corridor, riskScore: complianceResult.riskScore },
+        });
+      } else {
+        await notificationService.notify({
+          clientId,
+          escrowId,
+          type: 'ESCROW_CREATED',
+          title: 'Escrow Created',
+          message: `Escrow ${escrowCode} created for ${amount} USDC on corridor ${corridor}. Awaiting deposit.`,
+          metadata: { amount, corridor, escrowCode },
+        });
+      }
+    } catch (error) {
+      console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
     }
 
     // 12. Cache in Redis
@@ -528,16 +532,20 @@ export class InstitutionEscrowService {
       amount: Number(escrow.amount),
     });
 
-    await getInstitutionNotificationService().notify({
-      clientId,
-      escrowId,
-      type: 'ESCROW_FUNDED',
-      title: 'Escrow Funded',
-      message: `Deposit of ${Number(escrow.amount)} USDC confirmed for escrow ${
-        escrow.escrowCode || escrowId
-      }.`,
-      metadata: { amount: Number(escrow.amount), txSignature },
-    });
+    try {
+      await getInstitutionNotificationService().notify({
+        clientId,
+        escrowId,
+        type: 'ESCROW_FUNDED',
+        title: 'Escrow Funded',
+        message: `Deposit of ${Number(escrow.amount)} USDC confirmed for escrow ${
+          escrow.escrowCode || escrowId
+        }.`,
+        metadata: { amount: Number(escrow.amount), txSignature },
+      });
+    } catch (error) {
+      console.warn('[InstitutionEscrow] ESCROW_FUNDED notification failed (non-critical):', error);
+    }
 
     await this.cacheEscrow(updated);
 
@@ -718,16 +726,20 @@ export class InstitutionEscrowService {
       wasFunded: escrow.status === 'FUNDED',
     });
 
-    await getInstitutionNotificationService().notify({
-      clientId,
-      escrowId,
-      type: 'ESCROW_CANCELLED',
-      title: 'Escrow Cancelled',
-      message: `Escrow ${escrow.escrowCode || escrowId} has been cancelled.${
-        reason ? ` Reason: ${reason}` : ''
-      }`,
-      metadata: { reason, previousStatus: escrow.status },
-    });
+    try {
+      await getInstitutionNotificationService().notify({
+        clientId,
+        escrowId,
+        type: 'ESCROW_CANCELLED',
+        title: 'Escrow Cancelled',
+        message: `Escrow ${escrow.escrowCode || escrowId} has been cancelled.${
+          reason ? ` Reason: ${reason}` : ''
+        }`,
+        metadata: { reason, previousStatus: escrow.status },
+      });
+    } catch (error) {
+      console.warn('[InstitutionEscrow] ESCROW_CANCELLED notification failed (non-critical):', error);
+    }
 
     await this.cacheEscrow(updated);
 

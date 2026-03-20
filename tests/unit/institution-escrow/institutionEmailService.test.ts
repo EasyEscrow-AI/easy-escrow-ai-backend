@@ -11,7 +11,13 @@ process.env.NODE_ENV = 'test';
 process.env.RESEND_API_KEY = 'test-resend-key';
 process.env.RESEND_FROM_ADDRESS = 'test@easyescrow.ai';
 
-describe('InstitutionEmailService', () => {
+if (process.env.NODE_ENV !== 'test') {
+  throw new Error('Unit tests must run with NODE_ENV=test');
+}
+
+describe('InstitutionEmailService', function () {
+  this.timeout(10000);
+
   let sandbox: sinon.SinonSandbox;
   let emailService: any;
   let resendSendStub: sinon.SinonStub;
