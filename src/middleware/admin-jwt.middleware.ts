@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import ms from 'ms';
 import { config } from '../config';
+
+const ADMIN_ACCESS_TOKEN_EXPIRY = process.env.ADMIN_ACCESS_TOKEN_EXPIRY || '1h';
+const RENEWAL_THRESHOLD = 0.25; // Renew when less than 25% of lifetime remains
 
 export interface AdminAuthenticatedRequest extends Request {
   adminUser?: {
@@ -16,6 +20,8 @@ interface AdminJwtPayload {
   adminId: string;
   email: string;
   role: string;
+  iat?: number;
+  exp?: number;
 }
 
 function getJwtSecret(): string {
@@ -33,7 +39,7 @@ function constantTimeCompare(a: string, b: string): boolean {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-function extractAndVerifyAdminToken(req: Request): AdminJwtPayload | null {
+function extractAndVerifyAdminToken(req: Request, res: Response): AdminJwtPayload | null {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -48,6 +54,27 @@ function extractAndVerifyAdminToken(req: Request): AdminJwtPayload | null {
 
     if (!decoded.adminId) {
       return null;
+    }
+
+    // Sliding session: renew token if near expiry
+    if (decoded.iat && decoded.exp) {
+      const now = Math.floor(Date.now() / 1000);
+      const totalLifetime = decoded.exp - decoded.iat;
+      const remaining = decoded.exp - now;
+
+      if (remaining > 0 && remaining < totalLifetime * RENEWAL_THRESHOLD) {
+        try {
+          const expirySec = Math.floor(ms(ADMIN_ACCESS_TOKEN_EXPIRY as ms.StringValue) / 1000);
+          const newToken = jwt.sign(
+            { adminId: decoded.adminId, email: decoded.email, role: decoded.role },
+            secret,
+            { expiresIn: expirySec }
+          );
+          res.setHeader('X-New-Access-Token', newToken);
+        } catch {
+          // Non-fatal: if renewal fails, the current token is still valid
+        }
+      }
     }
 
     return decoded;
@@ -86,7 +113,7 @@ export const requireAdminAuth = (
   next: NextFunction
 ): void => {
   try {
-    const payload = extractAndVerifyAdminToken(req);
+    const payload = extractAndVerifyAdminToken(req, res);
     if (!payload) {
       res.status(401).json({
         error: 'Unauthorized',
@@ -121,7 +148,7 @@ export const requireAdminOrApiKey = (
 ): void => {
   try {
     // Try JWT first
-    const payload = extractAndVerifyAdminToken(req);
+    const payload = extractAndVerifyAdminToken(req, res);
     if (payload) {
       req.adminUser = {
         adminId: payload.adminId,

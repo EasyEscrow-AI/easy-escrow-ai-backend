@@ -76,6 +76,7 @@ export const corsOptions: CorsOptions = {
     'X-RateLimit-Limit',
     'X-RateLimit-Remaining',
     'X-RateLimit-Reset',
+    'X-New-Access-Token',
   ],
   maxAge: 86400, // Cache preflight response for 24 hours
   optionsSuccessStatus: 200,

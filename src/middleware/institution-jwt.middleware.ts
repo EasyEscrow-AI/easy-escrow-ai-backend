@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import ms from 'ms';
+import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 
-/**
- * Institution JWT Authentication Middleware
- * Protects institution API endpoints with JWT-based authentication
- */
+const RENEWAL_THRESHOLD = 0.25; // Renew when less than 25% of lifetime remains
 
 export interface InstitutionAuthenticatedRequest extends Request {
   institutionClient?: {
@@ -19,6 +18,8 @@ interface InstitutionJwtPayload {
   clientId: string;
   email: string;
   tier: string;
+  iat?: number;
+  exp?: number;
 }
 
 function getJwtSecret(): string {
@@ -58,6 +59,30 @@ function extractAndVerifyToken(req: Request, res: Response): InstitutionJwtPaylo
   try {
     const secret = getJwtSecret();
     const decoded = jwt.verify(token, secret) as InstitutionJwtPayload;
+
+    // Sliding session: renew token if near expiry
+    if (decoded.iat && decoded.exp) {
+      const now = Math.floor(Date.now() / 1000);
+      const totalLifetime = decoded.exp - decoded.iat;
+      const remaining = decoded.exp - now;
+
+      if (remaining > 0 && remaining < totalLifetime * RENEWAL_THRESHOLD) {
+        try {
+          const escrowConfig = getInstitutionEscrowConfig();
+          const accessTokenExpiry = escrowConfig.jwt.accessTokenExpiry || '1h';
+          const expirySec = Math.floor(ms(accessTokenExpiry as ms.StringValue) / 1000);
+          const newToken = jwt.sign(
+            { clientId: decoded.clientId, email: decoded.email, tier: decoded.tier },
+            secret,
+            { expiresIn: expirySec }
+          );
+          res.setHeader('X-New-Access-Token', newToken);
+        } catch {
+          // Non-fatal: if renewal fails, the current token is still valid
+        }
+      }
+    }
+
     return decoded;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
