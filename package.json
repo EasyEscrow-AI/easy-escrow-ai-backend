@@ -263,6 +263,7 @@
     "test:staging:e2e:ai-chat": "mocha --no-config --require ts-node/register tests/staging/e2e/26-ai-chat-guardrails.test.ts --timeout 180000 --reporter spec --colors",
     "seed:institution:enhanced": "ts-node scripts/seed-institution-staging-enhanced.ts --staging",
     "seed:admin": "ts-node scripts/seed-admin.ts",
+    "seed:portal": "ts-node scripts/seed-institution-portal.ts",
     "test:unit:admin": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/admin/*.test.ts' --timeout 10000 --exit",
     "prepare": "husky"
   },
