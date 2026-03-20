@@ -12,6 +12,13 @@ const ALLOWED_SETTINGS_FIELDS = [
   'webhookSecret',
   'timezone',
   'autoApproveThreshold',
+  'manualReviewThreshold',
+  'autoTravelRule',
+  'activeSanctionsLists',
+  'aiAutoRelease',
+  'riskTolerance',
+  'defaultToken',
+  'emailNotifications',
 ] as const;
 
 export class InstitutionClientSettingsService {
