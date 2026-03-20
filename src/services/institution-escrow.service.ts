@@ -563,6 +563,9 @@ export class InstitutionEscrowService {
       );
     }
 
+    // Capture original status before changing to RELEASING so balance check can revert correctly
+    const originalStatus = escrow.status as InstitutionEscrowStatus;
+
     // Update status to RELEASING
     await this.prisma.institutionEscrow.update({
       where: { escrowId },
@@ -570,7 +573,7 @@ export class InstitutionEscrowService {
     });
 
     // Check payer's token balance before settlement
-    await this.checkPayerBalance(escrow, clientId);
+    await this.checkPayerBalance(escrow, clientId, originalStatus);
 
     // Advance durable nonce to prove atomic settlement on-chain
     let releaseTxSig: string | null = null;
@@ -738,7 +741,7 @@ export class InstitutionEscrowService {
    * Check payer's USDC balance before settlement.
    * Sets INSUFFICIENT_FUNDS if balance is too low or token account doesn't exist.
    */
-  private async checkPayerBalance(escrow: any, clientId: string): Promise<void> {
+  private async checkPayerBalance(escrow: any, clientId: string, originalStatus?: InstitutionEscrowStatus): Promise<void> {
     const { escrowId } = escrow;
     try {
       const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
@@ -790,7 +793,7 @@ export class InstitutionEscrowService {
       }
       // For RPC/network errors, revert to previous status so release can be retried
       console.error('[InstitutionEscrow] Balance check failed due to RPC error:', err);
-      const revertStatus = escrow.status as InstitutionEscrowStatus;
+      const revertStatus = originalStatus || (escrow.status as InstitutionEscrowStatus);
       await this.prisma.institutionEscrow.update({
         where: { escrowId },
         data: { status: revertStatus },
