@@ -531,6 +531,18 @@ export class InstitutionEscrowService {
         where: { escrowId },
         data: { status: 'EXPIRED', resolvedAt: new Date() },
       });
+      try {
+        await getInstitutionNotificationService().notify({
+          clientId,
+          escrowId,
+          type: 'ESCROW_EXPIRED',
+          title: 'Escrow Expired',
+          message: `Escrow ${escrow.escrowCode || escrowId} has expired without a deposit being recorded.`,
+          metadata: { amount: Number(escrow.amount), corridor: escrow.corridor },
+        });
+      } catch (error) {
+        console.warn('[InstitutionEscrow] ESCROW_EXPIRED notification failed (non-critical):', error);
+      }
       throw new Error('Escrow has expired');
     }
 
@@ -801,6 +813,24 @@ export class InstitutionEscrowService {
             available: tokenAccount.amount.toString(),
             required: requiredMicroUsdc.toString(),
           });
+          try {
+            await getInstitutionNotificationService().notify({
+              clientId,
+              escrowId,
+              type: 'ESCROW_FUNDED',
+              priority: 'HIGH',
+              title: 'Insufficient Funds',
+              message: `Escrow ${escrow.escrowCode || escrowId} release blocked: payer has ${
+                Number(tokenAccount.amount) / 1_000_000
+              } USDC, needs ${Number(escrow.amount)} USDC. Please fund the wallet and retry.`,
+              metadata: {
+                available: Number(tokenAccount.amount) / 1_000_000,
+                required: Number(escrow.amount),
+              },
+            });
+          } catch (notifErr) {
+            console.warn('[InstitutionEscrow] INSUFFICIENT_FUNDS notification failed:', notifErr);
+          }
           throw new Error(
             `Insufficient USDC balance: has ${
               Number(tokenAccount.amount) / 1_000_000
@@ -819,6 +849,19 @@ export class InstitutionEscrowService {
         await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
           reason: 'Token account does not exist',
         });
+        try {
+          await getInstitutionNotificationService().notify({
+            clientId,
+            escrowId,
+            type: 'ESCROW_FUNDED',
+            priority: 'HIGH',
+            title: 'Insufficient Funds',
+            message: `Escrow ${escrow.escrowCode || escrowId} release blocked: payer token account does not exist. Please create a USDC token account and fund it.`,
+            metadata: { reason: 'Token account does not exist' },
+          });
+        } catch (notifErr) {
+          console.warn('[InstitutionEscrow] INSUFFICIENT_FUNDS notification failed:', notifErr);
+        }
         throw new Error('Insufficient USDC balance: payer token account does not exist');
       }
     } catch (err: any) {
