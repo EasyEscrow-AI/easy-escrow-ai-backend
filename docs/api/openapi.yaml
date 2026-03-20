@@ -6350,14 +6350,24 @@ components:
         status:
           type: string
           enum: [pass, warning, fail, pending]
-          description: Section assessment status
+          description: |
+            - `pass` — No issues, compliant
+            - `warning` — Minor concerns, not blocking
+            - `fail` — Compliance risk, requires attention
+            - `pending` — Required data not yet provided (e.g. DRAFT escrow)
         title:
           type: string
           example: "From Account (Payer)"
         findings:
           type: string
-          description: 1-3 sentence analysis for this step
+          description: 1-2 concise sentence analysis for this step
           example: "Payer wallet belongs to a verified PREMIUM-tier institution with low risk rating."
+        checked_fields:
+          type: array
+          items:
+            type: string
+          description: Field names the AI evaluated for this section
+          example: ["payerWallet", "client.kycStatus", "client.riskRating"]
 
     InstitutionAccount:
       type: object
