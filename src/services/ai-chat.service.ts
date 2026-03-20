@@ -18,6 +18,7 @@ import { PrismaClient } from '../generated/prisma';
 import { redisClient } from '../config/redis';
 import { DataAnonymizer, CLIENT_SENSITIVE_FIELDS } from '../utils/data-anonymizer';
 import { KNOWLEDGEBASE } from '../data/ai-chat-knowledgebase';
+import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 
 const CHAT_RATE_LIMIT_KEY_PREFIX = 'institution:ai:chat:ratelimit:';
 const CHAT_RATE_LIMIT_MAX = 20; // 20 messages per minute per client
@@ -166,6 +167,16 @@ const CHAT_TOOLS: Anthropic.Tool[] = [
       required: [],
     },
   },
+  {
+    name: 'get_platform_info',
+    description:
+      'Get current platform configuration including escrow amount limits, platform fees, supported corridors, and default settings. Use this when the user asks about fees, limits, minimum/maximum amounts, supported corridors, or platform pricing.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [],
+    },
+  },
 ];
 
 export class AiChatService {
@@ -301,6 +312,8 @@ export class AiChatService {
           return await this.toolGetEscrowDetails(input, clientId, anonymizer);
         case 'get_account_summary':
           return await this.toolGetAccountSummary(clientId, anonymizer);
+        case 'get_platform_info':
+          return await this.toolGetPlatformInfo();
         default:
           return JSON.stringify({ error: `Unknown tool: ${toolName}` });
       }
@@ -513,6 +526,47 @@ export class AiChatService {
         isPrimary: w.isPrimary,
       })),
       escrowSummary,
+    };
+
+    return JSON.stringify(result);
+  }
+
+  private async toolGetPlatformInfo(): Promise<string> {
+    const escrowConfig = getInstitutionEscrowConfig();
+    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10);
+
+    const corridors = await this.prisma.institutionCorridor.findMany({
+      where: { status: 'ACTIVE' },
+      select: {
+        code: true,
+        sourceCountry: true,
+        destCountry: true,
+        minAmount: true,
+        maxAmount: true,
+        riskLevel: true,
+      },
+      orderBy: { code: 'asc' },
+    });
+
+    const result = {
+      escrowLimits: {
+        minimumAmount: `$${escrowConfig.minUsdc} USDC`,
+        maximumAmount: `$${escrowConfig.maxUsdc.toLocaleString()} USDC`,
+      },
+      platformFee: {
+        rateBps: feeBps,
+        ratePercent: `${feeBps / 100}%`,
+        description: `${feeBps / 100}% of escrow amount`,
+      },
+      defaultExpiryHours: escrowConfig.defaultExpiryHours,
+      supportedCorridors: corridors.map((c) => ({
+        corridor: c.code,
+        from: c.sourceCountry,
+        to: c.destCountry,
+        minAmount: `$${Number(c.minAmount).toLocaleString()} USDC`,
+        maxAmount: `$${Number(c.maxAmount).toLocaleString()} USDC`,
+        riskLevel: c.riskLevel,
+      })),
     };
 
     return JSON.stringify(result);

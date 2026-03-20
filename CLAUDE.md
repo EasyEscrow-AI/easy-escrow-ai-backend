@@ -309,7 +309,7 @@ Environment-specific IDL files in `src/generated/anchor/`:
 
 ### Institution Escrow
 - Feature-flagged via `INSTITUTION_ESCROW_ENABLED` (disabled by default)
-- USDC escrow with configurable min/max amounts ($100 - $1M default)
+- USDC escrow with configurable min/max amounts ($10 - $100M default)
 - JWT authentication (access + refresh tokens) for institution users
 - Allowlist-based institution registration (not open signup)
 - AI compliance analysis via Claude API before escrow release

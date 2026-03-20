@@ -5,6 +5,9 @@
  * POST   /api/v1/ai/analyze-escrow/:escrow_id          → analyzeEscrow
  * GET    /api/v1/ai/escrow-analysis/:escrow_id          → getEscrowAnalysis
  *
+ * Corridor Analysis:
+ * GET    /api/v1/institution/ai/analyze-corridor        → analyzeCorridor
+ *
  * Document Analysis:
  * POST   /api/v1/ai/analyze-escrow-doc/:escrow_id       → analyzeDocument (primary)
  * GET    /api/v1/ai/escrow-doc-analysis/:escrow_id      → getDocumentAnalysisResults (primary)
@@ -20,13 +23,14 @@
 
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { param, validationResult } from 'express-validator';
+import { param, query, validationResult } from 'express-validator';
 import {
   requireInstitutionAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { validateAiAnalysis } from '../middleware/institution-escrow-validation.middleware';
 import { getAiAnalysisService } from '../services/ai-analysis.service';
+import { getCorridorAnalysisService } from '../services/corridor-analysis.service';
 
 // Param-only validation for GET routes (no body required)
 const validateEscrowIdParam = [
@@ -237,6 +241,76 @@ router.get(
   requireInstitutionAuth,
   validateEscrowIdParam,
   handleGetDocumentAnalysis,
+);
+
+// ─── Corridor Analysis ──────────────────────────────────────────
+
+const validateCorridorAnalysis = [
+  query('fromCountry')
+    .isString()
+    .isLength({ min: 2, max: 2 })
+    .isAlpha()
+    .isUppercase()
+    .withMessage('fromCountry must be a 2-letter uppercase country code'),
+  query('toCountry')
+    .isString()
+    .isLength({ min: 2, max: 2 })
+    .isAlpha()
+    .isUppercase()
+    .withMessage('toCountry must be a 2-letter uppercase country code'),
+  query('amount')
+    .optional()
+    .isFloat({ min: 1 })
+    .withMessage('amount must be a positive number'),
+  query('currency')
+    .optional()
+    .isString()
+    .isIn(['USDC', 'USDT'])
+    .withMessage('currency must be USDC or USDT'),
+];
+
+// GET /api/v1/institution/ai/analyze-corridor
+router.get(
+  '/api/v1/institution/ai/analyze-corridor',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  validateCorridorAnalysis,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({
+        error: 'Validation Error',
+        details: errors.array(),
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    try {
+      const service = getCorridorAnalysisService();
+      const result = await service.analyzeCorridor({
+        fromCountry: req.query.fromCountry as string,
+        toCountry: req.query.toCountry as string,
+        amount: req.query.amount ? parseFloat(req.query.amount as string) : undefined,
+        currency: (req.query.currency as string) || 'USDC',
+      });
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('not found') ? 404
+        : error.message.includes('not supported') ? 404
+        : 500;
+      res.status(status).json({
+        error: 'Corridor Analysis Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
 );
 
 // ─── Client Analysis ────────────────────────────────────────────

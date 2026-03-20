@@ -85,6 +85,11 @@ router.post(
         conditionType: req.body.conditionType,
         expiryHours: req.body.expiryHours,
         settlementAuthority: req.body.settlementAuthority,
+        settlementMode: req.body.settlementMode,
+        releaseMode: req.body.releaseMode,
+        approvalParties: req.body.approvalParties,
+        releaseConditions: req.body.releaseConditions,
+        approvalInstructions: req.body.approvalInstructions,
       });
 
       res.status(201).json({
@@ -124,6 +129,11 @@ router.post(
         conditionType: req.body.conditionType,
         settlementAuthority: req.body.settlementAuthority,
         tokenMint: req.body.tokenMint,
+        settlementMode: req.body.settlementMode,
+        releaseMode: req.body.releaseMode,
+        approvalParties: req.body.approvalParties,
+        releaseConditions: req.body.releaseConditions,
+        approvalInstructions: req.body.approvalInstructions,
       });
 
       res.status(201).json({
@@ -164,6 +174,11 @@ router.put(
           conditionType: req.body.conditionType,
           settlementAuthority: req.body.settlementAuthority,
           tokenMint: req.body.tokenMint,
+          settlementMode: req.body.settlementMode,
+          releaseMode: req.body.releaseMode,
+          approvalParties: req.body.approvalParties,
+          releaseConditions: req.body.releaseConditions,
+          approvalInstructions: req.body.approvalInstructions,
         },
       );
 
