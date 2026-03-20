@@ -312,14 +312,17 @@ export class AiAnalysisService {
     const client = this.getAnthropicClient();
     const anonymizer = anonymize ? new DataAnonymizer() : null;
 
-    // Build escrow summary for AI
+    // Build escrow summary for AI — include all fields for step-by-step analysis
     const escrowSummary: Record<string, unknown> = {
       escrowId: escrow.escrowId,
+      escrowCode: escrow.escrowCode,
       status: escrow.status,
       amount: Number(escrow.amount),
       platformFee: Number(escrow.platformFee),
+      tokenMint: escrow.usdcMint,
       corridor: escrow.corridor,
       conditionType: escrow.conditionType,
+      settlementAuthority: escrow.settlementAuthority,
       riskScore: escrow.riskScore,
       payerWallet: escrow.payerWallet,
       recipientWallet: escrow.recipientWallet,
@@ -332,6 +335,8 @@ export class AiAnalysisService {
       fundedAt: escrow.fundedAt?.toISOString() || null,
       resolvedAt: escrow.resolvedAt?.toISOString() || null,
       depositTxSignature: escrow.depositTxSignature,
+      escrowPda: escrow.escrowPda,
+      nonceAccount: escrow.nonceAccount,
       client: {
         companyName: escrow.client.companyName,
         legalName: escrow.client.legalName,
@@ -351,21 +356,65 @@ export class AiAnalysisService {
       ? anonymizer.anonymizeObject(escrowSummary, ESCROW_SENSITIVE_FIELDS)
       : escrowSummary;
 
-    const systemPrompt = `You are EasyEscrow AI, an escrow compliance analyst. Analyze the following institutional escrow transaction and provide a comprehensive risk assessment.${anonymize ? '\n\nNote: Some fields have been tokenized for privacy (e.g. [COMPANY_1], [WALLET_1]). Reference these tokens in your analysis — they will be resolved to real values after.' : ''}
+    const systemPrompt = `You are EasyEscrow AI, an escrow compliance analyst for cross-border stablecoin payments on Solana. Analyze the escrow transaction and provide a step-by-step compliance assessment for each stage of the escrow creation process.${anonymize ? '\n\nNote: Some fields have been tokenized for privacy (e.g. [COMPANY_1], [WALLET_1]). Reference these tokens in your analysis — they will be resolved to real values after.' : ''}
+
+The escrow may be at any stage (DRAFT with partial data, CREATED, FUNDED, etc.). Analyze only what data is available — mark sections as "pending" if the relevant fields are null/missing.
 
 Your response MUST be valid JSON with this exact structure:
 {
   "risk_score": <number 0-100>,
   "recommendation": "<APPROVE|REVIEW|REJECT>",
-  "summary": "<2-4 sentence human-readable summary of the escrow analysis>",
+  "summary": "<1 sentence AI compliance conclusion>",
+  "sections": {
+    "from_account": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "From Account (Payer)",
+      "findings": "<1-3 sentences analyzing payer wallet, client KYC/KYB status, entity type, risk rating, country>"
+    },
+    "to_account": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "To Account (Recipient)",
+      "findings": "<1-3 sentences analyzing recipient wallet — whether it is set, any known risk indicators>"
+    },
+    "corridor": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "Payment Corridor",
+      "findings": "<1-3 sentences analyzing the From→To corridor (e.g. SG-CH), jurisdiction risk, regulatory considerations>"
+    },
+    "amount": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "Amount Compliance",
+      "findings": "<1-3 sentences analyzing amount vs corridor limits, platform fee, large transaction flags>"
+    },
+    "settlement": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "Settlement Mode",
+      "findings": "<1-3 sentences analyzing the escrow settlement approach — token mint, escrow PDA, deposit status, on-chain state>"
+    },
+    "release": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "Release Conditions",
+      "findings": "<1-3 sentences analyzing conditionType (ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK), settlement authority>"
+    },
+    "advanced": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "Advanced Settings",
+      "findings": "<1-3 sentences analyzing expiry timeout, nonce account, supporting documents, any 3rd party release authority>"
+    },
+    "overview": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "Overall Assessment",
+      "findings": "<2-4 sentences combining all sections into a holistic compliance conclusion>"
+    }
+  },
   "extracted_fields": {
     "escrow_status": "<string>",
-    "amount_usd": <number>,
-    "corridor": "<string>",
-    "condition_type": "<string>",
+    "amount_usd": <number or null>,
+    "corridor": "<string or null>",
+    "condition_type": "<string or null>",
     "client_tier": "<string>",
     "kyc_status": "<string>",
-    "days_until_expiry": <number>,
+    "days_until_expiry": <number or null>,
     "has_supporting_documents": <boolean>,
     "deposit_confirmed": <boolean>
   },
@@ -375,12 +424,11 @@ Your response MUST be valid JSON with this exact structure:
   "details": "<brief explanation of risk factors>"
 }
 
-Consider: corridor risk, amount size, client tier/KYC status, document support, escrow timing, condition type.
 Respond with ONLY the JSON object, no additional text.`;
 
     const response = await client.messages.create({
       model,
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [{
         role: 'user',
@@ -393,7 +441,7 @@ Respond with ONLY the JSON object, no additional text.`;
       .map(block => block.text)
       .join('');
 
-    let result: AiAnalysisResult & { summary: string };
+    let result: AiAnalysisResult & { summary: string; sections?: Record<string, unknown> };
     try {
       const parsed = JSON.parse(responseText);
       result = {
@@ -409,6 +457,7 @@ Respond with ONLY the JSON object, no additional text.`;
           : 'REVIEW',
         details: parsed.details || 'Analysis complete',
         summary: parsed.summary || '',
+        sections: parsed.sections || undefined,
       };
     } catch {
       result = {
