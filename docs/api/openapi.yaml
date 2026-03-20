@@ -2991,13 +2991,24 @@ paths:
         - AI Analysis
       summary: Analyze escrow
       description: |
-        Run a full AI analysis on an escrow's details including amounts, corridor risk,
-        client tier, KYC/KYB status, deposit status, and supporting documents.
+        Run a step-by-step AI compliance analysis on an escrow at **any status** (DRAFT, CREATED, FUNDED, etc.).
+        Provides analysis for each stage of the escrow creation process:
 
-        Returns a risk score, recommendation, and human-readable summary.
+        | Section | Analyzes |
+        |---------|----------|
+        | `from_account` | Payer wallet, client KYC/KYB, entity type, risk rating |
+        | `to_account` | Recipient wallet presence and risk indicators |
+        | `corridor` | From→To jurisdiction, regulatory risk |
+        | `amount` | Amount vs corridor limits, large transaction flags |
+        | `settlement` | Token mint, escrow PDA, deposit status, on-chain state |
+        | `release` | Condition type (ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK), settlement authority |
+        | `advanced` | Expiry timeout, nonce account, documents, 3rd party release |
+        | `overview` | Combined compliance conclusion with risk score |
 
-        **Data Anonymization**: Sensitive fields (company names, wallet addresses) are
-        tokenized before sending to AI and de-anonymized in the response by default.
+        Each section returns a `status` (pass/warning/fail/pending) and `findings`.
+        Sections are marked `pending` when the escrow data for that step is not yet available (e.g., DRAFT without recipient).
+
+        **Data Anonymization**: Sensitive fields are tokenized before AI and de-anonymized in the response.
 
         **Rate Limited**: 10 requests per minute.
       security:
@@ -6279,8 +6290,28 @@ components:
           example: "APPROVE"
         summary:
           type: string
-          description: Human-readable 2-4 sentence summary of the analysis
-          example: "Low risk institution with verified KYC/KYB status operating in a standard corridor."
+          description: One-line AI compliance conclusion
+          example: "Low-risk escrow with verified KYC on a standard SG-CH corridor — no compliance concerns."
+        sections:
+          type: object
+          description: Step-by-step analysis for each stage of escrow creation. Each section has status (pass/warning/fail/pending), title, and findings.
+          properties:
+            from_account:
+              $ref: '#/components/schemas/AiAnalysisSection'
+            to_account:
+              $ref: '#/components/schemas/AiAnalysisSection'
+            corridor:
+              $ref: '#/components/schemas/AiAnalysisSection'
+            amount:
+              $ref: '#/components/schemas/AiAnalysisSection'
+            settlement:
+              $ref: '#/components/schemas/AiAnalysisSection'
+            release:
+              $ref: '#/components/schemas/AiAnalysisSection'
+            advanced:
+              $ref: '#/components/schemas/AiAnalysisSection'
+            overview:
+              $ref: '#/components/schemas/AiAnalysisSection'
         extractedFields:
           type: object
           description: Key fields extracted and evaluated by the AI
@@ -6312,6 +6343,36 @@ components:
           type: string
           description: Brief explanation of risk factors
           example: "SG-CH corridor is low risk with standard documentation requirements."
+
+    AiAnalysisSection:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pass, warning, fail, pending]
+          description: |
+            - `pass` — No issues, compliant
+            - `warning` — Minor concerns, not blocking
+            - `fail` — Compliance risk, requires attention
+            - `pending` — Required data not yet provided (e.g. DRAFT escrow)
+        title:
+          type: string
+          example: "From Account (Payer)"
+        findings:
+          type: string
+          description: 1-2 concise sentence analysis for this step
+          example: "Payer wallet belongs to a verified PREMIUM-tier institution with low risk rating."
+        checked_fields:
+          type: array
+          items:
+            type: string
+          description: Field names the AI evaluated for this section
+          example: ["payerWallet", "client.kycStatus", "client.riskRating"]
+        recommended_corridor:
+          type: string
+          nullable: true
+          description: Only present on the corridor section. Best corridor code from available corridors, or null if none available.
+          example: "SG-CH"
 
     InstitutionAccount:
       type: object
