@@ -30007,7 +30007,6 @@ export namespace Prisma {
 
   export type DirectPaymentMinAggregateOutputType = {
     id: string | null
-    paymentCode: string | null
     clientId: string | null
     sender: string | null
     senderCountry: string | null
@@ -30031,7 +30030,6 @@ export namespace Prisma {
 
   export type DirectPaymentMaxAggregateOutputType = {
     id: string | null
-    paymentCode: string | null
     clientId: string | null
     sender: string | null
     senderCountry: string | null
@@ -30055,7 +30053,6 @@ export namespace Prisma {
 
   export type DirectPaymentCountAggregateOutputType = {
     id: number
-    paymentCode: number
     clientId: number
     sender: number
     senderCountry: number
@@ -30093,7 +30090,6 @@ export namespace Prisma {
 
   export type DirectPaymentMinAggregateInputType = {
     id?: true
-    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30117,7 +30113,6 @@ export namespace Prisma {
 
   export type DirectPaymentMaxAggregateInputType = {
     id?: true
-    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30141,7 +30136,6 @@ export namespace Prisma {
 
   export type DirectPaymentCountAggregateInputType = {
     id?: true
-    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30252,7 +30246,6 @@ export namespace Prisma {
 
   export type DirectPaymentGroupByOutputType = {
     id: string
-    paymentCode: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -30295,7 +30288,6 @@ export namespace Prisma {
 
   export type DirectPaymentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30320,7 +30312,6 @@ export namespace Prisma {
 
   export type DirectPaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30345,7 +30336,6 @@ export namespace Prisma {
 
   export type DirectPaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30370,7 +30360,6 @@ export namespace Prisma {
 
   export type DirectPaymentSelectScalar = {
     id?: boolean
-    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30392,7 +30381,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type DirectPaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "paymentCode" | "clientId" | "sender" | "senderCountry" | "senderWallet" | "recipient" | "recipientCountry" | "recipientWallet" | "amount" | "currency" | "corridor" | "status" | "txHash" | "platformFee" | "riskScore" | "settlementMode" | "releaseMode" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["directPayment"]>
+  export type DirectPaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "sender" | "senderCountry" | "senderWallet" | "recipient" | "recipientCountry" | "recipientWallet" | "amount" | "currency" | "corridor" | "status" | "txHash" | "platformFee" | "riskScore" | "settlementMode" | "releaseMode" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["directPayment"]>
   export type DirectPaymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -30410,7 +30399,6 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      paymentCode: string | null
       clientId: string
       sender: string
       senderCountry: string
@@ -30855,7 +30843,6 @@ export namespace Prisma {
    */
   interface DirectPaymentFieldRefs {
     readonly id: FieldRef<"DirectPayment", 'String'>
-    readonly paymentCode: FieldRef<"DirectPayment", 'String'>
     readonly clientId: FieldRef<"DirectPayment", 'String'>
     readonly sender: FieldRef<"DirectPayment", 'String'>
     readonly senderCountry: FieldRef<"DirectPayment", 'String'>
@@ -32425,6 +32412,10 @@ export namespace Prisma {
     riskTolerance: string | null
     defaultToken: string | null
     emailNotifications: boolean | null
+    language: string | null
+    theme: string | null
+    twoFactorEnabled: boolean | null
+    aiRecommendations: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -32446,6 +32437,10 @@ export namespace Prisma {
     riskTolerance: string | null
     defaultToken: string | null
     emailNotifications: boolean | null
+    language: string | null
+    theme: string | null
+    twoFactorEnabled: boolean | null
+    aiRecommendations: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -32468,6 +32463,10 @@ export namespace Prisma {
     riskTolerance: number
     defaultToken: number
     emailNotifications: number
+    language: number
+    theme: number
+    twoFactorEnabled: number
+    aiRecommendations: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -32501,6 +32500,10 @@ export namespace Prisma {
     riskTolerance?: true
     defaultToken?: true
     emailNotifications?: true
+    language?: true
+    theme?: true
+    twoFactorEnabled?: true
+    aiRecommendations?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -32522,6 +32525,10 @@ export namespace Prisma {
     riskTolerance?: true
     defaultToken?: true
     emailNotifications?: true
+    language?: true
+    theme?: true
+    twoFactorEnabled?: true
+    aiRecommendations?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -32544,6 +32551,10 @@ export namespace Prisma {
     riskTolerance?: true
     defaultToken?: true
     emailNotifications?: true
+    language?: true
+    theme?: true
+    twoFactorEnabled?: true
+    aiRecommendations?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -32653,6 +32664,10 @@ export namespace Prisma {
     riskTolerance: string
     defaultToken: string
     emailNotifications: boolean
+    language: string | null
+    theme: string | null
+    twoFactorEnabled: boolean
+    aiRecommendations: boolean
     createdAt: Date
     updatedAt: Date
     _count: InstitutionClientSettingsCountAggregateOutputType | null
@@ -32694,6 +32709,10 @@ export namespace Prisma {
     riskTolerance?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
+    language?: boolean
+    theme?: boolean
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32717,6 +32736,10 @@ export namespace Prisma {
     riskTolerance?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
+    language?: boolean
+    theme?: boolean
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32740,6 +32763,10 @@ export namespace Prisma {
     riskTolerance?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
+    language?: boolean
+    theme?: boolean
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32763,11 +32790,15 @@ export namespace Prisma {
     riskTolerance?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
+    language?: boolean
+    theme?: boolean
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
+  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "language" | "theme" | "twoFactorEnabled" | "aiRecommendations" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
   export type InstitutionClientSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -32801,6 +32832,10 @@ export namespace Prisma {
       riskTolerance: string
       defaultToken: string
       emailNotifications: boolean
+      language: string | null
+      theme: string | null
+      twoFactorEnabled: boolean
+      aiRecommendations: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["institutionClientSettings"]>
@@ -33244,6 +33279,10 @@ export namespace Prisma {
     readonly riskTolerance: FieldRef<"InstitutionClientSettings", 'String'>
     readonly defaultToken: FieldRef<"InstitutionClientSettings", 'String'>
     readonly emailNotifications: FieldRef<"InstitutionClientSettings", 'Boolean'>
+    readonly language: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly theme: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly twoFactorEnabled: FieldRef<"InstitutionClientSettings", 'Boolean'>
+    readonly aiRecommendations: FieldRef<"InstitutionClientSettings", 'Boolean'>
     readonly createdAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
   }
@@ -48006,7 +48045,6 @@ export namespace Prisma {
 
   export const DirectPaymentScalarFieldEnum: {
     id: 'id',
-    paymentCode: 'paymentCode',
     clientId: 'clientId',
     sender: 'sender',
     senderCountry: 'senderCountry',
@@ -48063,6 +48101,10 @@ export namespace Prisma {
     riskTolerance: 'riskTolerance',
     defaultToken: 'defaultToken',
     emailNotifications: 'emailNotifications',
+    language: 'language',
+    theme: 'theme',
+    twoFactorEnabled: 'twoFactorEnabled',
+    aiRecommendations: 'aiRecommendations',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -51439,7 +51481,6 @@ export namespace Prisma {
     OR?: DirectPaymentWhereInput[]
     NOT?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
     id?: StringFilter<"DirectPayment"> | string
-    paymentCode?: StringNullableFilter<"DirectPayment"> | string | null
     clientId?: StringFilter<"DirectPayment"> | string
     sender?: StringFilter<"DirectPayment"> | string
     senderCountry?: StringFilter<"DirectPayment"> | string
@@ -51464,7 +51505,6 @@ export namespace Prisma {
 
   export type DirectPaymentOrderByWithRelationInput = {
     id?: SortOrder
-    paymentCode?: SortOrderInput | SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -51489,7 +51529,6 @@ export namespace Prisma {
 
   export type DirectPaymentWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    paymentCode?: string
     AND?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
     OR?: DirectPaymentWhereInput[]
     NOT?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
@@ -51513,11 +51552,10 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"DirectPayment"> | Date | string
     updatedAt?: DateTimeFilter<"DirectPayment"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
-  }, "id" | "paymentCode">
+  }, "id">
 
   export type DirectPaymentOrderByWithAggregationInput = {
     id?: SortOrder
-    paymentCode?: SortOrderInput | SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -51549,7 +51587,6 @@ export namespace Prisma {
     OR?: DirectPaymentScalarWhereWithAggregatesInput[]
     NOT?: DirectPaymentScalarWhereWithAggregatesInput | DirectPaymentScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"DirectPayment"> | string
-    paymentCode?: StringNullableWithAggregatesFilter<"DirectPayment"> | string | null
     clientId?: StringWithAggregatesFilter<"DirectPayment"> | string
     sender?: StringWithAggregatesFilter<"DirectPayment"> | string
     senderCountry?: StringWithAggregatesFilter<"DirectPayment"> | string
@@ -51662,6 +51699,10 @@ export namespace Prisma {
     riskTolerance?: StringFilter<"InstitutionClientSettings"> | string
     defaultToken?: StringFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolFilter<"InstitutionClientSettings"> | boolean
+    language?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    theme?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    twoFactorEnabled?: BoolFilter<"InstitutionClientSettings"> | boolean
+    aiRecommendations?: BoolFilter<"InstitutionClientSettings"> | boolean
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -51685,6 +51726,10 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrderInput | SortOrder
+    theme?: SortOrderInput | SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     client?: InstitutionClientOrderByWithRelationInput
@@ -51711,6 +51756,10 @@ export namespace Prisma {
     riskTolerance?: StringFilter<"InstitutionClientSettings"> | string
     defaultToken?: StringFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolFilter<"InstitutionClientSettings"> | boolean
+    language?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    theme?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    twoFactorEnabled?: BoolFilter<"InstitutionClientSettings"> | boolean
+    aiRecommendations?: BoolFilter<"InstitutionClientSettings"> | boolean
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -51734,6 +51783,10 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrderInput | SortOrder
+    theme?: SortOrderInput | SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: InstitutionClientSettingsCountOrderByAggregateInput
@@ -51764,6 +51817,10 @@ export namespace Prisma {
     riskTolerance?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
     defaultToken?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
+    language?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    theme?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    twoFactorEnabled?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
+    aiRecommendations?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
   }
@@ -55851,7 +55908,6 @@ export namespace Prisma {
 
   export type DirectPaymentCreateInput = {
     id?: string
-    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -55875,7 +55931,6 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedCreateInput = {
     id?: string
-    paymentCode?: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -55899,7 +55954,6 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -55923,7 +55977,6 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     clientId?: StringFieldUpdateOperationsInput | string
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
@@ -55947,7 +56000,6 @@ export namespace Prisma {
 
   export type DirectPaymentCreateManyInput = {
     id?: string
-    paymentCode?: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -55971,7 +56023,6 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -55994,7 +56045,6 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     clientId?: StringFieldUpdateOperationsInput | string
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
@@ -56109,6 +56159,10 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutSettingsInput
@@ -56132,6 +56186,10 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -56153,6 +56211,10 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutSettingsNestedInput
@@ -56176,6 +56238,10 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -56198,6 +56264,10 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -56219,6 +56289,10 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -56241,6 +56315,10 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -59984,7 +60062,6 @@ export namespace Prisma {
 
   export type DirectPaymentCountOrderByAggregateInput = {
     id?: SortOrder
-    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -60014,7 +60091,6 @@ export namespace Prisma {
 
   export type DirectPaymentMaxOrderByAggregateInput = {
     id?: SortOrder
-    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -60038,7 +60114,6 @@ export namespace Prisma {
 
   export type DirectPaymentMinOrderByAggregateInput = {
     id?: SortOrder
-    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -60117,6 +60192,10 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrder
+    theme?: SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -60143,6 +60222,10 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrder
+    theme?: SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -60164,6 +60247,10 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrder
+    theme?: SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -67122,6 +67209,10 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -67143,6 +67234,10 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -67566,7 +67661,6 @@ export namespace Prisma {
 
   export type DirectPaymentCreateWithoutClientInput = {
     id?: string
-    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -67589,7 +67683,6 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedCreateWithoutClientInput = {
     id?: string
-    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -67678,6 +67771,10 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -67699,6 +67796,10 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -68060,7 +68161,6 @@ export namespace Prisma {
     OR?: DirectPaymentScalarWhereInput[]
     NOT?: DirectPaymentScalarWhereInput | DirectPaymentScalarWhereInput[]
     id?: StringFilter<"DirectPayment"> | string
-    paymentCode?: StringNullableFilter<"DirectPayment"> | string | null
     clientId?: StringFilter<"DirectPayment"> | string
     sender?: StringFilter<"DirectPayment"> | string
     senderCountry?: StringFilter<"DirectPayment"> | string
@@ -74314,7 +74414,6 @@ export namespace Prisma {
 
   export type DirectPaymentCreateManyClientInput = {
     id?: string
-    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -74845,7 +74944,6 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
-    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -74868,7 +74966,6 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
-    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -74891,7 +74988,6 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateManyWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
-    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string

@@ -546,7 +546,6 @@ exports.Prisma.InstitutionBranchScalarFieldEnum = {
 
 exports.Prisma.DirectPaymentScalarFieldEnum = {
   id: 'id',
-  paymentCode: 'paymentCode',
   clientId: 'clientId',
   sender: 'sender',
   senderCountry: 'senderCountry',
@@ -597,6 +596,10 @@ exports.Prisma.InstitutionClientSettingsScalarFieldEnum = {
   riskTolerance: 'riskTolerance',
   defaultToken: 'defaultToken',
   emailNotifications: 'emailNotifications',
+  language: 'language',
+  theme: 'theme',
+  twoFactorEnabled: 'twoFactorEnabled',
+  aiRecommendations: 'aiRecommendations',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

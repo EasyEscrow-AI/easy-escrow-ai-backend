@@ -1129,6 +1129,10 @@ model InstitutionClientSettings {
   riskTolerance             String   @default("low") @map("risk_tolerance") // low, medium, high
   defaultToken              String   @default("usdc") @map("default_token")
   emailNotifications        Boolean  @default(true) @map("email_notifications")
+  language                  String? // en, de, fr, ar, zh, es
+  theme                     String? // light, dark, system
+  twoFactorEnabled          Boolean  @default(false) @map("two_factor_enabled")
+  aiRecommendations         Boolean  @default(true) @map("ai_recommendations")
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
 
