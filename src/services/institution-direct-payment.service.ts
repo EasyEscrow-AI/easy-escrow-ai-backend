@@ -1,9 +1,24 @@
+import crypto from 'crypto';
 import { prisma } from '../config/database';
 import type { PrismaClient } from '../generated/prisma';
 
 export class InstitutionDirectPaymentService {
   private prisma: PrismaClient;
   constructor() { this.prisma = prisma; }
+
+  /**
+   * Generate a human-readable payment code in EE-XXX-XXX format.
+   */
+  generatePaymentCode(): string {
+    const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+    const bytes = crypto.randomBytes(6);
+    let code = 'EE-';
+    for (let i = 0; i < 6; i++) {
+      if (i === 3) code += '-';
+      code += chars[bytes[i] % chars.length];
+    }
+    return code;
+  }
 
   async list(clientId: string, params: { status?: string; corridor?: string; from?: string; to?: string; limit?: number; offset?: number }) {
     const { status, corridor, from, to, limit = 20, offset = 0 } = params;
@@ -21,7 +36,10 @@ export class InstitutionDirectPaymentService {
   }
 
   async getById(clientId: string, paymentId: string) {
-    const payment = await this.prisma.directPayment.findFirst({ where: { id: paymentId, clientId } });
+    const isCode = paymentId.startsWith('EE-');
+    const payment = await this.prisma.directPayment.findFirst({
+      where: isCode ? { paymentCode: paymentId, clientId } : { id: paymentId, clientId },
+    });
     if (!payment) return null;
 
     const auditLogs = await this.prisma.institutionAuditLog.findMany({
@@ -41,7 +59,8 @@ export class InstitutionDirectPaymentService {
 
   private format(p: any) {
     return {
-      id: p.id, sender: p.sender, senderCountry: p.senderCountry, senderWallet: p.senderWallet,
+      id: p.paymentCode || p.id, paymentId: p.paymentCode || p.id, internalId: p.id,
+      sender: p.sender, senderCountry: p.senderCountry, senderWallet: p.senderWallet,
       recipient: p.recipient, recipientCountry: p.recipientCountry, recipientWallet: p.recipientWallet,
       amount: Number(p.amount), currency: p.currency, corridor: p.corridor, status: p.status,
       txHash: p.txHash, platformFee: Number(p.platformFee), riskScore: p.riskScore,
