@@ -31,6 +31,7 @@ import {
   institutionTokensRoutes,
   aiChatRoutes,
   institutionAccountRoutes,
+  institutionNotificationRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -286,7 +287,7 @@ if (openApiDocument) {
       text-decoration: none;
     }
     #topbar .brand img {
-      height: 28px; filter: invert(1);
+      height: 28px;
     }
     #topbar .search-wrapper {
       flex: 0 1 420px; position: relative;
@@ -457,7 +458,7 @@ if (openApiDocument) {
 </head>
 <body>
   <div id="topbar">
-    <a class="brand" href="/"><img src="/easyescrow-logo.png" alt="EasyEscrow.ai" /></a>
+    <a class="brand" href="/"><img src="https://portal.easyescrow.ai/assets/easyescrow-logo-invert.svg" alt="EasyEscrow.ai" /></a>
     <div class="search-wrapper">
       <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input id="topbar-search" type="text" placeholder="Search endpoints, schemas, tags...  (Ctrl+K)" autocomplete="off" />
@@ -633,7 +634,7 @@ if (openApiDocument) {
             }
             if (el) {
               var y = el.getBoundingClientRect().top + window.scrollY - topbarH - 10;
-              window.scrollTo({ top: y, behavior: 'smooth' });
+              window.scrollTo({ top: y, behavior: 'instant' });
             }
           }, 250);
           return;
@@ -644,7 +645,7 @@ if (openApiDocument) {
           if ((headings[j].textContent || '').toLowerCase().indexOf(result.title.toLowerCase()) !== -1) {
             var topH = 56;
             var yPos = headings[j].getBoundingClientRect().top + window.scrollY - topH - 10;
-            window.scrollTo({ top: yPos, behavior: 'smooth' });
+            window.scrollTo({ top: yPos, behavior: 'instant' });
             return;
           }
         }
@@ -759,6 +760,7 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionTokensRoutes);
   app.use(aiChatRoutes);
   app.use(institutionAccountRoutes);
+  app.use(institutionNotificationRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled

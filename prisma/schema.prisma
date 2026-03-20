@@ -682,11 +682,14 @@ model TwoPhaseSwap {
 
 // Enums for institution escrow
 enum InstitutionEscrowStatus {
+  DRAFT
   CREATED
   FUNDED
   COMPLIANCE_HOLD
   RELEASING
   RELEASED
+  INSUFFICIENT_FUNDS
+  COMPLETE
   CANCELLING
   CANCELLED
   EXPIRED
@@ -1089,12 +1092,12 @@ model InstitutionEscrow {
   escrowCode            String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
   clientId              String                    @map("client_id")
   payerWallet           String                    @map("payer_wallet")
-  recipientWallet       String                    @map("recipient_wallet")
+  recipientWallet       String?                   @map("recipient_wallet")
   usdcMint              String                    @map("usdc_mint")
   amount                Decimal                   @db.Decimal(20, 6) // USDC amount (6 decimal precision)
   platformFee           Decimal                   @map("platform_fee") @db.Decimal(20, 6)
-  corridor              String                    // e.g. 'SG-CH'
-  conditionType         InstitutionConditionType  @map("condition_type")
+  corridor              String?                   // e.g. 'SG-CH'
+  conditionType         InstitutionConditionType? @map("condition_type")
   status                InstitutionEscrowStatus   @default(CREATED)
   settlementAuthority   String                    @map("settlement_authority")
   riskScore             Int?                      @map("risk_score")
@@ -1108,7 +1111,7 @@ model InstitutionEscrow {
   cancelTxSignature     String?                   @map("cancel_tx_signature")
 
   // Timestamps
-  expiresAt             DateTime                  @map("expires_at")
+  expiresAt             DateTime?                 @map("expires_at")
   createdAt             DateTime                  @default(now()) @map("created_at")
   updatedAt             DateTime                  @updatedAt @map("updated_at")
   resolvedAt            DateTime?                 @map("resolved_at")
@@ -1385,5 +1388,20 @@ model InstitutionNotification {
   @@index([type])
   @@index([createdAt])
   @@map("institution_notifications")
+}
+
+// ============================================
+// SYSTEM SETTINGS
+// ============================================
+
+// Key-value store for runtime system settings (e.g., pause state)
+model SystemSetting {
+  key       String   @id
+  value     Json     @default("{}")
+  updatedBy String?  @map("updated_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("system_settings")
 }
 
