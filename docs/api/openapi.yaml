@@ -332,6 +332,34 @@ tags:
       All messages pass through an anonymization pipeline that redacts PII (names, addresses,
       wallet keys, amounts) before sending to the AI model. Responses are then de-anonymized
       before returning to the client.
+  - name: Institution Notifications
+    description: |
+      ## In-App & Email Notifications
+
+      Real-time notification system for escrow lifecycle events. Notifications are created automatically
+      when escrow state changes occur and optionally sent via email based on user preferences.
+
+      ### Notification Types (Escrow Lifecycle)
+      | Type | Trigger | Priority |
+      |------|---------|----------|
+      | `ESCROW_CREATED` | Escrow created or draft submitted | MEDIUM |
+      | `ESCROW_FUNDED` | Deposit confirmed on-chain | MEDIUM |
+      | `ESCROW_COMPLIANCE_HOLD` | Held for compliance review | HIGH |
+      | `SETTLEMENT_COMPLETE` | Funds released to recipient | HIGH |
+      | `ESCROW_CANCELLED` | Escrow cancelled by client | MEDIUM |
+      | `ESCROW_EXPIRED` | Escrow expired without deposit | MEDIUM |
+      | `ESCROW_FUNDED` (insufficient) | Release blocked — insufficient balance | HIGH |
+
+      ### Preference Flags
+      Each notification type maps to a preference flag on the institution account:
+      - `notifyOnEscrowCreated` — controls ESCROW_CREATED
+      - `notifyOnEscrowFunded` — controls ESCROW_FUNDED, DEPOSIT_CONFIRMED
+      - `notifyOnEscrowReleased` — controls SETTLEMENT_COMPLETE, ESCROW_CANCELLED, ESCROW_EXPIRED
+      - `notifyOnComplianceAlert` — controls ESCROW_COMPLIANCE_HOLD, COMPLIANCE_CHECK_FAILED
+
+      ### Email Delivery
+      Emails are sent via Resend if a notification email is configured. Fallback chain:
+      account → settings → client contactEmail → client email.
   - name: Institution Admin
     description: Admin operations for allowlist and corridor management
 
@@ -359,6 +387,7 @@ x-tagGroups:
       - Institution Escrow
       - AI Analysis
       - AI Chat
+      - Institution Notifications
       - Institution Admin
 
 paths:
@@ -3704,6 +3733,158 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  # ── Institution Notifications ─────────────────────────────────────────
+
+  /api/v1/institution-notifications:
+    get:
+      tags:
+        - Institution Notifications
+      summary: List notifications
+      description: |
+        List in-app notifications for the authenticated client with optional filters and pagination.
+        Returns notifications ordered by creation date (newest first), with unread count.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: unreadOnly
+          schema:
+            type: string
+            enum: ['true', 'false']
+          description: Filter to unread notifications only
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Items per page
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Notifications listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      notifications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InstitutionNotification'
+                      total:
+                        type: integer
+                      unreadCount:
+                        type: integer
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution-notifications/read-all:
+    post:
+      tags:
+        - Institution Notifications
+      summary: Mark all as read
+      description: Mark all unread notifications as read for the authenticated client.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      updated:
+                        type: integer
+                        description: Number of notifications marked as read
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution-notifications/{id}/read:
+    post:
+      tags:
+        - Institution Notifications
+      summary: Mark as read
+      description: Mark a single notification as read.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionNotification'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied (notification belongs to another client)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ── Institution Admin ──────────────────────────────────────────────────
 
   /api/admin/institution-escrow/allowlist:
@@ -6165,6 +6346,59 @@ components:
           type: string
           format: date-time
         updatedAt:
+          type: string
+          format: date-time
+
+    # ── Institution Notification Schemas ────────────────────────────────
+
+    InstitutionNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        escrowId:
+          type: string
+          nullable: true
+          description: Related escrow ID (if applicable)
+        type:
+          type: string
+          enum:
+            - ESCROW_CREATED
+            - ESCROW_FUNDED
+            - ESCROW_RELEASED
+            - ESCROW_CANCELLED
+            - ESCROW_EXPIRED
+            - ESCROW_COMPLIANCE_HOLD
+            - DEPOSIT_CONFIRMED
+            - SETTLEMENT_COMPLETE
+            - COMPLIANCE_CHECK_FAILED
+            - COMPLIANCE_REVIEW_REQUIRED
+            - SECURITY_ALERT
+            - SYSTEM_MAINTENANCE
+          description: Notification event type
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        title:
+          type: string
+          example: "Escrow Created"
+        message:
+          type: string
+          example: "Escrow EE-AB3D-7KMN created for 5000 USDC on corridor SG-CH."
+        metadata:
+          type: object
+          description: Additional context (amount, corridor, txSignature, etc.)
+        isRead:
+          type: boolean
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
           type: string
           format: date-time
 
