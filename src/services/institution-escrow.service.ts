@@ -10,6 +10,7 @@
  */
 
 import { PrismaClient, InstitutionEscrowStatus } from '../generated/prisma';
+import type { SettlementMode, ReleaseMode } from '../types/institution-escrow';
 import { redisClient } from '../config/redis';
 import { AllowlistService, getAllowlistService } from './allowlist.service';
 import { ComplianceService, getComplianceService } from './compliance.service';
@@ -35,9 +36,9 @@ export interface CreateEscrowParams {
   /** Optional token mint address. Defaults to USDC if omitted. Must be on AMINA-approved whitelist. */
   tokenMint?: string;
   /** "escrow" (PDA) or "direct" atomic settlement */
-  settlementMode: string;
+  settlementMode: SettlementMode;
   /** "manual" approval or "ai" compliance check */
-  releaseMode: string;
+  releaseMode: ReleaseMode;
   /** Party IDs who must approve for manual release */
   approvalParties?: string[];
   /** Condition IDs for AI release */
@@ -55,8 +56,8 @@ export interface SaveDraftParams {
   conditionType?: string;
   settlementAuthority?: string;
   tokenMint?: string;
-  settlementMode?: string;
-  releaseMode?: string;
+  settlementMode?: SettlementMode;
+  releaseMode?: ReleaseMode;
   approvalParties?: string[];
   releaseConditions?: string[];
   approvalInstructions?: string;
@@ -70,8 +71,8 @@ export interface UpdateDraftParams {
   conditionType?: string;
   settlementAuthority?: string;
   tokenMint?: string;
-  settlementMode?: string;
-  releaseMode?: string;
+  settlementMode?: SettlementMode;
+  releaseMode?: ReleaseMode;
   approvalParties?: string[];
   releaseConditions?: string[];
   approvalInstructions?: string;
@@ -312,7 +313,21 @@ export class InstitutionEscrowService {
    * Only payerWallet is required; other fields can be filled in later.
    */
   async saveDraft(params: SaveDraftParams): Promise<Record<string, unknown>> {
-    const { clientId, payerWallet, recipientWallet, amount, corridor, conditionType, settlementAuthority, tokenMint, settlementMode, releaseMode, approvalParties, releaseConditions, approvalInstructions } = params;
+    const {
+      clientId,
+      payerWallet,
+      recipientWallet,
+      amount,
+      corridor,
+      conditionType,
+      settlementAuthority,
+      tokenMint,
+      settlementMode,
+      releaseMode,
+      approvalParties,
+      releaseConditions,
+      approvalInstructions,
+    } = params;
 
     // Validate client exists and is active
     const client = await this.prisma.institutionClient.findUnique({

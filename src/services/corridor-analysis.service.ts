@@ -8,6 +8,10 @@
 
 import { PrismaClient } from '../generated/prisma';
 
+const TRAVEL_RULE_THRESHOLD = parseInt(process.env.CORRIDOR_TRAVEL_RULE_THRESHOLD || '1000', 10);
+const EDD_THRESHOLD = parseInt(process.env.CORRIDOR_EDD_THRESHOLD || '10000', 10);
+const REPORTING_THRESHOLD = parseInt(process.env.CORRIDOR_REPORTING_THRESHOLD || '15000', 10);
+
 const COUNTRY_NAMES: Record<string, string> = {
   AE: 'United Arab Emirates',
   CH: 'Switzerland',
@@ -69,8 +73,8 @@ export interface CorridorAnalysisResult {
 export class CorridorAnalysisService {
   private prisma: PrismaClient;
 
-  constructor() {
-    this.prisma = new PrismaClient();
+  constructor(prisma?: PrismaClient) {
+    this.prisma = prisma ?? new PrismaClient();
   }
 
   async analyzeCorridor(params: CorridorAnalysisParams): Promise<CorridorAnalysisResult> {
@@ -129,20 +133,20 @@ export class CorridorAnalysisService {
         riskScore += 5;
       }
 
-      if (amount >= 10000) {
+      if (amount >= EDD_THRESHOLD) {
         factors.push({
           label: 'Enhanced due diligence threshold',
           impact: 'MEDIUM',
-          detail: `Amount of $${amount.toLocaleString()} triggers EDD requirements.`,
+          detail: `Amount of $${amount.toLocaleString()} triggers EDD requirements (threshold: $${EDD_THRESHOLD.toLocaleString()}).`,
         });
         riskScore += 5;
       }
 
-      if (amount >= 15000) {
+      if (amount >= REPORTING_THRESHOLD) {
         factors.push({
           label: 'Reporting threshold',
           impact: 'MEDIUM',
-          detail: `Amount of $${amount.toLocaleString()} may trigger regulatory reporting requirements.`,
+          detail: `Amount of $${amount.toLocaleString()} may trigger regulatory reporting requirements (threshold: $${REPORTING_THRESHOLD.toLocaleString()}).`,
         });
         riskScore += 5;
       }
@@ -189,9 +193,9 @@ export class CorridorAnalysisService {
       description,
       corridorRisk,
       riskReason,
-      travelRuleThreshold: 1000,
-      eddThreshold: 10000,
-      reportingThreshold: 15000,
+      travelRuleThreshold: TRAVEL_RULE_THRESHOLD,
+      eddThreshold: EDD_THRESHOLD,
+      reportingThreshold: REPORTING_THRESHOLD,
       riskScore,
       riskLevel: finalRiskLevel,
       factors,

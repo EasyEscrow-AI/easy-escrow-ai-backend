@@ -34,6 +34,9 @@ export enum InstitutionEscrowStatus {
   FAILED = 'FAILED',
 }
 
+export type SettlementMode = 'escrow' | 'direct';
+export type ReleaseMode = 'manual' | 'ai';
+
 /**
  * Condition that must be met before funds can be released.
  */
@@ -69,9 +72,9 @@ export interface InstitutionEscrowRecord {
   settlementAuthority: string;
   riskScore: number | null;
   /** "escrow" (PDA) or "direct" atomic settlement */
-  settlementMode: string | null;
+  settlementMode: SettlementMode | null;
   /** "manual" approval or "ai" compliance check */
-  releaseMode: string | null;
+  releaseMode: ReleaseMode | null;
   /** Party IDs who must approve for manual release */
   approvalParties: string[];
   /** Condition IDs for AI release */
