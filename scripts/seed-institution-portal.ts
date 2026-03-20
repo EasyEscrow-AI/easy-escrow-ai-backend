@@ -1,5 +1,14 @@
 /**
- * Seed Institution Portal Data
+ * Seed Institution Portal Data — Helvetica Digital Dashboard
+ *
+ * Seeds the ops@helvetica-digital.ch account with:
+ * - 3 accounts (Operating, Escrow Reserve, Settlement Float)
+ * - 6 branches (CH, US, SG, GB, AE + RU sanctioned)
+ * - 4 external counterparty clients
+ * - 4 active escrows
+ * - 4 recent direct payments
+ * - Corridors for all payment routes
+ * - Notifications for pending actions
  *
  * Usage: npm run seed:portal
  */
@@ -10,23 +19,25 @@ import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-function generateEscrowCode(): string {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  const seg = (len: number) =>
-    Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  return `EE-${seg(4)}-${seg(4)}`;
+function hoursAgo(hours: number): Date {
+  return new Date(Date.now() - hours * 60 * 60 * 1000);
+}
+
+function minutesAgo(minutes: number): Date {
+  return new Date(Date.now() - minutes * 60 * 1000);
 }
 
 function daysAgo(days: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d;
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 }
 
 async function main() {
-  console.log('🌱 Seeding institution portal data...\n');
+  console.log('Seeding institution portal data...\n');
 
-  console.log('🏢 Seeding primary client: Helvetica Digital...');
+  // ============================================================================
+  // 1. Primary Client: Helvetica Digital
+  // ============================================================================
+  console.log('Seeding primary client: Helvetica Digital...');
   const passwordHash = await bcrypt.hash('HelveticaDemo2026!', 12);
 
   const helvetica = await prisma.institutionClient.upsert({
@@ -74,84 +85,150 @@ async function main() {
       custodianName: 'Fireblocks',
       preferredSettlementChain: 'solana',
       primaryWallet: 'HeLv3t1cAd1g1tALwA11etAddr355000000000001',
-      settledWallets: ['HeLv3t1cAd1g1tALwA11etAddr355000000000001', 'HeLv3t1cAd1g1tALwA11etAddr355000000000002'],
+      settledWallets: [
+        'HeLv3t1cAd1g1tALwA11etAddr355000000000001',
+        'HeLv3t1cAd1g1tALwA11etAddr355000000000002',
+      ],
       isTestAccount: true,
     },
     update: { companyName: 'Helvetica Digital AG', status: 'ACTIVE', kycStatus: 'VERIFIED' },
   });
 
-  console.log(`  ✅ Helvetica Digital (${helvetica.id})`);
+  console.log(`  Helvetica Digital (${helvetica.id})`);
 
+  // Settings
   await prisma.institutionClientSettings.upsert({
     where: { clientId: helvetica.id },
     create: {
-      clientId: helvetica.id, defaultCorridor: 'CH-SG', defaultCurrency: 'USDC',
-      timezone: 'Europe/Zurich', autoApproveThreshold: 10000, manualReviewThreshold: 50000,
-      autoTravelRule: true, activeSanctionsLists: ['OFAC SDN', 'EU Consolidated', 'UN Sanctions', 'SECO'],
-      aiAutoRelease: false, riskTolerance: 'low', defaultToken: 'usdc', emailNotifications: true,
+      clientId: helvetica.id,
+      defaultCorridor: 'CH-SG',
+      defaultCurrency: 'USDC',
+      timezone: 'Europe/Zurich',
+      autoApproveThreshold: 10000,
+      manualReviewThreshold: 50000,
+      autoTravelRule: true,
+      activeSanctionsLists: ['OFAC SDN', 'EU Consolidated', 'UN Sanctions', 'SECO'],
+      aiAutoRelease: false,
+      riskTolerance: 'low',
+      defaultToken: 'usdc',
+      emailNotifications: true,
     },
-    update: { manualReviewThreshold: 50000, autoTravelRule: true, aiAutoRelease: false, riskTolerance: 'low', defaultToken: 'usdc', emailNotifications: true },
+    update: {},
   });
 
-  console.log('\n🏬 Seeding branches...');
+  // ============================================================================
+  // 2. Branches
+  // ============================================================================
+  console.log('\nSeeding branches...');
+
+  // Clean previous branches
+  await prisma.institutionAccount.deleteMany({ where: { clientId: helvetica.id } });
+  await prisma.institutionBranch.deleteMany({ where: { clientId: helvetica.id } });
+
   const branchData = [
     { name: 'Zurich HQ', city: 'Zurich', country: 'Switzerland', countryCode: 'CH', address: 'Bahnhofstrasse 42, 8001 Zurich', timezone: 'Europe/Zurich', riskScore: 5, complianceStatus: 'ACTIVE', regulatoryBody: 'FINMA' },
-    { name: 'Singapore Office', city: 'Singapore', country: 'Singapore', countryCode: 'SG', address: '1 Raffles Place, #20-01, Tower 2', timezone: 'Asia/Singapore', riskScore: 8, complianceStatus: 'ACTIVE', regulatoryBody: 'MAS' },
+    { name: 'New York Branch', city: 'New York', country: 'United States', countryCode: 'US', address: '55 Water Street, New York, NY 10041', timezone: 'America/New_York', riskScore: 10, complianceStatus: 'ACTIVE', regulatoryBody: 'FinCEN' },
+    { name: 'Singapore Branch', city: 'Singapore', country: 'Singapore', countryCode: 'SG', address: '1 Raffles Place, #20-01, Tower 2', timezone: 'Asia/Singapore', riskScore: 8, complianceStatus: 'ACTIVE', regulatoryBody: 'MAS' },
     { name: 'London Branch', city: 'London', country: 'United Kingdom', countryCode: 'GB', address: '25 Old Broad Street, EC2N 1HQ', timezone: 'Europe/London', riskScore: 6, complianceStatus: 'ACTIVE', regulatoryBody: 'FCA' },
-    { name: 'New York Representative', city: 'New York', country: 'United States', countryCode: 'US', address: '55 Water Street, New York, NY 10041', timezone: 'America/New_York', riskScore: 10, complianceStatus: 'ACTIVE', regulatoryBody: 'FinCEN' },
-    { name: 'Dubai DIFC', city: 'Dubai', country: 'United Arab Emirates', countryCode: 'AE', address: 'Gate Village, Building 3, DIFC', timezone: 'Asia/Dubai', riskScore: 15, complianceStatus: 'UNDER_REVIEW', regulatoryBody: 'DFSA', complianceNote: 'Enhanced due diligence in progress for VARA registration' },
-    { name: 'Geneva Wealth Office', city: 'Geneva', country: 'Switzerland', countryCode: 'CH', address: 'Rue du Rhone 80, 1204 Geneva', timezone: 'Europe/Zurich', riskScore: 4, complianceStatus: 'ACTIVE', regulatoryBody: 'FINMA' },
+    { name: 'Dubai Branch', city: 'Dubai', country: 'United Arab Emirates', countryCode: 'AE', address: 'Gate Village, Building 3, DIFC', timezone: 'Asia/Dubai', riskScore: 15, complianceStatus: 'ACTIVE', regulatoryBody: 'DFSA' },
+    { name: 'Moscow Office', city: 'Moscow', country: 'Russia', countryCode: 'RU', address: 'Tverskaya Street 22, Moscow 125009', timezone: 'Europe/Moscow', riskScore: 100, complianceStatus: 'BLOCKED', regulatoryBody: 'CBR', isSanctioned: true, sanctionReason: 'All operations suspended — EU/US/CH sanctions', isActive: false },
   ];
 
   const branches: Record<string, any> = {};
   for (const b of branchData) {
-    await prisma.institutionBranch.deleteMany({ where: { clientId: helvetica.id, name: b.name } });
-    const branch = await prisma.institutionBranch.create({ data: { clientId: helvetica.id, ...b } });
-    branches[b.countryCode + '-' + b.city] = branch;
-    console.log(`  ✅ ${b.name} (${b.countryCode})`);
+    const branch = await prisma.institutionBranch.create({
+      data: { clientId: helvetica.id, ...b },
+    });
+    branches[b.countryCode] = branch;
+    console.log(`  ${b.name} (${b.countryCode})${b.isSanctioned ? ' [SANCTIONED]' : ''}`);
   }
 
-  console.log('\n💰 Seeding accounts...');
+  // ============================================================================
+  // 3. Accounts (3 dashboard accounts)
+  // ============================================================================
+  console.log('\nSeeding accounts...');
+
   const accountData = [
-    { name: 'ZH Treasury', accountType: 'TREASURY' as const, walletAddress: 'HeLv3t1cAd1g1tALwA11etAddr355000000000001', branchId: branches['CH-Zurich']?.id, isDefault: true, verificationStatus: 'VERIFIED' as const },
-    { name: 'SG Operations', accountType: 'OPERATIONS' as const, walletAddress: 'HeLv3t1cAd1g1tALwA11etAddr355000000000002', branchId: branches['SG-Singapore']?.id, verificationStatus: 'VERIFIED' as const },
-    { name: 'London Settlement', accountType: 'SETTLEMENT' as const, walletAddress: 'HeLv3t1cAd1g1tALwA11etAddr355000000000003', branchId: branches['GB-London']?.id, verificationStatus: 'VERIFIED' as const },
-    { name: 'Dubai Collateral', accountType: 'COLLATERAL' as const, walletAddress: 'HeLv3t1cAd1g1tALwA11etAddr355000000000004', branchId: branches['AE-Dubai']?.id, verificationStatus: 'PENDING' as const },
-    { name: 'NY General', accountType: 'GENERAL' as const, walletAddress: 'HeLv3t1cAd1g1tALwA11etAddr355000000000005', branchId: branches['US-New York']?.id, verificationStatus: 'VERIFIED' as const },
-    { name: 'Geneva Wealth', accountType: 'TREASURY' as const, walletAddress: 'HeLv3t1cAd1g1tALwA11etAddr355000000000006', branchId: branches['CH-Geneva']?.id, verificationStatus: 'VERIFIED' as const },
+    {
+      name: 'Operating Account',
+      label: 'Operating Account',
+      accountType: 'OPERATIONS' as const,
+      walletAddress: 'HeLv3t1cAd1g1tALOp1rAddr355000000000001',
+      branchKey: 'CH',
+      isDefault: true,
+      verificationStatus: 'VERIFIED' as const,
+      description: 'Primary operating account — USDC',
+    },
+    {
+      name: 'Escrow Reserve',
+      label: 'Escrow Reserve',
+      accountType: 'COLLATERAL' as const,
+      walletAddress: 'HeLv3t1cAd1g1tALEs1rAddr355000000000001',
+      branchKey: 'CH',
+      isDefault: false,
+      verificationStatus: 'VERIFIED' as const,
+      description: 'Escrow reserve for active escrows — USDC',
+    },
+    {
+      name: 'Settlement Float',
+      label: 'Settlement Float',
+      accountType: 'SETTLEMENT' as const,
+      walletAddress: 'HeLv3t1cAd1g1tALSe1rAddr355000000000001',
+      branchKey: 'CH',
+      isDefault: false,
+      verificationStatus: 'VERIFIED' as const,
+      description: 'Settlement float for cross-border payments — USDC',
+    },
   ];
 
   for (const a of accountData) {
-    await prisma.institutionAccount.upsert({
-      where: { clientId_name: { clientId: helvetica.id, name: a.name } },
-      create: { clientId: helvetica.id, name: a.name, accountType: a.accountType, walletAddress: a.walletAddress, branchId: a.branchId || null, isDefault: a.isDefault || false, verificationStatus: a.verificationStatus, verifiedAt: a.verificationStatus === 'VERIFIED' ? daysAgo(90) : undefined },
-      update: { branchId: a.branchId || null, verificationStatus: a.verificationStatus },
+    await prisma.institutionAccount.create({
+      data: {
+        clientId: helvetica.id,
+        name: a.name,
+        label: a.label,
+        accountType: a.accountType,
+        walletAddress: a.walletAddress,
+        branchId: branches[a.branchKey]?.id || null,
+        isDefault: a.isDefault,
+        verificationStatus: a.verificationStatus,
+        verifiedAt: daysAgo(90),
+        description: a.description,
+      },
     });
-    console.log(`  ✅ ${a.name} (${a.accountType})`);
+    console.log(`  ${a.name} (${a.accountType})`);
   }
 
-  console.log('\n🌐 Seeding corridors...');
+  // ============================================================================
+  // 4. Corridors
+  // ============================================================================
+  console.log('\nSeeding corridors...');
+
   const corridorConfigs: Record<string, { risk: string; min: number; max: number; daily: number; monthly: number; docs: string[] }> = {
-    'CH-SG': { risk: 'LOW', min: 100, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE', 'CONTRACT'] },
-    'SG-CH': { risk: 'LOW', min: 100, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE', 'CONTRACT'] },
-    'CH-US': { risk: 'LOW', min: 500, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
+    // Corridors from active escrows
+    'CH-SG': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE', 'CONTRACT'] },
+    'SG-JP': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE', 'CONTRACT'] },
+    'GB-CH': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
+    'AE-AE': { risk: 'LOW', min: 100, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE'] },
+    // Corridors from direct payments
+    'CH-CH': { risk: 'LOW', min: 100, max: 10000000, daily: 50000000, monthly: 500000000, docs: [] },
+    'US-DE': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
+    'GB-SG': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
+    // Corridors from corridor activity
     'US-CH': { risk: 'LOW', min: 500, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
-    'CH-GB': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
-    'GB-CH': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
+    'GB-HK': { risk: 'MEDIUM', min: 500, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE', 'CONTRACT'] },
+    'CH-IT': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
+    // Reverse corridors
+    'SG-CH': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE', 'CONTRACT'] },
+    'JP-SG': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE', 'CONTRACT'] },
+    'CH-GB': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
+    'DE-US': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
+    'HK-GB': { risk: 'MEDIUM', min: 500, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE', 'CONTRACT'] },
+    'IT-CH': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
+    'CH-US': { risk: 'LOW', min: 500, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
+    'SG-GB': { risk: 'LOW', min: 100, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE'] },
     'CH-AE': { risk: 'MEDIUM', min: 1000, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT', 'LETTER_OF_CREDIT'] },
     'AE-CH': { risk: 'MEDIUM', min: 1000, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT', 'LETTER_OF_CREDIT'] },
-    'SG-US': { risk: 'LOW', min: 100, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT'] },
-    'US-SG': { risk: 'LOW', min: 100, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT'] },
-    'SG-GB': { risk: 'LOW', min: 100, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE'] },
-    'GB-SG': { risk: 'LOW', min: 100, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE'] },
-    'SG-AE': { risk: 'MEDIUM', min: 500, max: 500000, daily: 2500000, monthly: 25000000, docs: ['INVOICE', 'CONTRACT'] },
-    'AE-SG': { risk: 'MEDIUM', min: 500, max: 500000, daily: 2500000, monthly: 25000000, docs: ['INVOICE', 'CONTRACT'] },
-    'US-GB': { risk: 'LOW', min: 100, max: 5000000, daily: 25000000, monthly: 250000000, docs: ['INVOICE'] },
-    'GB-US': { risk: 'LOW', min: 100, max: 5000000, daily: 25000000, monthly: 250000000, docs: ['INVOICE'] },
-    'US-AE': { risk: 'MEDIUM', min: 1000, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT'] },
-    'AE-US': { risk: 'MEDIUM', min: 1000, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT'] },
-    'GB-AE': { risk: 'MEDIUM', min: 500, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT'] },
-    'AE-GB': { risk: 'MEDIUM', min: 500, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT'] },
   };
 
   for (const [code, cfg] of Object.entries(corridorConfigs)) {
@@ -162,155 +239,376 @@ async function main() {
       update: { minAmount: cfg.min, maxAmount: cfg.max, riskLevel: cfg.risk, status: 'ACTIVE' },
     });
   }
-  console.log(`  ✅ ${Object.keys(corridorConfigs).length} corridors seeded`);
+  console.log(`  ${Object.keys(corridorConfigs).length} corridors seeded`);
 
-  console.log('\n👥 Seeding external clients...');
-  // Generate deterministic wallet addresses from email prefix
-  function walletFromEmail(email: string): string {
-    const prefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
-    return (prefix + 'Wa11etAddr355' + '0'.repeat(44)).slice(0, 44);
+  // ============================================================================
+  // 5. External Counterparty Clients
+  // ============================================================================
+  console.log('\nSeeding external clients...');
+
+  function walletFromSeed(seed: string): string {
+    const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let hash = 0;
+    for (const ch of seed) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
+    let out = '';
+    for (let i = 0; i < 44; i++) {
+      hash = ((hash << 5) - hash + i) | 0;
+      out += chars[Math.abs(hash) % chars.length];
+    }
+    return out;
   }
 
-  const externalClients = [
-    { email: 'treasury@amina-bank.ch', company: 'AMINA Bank AG', country: 'Switzerland', city: 'Zug', industry: 'Digital Asset Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'FINMA' },
-    { email: 'ops@dbs-digital.sg', company: 'DBS Digital Exchange', country: 'Singapore', city: 'Singapore', industry: 'Digital Asset Exchange', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'MAS' },
-    { email: 'settlements@circle.com', company: 'Circle Internet Financial', country: 'United States', city: 'Boston', industry: 'Stablecoin Issuance', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'NYDFS' },
-    { email: 'ops@seba-bank.ch', company: 'SEBA Bank AG', country: 'Switzerland', city: 'Zug', industry: 'Digital Asset Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'FINMA' },
-    { email: 'custody@fireblocks.com', company: 'Fireblocks Inc.', country: 'United States', city: 'New York', industry: 'Digital Asset Custody', tier: 'PREMIUM' as const, regulated: false, regBody: null },
-    { email: 'trading@bc-group.hk', company: 'BC Technology Group', country: 'Hong Kong', city: 'Hong Kong', industry: 'Digital Asset Trading', tier: 'PREMIUM' as const, regulated: true, regBody: 'SFC' },
-    { email: 'compliance@chainalysis.com', company: 'Chainalysis Inc.', country: 'United States', city: 'New York', industry: 'Blockchain Analytics', tier: 'PREMIUM' as const, regulated: false, regBody: null },
-    { email: 'ops@standard-chartered.sg', company: 'SC Ventures Digital', country: 'Singapore', city: 'Singapore', industry: 'Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'MAS' },
-    { email: 'digital@hsbc.co.uk', company: 'HSBC Digital Assets', country: 'United Kingdom', city: 'London', industry: 'Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'FCA' },
-    { email: 'treasury@tether.to', company: 'Tether Holdings', country: 'British Virgin Islands', city: 'Road Town', industry: 'Stablecoin Issuance', tier: 'ENTERPRISE' as const, regulated: false, regBody: null },
-    { email: 'ops@copper.co', company: 'Copper Technologies', country: 'United Kingdom', city: 'London', industry: 'Digital Asset Custody', tier: 'PREMIUM' as const, regulated: true, regBody: 'FCA' },
-    { email: 'settlements@paxos.com', company: 'Paxos Trust Company', country: 'United States', city: 'New York', industry: 'Stablecoin & Settlement', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'NYDFS' },
-    { email: 'ops@matrixport.com', company: 'Matrixport', country: 'Singapore', city: 'Singapore', industry: 'Digital Asset Services', tier: 'PREMIUM' as const, regulated: true, regBody: 'MAS' },
-    { email: 'custody@anchorage.com', company: 'Anchorage Digital', country: 'United States', city: 'San Francisco', industry: 'Digital Asset Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'OCC' },
-    { email: 'digital@emirates-nbd.ae', company: 'Emirates NBD Digital', country: 'United Arab Emirates', city: 'Dubai', industry: 'Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'DFSA' },
+  // Clients appearing in the dashboard escrows and payments
+  const dashboardClients = [
+    { email: 'ops@globaltrade-industries.com', company: 'GlobalTrade Industries', country: 'Singapore', city: 'Singapore', countryCode: 'SG', industry: 'International Trade', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'MAS' },
+    { email: 'ops@pacific-rim-exports.sg', company: 'Pacific Rim Exports', country: 'Singapore', city: 'Singapore', countryCode: 'SG', industry: 'Export Trading', tier: 'PREMIUM' as const, regulated: true, regBody: 'MAS' },
+    { email: 'finance@swiss-precision.ch', company: 'Swiss Precision AG', country: 'Switzerland', city: 'Basel', countryCode: 'CH', industry: 'Precision Manufacturing', tier: 'PREMIUM' as const, regulated: false, regBody: null },
+    { email: 'ops@eurolink-trading.de', company: 'Eurolink Trading GmbH', country: 'Germany', city: 'Frankfurt', countryCode: 'DE', industry: 'Cross-border Trade', tier: 'STANDARD' as const, regulated: true, regBody: 'BaFin' },
   ];
 
-  for (const c of externalClients) {
-    const wallet = walletFromEmail(c.email);
+  // Keep existing external clients from previous seed
+  const existingClients = [
+    { email: 'treasury@amina-bank.ch', company: 'AMINA Bank AG', country: 'Switzerland', city: 'Zug', countryCode: 'CH', industry: 'Digital Asset Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'FINMA' },
+    { email: 'ops@dbs-digital.sg', company: 'DBS Digital Exchange', country: 'Singapore', city: 'Singapore', countryCode: 'SG', industry: 'Digital Asset Exchange', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'MAS' },
+    { email: 'settlements@circle.com', company: 'Circle Internet Financial', country: 'United States', city: 'Boston', countryCode: 'US', industry: 'Stablecoin Issuance', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'NYDFS' },
+    { email: 'ops@seba-bank.ch', company: 'SEBA Bank AG', country: 'Switzerland', city: 'Zug', countryCode: 'CH', industry: 'Digital Asset Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'FINMA' },
+    { email: 'digital@hsbc.co.uk', company: 'HSBC Digital Assets', country: 'United Kingdom', city: 'London', countryCode: 'GB', industry: 'Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'FCA' },
+    { email: 'ops@copper.co', company: 'Copper Technologies', country: 'United Kingdom', city: 'London', countryCode: 'GB', industry: 'Digital Asset Custody', tier: 'PREMIUM' as const, regulated: true, regBody: 'FCA' },
+    { email: 'digital@emirates-nbd.ae', company: 'Emirates NBD Digital', country: 'United Arab Emirates', city: 'Dubai', countryCode: 'AE', industry: 'Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'DFSA' },
+  ];
+
+  const allExternal = [...dashboardClients, ...existingClients];
+  for (const c of allExternal) {
+    const wallet = walletFromSeed(c.email);
     await prisma.institutionClient.upsert({
       where: { email: c.email },
-      create: { email: c.email, passwordHash, companyName: c.company, country: c.country, city: c.city, industry: c.industry, tier: c.tier, status: 'ACTIVE', kycStatus: 'VERIFIED', kybStatus: 'VERIFIED', kybVerifiedAt: daysAgo(120), riskRating: 'LOW', sanctionsStatus: 'CLEAR', isRegulatedEntity: c.regulated, regulatoryBody: c.regBody, isTestAccount: true, primaryWallet: wallet, settledWallets: [wallet] },
+      create: {
+        email: c.email, passwordHash, companyName: c.company,
+        country: c.country, city: c.city, industry: c.industry,
+        tier: c.tier, status: 'ACTIVE', kycStatus: 'VERIFIED',
+        kybStatus: 'VERIFIED', kybVerifiedAt: daysAgo(120),
+        riskRating: 'LOW', sanctionsStatus: 'CLEAR',
+        isRegulatedEntity: c.regulated, regulatoryBody: c.regBody,
+        isTestAccount: true, primaryWallet: wallet, settledWallets: [wallet],
+      },
       update: { companyName: c.company, primaryWallet: wallet, settledWallets: [wallet] },
     });
   }
-  console.log(`  ✅ ${externalClients.length} external clients seeded`);
+  console.log(`  ${allExternal.length} external clients seeded`);
 
-  console.log('\n📦 Seeding escrow records...');
-  // Clean up previous demo data to avoid duplicates on re-run
+  // ============================================================================
+  // 6. Active Escrows (4 matching dashboard)
+  // ============================================================================
+  console.log('\nSeeding escrow records...');
+
+  // Clean previous Helvetica data
   await prisma.institutionAuditLog.deleteMany({ where: { clientId: helvetica.id } });
+  await prisma.institutionNotification.deleteMany({ where: { clientId: helvetica.id } });
+  // Deposits cascade-delete with escrows (onDelete: Cascade)
   await prisma.institutionEscrow.deleteMany({ where: { clientId: helvetica.id } });
   await prisma.directPayment.deleteMany({ where: { clientId: helvetica.id } });
+
   const usdcMint = process.env.USDC_MINT_ADDRESS || '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
-  const escrowData = [
-    { corridor: 'CH-SG', amount: 125000, status: 'COMPLETE' as const, condition: 'COMPLIANCE_CHECK', days: 30, recipientEmail: 'ops@dbs-digital.sg' },
-    { corridor: 'CH-US', amount: 250000, status: 'FUNDED' as const, condition: 'ADMIN_RELEASE', days: 5, recipientEmail: 'settlements@circle.com' },
-    { corridor: 'SG-CH', amount: 75000, status: 'CREATED' as const, condition: 'COMPLIANCE_CHECK', days: 2, recipientEmail: 'ops@seba-bank.ch' },
-    { corridor: 'CH-GB', amount: 500000, status: 'COMPLIANCE_HOLD' as const, condition: 'COMPLIANCE_CHECK', days: 3, recipientEmail: 'digital@hsbc.co.uk' },
-    { corridor: 'GB-CH', amount: 180000, status: 'RELEASED' as const, condition: 'ADMIN_RELEASE', days: 15, recipientEmail: 'ops@copper.co' },
-    { corridor: 'CH-AE', amount: 95000, status: 'CANCELLED' as const, condition: 'ADMIN_RELEASE', days: 20, recipientEmail: 'digital@emirates-nbd.ae' },
-    { corridor: 'US-CH', amount: 350000, status: 'DRAFT' as const, condition: 'COMPLIANCE_CHECK', days: 1, recipientEmail: 'settlements@paxos.com' },
-    { corridor: 'SG-US', amount: 420000, status: 'EXPIRED' as const, condition: 'TIME_LOCK', days: 45, recipientEmail: 'custody@anchorage.com' },
+  const helveticaWallet = helvetica.primaryWallet || 'HeLv3t1cAd1g1tALwA11etAddr355000000000001';
+
+  // Lookup counterparty wallets
+  const globalTrade = await prisma.institutionClient.findUnique({ where: { email: 'ops@globaltrade-industries.com' } });
+  const pacificRim = await prisma.institutionClient.findUnique({ where: { email: 'ops@pacific-rim-exports.sg' } });
+  const swissPrecision = await prisma.institutionClient.findUnique({ where: { email: 'finance@swiss-precision.ch' } });
+
+  const escrows = [
+    {
+      escrowCode: 'esc-a1b2c3d4',
+      corridor: 'CH-SG',
+      amount: 2500000,
+      status: 'FUNDED' as const,
+      conditionType: 'ADMIN_RELEASE' as const,
+      recipientWallet: globalTrade?.primaryWallet || walletFromSeed('globaltrade'),
+      recipientName: 'GlobalTrade Industries',
+      createdAt: hoursAgo(2),
+      riskScore: 12,
+    },
+    {
+      escrowCode: 'esc-e5f6a7b8',
+      corridor: 'SG-JP',
+      amount: 1800000,
+      status: 'COMPLIANCE_HOLD' as const,
+      conditionType: 'COMPLIANCE_CHECK' as const,
+      recipientWallet: pacificRim?.primaryWallet || walletFromSeed('pacificrim'),
+      recipientName: 'Pacific Rim Exports',
+      createdAt: hoursAgo(5),
+      riskScore: 42,
+    },
+    {
+      escrowCode: 'esc-a3b4c5d6',
+      corridor: 'GB-CH',
+      amount: 4200000,
+      status: 'CREATED' as const,
+      conditionType: 'ADMIN_RELEASE' as const,
+      recipientWallet: swissPrecision?.primaryWallet || walletFromSeed('swissprecision'),
+      recipientName: 'Swiss Precision AG',
+      createdAt: hoursAgo(9),
+      riskScore: 8,
+    },
+    {
+      escrowCode: 'esc-c1d2e3f4',
+      corridor: 'AE-AE',
+      amount: 1100000,
+      status: 'RELEASING' as const,
+      conditionType: 'ADMIN_RELEASE' as const,
+      recipientWallet: globalTrade?.primaryWallet || walletFromSeed('globaltrade'),
+      recipientName: 'GlobalTrade Industries',
+      createdAt: daysAgo(1),
+      riskScore: 18,
+    },
   ];
 
-  for (const e of escrowData) {
+  for (const e of escrows) {
     const escrowId = crypto.randomUUID();
-    const escrowCode = generateEscrowCode();
-    const recipient = await prisma.institutionClient.findUnique({ where: { email: e.recipientEmail } });
-    const recipientWallet = recipient?.primaryWallet || 'RecipientWa11etAddr355000000000000000000000';
     const feeBps = 50;
     const platformFee = (e.amount * feeBps) / 10000;
 
     await prisma.institutionEscrow.create({
       data: {
-        escrowId, escrowCode, clientId: helvetica.id,
-        payerWallet: helvetica.primaryWallet || 'HeLv3t1cAd1g1tALwA11etAddr355000000000001',
-        recipientWallet, usdcMint, amount: e.amount, platformFee,
-        corridor: e.corridor, conditionType: e.condition, status: e.status,
-        settlementAuthority: helvetica.primaryWallet || 'HeLv3t1cAd1g1tALwA11etAddr355000000000001',
-        riskScore: Math.floor(Math.random() * 30) + 5,
-        expiresAt: new Date(daysAgo(e.days).getTime() + 72 * 60 * 60 * 1000),
-        createdAt: daysAgo(e.days),
-        resolvedAt: ['COMPLETE', 'RELEASED', 'CANCELLED', 'EXPIRED'].includes(e.status) ? daysAgo(Math.max(0, e.days - 2)) : undefined,
-        fundedAt: ['FUNDED', 'COMPLETE', 'RELEASED'].includes(e.status) ? daysAgo(Math.max(0, e.days - 1)) : undefined,
+        escrowId,
+        escrowCode: e.escrowCode,
+        clientId: helvetica.id,
+        payerWallet: helveticaWallet,
+        recipientWallet: e.recipientWallet,
+        usdcMint,
+        amount: e.amount,
+        platformFee,
+        corridor: e.corridor,
+        conditionType: e.conditionType,
+        status: e.status,
+        settlementAuthority: helveticaWallet,
+        riskScore: e.riskScore,
+        expiresAt: new Date(e.createdAt.getTime() + 72 * 60 * 60 * 1000),
+        createdAt: e.createdAt,
+        fundedAt: ['FUNDED', 'RELEASING'].includes(e.status) ? new Date(e.createdAt.getTime() + 30 * 60 * 1000) : undefined,
       },
     });
 
+    // Audit log: creation
     await prisma.institutionAuditLog.create({
-      data: { escrowId, clientId: helvetica.id, action: 'ESCROW_CREATED', actor: helvetica.email, details: { corridor: e.corridor, amount: e.amount }, createdAt: daysAgo(e.days) },
+      data: {
+        escrowId, clientId: helvetica.id,
+        action: 'ESCROW_CREATED', actor: helvetica.email,
+        details: { corridor: e.corridor, amount: e.amount, recipient: e.recipientName },
+        createdAt: e.createdAt,
+      },
     });
 
-    if (['FUNDED', 'COMPLETE', 'RELEASED'].includes(e.status)) {
+    // Audit log: funded
+    if (['FUNDED', 'RELEASING'].includes(e.status)) {
       await prisma.institutionAuditLog.create({
-        data: { escrowId, clientId: helvetica.id, action: 'DEPOSIT_CONFIRMED', actor: 'system', details: { amount: e.amount }, createdAt: daysAgo(Math.max(0, e.days - 1)) },
-      });
-    }
-    if (['COMPLETE', 'RELEASED'].includes(e.status)) {
-      await prisma.institutionAuditLog.create({
-        data: { escrowId, clientId: helvetica.id, action: 'FUNDS_RELEASED', actor: 'settlement-authority', details: { recipientWallet }, createdAt: daysAgo(Math.max(0, e.days - 2)) },
+        data: {
+          escrowId, clientId: helvetica.id,
+          action: 'DEPOSIT_CONFIRMED', actor: 'system',
+          details: { amount: e.amount },
+          createdAt: new Date(e.createdAt.getTime() + 30 * 60 * 1000),
+        },
       });
     }
 
-    console.log(`  ✅ Escrow ${escrowCode} (${e.corridor}, $${e.amount.toLocaleString()}, ${e.status})`);
+    // Audit log: compliance hold
+    if (e.status === 'COMPLIANCE_HOLD') {
+      await prisma.institutionAuditLog.create({
+        data: {
+          escrowId, clientId: helvetica.id,
+          action: 'COMPLIANCE_REVIEW_REQUIRED', actor: 'system',
+          details: { reason: 'Automated compliance check flagged for manual review', riskScore: e.riskScore },
+          createdAt: new Date(e.createdAt.getTime() + 15 * 60 * 1000),
+        },
+      });
+    }
+
+    console.log(`  Escrow ${e.escrowCode} (${e.corridor}, $${e.amount.toLocaleString()}, ${e.status})`);
   }
 
-  console.log('\n💸 Seeding direct payments...');
+  // ============================================================================
+  // 7. Direct Payments (4 matching dashboard)
+  // ============================================================================
+  console.log('\nSeeding direct payments...');
+
+  const eurolink = await prisma.institutionClient.findUnique({ where: { email: 'ops@eurolink-trading.de' } });
+
   const directPayments = [
-    { sender: 'Helvetica Digital', senderCountry: 'CH', recipient: 'DBS Digital Exchange', recipientCountry: 'SG', amount: 50000, corridor: 'CH-SG', status: 'completed', days: 10 },
-    { sender: 'Helvetica Digital', senderCountry: 'CH', recipient: 'Circle Internet Financial', recipientCountry: 'US', amount: 100000, corridor: 'CH-US', status: 'completed', days: 8 },
-    { sender: 'AMINA Bank AG', senderCountry: 'CH', recipient: 'Helvetica Digital', recipientCountry: 'CH', amount: 75000, corridor: 'CH-CH', status: 'completed', days: 15 },
-    { sender: 'Helvetica Digital', senderCountry: 'CH', recipient: 'HSBC Digital Assets', recipientCountry: 'GB', amount: 200000, corridor: 'CH-GB', status: 'completed', days: 1 },
-    { sender: 'SC Ventures Digital', senderCountry: 'SG', recipient: 'Helvetica Digital', recipientCountry: 'CH', amount: 150000, corridor: 'SG-CH', status: 'completed', days: 20 },
-    { sender: 'Helvetica Digital', senderCountry: 'CH', recipient: 'Emirates NBD Digital', recipientCountry: 'AE', amount: 80000, corridor: 'CH-AE', status: 'cancelled', days: 12 },
-    { sender: 'Helvetica Digital', senderCountry: 'CH', recipient: 'Copper Technologies', recipientCountry: 'GB', amount: 45000, corridor: 'CH-GB', status: 'completed', days: 25 },
-    { sender: 'Anchorage Digital', senderCountry: 'US', recipient: 'Helvetica Digital', recipientCountry: 'CH', amount: 300000, corridor: 'US-CH', status: 'completed', days: 2 },
+    {
+      paymentCode: 'dp-001',
+      sender: 'Helvetica Digital',
+      senderCountry: 'CH',
+      senderWallet: helveticaWallet,
+      recipient: 'Swiss Precision AG',
+      recipientCountry: 'CH',
+      recipientWallet: swissPrecision?.primaryWallet || walletFromSeed('swissprecision'),
+      amount: 450000,
+      currency: 'USDC',
+      corridor: 'CH-CH',
+      status: 'completed',
+      createdAt: hoursAgo(18),
+    },
+    {
+      paymentCode: 'dp-002',
+      sender: 'Helvetica Digital',
+      senderCountry: 'SG',
+      senderWallet: helveticaWallet,
+      recipient: 'Pacific Rim Exports',
+      recipientCountry: 'JP',
+      recipientWallet: pacificRim?.primaryWallet || walletFromSeed('pacificrim'),
+      amount: 1200000,
+      currency: 'USDC',
+      corridor: 'SG-JP',
+      status: 'completed',
+      createdAt: hoursAgo(20),
+    },
+    {
+      paymentCode: 'dp-003',
+      sender: 'Helvetica Digital',
+      senderCountry: 'US',
+      senderWallet: helveticaWallet,
+      recipient: 'Eurolink Trading GmbH',
+      recipientCountry: 'DE',
+      recipientWallet: eurolink?.primaryWallet || walletFromSeed('eurolink'),
+      amount: 780000,
+      currency: 'EURC',
+      corridor: 'US-DE',
+      status: 'completed',
+      createdAt: daysAgo(1),
+    },
+    {
+      paymentCode: 'dp-004',
+      sender: 'Helvetica Digital',
+      senderCountry: 'GB',
+      senderWallet: helveticaWallet,
+      recipient: 'GlobalTrade Industries',
+      recipientCountry: 'SG',
+      recipientWallet: globalTrade?.primaryWallet || walletFromSeed('globaltrade'),
+      amount: 2100000,
+      currency: 'USDC',
+      corridor: 'GB-SG',
+      status: 'pending',
+      createdAt: minutesAgo(2),
+    },
   ];
 
   for (const dp of directPayments) {
     const feeBps = 25;
     const platformFee = (dp.amount * feeBps) / 10000;
     const txHash = dp.status === 'completed' ? `sim_tx_${crypto.randomUUID().slice(0, 16)}` : null;
-    const settledAt = dp.status === 'completed' ? daysAgo(Math.max(0, dp.days - 1)) : null;
+    const settledAt = dp.status === 'completed' ? new Date(dp.createdAt.getTime() + 10 * 60 * 1000) : null;
+
+    // Delete any existing payment with this code (idempotent re-run)
+    await prisma.directPayment.deleteMany({ where: { paymentCode: dp.paymentCode } });
+
     const payment = await prisma.directPayment.create({
       data: {
-        clientId: helvetica.id, sender: dp.sender, senderCountry: dp.senderCountry,
-        senderWallet: 'SenderWa11etAddr3550000000000000000000000' + Math.floor(Math.random() * 10),
-        recipient: dp.recipient, recipientCountry: dp.recipientCountry,
-        recipientWallet: 'RecipWa11etAddr35500000000000000000000000' + Math.floor(Math.random() * 10),
-        amount: dp.amount, corridor: dp.corridor, status: dp.status, platformFee,
-        riskScore: Math.floor(Math.random() * 25) + 5,
+        clientId: helvetica.id,
+        paymentCode: dp.paymentCode,
+        sender: dp.sender,
+        senderCountry: dp.senderCountry,
+        senderWallet: dp.senderWallet,
+        recipient: dp.recipient,
+        recipientCountry: dp.recipientCountry,
+        recipientWallet: dp.recipientWallet,
+        amount: dp.amount,
+        currency: dp.currency,
+        corridor: dp.corridor,
+        status: dp.status,
+        platformFee,
+        riskScore: Math.floor(Math.random() * 20) + 5,
         txHash,
         settledAt,
-        createdAt: daysAgo(dp.days),
+        createdAt: dp.createdAt,
       },
     });
 
-    // Audit log: creation
+    // Audit log
     await prisma.institutionAuditLog.create({
-      data: { clientId: helvetica.id, action: 'DIRECT_PAYMENT_CREATED', actor: helvetica.email, details: { paymentId: payment.id, corridor: dp.corridor, amount: dp.amount, recipient: dp.recipient }, createdAt: daysAgo(dp.days) },
+      data: {
+        clientId: helvetica.id,
+        action: 'DIRECT_PAYMENT_CREATED',
+        actor: helvetica.email,
+        details: { paymentId: payment.id, corridor: dp.corridor, amount: dp.amount, currency: dp.currency, recipient: dp.recipient },
+        createdAt: dp.createdAt,
+      },
     });
 
-    // Audit log: completion or cancellation
     if (dp.status === 'completed') {
       await prisma.institutionAuditLog.create({
-        data: { clientId: helvetica.id, action: 'DIRECT_PAYMENT_COMPLETED', actor: 'system', details: { paymentId: payment.id, txHash, settledAt }, createdAt: settledAt || daysAgo(dp.days) },
-      });
-    } else if (dp.status === 'cancelled') {
-      await prisma.institutionAuditLog.create({
-        data: { clientId: helvetica.id, action: 'DIRECT_PAYMENT_FAILED', actor: 'system', details: { paymentId: payment.id, reason: 'Client-requested cancellation' }, createdAt: daysAgo(Math.max(0, dp.days - 1)) },
+        data: {
+          clientId: helvetica.id,
+          action: 'DIRECT_PAYMENT_COMPLETED',
+          actor: 'system',
+          details: { paymentId: payment.id, txHash, settledAt },
+          createdAt: settledAt || dp.createdAt,
+        },
       });
     }
 
-    console.log(`  ✅ ${dp.sender} → ${dp.recipient} ($${dp.amount.toLocaleString()}, ${dp.status})`);
+    console.log(`  ${dp.sender} -> ${dp.recipient} ($${dp.amount.toLocaleString()} ${dp.currency}, ${dp.status})`);
   }
 
-  console.log('\n✅ Institution portal seed data complete!');
-  console.log(`   Login: ops@helvetica-digital.ch / HelveticaDemo2026!`);
+  // ============================================================================
+  // 8. Notifications (pending actions)
+  // ============================================================================
+  console.log('\nSeeding notifications...');
+
+  const notifications = [
+    {
+      type: 'COMPLIANCE_REVIEW_REQUIRED' as const,
+      priority: 'HIGH' as const,
+      title: 'Pacific Rim Exports — compliance review required',
+      message: '1,800,000 USDC escrow on SG-JP corridor flagged for compliance review. Risk score: 42.',
+      metadata: { escrowCode: 'esc-e5f6a7b8', corridor: 'SG-JP', amount: 1800000 },
+      createdAt: hoursAgo(1),
+    },
+    {
+      type: 'ESCROW_CREATED' as const,
+      priority: 'MEDIUM' as const,
+      title: 'Swiss Precision AG — awaiting funding',
+      message: '4,200,000 USDC escrow on GB-CH corridor created and awaiting deposit.',
+      metadata: { escrowCode: 'esc-a3b4c5d6', corridor: 'GB-CH', amount: 4200000 },
+      createdAt: hoursAgo(9),
+    },
+    {
+      type: 'SETTLEMENT_COMPLETE' as const,
+      priority: 'MEDIUM' as const,
+      title: 'GlobalTrade Industries — releasing funds',
+      message: '1,100,000 USDC escrow on AE-AE corridor is releasing funds to recipient.',
+      metadata: { escrowCode: 'esc-c1d2e3f4', corridor: 'AE-AE', amount: 1100000 },
+      createdAt: daysAgo(1),
+    },
+  ];
+
+  for (const n of notifications) {
+    await prisma.institutionNotification.create({
+      data: {
+        clientId: helvetica.id,
+        type: n.type,
+        priority: n.priority,
+        title: n.title,
+        message: n.message,
+        metadata: n.metadata,
+        createdAt: n.createdAt,
+      },
+    });
+    console.log(`  ${n.title}`);
+  }
+
+  // ============================================================================
+  // Summary
+  // ============================================================================
+  console.log('\nInstitution portal seed data complete!');
+  console.log(`  Login: ops@helvetica-digital.ch / HelveticaDemo2026!`);
+  console.log(`  Branches: ${branchData.length} (incl. RU sanctioned)`);
+  console.log(`  Accounts: ${accountData.length}`);
+  console.log(`  Escrows: ${escrows.length} active`);
+  console.log(`  Direct Payments: ${directPayments.length}`);
+  console.log(`  Corridors: ${Object.keys(corridorConfigs).length}`);
+  console.log(`  Notifications: ${notifications.length}`);
 }
 
 main()
-  .catch((e) => { console.error('❌ Seed failed:', e); process.exit(1); })
+  .catch((e) => { console.error('Seed failed:', e); process.exit(1); })
   .finally(async () => { await prisma.$disconnect(); });
