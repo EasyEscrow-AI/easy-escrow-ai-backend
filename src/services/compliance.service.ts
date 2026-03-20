@@ -29,7 +29,7 @@ export interface ComplianceCheckParams {
   corridor: string;
 }
 
-interface ComplianceThresholds {
+export interface ComplianceThresholds {
   rejectScore: number;
   holdScore: number;
 }
