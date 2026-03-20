@@ -59,8 +59,8 @@ export function loadInstitutionEscrowConfig(): InstitutionEscrowConfig {
   return {
     enabled,
     usdcMintAddress: process.env.USDC_MINT_ADDRESS || '',
-    minUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MIN_USDC || '100'),
-    maxUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MAX_USDC || '1000000'),
+    minUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MIN_USDC || '10'),
+    maxUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MAX_USDC || '100000000'),
     defaultExpiryHours: parseInt(process.env.INSTITUTION_ESCROW_DEFAULT_EXPIRY_HOURS || '72', 10),
     jwt: {
       accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '1h',

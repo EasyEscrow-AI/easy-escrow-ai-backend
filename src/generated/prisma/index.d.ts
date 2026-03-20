@@ -30007,6 +30007,7 @@ export namespace Prisma {
 
   export type DirectPaymentMinAggregateOutputType = {
     id: string | null
+    paymentCode: string | null
     clientId: string | null
     sender: string | null
     senderCountry: string | null
@@ -30030,6 +30031,7 @@ export namespace Prisma {
 
   export type DirectPaymentMaxAggregateOutputType = {
     id: string | null
+    paymentCode: string | null
     clientId: string | null
     sender: string | null
     senderCountry: string | null
@@ -30053,6 +30055,7 @@ export namespace Prisma {
 
   export type DirectPaymentCountAggregateOutputType = {
     id: number
+    paymentCode: number
     clientId: number
     sender: number
     senderCountry: number
@@ -30090,6 +30093,7 @@ export namespace Prisma {
 
   export type DirectPaymentMinAggregateInputType = {
     id?: true
+    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30113,6 +30117,7 @@ export namespace Prisma {
 
   export type DirectPaymentMaxAggregateInputType = {
     id?: true
+    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30136,6 +30141,7 @@ export namespace Prisma {
 
   export type DirectPaymentCountAggregateInputType = {
     id?: true
+    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30246,6 +30252,7 @@ export namespace Prisma {
 
   export type DirectPaymentGroupByOutputType = {
     id: string
+    paymentCode: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -30288,6 +30295,7 @@ export namespace Prisma {
 
   export type DirectPaymentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30312,6 +30320,7 @@ export namespace Prisma {
 
   export type DirectPaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30336,6 +30345,7 @@ export namespace Prisma {
 
   export type DirectPaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30360,6 +30370,7 @@ export namespace Prisma {
 
   export type DirectPaymentSelectScalar = {
     id?: boolean
+    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30381,7 +30392,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type DirectPaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "sender" | "senderCountry" | "senderWallet" | "recipient" | "recipientCountry" | "recipientWallet" | "amount" | "currency" | "corridor" | "status" | "txHash" | "platformFee" | "riskScore" | "settlementMode" | "releaseMode" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["directPayment"]>
+  export type DirectPaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "paymentCode" | "clientId" | "sender" | "senderCountry" | "senderWallet" | "recipient" | "recipientCountry" | "recipientWallet" | "amount" | "currency" | "corridor" | "status" | "txHash" | "platformFee" | "riskScore" | "settlementMode" | "releaseMode" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["directPayment"]>
   export type DirectPaymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -30399,6 +30410,7 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      paymentCode: string | null
       clientId: string
       sender: string
       senderCountry: string
@@ -30843,6 +30855,7 @@ export namespace Prisma {
    */
   interface DirectPaymentFieldRefs {
     readonly id: FieldRef<"DirectPayment", 'String'>
+    readonly paymentCode: FieldRef<"DirectPayment", 'String'>
     readonly clientId: FieldRef<"DirectPayment", 'String'>
     readonly sender: FieldRef<"DirectPayment", 'String'>
     readonly senderCountry: FieldRef<"DirectPayment", 'String'>
@@ -34857,6 +34870,9 @@ export namespace Prisma {
     status: $Enums.InstitutionEscrowStatus | null
     settlementAuthority: string | null
     riskScore: number | null
+    settlementMode: string | null
+    releaseMode: string | null
+    approvalInstructions: string | null
     escrowPda: string | null
     vaultPda: string | null
     nonceAccount: string | null
@@ -34885,6 +34901,9 @@ export namespace Prisma {
     status: $Enums.InstitutionEscrowStatus | null
     settlementAuthority: string | null
     riskScore: number | null
+    settlementMode: string | null
+    releaseMode: string | null
+    approvalInstructions: string | null
     escrowPda: string | null
     vaultPda: string | null
     nonceAccount: string | null
@@ -34913,6 +34932,11 @@ export namespace Prisma {
     status: number
     settlementAuthority: number
     riskScore: number
+    settlementMode: number
+    releaseMode: number
+    approvalParties: number
+    releaseConditions: number
+    approvalInstructions: number
     escrowPda: number
     vaultPda: number
     nonceAccount: number
@@ -34955,6 +34979,9 @@ export namespace Prisma {
     status?: true
     settlementAuthority?: true
     riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    approvalInstructions?: true
     escrowPda?: true
     vaultPda?: true
     nonceAccount?: true
@@ -34983,6 +35010,9 @@ export namespace Prisma {
     status?: true
     settlementAuthority?: true
     riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    approvalInstructions?: true
     escrowPda?: true
     vaultPda?: true
     nonceAccount?: true
@@ -35011,6 +35041,11 @@ export namespace Prisma {
     status?: true
     settlementAuthority?: true
     riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    approvalParties?: true
+    releaseConditions?: true
+    approvalInstructions?: true
     escrowPda?: true
     vaultPda?: true
     nonceAccount?: true
@@ -35126,6 +35161,11 @@ export namespace Prisma {
     status: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore: number | null
+    settlementMode: string | null
+    releaseMode: string | null
+    approvalParties: string[]
+    releaseConditions: string[]
+    approvalInstructions: string | null
     escrowPda: string | null
     vaultPda: string | null
     nonceAccount: string | null
@@ -35173,6 +35213,11 @@ export namespace Prisma {
     status?: boolean
     settlementAuthority?: boolean
     riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    approvalParties?: boolean
+    releaseConditions?: boolean
+    approvalInstructions?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
     nonceAccount?: boolean
@@ -35207,6 +35252,11 @@ export namespace Prisma {
     status?: boolean
     settlementAuthority?: boolean
     riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    approvalParties?: boolean
+    releaseConditions?: boolean
+    approvalInstructions?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
     nonceAccount?: boolean
@@ -35236,6 +35286,11 @@ export namespace Prisma {
     status?: boolean
     settlementAuthority?: boolean
     riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    approvalParties?: boolean
+    releaseConditions?: boolean
+    approvalInstructions?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
     nonceAccount?: boolean
@@ -35265,6 +35320,11 @@ export namespace Prisma {
     status?: boolean
     settlementAuthority?: boolean
     riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    approvalParties?: boolean
+    releaseConditions?: boolean
+    approvalInstructions?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
     nonceAccount?: boolean
@@ -35278,7 +35338,7 @@ export namespace Prisma {
     fundedAt?: boolean
   }
 
-  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "escrowPda" | "vaultPda" | "nonceAccount" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
+  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "settlementMode" | "releaseMode" | "approvalParties" | "releaseConditions" | "approvalInstructions" | "escrowPda" | "vaultPda" | "nonceAccount" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
   export type InstitutionEscrowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
@@ -35318,6 +35378,11 @@ export namespace Prisma {
       status: $Enums.InstitutionEscrowStatus
       settlementAuthority: string
       riskScore: number | null
+      settlementMode: string | null
+      releaseMode: string | null
+      approvalParties: string[]
+      releaseConditions: string[]
+      approvalInstructions: string | null
       escrowPda: string | null
       vaultPda: string | null
       nonceAccount: string | null
@@ -35771,6 +35836,11 @@ export namespace Prisma {
     readonly status: FieldRef<"InstitutionEscrow", 'InstitutionEscrowStatus'>
     readonly settlementAuthority: FieldRef<"InstitutionEscrow", 'String'>
     readonly riskScore: FieldRef<"InstitutionEscrow", 'Int'>
+    readonly settlementMode: FieldRef<"InstitutionEscrow", 'String'>
+    readonly releaseMode: FieldRef<"InstitutionEscrow", 'String'>
+    readonly approvalParties: FieldRef<"InstitutionEscrow", 'String[]'>
+    readonly releaseConditions: FieldRef<"InstitutionEscrow", 'String[]'>
+    readonly approvalInstructions: FieldRef<"InstitutionEscrow", 'String'>
     readonly escrowPda: FieldRef<"InstitutionEscrow", 'String'>
     readonly vaultPda: FieldRef<"InstitutionEscrow", 'String'>
     readonly nonceAccount: FieldRef<"InstitutionEscrow", 'String'>
@@ -48045,6 +48115,7 @@ export namespace Prisma {
 
   export const DirectPaymentScalarFieldEnum: {
     id: 'id',
+    paymentCode: 'paymentCode',
     clientId: 'clientId',
     sender: 'sender',
     senderCountry: 'senderCountry',
@@ -48143,6 +48214,11 @@ export namespace Prisma {
     status: 'status',
     settlementAuthority: 'settlementAuthority',
     riskScore: 'riskScore',
+    settlementMode: 'settlementMode',
+    releaseMode: 'releaseMode',
+    approvalParties: 'approvalParties',
+    releaseConditions: 'releaseConditions',
+    approvalInstructions: 'approvalInstructions',
     escrowPda: 'escrowPda',
     vaultPda: 'vaultPda',
     nonceAccount: 'nonceAccount',
@@ -51481,6 +51557,7 @@ export namespace Prisma {
     OR?: DirectPaymentWhereInput[]
     NOT?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
     id?: StringFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableFilter<"DirectPayment"> | string | null
     clientId?: StringFilter<"DirectPayment"> | string
     sender?: StringFilter<"DirectPayment"> | string
     senderCountry?: StringFilter<"DirectPayment"> | string
@@ -51505,6 +51582,7 @@ export namespace Prisma {
 
   export type DirectPaymentOrderByWithRelationInput = {
     id?: SortOrder
+    paymentCode?: SortOrderInput | SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -51529,6 +51607,7 @@ export namespace Prisma {
 
   export type DirectPaymentWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    paymentCode?: string
     AND?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
     OR?: DirectPaymentWhereInput[]
     NOT?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
@@ -51552,10 +51631,11 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"DirectPayment"> | Date | string
     updatedAt?: DateTimeFilter<"DirectPayment"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
-  }, "id">
+  }, "id" | "paymentCode">
 
   export type DirectPaymentOrderByWithAggregationInput = {
     id?: SortOrder
+    paymentCode?: SortOrderInput | SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -51587,6 +51667,7 @@ export namespace Prisma {
     OR?: DirectPaymentScalarWhereWithAggregatesInput[]
     NOT?: DirectPaymentScalarWhereWithAggregatesInput | DirectPaymentScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableWithAggregatesFilter<"DirectPayment"> | string | null
     clientId?: StringWithAggregatesFilter<"DirectPayment"> | string
     sender?: StringWithAggregatesFilter<"DirectPayment"> | string
     senderCountry?: StringWithAggregatesFilter<"DirectPayment"> | string
@@ -51923,6 +52004,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
+    settlementMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    approvalParties?: StringNullableListFilter<"InstitutionEscrow">
+    releaseConditions?: StringNullableListFilter<"InstitutionEscrow">
+    approvalInstructions?: StringNullableFilter<"InstitutionEscrow"> | string | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -51956,6 +52042,11 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrderInput | SortOrder
+    settlementMode?: SortOrderInput | SortOrder
+    releaseMode?: SortOrderInput | SortOrder
+    approvalParties?: SortOrder
+    releaseConditions?: SortOrder
+    approvalInstructions?: SortOrderInput | SortOrder
     escrowPda?: SortOrderInput | SortOrder
     vaultPda?: SortOrderInput | SortOrder
     nonceAccount?: SortOrderInput | SortOrder
@@ -51992,6 +52083,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
+    settlementMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    approvalParties?: StringNullableListFilter<"InstitutionEscrow">
+    releaseConditions?: StringNullableListFilter<"InstitutionEscrow">
+    approvalInstructions?: StringNullableFilter<"InstitutionEscrow"> | string | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -52025,6 +52121,11 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrderInput | SortOrder
+    settlementMode?: SortOrderInput | SortOrder
+    releaseMode?: SortOrderInput | SortOrder
+    approvalParties?: SortOrder
+    releaseConditions?: SortOrder
+    approvalInstructions?: SortOrderInput | SortOrder
     escrowPda?: SortOrderInput | SortOrder
     vaultPda?: SortOrderInput | SortOrder
     nonceAccount?: SortOrderInput | SortOrder
@@ -52061,6 +52162,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusWithAggregatesFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableWithAggregatesFilter<"InstitutionEscrow"> | number | null
+    settlementMode?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    releaseMode?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    approvalParties?: StringNullableListFilter<"InstitutionEscrow">
+    releaseConditions?: StringNullableListFilter<"InstitutionEscrow">
+    approvalInstructions?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     escrowPda?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     nonceAccount?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
@@ -55908,6 +56014,7 @@ export namespace Prisma {
 
   export type DirectPaymentCreateInput = {
     id?: string
+    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -55931,6 +56038,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedCreateInput = {
     id?: string
+    paymentCode?: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -55954,6 +56062,7 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -55977,6 +56086,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     clientId?: StringFieldUpdateOperationsInput | string
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
@@ -56000,6 +56110,7 @@ export namespace Prisma {
 
   export type DirectPaymentCreateManyInput = {
     id?: string
+    paymentCode?: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -56023,6 +56134,7 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -56045,6 +56157,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     clientId?: StringFieldUpdateOperationsInput | string
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
@@ -56427,6 +56540,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -56460,6 +56578,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -56491,6 +56614,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -56524,6 +56652,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -56556,6 +56689,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -56583,6 +56721,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -56611,6 +56754,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60062,6 +60210,7 @@ export namespace Prisma {
 
   export type DirectPaymentCountOrderByAggregateInput = {
     id?: SortOrder
+    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -60091,6 +60240,7 @@ export namespace Prisma {
 
   export type DirectPaymentMaxOrderByAggregateInput = {
     id?: SortOrder
+    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -60114,6 +60264,7 @@ export namespace Prisma {
 
   export type DirectPaymentMinOrderByAggregateInput = {
     id?: SortOrder
+    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -60336,6 +60487,11 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    approvalParties?: SortOrder
+    releaseConditions?: SortOrder
+    approvalInstructions?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
     nonceAccount?: SortOrder
@@ -60370,6 +60526,9 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    approvalInstructions?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
     nonceAccount?: SortOrder
@@ -60398,6 +60557,9 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    approvalInstructions?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
     nonceAccount?: SortOrder
@@ -62659,6 +62821,14 @@ export namespace Prisma {
     update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutApiKeysInput, InstitutionClientUpdateWithoutApiKeysInput>, InstitutionClientUncheckedUpdateWithoutApiKeysInput>
   }
 
+  export type InstitutionEscrowCreateapprovalPartiesInput = {
+    set: string[]
+  }
+
+  export type InstitutionEscrowCreatereleaseConditionsInput = {
+    set: string[]
+  }
+
   export type InstitutionClientCreateNestedOneWithoutEscrowsInput = {
     create?: XOR<InstitutionClientCreateWithoutEscrowsInput, InstitutionClientUncheckedCreateWithoutEscrowsInput>
     connectOrCreate?: InstitutionClientCreateOrConnectWithoutEscrowsInput
@@ -62727,6 +62897,16 @@ export namespace Prisma {
 
   export type EnumInstitutionEscrowStatusFieldUpdateOperationsInput = {
     set?: $Enums.InstitutionEscrowStatus
+  }
+
+  export type InstitutionEscrowUpdateapprovalPartiesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type InstitutionEscrowUpdatereleaseConditionsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput = {
@@ -67295,6 +67475,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -67326,6 +67511,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -67661,6 +67851,7 @@ export namespace Prisma {
 
   export type DirectPaymentCreateWithoutClientInput = {
     id?: string
+    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -67683,6 +67874,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedCreateWithoutClientInput = {
     id?: string
+    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -67870,6 +68062,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
+    settlementMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    approvalParties?: StringNullableListFilter<"InstitutionEscrow">
+    releaseConditions?: StringNullableListFilter<"InstitutionEscrow">
+    approvalInstructions?: StringNullableFilter<"InstitutionEscrow"> | string | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -68161,6 +68358,7 @@ export namespace Prisma {
     OR?: DirectPaymentScalarWhereInput[]
     NOT?: DirectPaymentScalarWhereInput | DirectPaymentScalarWhereInput[]
     id?: StringFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableFilter<"DirectPayment"> | string | null
     clientId?: StringFilter<"DirectPayment"> | string
     sender?: StringFilter<"DirectPayment"> | string
     senderCountry?: StringFilter<"DirectPayment"> | string
@@ -71157,6 +71355,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -71189,6 +71392,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -71235,6 +71443,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -71267,6 +71480,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -71297,6 +71515,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -71329,6 +71552,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -71532,6 +71760,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -71564,6 +71797,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -71757,6 +71995,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -71789,6 +72032,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -71992,6 +72240,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -72024,6 +72277,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -72492,6 +72750,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -72524,6 +72787,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -72733,6 +73001,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -72765,6 +73038,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74282,6 +74560,11 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
@@ -74414,6 +74697,7 @@ export namespace Prisma {
 
   export type DirectPaymentCreateManyClientInput = {
     id?: string
+    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -74514,6 +74798,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74545,6 +74834,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74576,6 +74870,11 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74944,6 +75243,7 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -74966,6 +75266,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -74988,6 +75289,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateManyWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string

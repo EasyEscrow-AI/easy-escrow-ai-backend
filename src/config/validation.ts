@@ -165,9 +165,9 @@ export function validateInstitutionEscrowConfig(cfg?: InstitutionEscrowConfig): 
     );
   }
 
-  if (escrowConfig.maxUsdc > 10_000_000) {
+  if (escrowConfig.maxUsdc > 100_000_000) {
     throw new ConfigurationError(
-      `INSTITUTION_ESCROW_MAX_USDC (${escrowConfig.maxUsdc}) exceeds safety limit of 10,000,000 USDC.`
+      `INSTITUTION_ESCROW_MAX_USDC (${escrowConfig.maxUsdc}) exceeds safety limit of 100,000,000 USDC.`
     );
   }
 

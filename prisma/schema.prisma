@@ -1183,6 +1183,13 @@ model InstitutionEscrow {
   settlementAuthority   String                    @map("settlement_authority")
   riskScore             Int?                      @map("risk_score")
 
+  // Settlement & release configuration
+  settlementMode        String?                   @map("settlement_mode") // "escrow" | "direct"
+  releaseMode           String?                   @map("release_mode") // "manual" | "ai"
+  approvalParties       String[]                  @default([]) @map("approval_parties")
+  releaseConditions     String[]                  @default([]) @map("release_conditions")
+  approvalInstructions  String?                   @map("approval_instructions")
+
   // On-chain references
   escrowPda             String?                   @map("escrow_pda")
   vaultPda              String?                   @map("vault_pda")

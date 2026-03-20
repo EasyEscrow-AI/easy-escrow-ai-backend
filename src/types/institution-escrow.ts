@@ -68,6 +68,16 @@ export interface InstitutionEscrowRecord {
   status: InstitutionEscrowStatus;
   settlementAuthority: string;
   riskScore: number | null;
+  /** "escrow" (PDA) or "direct" atomic settlement */
+  settlementMode: string | null;
+  /** "manual" approval or "ai" compliance check */
+  releaseMode: string | null;
+  /** Party IDs who must approve for manual release */
+  approvalParties: string[];
+  /** Condition IDs for AI release */
+  releaseConditions: string[];
+  /** Free-text instructions for manual reviewers */
+  approvalInstructions: string | null;
   escrowPda: string | null;
   vaultPda: string | null;
   nonceAccount: string | null;

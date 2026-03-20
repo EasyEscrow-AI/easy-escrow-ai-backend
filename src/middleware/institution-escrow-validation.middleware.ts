@@ -9,6 +9,8 @@ import { body, param, query } from 'express-validator';
 const SOLANA_ADDRESS_REGEX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const CORRIDOR_REGEX = /^[A-Z]{2}-[A-Z]{2}$/;
 const CONDITION_TYPES = ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'];
+const SETTLEMENT_MODES = ['escrow', 'direct'];
+const RELEASE_MODES = ['manual', 'ai'];
 
 /**
  * Validate create institution escrow request body
@@ -48,6 +50,37 @@ export const validateCreateInstitutionEscrow = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
+  body('settlementMode')
+    .isString()
+    .isIn(SETTLEMENT_MODES)
+    .withMessage(`settlementMode must be one of: ${SETTLEMENT_MODES.join(', ')}`),
+  body('releaseMode')
+    .isString()
+    .isIn(RELEASE_MODES)
+    .withMessage(`releaseMode must be one of: ${RELEASE_MODES.join(', ')}`),
+  body('approvalParties')
+    .optional()
+    .isArray()
+    .withMessage('approvalParties must be an array of strings'),
+  body('approvalParties.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each approvalParties entry must be a non-empty string (max 100 chars)'),
+  body('releaseConditions')
+    .optional()
+    .isArray()
+    .withMessage('releaseConditions must be an array of strings'),
+  body('releaseConditions.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each releaseConditions entry must be a non-empty string (max 100 chars)'),
+  body('approvalInstructions')
+    .optional()
+    .isString()
+    .isLength({ max: 2000 })
+    .withMessage('approvalInstructions must be 2000 characters or less'),
 ];
 
 /**
@@ -88,6 +121,39 @@ export const validateSaveDraft = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
+  body('settlementMode')
+    .optional()
+    .isString()
+    .isIn(SETTLEMENT_MODES)
+    .withMessage(`settlementMode must be one of: ${SETTLEMENT_MODES.join(', ')}`),
+  body('releaseMode')
+    .optional()
+    .isString()
+    .isIn(RELEASE_MODES)
+    .withMessage(`releaseMode must be one of: ${RELEASE_MODES.join(', ')}`),
+  body('approvalParties')
+    .optional()
+    .isArray()
+    .withMessage('approvalParties must be an array of strings'),
+  body('approvalParties.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each approvalParties entry must be a non-empty string (max 100 chars)'),
+  body('releaseConditions')
+    .optional()
+    .isArray()
+    .withMessage('releaseConditions must be an array of strings'),
+  body('releaseConditions.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each releaseConditions entry must be a non-empty string (max 100 chars)'),
+  body('approvalInstructions')
+    .optional()
+    .isString()
+    .isLength({ max: 2000 })
+    .withMessage('approvalInstructions must be 2000 characters or less'),
 ];
 
 /**
@@ -130,6 +196,39 @@ export const validateUpdateDraft = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
+  body('settlementMode')
+    .optional()
+    .isString()
+    .isIn(SETTLEMENT_MODES)
+    .withMessage(`settlementMode must be one of: ${SETTLEMENT_MODES.join(', ')}`),
+  body('releaseMode')
+    .optional()
+    .isString()
+    .isIn(RELEASE_MODES)
+    .withMessage(`releaseMode must be one of: ${RELEASE_MODES.join(', ')}`),
+  body('approvalParties')
+    .optional()
+    .isArray()
+    .withMessage('approvalParties must be an array of strings'),
+  body('approvalParties.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each approvalParties entry must be a non-empty string (max 100 chars)'),
+  body('releaseConditions')
+    .optional()
+    .isArray()
+    .withMessage('releaseConditions must be an array of strings'),
+  body('releaseConditions.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each releaseConditions entry must be a non-empty string (max 100 chars)'),
+  body('approvalInstructions')
+    .optional()
+    .isString()
+    .isLength({ max: 2000 })
+    .withMessage('approvalInstructions must be 2000 characters or less'),
 ];
 
 /**

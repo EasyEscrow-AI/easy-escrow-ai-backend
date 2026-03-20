@@ -188,7 +188,7 @@ EasyEscrow.ai is a Solana-based platform providing trustless escrow services for
 - Platform fees calculated on escrow amount
 - Settlement authority pattern for secure release operations
 - Default escrow expiry: 72 hours (configurable)
-- Amount limits: $100 minimum, $1,000,000 maximum (default)
+- Amount limits: $10 minimum, $100,000,000 maximum (default)
 
 **Platform Architecture:**
 - Backend: Node.js/Express/TypeScript API

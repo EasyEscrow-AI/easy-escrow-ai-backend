@@ -34,6 +34,16 @@ export interface CreateEscrowParams {
   settlementAuthority?: string;
   /** Optional token mint address. Defaults to USDC if omitted. Must be on AMINA-approved whitelist. */
   tokenMint?: string;
+  /** "escrow" (PDA) or "direct" atomic settlement */
+  settlementMode: string;
+  /** "manual" approval or "ai" compliance check */
+  releaseMode: string;
+  /** Party IDs who must approve for manual release */
+  approvalParties?: string[];
+  /** Condition IDs for AI release */
+  releaseConditions?: string[];
+  /** Free-text instructions for manual reviewers */
+  approvalInstructions?: string;
 }
 
 export interface SaveDraftParams {
@@ -45,6 +55,11 @@ export interface SaveDraftParams {
   conditionType?: string;
   settlementAuthority?: string;
   tokenMint?: string;
+  settlementMode?: string;
+  releaseMode?: string;
+  approvalParties?: string[];
+  releaseConditions?: string[];
+  approvalInstructions?: string;
 }
 
 export interface UpdateDraftParams {
@@ -55,6 +70,11 @@ export interface UpdateDraftParams {
   conditionType?: string;
   settlementAuthority?: string;
   tokenMint?: string;
+  settlementMode?: string;
+  releaseMode?: string;
+  approvalParties?: string[];
+  releaseConditions?: string[];
+  approvalInstructions?: string;
 }
 
 export interface CreateEscrowResult {
@@ -124,6 +144,11 @@ export class InstitutionEscrowService {
       expiryHours = 72,
       settlementAuthority,
       tokenMint,
+      settlementMode,
+      releaseMode,
+      approvalParties,
+      releaseConditions,
+      approvalInstructions,
     } = params;
 
     // 1. Validate client is verified
@@ -172,8 +197,8 @@ export class InstitutionEscrowService {
       resolvedMint = await tokenWhitelist.getDefaultMint();
     }
 
-    // 5. Calculate platform fee (basis points from config, default 50 bps = 0.5%)
-    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '50', 10);
+    // 5. Calculate platform fee (basis points from config, default 20 bps = 0.2%)
+    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10);
     const platformFee = (amount * feeBps) / 10000;
 
     // 6. Determine status based on compliance
@@ -222,6 +247,11 @@ export class InstitutionEscrowService {
         riskScore: complianceResult.riskScore,
         nonceAccount,
         expiresAt,
+        settlementMode,
+        releaseMode,
+        approvalParties: approvalParties || [],
+        releaseConditions: releaseConditions || [],
+        approvalInstructions,
       },
     });
 
@@ -282,7 +312,7 @@ export class InstitutionEscrowService {
    * Only payerWallet is required; other fields can be filled in later.
    */
   async saveDraft(params: SaveDraftParams): Promise<Record<string, unknown>> {
-    const { clientId, payerWallet, recipientWallet, amount, corridor, conditionType, settlementAuthority, tokenMint } = params;
+    const { clientId, payerWallet, recipientWallet, amount, corridor, conditionType, settlementAuthority, tokenMint, settlementMode, releaseMode, approvalParties, releaseConditions, approvalInstructions } = params;
 
     // Validate client exists and is active
     const client = await this.prisma.institutionClient.findUnique({
@@ -305,7 +335,7 @@ export class InstitutionEscrowService {
     }
 
     const resolvedAmount = amount || 0;
-    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '50', 10);
+    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10);
     const platformFee = (resolvedAmount * feeBps) / 10000;
 
     const escrow = await this.prisma.institutionEscrow.create({
@@ -323,6 +353,11 @@ export class InstitutionEscrowService {
         status: 'DRAFT',
         settlementAuthority: settlementAuthority || client.primaryWallet || payerWallet,
         expiresAt: null,
+        settlementMode: settlementMode || null,
+        releaseMode: releaseMode || null,
+        approvalParties: approvalParties || [],
+        releaseConditions: releaseConditions || [],
+        approvalInstructions: approvalInstructions || null,
       },
     });
 
@@ -361,7 +396,7 @@ export class InstitutionEscrowService {
 
     if (params.amount !== undefined) {
       updateData.amount = params.amount;
-      const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '50', 10);
+      const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10);
       updateData.platformFee = (params.amount * feeBps) / 10000;
     }
 
@@ -370,6 +405,12 @@ export class InstitutionEscrowService {
       await tokenWhitelist.validateMint(params.tokenMint);
       updateData.usdcMint = params.tokenMint;
     }
+
+    if (params.settlementMode !== undefined) updateData.settlementMode = params.settlementMode;
+    if (params.releaseMode !== undefined) updateData.releaseMode = params.releaseMode;
+    if (params.approvalParties !== undefined) updateData.approvalParties = params.approvalParties;
+    if (params.releaseConditions !== undefined) updateData.releaseConditions = params.releaseConditions;
+    if (params.approvalInstructions !== undefined) updateData.approvalInstructions = params.approvalInstructions;
 
     const updated = await this.prisma.institutionEscrow.update({
       where: { escrowId },
@@ -1059,8 +1100,11 @@ export class InstitutionEscrowService {
       statusLabel: InstitutionEscrowService.STATUS_LABELS[e.status] || e.status,
       settlementAuthority: e.settlementAuthority,
       riskScore: e.riskScore,
-      settlementMode: 'escrow',
-      releaseMode: e.conditionType === 'ADMIN_RELEASE' ? 'manual' : e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual',
+      settlementMode: e.settlementMode || 'escrow',
+      releaseMode: e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual'),
+      approvalParties: e.approvalParties || [],
+      releaseConditions: e.releaseConditions || [],
+      approvalInstructions: e.approvalInstructions || null,
       escrowPda: e.escrowPda,
       vaultPda: e.vaultPda,
       nonceAccount: e.nonceAccount,

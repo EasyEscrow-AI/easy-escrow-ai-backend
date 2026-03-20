@@ -109,7 +109,7 @@ export class InstitutionBootstrapService {
           minUsdc: escrowConfig.minUsdc,
           maxUsdc: escrowConfig.maxUsdc,
           defaultExpiryHours: escrowConfig.defaultExpiryHours,
-          feeBps: parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '50', 10),
+          feeBps: parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10),
         },
       },
       enums: {

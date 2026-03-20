@@ -3,6 +3,7 @@
  *
  * GET    /api/v1/institution/settings                  → getSettings
  * PUT    /api/v1/institution/settings                  → updateSettings
+ * PATCH  /api/v1/institution/settings                  → updateSettings (partial)
  * PUT    /api/v1/institution/settings/wallets          → updateWallets (legacy flat)
  * PUT    /api/v1/institution/settings/wallets/manage   → addOrUpdateWallet (new model)
  * GET    /api/v1/institution/settings/wallets/list     → listWallets
@@ -57,6 +58,34 @@ router.get(
 
 // PUT /api/v1/institution/settings
 router.put(
+  '/api/v1/institution/settings',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getInstitutionClientSettingsService();
+      const settings = await service.updateSettings(
+        req.institutionClient!.clientId,
+        req.body,
+      );
+
+      res.status(200).json({
+        success: true,
+        data: settings,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        error: 'Update Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
+// PATCH /api/v1/institution/settings — partial update (same logic as PUT)
+router.patch(
   '/api/v1/institution/settings',
   standardRateLimiter,
   requireInstitutionAuth,
