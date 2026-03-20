@@ -6368,6 +6368,11 @@ components:
             type: string
           description: Field names the AI evaluated for this section
           example: ["payerWallet", "client.kycStatus", "client.riskRating"]
+        recommended_corridor:
+          type: string
+          nullable: true
+          description: Only present on the corridor section. Best corridor code from available corridors, or null if none available.
+          example: "SG-CH"
 
     InstitutionAccount:
       type: object

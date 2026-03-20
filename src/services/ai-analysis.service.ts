@@ -282,6 +282,42 @@ export class AiAnalysisService {
     }
     const resolvedEscrowId = escrow.escrowId;
 
+    // Fetch available corridors from the client's country
+    let availableCorridors: Array<{
+      code: string;
+      riskLevel: string;
+      minAmount: number;
+      maxAmount: number;
+    }> = [];
+    try {
+      const clientCountry = escrow.client?.country;
+      if (clientCountry) {
+        const corridors = await this.prisma.institutionCorridor.findMany({
+          where: {
+            sourceCountry: clientCountry,
+            status: 'ACTIVE',
+          },
+          select: {
+            code: true,
+            sourceCountry: true,
+            destCountry: true,
+            riskLevel: true,
+            minAmount: true,
+            maxAmount: true,
+          },
+          orderBy: { riskLevel: 'asc' },
+        });
+        availableCorridors = corridors.map((c) => ({
+          code: c.code,
+          riskLevel: c.riskLevel,
+          minAmount: Number(c.minAmount),
+          maxAmount: Number(c.maxAmount),
+        }));
+      }
+    } catch {
+      // Non-critical — continue without corridor data
+    }
+
     // Check cache
     const cacheKey = `${AI_CACHE_PREFIX}escrow:${resolvedEscrowId}`;
     try {
@@ -349,6 +385,7 @@ export class AiAnalysisService {
         riskRating: (escrow.client as any).riskRating,
         entityType: (escrow.client as any).entityType,
       },
+      availableCorridors: availableCorridors.length > 0 ? availableCorridors : null,
     };
 
     // Anonymize sensitive fields before sending to AI
@@ -369,7 +406,7 @@ STATUS RULES per section:
 SECTION ANALYSIS RULES:
 1. from_account: Check payerWallet exists, client.kycStatus=VERIFIED (fail if not), client.kybStatus (warn if not VERIFIED), client.riskRating (fail if HIGH/CRITICAL), client.country jurisdiction risk. Pending if payerWallet is null.
 2. to_account: Check recipientWallet is set (pending if null), different from payerWallet (fail if same). Note if wallet appears to be an exchange or contract address.
-3. corridor: Check corridor format (XX-XX), assess jurisdiction pair risk (e.g. sanctioned countries=fail, high-risk pairs=warning). Pending if corridor is null.
+3. corridor: The data includes "availableCorridors" — an array of active corridors from the payer's country with riskLevel and amount limits (queried from the database), or null if none exist. If corridor is null (DRAFT): check availableCorridors and recommend the best one (lowest riskLevel that fits the amount). If no corridors are available, status=fail with "No active corridors available for this country." If corridor IS set: verify it exists in availableCorridors (fail if not found), check riskLevel (HIGH=warning), check amount is within min/max limits. Include the recommended or validated corridor code in findings.
 4. amount: Check amount > 0 (fail if 0 or null), flag amounts > 100000 as warning, flag > 1000000 as high scrutiny. Check platformFee is reasonable. Pending if amount is null/0.
 5. settlement: Check tokenMint is a known stablecoin (USDC/USDT/EURC/PYUSD). Report deposit status (hasDeposit, depositTxSignature). Note escrowPda and on-chain readiness. Pending if no tokenMint.
 6. release: Check conditionType is set (pending if null). ADMIN_RELEASE=pass, TIME_LOCK=pass with note, COMPLIANCE_CHECK=pass. Verify settlementAuthority is set (warn if missing for non-DRAFT). Note if settlementAuthority differs from payerWallet.
@@ -386,7 +423,8 @@ RESPONSE FORMAT (valid JSON only, no other text):
       "status": "<pass|warning|fail|pending>",
       "title": "<display title>",
       "findings": "<1-2 concise sentences>",
-      "checked_fields": ["<field names this section evaluated>"]
+      "checked_fields": ["<field names this section evaluated>"],
+      "recommended_corridor": "<only for corridor section: best corridor code from availableCorridors, or null>"
     }
   },
   "extracted_fields": {
