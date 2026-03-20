@@ -36,6 +36,7 @@ import institutionReportsRoutes from './institution-reports.routes';
 import institutionDirectPaymentRoutes from './institution-direct-payment.routes';
 import institutionReferenceRoutes from './institution-reference.routes';
 import institutionBootstrapRoutes from './institution-bootstrap.routes';
+import institutionSearchRoutes from './institution-search.routes';
 
 export {
   expiryCancellationRoutes,
@@ -69,4 +70,5 @@ export {
   institutionDirectPaymentRoutes,
   institutionReferenceRoutes,
   institutionBootstrapRoutes,
+  institutionSearchRoutes,
 };

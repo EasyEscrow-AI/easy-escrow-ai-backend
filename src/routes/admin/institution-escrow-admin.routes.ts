@@ -216,7 +216,7 @@ router.post(
   standardRateLimiter,
   requireAdminOrApiKey,
   validatePauseEscrow,
-  async (req: Request, res: Response) => {
+  async (req: AdminAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       res.status(400).json({
@@ -229,10 +229,15 @@ router.post(
 
     try {
       const pauseService = getInstitutionEscrowPauseService();
-      const adminIdentifier =
-        (req as AdminAuthenticatedRequest).adminUser?.email ||
-        (req as AdminAuthenticatedRequest).apiKeyFingerprint ||
-        'unknown';
+      const adminIdentifier = req.adminUser?.email || req.apiKeyFingerprint;
+      if (!adminIdentifier) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Cannot determine admin identity for audit trail',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       const state = await pauseService.pause(req.body.reason, adminIdentifier);
 
       res.status(201).json({
@@ -263,13 +268,18 @@ router.post(
   '/api/admin/institution-escrow/unpause',
   standardRateLimiter,
   requireAdminOrApiKey,
-  async (req: Request, res: Response) => {
+  async (req: AdminAuthenticatedRequest, res: Response) => {
     try {
       const pauseService = getInstitutionEscrowPauseService();
-      const adminIdentifier =
-        (req as AdminAuthenticatedRequest).adminUser?.email ||
-        (req as AdminAuthenticatedRequest).apiKeyFingerprint ||
-        'unknown';
+      const adminIdentifier = req.adminUser?.email || req.apiKeyFingerprint;
+      if (!adminIdentifier) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Cannot determine admin identity for audit trail',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       await pauseService.unpause(adminIdentifier);
 
       res.status(200).json({

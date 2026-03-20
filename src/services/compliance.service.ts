@@ -64,10 +64,15 @@ export class ComplianceService {
       });
       if (setting && setting.value) {
         const val = setting.value as Record<string, unknown>;
-        this.cachedThresholds = {
-          rejectScore: typeof val.rejectScore === 'number' ? val.rejectScore : DEFAULT_THRESHOLDS.rejectScore,
-          holdScore: typeof val.holdScore === 'number' ? val.holdScore : DEFAULT_THRESHOLDS.holdScore,
-        };
+        const clamp = (v: unknown, fallback: number) =>
+          typeof v === 'number' && v >= 0 && v <= 100 ? v : fallback;
+        let rejectScore = clamp(val.rejectScore, DEFAULT_THRESHOLDS.rejectScore);
+        let holdScore = clamp(val.holdScore, DEFAULT_THRESHOLDS.holdScore);
+        if (holdScore >= rejectScore) {
+          rejectScore = DEFAULT_THRESHOLDS.rejectScore;
+          holdScore = DEFAULT_THRESHOLDS.holdScore;
+        }
+        this.cachedThresholds = { rejectScore, holdScore };
       } else {
         this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
       }
