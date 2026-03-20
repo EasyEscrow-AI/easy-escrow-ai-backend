@@ -54,7 +54,7 @@ export interface InstitutionEscrowRecord {
   clientId: string;
   /** UUID used for on-chain PDA derivation */
   escrowId: string;
-  /** Human-readable escrow code: EE-XXXX-XXXX */
+  /** Human-readable escrow code: EE-XXX-XXX */
   escrowCode: string;
   payerWallet: string;
   recipientWallet: string;

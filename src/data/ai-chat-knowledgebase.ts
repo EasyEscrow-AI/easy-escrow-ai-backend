@@ -200,7 +200,7 @@ EasyEscrow.ai is a Solana-based platform providing trustless escrow services for
 - Deployment: DigitalOcean App Platform
 
 **Escrow Codes:**
-- Each institution escrow has a human-readable code: EE-XXXX-XXXX
+- Each institution escrow has a human-readable code: EE-XXX-XXX
 - This code can be used to look up escrow details
 - Separate from the internal UUID and on-chain PDA
 

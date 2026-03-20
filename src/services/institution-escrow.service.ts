@@ -96,15 +96,15 @@ export class InstitutionEscrowService {
   }
 
   /**
-   * Generate a human-readable escrow code in EE-XXXX-XXXX format.
+   * Generate a human-readable escrow code in EE-XXX-XXX format.
    * Uses uppercase alphanumeric characters (excludes ambiguous: 0/O, 1/I/L).
    */
   private generateEscrowCode(): string {
     const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; // 30 chars
-    const bytes = crypto.randomBytes(8);
+    const bytes = crypto.randomBytes(6);
     let code = 'EE-';
-    for (let i = 0; i < 8; i++) {
-      if (i === 4) code += '-';
+    for (let i = 0; i < 6; i++) {
+      if (i === 3) code += '-';
       code += chars[bytes[i] % chars.length];
     }
     return code;
@@ -970,7 +970,7 @@ export class InstitutionEscrowService {
 
   /**
    * Internal: Get escrow with client ownership check.
-   * Accepts either escrowCode (EE-XXXX-XXXX) or escrowId (UUID).
+   * Accepts either escrowCode (EE-XXX-XXX) or escrowId (UUID).
    * @param allowCounterpartyRead - When true, counterparties can view but not mutate.
    *   Mutation callers (recordDeposit, releaseFunds, cancelEscrow) pass false.
    */

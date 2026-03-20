@@ -1021,6 +1021,69 @@ model InstitutionAccount {
   @@map("institution_accounts")
 }
 
+// Institution branch (sub-entity of client for geographic presence)
+model InstitutionBranch {
+  id               String   @id @default(uuid())
+  clientId         String   @map("client_id")
+  name             String
+  city             String
+  country          String
+  countryCode      String   @map("country_code") // ISO 3166-1 alpha-2
+  address          String?
+  timezone         String   @default("UTC")
+  riskScore        Int      @default(0) @map("risk_score")
+  complianceStatus String   @default("ACTIVE") @map("compliance_status") // ACTIVE, SUSPENDED, UNDER_REVIEW, BLOCKED
+  complianceNote   String?  @map("compliance_note")
+  regulatoryBody   String?  @map("regulatory_body")
+  isSanctioned     Boolean  @default(false) @map("is_sanctioned")
+  sanctionReason   String?  @map("sanction_reason")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  client   InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  accounts InstitutionAccount[]
+
+  @@index([clientId])
+  @@index([countryCode])
+  @@index([complianceStatus])
+  @@map("institution_branches")
+}
+
+// Direct payments (non-escrow transfers between institutions)
+model DirectPayment {
+  id                String    @id @default(uuid())
+  paymentCode       String?   @unique @map("payment_code") // Human-readable ID: EE-XXX-XXX
+  clientId          String    @map("client_id")
+  sender            String    // sender name/label
+  senderCountry     String    @map("sender_country")
+  senderWallet      String    @map("sender_wallet")
+  recipient         String    // recipient name
+  recipientCountry  String    @map("recipient_country")
+  recipientWallet   String    @map("recipient_wallet")
+  amount            Decimal   @db.Decimal(20, 6)
+  currency          String    @default("USDC")
+  corridor          String
+  status            String    @default("processing") // completed, processing, failed
+  txHash            String?   @map("tx_hash")
+  platformFee       Decimal   @default(0) @map("platform_fee") @db.Decimal(20, 6)
+  riskScore         Int?      @map("risk_score")
+  settlementMode    String    @default("direct") @map("settlement_mode")
+  releaseMode       String    @default("manual") @map("release_mode")
+  settledAt         DateTime? @map("settled_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([paymentCode])
+  @@index([status])
+  @@index([corridor])
+  @@index([createdAt])
+  @@map("direct_payments")
+}
+
 // Refresh token storage (hashed)
 model InstitutionRefreshToken {
   id          String    @id @default(uuid())
@@ -1096,7 +1159,7 @@ model InstitutionApiKey {
 model InstitutionEscrow {
   id                    String                    @id @default(uuid())
   escrowId              String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
-  escrowCode            String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
+  escrowCode            String                    @unique @map("escrow_code") // Human-readable ID: EE-XXX-XXX
   clientId              String                    @map("client_id")
   payerWallet           String                    @map("payer_wallet")
   recipientWallet       String?                   @map("recipient_wallet")

@@ -123,7 +123,7 @@ const CHAT_TOOLS: Anthropic.Tool[] = [
         },
         escrow_code: {
           type: 'string',
-          description: 'Search by escrow code (e.g. "EE-XXXX-XXXX"). Partial match supported.',
+          description: 'Search by escrow code (e.g. "EE-XXX-XXX"). Partial match supported.',
         },
         min_amount: {
           type: 'number',
@@ -144,13 +144,13 @@ const CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: 'get_escrow_details',
     description:
-      'Get detailed information about a specific escrow by its escrow code (e.g. "EE-XXXX-XXXX") or escrow ID. Use this when the user asks about a particular escrow.',
+      'Get detailed information about a specific escrow by its escrow code (e.g. "EE-XXX-XXX") or escrow ID. Use this when the user asks about a particular escrow.',
     input_schema: {
       type: 'object' as const,
       properties: {
         escrow_code: {
           type: 'string',
-          description: 'The escrow code (e.g. "EE-XXXX-XXXX") or escrow ID',
+          description: 'The escrow code (e.g. "EE-XXX-XXX") or escrow ID',
         },
       },
       required: ['escrow_code'],
