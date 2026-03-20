@@ -282,6 +282,42 @@ export class AiAnalysisService {
     }
     const resolvedEscrowId = escrow.escrowId;
 
+    // Fetch available corridors from the client's country
+    let availableCorridors: Array<{
+      code: string;
+      riskLevel: string;
+      minAmount: number;
+      maxAmount: number;
+    }> = [];
+    try {
+      const clientCountry = escrow.client?.country;
+      if (clientCountry) {
+        const corridors = await this.prisma.institutionCorridor.findMany({
+          where: {
+            sourceCountry: clientCountry,
+            status: 'ACTIVE',
+          },
+          select: {
+            code: true,
+            sourceCountry: true,
+            destCountry: true,
+            riskLevel: true,
+            minAmount: true,
+            maxAmount: true,
+          },
+          orderBy: { riskLevel: 'asc' },
+        });
+        availableCorridors = corridors.map((c) => ({
+          code: c.code,
+          riskLevel: c.riskLevel,
+          minAmount: Number(c.minAmount),
+          maxAmount: Number(c.maxAmount),
+        }));
+      }
+    } catch {
+      // Non-critical — continue without corridor data
+    }
+
     // Check cache
     const cacheKey = `${AI_CACHE_PREFIX}escrow:${resolvedEscrowId}`;
     try {
@@ -312,14 +348,17 @@ export class AiAnalysisService {
     const client = this.getAnthropicClient();
     const anonymizer = anonymize ? new DataAnonymizer() : null;
 
-    // Build escrow summary for AI
+    // Build escrow summary for AI — include all fields for step-by-step analysis
     const escrowSummary: Record<string, unknown> = {
       escrowId: escrow.escrowId,
+      escrowCode: escrow.escrowCode,
       status: escrow.status,
       amount: Number(escrow.amount),
       platformFee: Number(escrow.platformFee),
+      tokenMint: escrow.usdcMint,
       corridor: escrow.corridor,
       conditionType: escrow.conditionType,
+      settlementAuthority: escrow.settlementAuthority,
       riskScore: escrow.riskScore,
       payerWallet: escrow.payerWallet,
       recipientWallet: escrow.recipientWallet,
@@ -332,6 +371,8 @@ export class AiAnalysisService {
       fundedAt: escrow.fundedAt?.toISOString() || null,
       resolvedAt: escrow.resolvedAt?.toISOString() || null,
       depositTxSignature: escrow.depositTxSignature,
+      escrowPda: escrow.escrowPda,
+      nonceAccount: escrow.nonceAccount,
       client: {
         companyName: escrow.client.companyName,
         legalName: escrow.client.legalName,
@@ -344,6 +385,7 @@ export class AiAnalysisService {
         riskRating: (escrow.client as any).riskRating,
         entityType: (escrow.client as any).entityType,
       },
+      availableCorridors: availableCorridors.length > 0 ? availableCorridors : null,
     };
 
     // Anonymize sensitive fields before sending to AI
@@ -351,36 +393,58 @@ export class AiAnalysisService {
       ? anonymizer.anonymizeObject(escrowSummary, ESCROW_SENSITIVE_FIELDS)
       : escrowSummary;
 
-    const systemPrompt = `You are EasyEscrow AI, an escrow compliance analyst. Analyze the following institutional escrow transaction and provide a comprehensive risk assessment.${anonymize ? '\n\nNote: Some fields have been tokenized for privacy (e.g. [COMPANY_1], [WALLET_1]). Reference these tokens in your analysis — they will be resolved to real values after.' : ''}
+    const systemPrompt = `You are EasyEscrow AI, a compliance analyst for cross-border stablecoin escrow payments on Solana.${anonymize ? ' Tokenized fields (e.g. [COMPANY_1], [WALLET_1]) will be resolved after — reference them as-is.' : ''}
 
-Your response MUST be valid JSON with this exact structure:
+Analyze the escrow JSON and return a step-by-step compliance assessment. The escrow may be DRAFT (partial data) or any later state. Use "pending" for sections where required data is null/missing.
+
+STATUS RULES per section:
+- "pass": No issues found, data looks compliant
+- "warning": Minor concerns or unusual patterns, but not blocking
+- "fail": Compliance risk identified, requires attention
+- "pending": Required data for this section is null/not yet provided
+
+SECTION ANALYSIS RULES:
+1. from_account: Check payerWallet exists, client.kycStatus=VERIFIED (fail if not), client.kybStatus (warn if not VERIFIED), client.riskRating (fail if HIGH/CRITICAL), client.country jurisdiction risk. Pending if payerWallet is null.
+2. to_account: Check recipientWallet is set (pending if null), different from payerWallet (fail if same). Note if wallet appears to be an exchange or contract address.
+3. corridor: The data includes "availableCorridors" — an array of active corridors from the payer's country with riskLevel and amount limits (queried from the database), or null if none exist. If corridor is null (DRAFT): check availableCorridors and recommend the best one (lowest riskLevel that fits the amount). If no corridors are available, status=fail with "No active corridors available for this country." If corridor IS set: verify it exists in availableCorridors (fail if not found), check riskLevel (HIGH=warning), check amount is within min/max limits. Include the recommended or validated corridor code in findings.
+4. amount: Check amount > 0 (fail if 0 or null), flag amounts > 100000 as warning, flag > 1000000 as high scrutiny. Check platformFee is reasonable. Pending if amount is null/0.
+5. settlement: Check tokenMint is a known stablecoin (USDC/USDT/EURC/PYUSD). Report deposit status (hasDeposit, depositTxSignature). Note escrowPda and on-chain readiness. Pending if no tokenMint.
+6. release: Check conditionType is set (pending if null). ADMIN_RELEASE=pass, TIME_LOCK=pass with note, COMPLIANCE_CHECK=pass. Verify settlementAuthority is set (warn if missing for non-DRAFT). Note if settlementAuthority differs from payerWallet.
+7. advanced: Check expiresAt is set and reasonable (warn if <24h or >90 days from now). Note fileCount (warn if 0 supporting docs for amounts >50000). Note nonceAccount (pass if assigned). Pending if expiresAt is null on non-DRAFT.
+8. overview: Aggregate all sections. Count pass/warning/fail/pending. Give a 1-sentence compliance verdict. Status = "fail" if ANY section is "fail", "warning" if any "warning", "pass" if all pass/pending.
+
+RESPONSE FORMAT (valid JSON only, no other text):
 {
-  "risk_score": <number 0-100>,
+  "risk_score": <0-100>,
   "recommendation": "<APPROVE|REVIEW|REJECT>",
-  "summary": "<2-4 sentence human-readable summary of the escrow analysis>",
+  "summary": "<1 sentence: e.g. 'Compliant SG-CH corridor escrow with verified KYC — no issues found.'>",
+  "sections": {
+    "<section_key>": {
+      "status": "<pass|warning|fail|pending>",
+      "title": "<display title>",
+      "findings": "<1-2 concise sentences>",
+      "checked_fields": ["<field names this section evaluated>"],
+      "recommended_corridor": "<only for corridor section: best corridor code from availableCorridors, or null>"
+    }
+  },
   "extracted_fields": {
     "escrow_status": "<string>",
-    "amount_usd": <number>,
-    "corridor": "<string>",
-    "condition_type": "<string>",
+    "amount_usd": <number|null>,
+    "corridor": "<string|null>",
+    "condition_type": "<string|null>",
     "client_tier": "<string>",
     "kyc_status": "<string>",
-    "days_until_expiry": <number>,
+    "days_until_expiry": <number|null>,
     "has_supporting_documents": <boolean>,
     "deposit_confirmed": <boolean>
   },
-  "factors": [
-    {"name": "<factor_name>", "weight": <0-1>, "value": <0-100>}
-  ],
-  "details": "<brief explanation of risk factors>"
-}
-
-Consider: corridor risk, amount size, client tier/KYC status, document support, escrow timing, condition type.
-Respond with ONLY the JSON object, no additional text.`;
+  "factors": [{"name": "<string>", "weight": <0-1>, "value": <0-100>}],
+  "details": "<brief risk explanation>"
+}`;
 
     const response = await client.messages.create({
       model,
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [{
         role: 'user',
@@ -393,7 +457,7 @@ Respond with ONLY the JSON object, no additional text.`;
       .map(block => block.text)
       .join('');
 
-    let result: AiAnalysisResult & { summary: string };
+    let result: AiAnalysisResult & { summary: string; sections?: Record<string, unknown> };
     try {
       const parsed = JSON.parse(responseText);
       result = {
@@ -409,6 +473,7 @@ Respond with ONLY the JSON object, no additional text.`;
           : 'REVIEW',
         details: parsed.details || 'Analysis complete',
         summary: parsed.summary || '',
+        sections: parsed.sections || undefined,
       };
     } catch {
       result = {
