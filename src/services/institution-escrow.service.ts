@@ -815,20 +815,13 @@ export class InstitutionEscrowService {
    * Get a single escrow by code or ID (scoped to client)
    */
   async getEscrow(clientId: string, idOrCode: string): Promise<Record<string, unknown>> {
-    // Try Redis cache first (cache keyed by escrowCode)
-    try {
-      const cached = await redisClient.get(`${ESCROW_CACHE_PREFIX}${idOrCode}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.clientId === clientId) {
-          return this.formatEscrow(parsed);
-        }
-      }
-    } catch {
-      // Cache miss
-    }
-
+    // Skip cache for detail view — we need enriched data from DB
     const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
+    // Counterparty requests get the base format (no AI analyses, audit logs)
+    const isOwner = escrow.clientId === clientId;
+    if (isOwner) {
+      return this.formatEscrowEnriched(escrow);
+    }
     return this.formatEscrow(escrow);
   }
 
@@ -962,6 +955,21 @@ export class InstitutionEscrowService {
   /**
    * Format escrow for API response
    */
+  private static STATUS_LABELS: Record<string, string> = {
+    DRAFT: 'Draft',
+    CREATED: 'Awaiting Deposit',
+    FUNDED: 'Funded — Awaiting Release',
+    COMPLIANCE_HOLD: 'Compliance Review',
+    RELEASING: 'Releasing',
+    RELEASED: 'Released',
+    INSUFFICIENT_FUNDS: 'Insufficient Funds',
+    COMPLETE: 'Complete',
+    CANCELLING: 'Cancelling',
+    CANCELLED: 'Cancelled',
+    EXPIRED: 'Expired',
+    FAILED: 'Failed',
+  };
+
   private formatEscrow(escrow: Record<string, unknown>): Record<string, unknown> {
     const e = escrow as any;
     return {
@@ -977,8 +985,11 @@ export class InstitutionEscrowService {
       corridor: e.corridor,
       conditionType: e.conditionType,
       status: e.status,
+      statusLabel: InstitutionEscrowService.STATUS_LABELS[e.status] || e.status,
       settlementAuthority: e.settlementAuthority,
       riskScore: e.riskScore,
+      settlementMode: 'escrow',
+      releaseMode: e.conditionType === 'ADMIN_RELEASE' ? 'manual' : e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual',
       escrowPda: e.escrowPda,
       vaultPda: e.vaultPda,
       nonceAccount: e.nonceAccount,
@@ -991,6 +1002,81 @@ export class InstitutionEscrowService {
       resolvedAt: e.resolvedAt,
       fundedAt: e.fundedAt,
     };
+  }
+
+  private async formatEscrowEnriched(escrow: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const base = this.formatEscrow(escrow);
+    const e = escrow as any;
+
+    const [corridorRecord, client, aiAnalyses, auditLogs] = await Promise.all([
+      e.corridor
+        ? this.prisma.institutionCorridor.findUnique({ where: { code: e.corridor } })
+        : Promise.resolve(null),
+      this.prisma.institutionClient.findUnique({
+        where: { id: e.clientId },
+        select: { companyName: true, country: true, primaryWallet: true },
+      }),
+      this.prisma.institutionAiAnalysis.findMany({
+        where: { escrowId: e.escrowId },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, analysisType: true, riskScore: true, recommendation: true, summary: true, factors: true, createdAt: true },
+      }),
+      this.prisma.institutionAuditLog.findMany({
+        where: { escrowId: e.escrowId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        select: { id: true, action: true, actor: true, details: true, createdAt: true },
+      }),
+    ]);
+
+    if (corridorRecord) {
+      base.corridor = {
+        code: corridorRecord.code,
+        name: `${corridorRecord.sourceCountry} → ${corridorRecord.destCountry}`,
+        sourceCountry: corridorRecord.sourceCountry,
+        destCountry: corridorRecord.destCountry,
+        riskLevel: corridorRecord.riskLevel,
+        requiredDocuments: corridorRecord.requiredDocuments,
+        compliance: corridorRecord.status,
+      };
+    }
+
+    base.sender = {
+      name: client?.companyName || 'Unknown',
+      wallet: e.payerWallet,
+      country: client?.country || null,
+    };
+
+    const recipientClient = e.recipientWallet
+      ? await this.prisma.institutionClient.findFirst({
+          where: {
+            OR: [
+              { primaryWallet: e.recipientWallet },
+              { settledWallets: { has: e.recipientWallet } },
+            ],
+          },
+          select: { companyName: true, country: true },
+        })
+      : null;
+
+    base.recipient = {
+      name: recipientClient?.companyName || 'External Wallet',
+      wallet: e.recipientWallet,
+      country: recipientClient?.country || null,
+    };
+
+    base.complianceChecks = aiAnalyses.map(a => ({
+      id: a.id, type: a.analysisType, riskScore: a.riskScore,
+      recommendation: a.recommendation, summary: a.summary,
+      factors: a.factors, createdAt: a.createdAt,
+    }));
+
+    base.activityLog = auditLogs.map(l => ({
+      id: l.id, action: l.action, actor: l.actor,
+      details: l.details, createdAt: l.createdAt,
+    }));
+
+    return base;
   }
 }
 

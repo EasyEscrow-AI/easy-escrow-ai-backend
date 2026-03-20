@@ -148,7 +148,17 @@ router.get(
   },
 );
 
-// GET /api/v1/institution/clients/:id/profile — Public profile
+// Country name → ISO code mapping (common countries)
+const COUNTRY_CODE_MAP: Record<string, string> = {
+  'switzerland': 'CH', 'singapore': 'SG', 'united states': 'US',
+  'united kingdom': 'GB', 'united arab emirates': 'AE', 'hong kong': 'HK',
+  'germany': 'DE', 'france': 'FR', 'japan': 'JP', 'australia': 'AU',
+  'canada': 'CA', 'brazil': 'BR', 'india': 'IN', 'china': 'CN',
+  'south korea': 'KR', 'mexico': 'MX', 'philippines': 'PH',
+  'british virgin islands': 'VG', 'cayman islands': 'KY',
+};
+
+// GET /api/v1/institution/clients/:id/profile — Enriched public profile
 router.get(
   '/api/v1/institution/clients/:id/profile',
   standardRateLimiter,
@@ -157,7 +167,11 @@ router.get(
     try {
       const client = await prisma.institutionClient.findFirst({
         where: { id: req.params.id, ...getVisibilityFilter() },
-        select: PUBLIC_PROFILE_SELECT,
+        select: {
+          ...PUBLIC_PROFILE_SELECT,
+          registrationNumber: true,
+          riskRating: true,
+        },
       });
 
       if (!client) {
@@ -169,9 +183,54 @@ router.get(
         return;
       }
 
+      const [escrowStats, directPaymentCount, latestAnalysis, latestActivity, activeEscrows, completedEscrows] = await Promise.all([
+        prisma.institutionEscrow.aggregate({
+          where: { clientId: req.params.id },
+          _sum: { amount: true },
+          _count: true,
+        }),
+        prisma.directPayment.count({
+          where: { clientId: req.params.id, status: 'completed' },
+        }),
+        prisma.institutionAiAnalysis.findFirst({
+          where: { clientId: req.params.id },
+          orderBy: { createdAt: 'desc' },
+          select: { riskScore: true },
+        }),
+        prisma.institutionEscrow.findFirst({
+          where: { clientId: req.params.id },
+          orderBy: { updatedAt: 'desc' },
+          select: { updatedAt: true },
+        }),
+        prisma.institutionEscrow.count({
+          where: {
+            clientId: req.params.id,
+            status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] },
+          },
+        }),
+        prisma.institutionEscrow.count({
+          where: {
+            clientId: req.params.id,
+            status: { in: ['COMPLETE', 'RELEASED'] },
+          },
+        }),
+      ]);
+
+      const countryCode = client.country
+        ? COUNTRY_CODE_MAP[client.country.toLowerCase()] || client.country
+        : null;
+
       res.status(200).json({
         success: true,
-        data: client,
+        data: {
+          ...client,
+          countryCode,
+          totalVolume: Number(escrowStats._sum.amount || 0),
+          activeEscrows,
+          completedPayments: completedEscrows + directPaymentCount,
+          riskScore: latestAnalysis?.riskScore ?? null,
+          lastActivity: latestActivity?.updatedAt ?? client.createdAt,
+        },
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {

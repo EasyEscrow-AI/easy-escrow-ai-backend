@@ -12,6 +12,13 @@ const ALLOWED_SETTINGS_FIELDS = [
   'webhookSecret',
   'timezone',
   'autoApproveThreshold',
+  'manualReviewThreshold',
+  'autoTravelRule',
+  'activeSanctionsLists',
+  'aiAutoRelease',
+  'riskTolerance',
+  'defaultToken',
+  'emailNotifications',
 ] as const;
 
 export class InstitutionClientSettingsService {
@@ -41,6 +48,39 @@ export class InstitutionClientSettingsService {
     for (const field of ALLOWED_SETTINGS_FIELDS) {
       if (field in updates) {
         filteredUpdates[field] = updates[field];
+      }
+    }
+
+    // Validate new settings fields
+    if ('manualReviewThreshold' in filteredUpdates) {
+      const v = filteredUpdates.manualReviewThreshold;
+      if (v !== null && (typeof v !== 'number' || v < 0)) {
+        throw new Error('manualReviewThreshold must be a non-negative number or null');
+      }
+    }
+    if ('autoTravelRule' in filteredUpdates && typeof filteredUpdates.autoTravelRule !== 'boolean') {
+      throw new Error('autoTravelRule must be a boolean');
+    }
+    if ('aiAutoRelease' in filteredUpdates && typeof filteredUpdates.aiAutoRelease !== 'boolean') {
+      throw new Error('aiAutoRelease must be a boolean');
+    }
+    if ('emailNotifications' in filteredUpdates && typeof filteredUpdates.emailNotifications !== 'boolean') {
+      throw new Error('emailNotifications must be a boolean');
+    }
+    if ('riskTolerance' in filteredUpdates) {
+      if (!['low', 'medium', 'high'].includes(filteredUpdates.riskTolerance)) {
+        throw new Error('riskTolerance must be one of: low, medium, high');
+      }
+    }
+    if ('activeSanctionsLists' in filteredUpdates) {
+      const v = filteredUpdates.activeSanctionsLists;
+      if (!Array.isArray(v) || v.length === 0 || !v.every((s: any) => typeof s === 'string')) {
+        throw new Error('activeSanctionsLists must be a non-empty array of strings');
+      }
+    }
+    if ('defaultToken' in filteredUpdates) {
+      if (typeof filteredUpdates.defaultToken !== 'string' || filteredUpdates.defaultToken.trim().length === 0) {
+        throw new Error('defaultToken must be a non-empty string');
       }
     }
 
