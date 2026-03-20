@@ -23,7 +23,7 @@ const searchRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const VALID_CATEGORIES = ['escrow', 'client', 'account', 'notification'];
+const VALID_CATEGORIES = ['escrow', 'client', 'account', 'notification', 'payment'];
 
 const validateSearch = [
   query('q')
@@ -86,9 +86,12 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
+      const errorId = `search-${Date.now()}`;
+      console.error(`[${errorId}] Search failed for client=${req.institutionClient?.clientId} q="${req.query.q}":`, error);
       res.status(500).json({
         error: 'Search Failed',
-        message: error.message,
+        message: 'Search failed, please try again',
+        errorId,
         timestamp: new Date().toISOString(),
       });
     }
