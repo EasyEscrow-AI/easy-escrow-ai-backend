@@ -11,8 +11,8 @@ const BCRYPT_ROUNDS = 12;
 const LOGIN_RATE_LIMIT_MAX = 5;
 const LOGIN_RATE_LIMIT_TTL = 900; // 15 minutes in seconds
 const REDIS_LOGIN_PREFIX = 'admin:login:attempts:';
-const ACCESS_TOKEN_EXPIRY = '15m';
-const REFRESH_TOKEN_EXPIRY = '7d';
+const ACCESS_TOKEN_EXPIRY = process.env.ADMIN_ACCESS_TOKEN_EXPIRY || '1h';
+const REFRESH_TOKEN_EXPIRY = process.env.ADMIN_REFRESH_TOKEN_EXPIRY || '7d';
 
 export class AdminAuthService {
   private prisma: PrismaClient;
