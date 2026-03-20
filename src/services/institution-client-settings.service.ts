@@ -19,6 +19,10 @@ const ALLOWED_SETTINGS_FIELDS = [
   'riskTolerance',
   'defaultToken',
   'emailNotifications',
+  'language',
+  'theme',
+  'twoFactorEnabled',
+  'aiRecommendations',
 ] as const;
 
 export class InstitutionClientSettingsService {
@@ -29,14 +33,41 @@ export class InstitutionClientSettingsService {
   }
 
   /**
-   * Get settings for a client, creating defaults if none exist
+   * Get settings for a client, creating defaults if none exist.
+   * Merges fields from InstitutionClient (tier, jurisdiction, kycStatus)
+   * and maps field names to match frontend expectations.
    */
   async getSettings(clientId: string) {
-    return this.prisma.institutionClientSettings.upsert({
-      where: { clientId },
-      create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC' },
-      update: {},
-    });
+    const [settings, client] = await Promise.all([
+      this.prisma.institutionClientSettings.upsert({
+        where: { clientId },
+        create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC' },
+        update: {},
+      }),
+      this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { tier: true, jurisdiction: true, kycStatus: true },
+      }),
+    ]);
+
+    return {
+      webhookUrl: settings.webhookUrl,
+      tier: client?.tier ?? null,
+      jurisdiction: client?.jurisdiction ?? null,
+      language: settings.language,
+      timezone: settings.timezone,
+      theme: settings.theme,
+      twoFactorEnabled: settings.twoFactorEnabled,
+      autoTravelRule: settings.autoTravelRule,
+      sanctionsLists: settings.activeSanctionsLists,
+      manualReviewThreshold: settings.manualReviewThreshold,
+      aiRecommendations: settings.aiRecommendations,
+      aiAutoRelease: settings.aiAutoRelease,
+      aiRiskTolerance: settings.riskTolerance,
+      defaultToken: settings.defaultToken,
+      emailNotifications: settings.emailNotifications,
+      kycStatus: client?.kycStatus ?? null,
+    };
   }
 
   /**
@@ -82,6 +113,24 @@ export class InstitutionClientSettingsService {
       if (typeof filteredUpdates.defaultToken !== 'string' || filteredUpdates.defaultToken.trim().length === 0) {
         throw new Error('defaultToken must be a non-empty string');
       }
+    }
+    if ('language' in filteredUpdates) {
+      const valid = ['en', 'de', 'fr', 'ar', 'zh', 'es'];
+      if (filteredUpdates.language !== null && !valid.includes(filteredUpdates.language)) {
+        throw new Error(`language must be one of: ${valid.join(', ')} (or null)`);
+      }
+    }
+    if ('theme' in filteredUpdates) {
+      const valid = ['light', 'dark', 'system'];
+      if (filteredUpdates.theme !== null && !valid.includes(filteredUpdates.theme)) {
+        throw new Error('theme must be one of: light, dark, system (or null)');
+      }
+    }
+    if ('twoFactorEnabled' in filteredUpdates && typeof filteredUpdates.twoFactorEnabled !== 'boolean') {
+      throw new Error('twoFactorEnabled must be a boolean');
+    }
+    if ('aiRecommendations' in filteredUpdates && typeof filteredUpdates.aiRecommendations !== 'boolean') {
+      throw new Error('aiRecommendations must be a boolean');
     }
 
     const settings = await this.prisma.institutionClientSettings.upsert({
