@@ -206,9 +206,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('Compliance') ? 422
-        : error.message.includes('Cannot submit') ? 400
-        : 400;
+      const status = error.message.includes('Compliance') ? 422 : 400;
       res.status(status).json({
         error: 'Draft Submission Failed',
         message: error.message,

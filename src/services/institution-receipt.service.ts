@@ -222,7 +222,7 @@ export class InstitutionReceiptService {
         netAmount: (amount - fee).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
         currency: 'USDC',
         payerWallet: escrow.payerWallet,
-        recipientWallet: escrow.recipientWallet ?? '',
+        recipientWallet: escrow.recipientWallet ?? 'N/A',
         settlementAuthority: escrow.settlementAuthority,
         escrowPda: escrow.escrowPda,
         vaultPda: escrow.vaultPda,

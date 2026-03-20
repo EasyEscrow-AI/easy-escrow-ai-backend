@@ -17,7 +17,13 @@ export const validateCreateInstitutionEscrow = [
   body('payerWallet')
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
-    .withMessage('payerWallet must be a valid Solana address (base58, 32-44 chars)'),
+    .withMessage('payerWallet must be a valid Solana address (base58, 32-44 chars)')
+    .custom((value, { req }) => {
+      if (value === req.body.recipientWallet) {
+        throw new Error('payerWallet and recipientWallet must be different');
+      }
+      return true;
+    }),
   body('recipientWallet')
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
@@ -42,12 +48,6 @@ export const validateCreateInstitutionEscrow = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
-  body('payerWallet').custom((value, { req }) => {
-    if (value === req.body.recipientWallet) {
-      throw new Error('payerWallet and recipientWallet must be different');
-    }
-    return true;
-  }),
 ];
 
 /**
@@ -62,7 +62,13 @@ export const validateSaveDraft = [
     .optional()
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
-    .withMessage('recipientWallet must be a valid Solana address'),
+    .withMessage('recipientWallet must be a valid Solana address')
+    .custom((value, { req }) => {
+      if (value && value === req.body.payerWallet) {
+        throw new Error('recipientWallet must not equal payerWallet');
+      }
+      return true;
+    }),
   body('amount')
     .optional()
     .isFloat({ min: 0, max: 10000000 })
@@ -98,7 +104,13 @@ export const validateUpdateDraft = [
     .optional()
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
-    .withMessage('recipientWallet must be a valid Solana address'),
+    .withMessage('recipientWallet must be a valid Solana address')
+    .custom((value, { req }) => {
+      if (value && req.body.payerWallet && value === req.body.payerWallet) {
+        throw new Error('recipientWallet must not equal payerWallet');
+      }
+      return true;
+    }),
   body('amount')
     .optional()
     .isFloat({ min: 0, max: 10000000 })

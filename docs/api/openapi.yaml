@@ -203,7 +203,7 @@ tags:
 
       ### Escrow States
 
-      Every escrow progresses through a defined set of states. Terminal states (`RELEASED`, `CANCELLED`, `EXPIRED`, `FAILED`) cannot transition further.
+      Every escrow progresses through a defined set of states. Terminal states (`COMPLETE`, `CANCELLED`, `EXPIRED`, `FAILED`) cannot transition further.
 
       | State | Description |
       |-------|-------------|
@@ -212,7 +212,7 @@ tags:
       | `FUNDED` | Deposit confirmed on-chain, awaiting release or cancellation |
       | `COMPLIANCE_HOLD` | Held for compliance review (medium risk score) |
       | `RELEASING` | Release transaction in progress |
-      | `RELEASED` | Funds successfully released to recipient (terminal) |
+      | `RELEASED` | Funds released to recipient |
       | `INSUFFICIENT_FUNDS` | Payer balance too low, can retry after funding |
       | `COMPLETE` | Settlement complete, notification sent (terminal) |
       | `CANCELLING` | Cancellation in progress |
@@ -2583,7 +2583,7 @@ paths:
       summary: Sitewide search
       description: |
         Search across escrows, clients, accounts, and notifications in a single query.
-        Results are scoped to the authenticated client's data and returned grouped by category.
+        Results are scoped to the authenticated client's data and returned as a flat array with a `category` field on each item. Category counts are provided separately.
 
         **Smart query detection:**
         - `EE-XXXX` → searches escrow codes

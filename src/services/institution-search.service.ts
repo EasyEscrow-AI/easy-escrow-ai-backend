@@ -135,8 +135,7 @@ class InstitutionSearchService {
   private async searchClients(clientId: string, q: string, limit: number): Promise<SearchResult[]> {
     const clients = await prisma.institutionClient.findMany({
       where: {
-        status: 'ACTIVE',
-        isArchived: false,
+        id: clientId,
         OR: [
           { companyName: { contains: q, mode: 'insensitive' } },
           { legalName: { contains: q, mode: 'insensitive' } },

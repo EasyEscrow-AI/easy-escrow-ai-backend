@@ -34,6 +34,7 @@ const validateSearch = [
   query('limit')
     .optional()
     .isInt({ min: 1, max: 10 })
+    .toInt()
     .withMessage('limit must be between 1 and 10'),
   query('categories')
     .optional()
@@ -60,7 +61,7 @@ router.get(
 
     try {
       const q = (req.query.q as string).trim();
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+      const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
       let categories: string[] | undefined;
       if (req.query.categories && typeof req.query.categories === 'string') {

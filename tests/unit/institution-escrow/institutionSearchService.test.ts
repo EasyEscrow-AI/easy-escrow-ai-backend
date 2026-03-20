@@ -7,6 +7,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+process.env.NODE_ENV = 'test';
+
 import { setMockPrismaClient, clearMockPrismaClient } from '../../../src/config/database';
 
 describe('InstitutionSearchService', () => {
