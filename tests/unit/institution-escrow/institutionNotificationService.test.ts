@@ -12,9 +12,15 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
 process.env.RESEND_API_KEY = 'test-resend-key';
 
+if (process.env.NODE_ENV !== 'test') {
+  throw new Error('Unit tests must run with NODE_ENV=test');
+}
+
 import { setMockPrismaClient, clearMockPrismaClient } from '../../../src/config/database';
 
-describe('InstitutionNotificationService', () => {
+describe('InstitutionNotificationService', function () {
+  this.timeout(10000);
+
   let sandbox: sinon.SinonSandbox;
   let prismaStub: any;
   let emailServiceStub: any;

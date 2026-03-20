@@ -88,6 +88,7 @@ class InstitutionNotificationService {
       if (notificationEmail) {
         try {
           const emailService = getEmailService();
+          if (!emailService) return;
           await emailService.sendNotificationEmail({
             to: notificationEmail,
             recipientName: client?.companyName || 'Customer',
@@ -117,7 +118,9 @@ class InstitutionNotificationService {
     clientId: string,
     options: { unreadOnly?: boolean; limit?: number; offset?: number } = {}
   ) {
-    const { unreadOnly = false, limit = 20, offset = 0 } = options;
+    const { unreadOnly = false } = options;
+    const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
+    const offset = Math.max(options.offset ?? 0, 0);
 
     const where: Record<string, unknown> = { clientId };
     if (unreadOnly) {
