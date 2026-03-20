@@ -12,7 +12,7 @@ export class InstitutionReportsService {
     const { from, to, limit = 50, offset = 0 } = params;
     const where: any = {
       clientId,
-      action: { in: ['COMPLIANCE_HOLD', 'COMPLIANCE_CHECK_PASSED', 'COMPLIANCE_CHECK_FAILED', 'ESCROW_CREATED', 'FUNDS_RELEASED', 'ESCROW_CANCELLED'] },
+      action: { in: ['COMPLIANCE_HOLD', 'COMPLIANCE_CHECK_PASSED', 'COMPLIANCE_CHECK_FAILED', 'ESCROW_CREATED', 'DRAFT_SUBMITTED', 'DEPOSIT_CONFIRMED', 'FUNDS_RELEASED', 'ESCROW_CANCELLED', 'ESCROW_COMPLETED', 'INSUFFICIENT_FUNDS'] },
     };
     if (from) where.createdAt = { ...where.createdAt, gte: new Date(from) };
     if (to) where.createdAt = { ...where.createdAt, lte: new Date(to) };
@@ -57,12 +57,24 @@ export class InstitutionReportsService {
     if (to) dateFilter.lte = new Date(to);
     const hasDateFilter = Object.keys(dateFilter).length > 0;
 
+    // Cap per-source fetch to avoid full table scans
+    const fetchLimit = limit + offset;
+
+    let escrowTotal = 0;
+    let paymentTotal = 0;
     const results: any[] = [];
 
     if (!type || type === 'escrow') {
       const escrowWhere: any = { clientId, status: { in: ['COMPLETE', 'RELEASED'] } };
       if (hasDateFilter) escrowWhere.resolvedAt = dateFilter;
-      const escrows = await this.prisma.institutionEscrow.findMany({ where: escrowWhere, orderBy: { resolvedAt: 'desc' } });
+      const [escrows, count] = await Promise.all([
+        this.prisma.institutionEscrow.findMany({
+          where: escrowWhere, orderBy: { resolvedAt: 'desc' }, take: fetchLimit,
+          select: { escrowCode: true, amount: true, platformFee: true, corridor: true, status: true, payerWallet: true, recipientWallet: true, releaseTxSignature: true, resolvedAt: true, createdAt: true },
+        }),
+        this.prisma.institutionEscrow.count({ where: escrowWhere }),
+      ]);
+      escrowTotal = count;
       for (const e of escrows) {
         results.push({
           id: e.escrowCode, type: 'escrow', amount: Number(e.amount), fee: Number(e.platformFee),
@@ -76,7 +88,14 @@ export class InstitutionReportsService {
     if (!type || type === 'direct') {
       const paymentWhere: any = { clientId, status: 'completed' };
       if (hasDateFilter) paymentWhere.settledAt = dateFilter;
-      const payments = await this.prisma.directPayment.findMany({ where: paymentWhere, orderBy: { settledAt: 'desc' } });
+      const [payments, count] = await Promise.all([
+        this.prisma.directPayment.findMany({
+          where: paymentWhere, orderBy: { settledAt: 'desc' }, take: fetchLimit,
+          select: { id: true, amount: true, platformFee: true, currency: true, corridor: true, status: true, sender: true, recipient: true, txHash: true, settledAt: true, createdAt: true },
+        }),
+        this.prisma.directPayment.count({ where: paymentWhere }),
+      ]);
+      paymentTotal = count;
       for (const p of payments) {
         results.push({
           id: p.id, type: 'direct', amount: Number(p.amount), fee: Number(p.platformFee),
@@ -93,7 +112,7 @@ export class InstitutionReportsService {
       return bDate - aDate;
     });
 
-    return { data: results.slice(offset, offset + limit), total: results.length, limit, offset };
+    return { data: results.slice(offset, offset + limit), total: escrowTotal + paymentTotal, limit, offset };
   }
 
   async getEscrowLog(clientId: string, params: { escrowId?: string; from?: string; to?: string; limit?: number; offset?: number }) {

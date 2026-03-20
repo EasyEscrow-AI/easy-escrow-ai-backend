@@ -26,10 +26,13 @@ router.get('/api/v1/institution/direct-payments/:id', standardRateLimiter, requi
     try {
       const service = getInstitutionDirectPaymentService();
       const payment = await service.getById(req.institutionClient!.clientId, req.params.id);
+      if (!payment) {
+        res.status(404).json({ error: 'Not Found', message: `Direct payment not found: ${req.params.id}`, timestamp: new Date().toISOString() });
+        return;
+      }
       res.status(200).json({ success: true, data: payment, timestamp: new Date().toISOString() });
     } catch (error: any) {
-      const status = error.message.includes('not found') ? 404 : 500;
-      res.status(status).json({ error: status === 404 ? 'Not Found' : 'Internal Error', message: error.message, timestamp: new Date().toISOString() });
+      res.status(500).json({ error: 'Internal Error', message: error.message, timestamp: new Date().toISOString() });
     }
   });
 

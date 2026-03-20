@@ -22,10 +22,14 @@ export class InstitutionDirectPaymentService {
 
   async getById(clientId: string, paymentId: string) {
     const payment = await this.prisma.directPayment.findFirst({ where: { id: paymentId, clientId } });
-    if (!payment) throw new Error(`Direct payment not found: ${paymentId}`);
+    if (!payment) return null;
 
     const auditLogs = await this.prisma.institutionAuditLog.findMany({
-      where: { clientId, action: { in: ['DIRECT_PAYMENT_CREATED', 'DIRECT_PAYMENT_COMPLETED', 'DIRECT_PAYMENT_FAILED'] } },
+      where: {
+        clientId,
+        action: { in: ['DIRECT_PAYMENT_CREATED', 'DIRECT_PAYMENT_COMPLETED', 'DIRECT_PAYMENT_FAILED'] },
+        details: { path: ['paymentId'], equals: paymentId },
+      },
       orderBy: { createdAt: 'desc' }, take: 10,
     });
 

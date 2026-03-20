@@ -183,7 +183,7 @@ router.get(
         return;
       }
 
-      const [escrowStats, directPaymentCount, latestAnalysis, latestActivity] = await Promise.all([
+      const [escrowStats, directPaymentCount, latestAnalysis, latestActivity, activeEscrows, completedEscrows] = await Promise.all([
         prisma.institutionEscrow.aggregate({
           where: { clientId: req.params.id },
           _sum: { amount: true },
@@ -202,21 +202,19 @@ router.get(
           orderBy: { updatedAt: 'desc' },
           select: { updatedAt: true },
         }),
+        prisma.institutionEscrow.count({
+          where: {
+            clientId: req.params.id,
+            status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] },
+          },
+        }),
+        prisma.institutionEscrow.count({
+          where: {
+            clientId: req.params.id,
+            status: { in: ['COMPLETE', 'RELEASED'] },
+          },
+        }),
       ]);
-
-      const activeEscrows = await prisma.institutionEscrow.count({
-        where: {
-          clientId: req.params.id,
-          status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] },
-        },
-      });
-
-      const completedEscrows = await prisma.institutionEscrow.count({
-        where: {
-          clientId: req.params.id,
-          status: { in: ['COMPLETE', 'RELEASED'] },
-        },
-      });
 
       const countryCode = client.country
         ? COUNTRY_CODE_MAP[client.country.toLowerCase()] || client.country

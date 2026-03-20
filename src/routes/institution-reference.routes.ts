@@ -6,15 +6,15 @@ import { prisma } from '../config/database';
 const router = Router();
 const standardRateLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, message: { error: 'Rate limit exceeded', message: 'Too many requests' }, standardHeaders: true, legacyHeaders: false });
 
-const EXCHANGE_RATES: Record<string, { rate: number; source: string; updatedAt: string }> = {
-  'USDC/USD': { rate: 1.0, source: 'peg', updatedAt: new Date().toISOString() },
-  'USDT/USD': { rate: 1.0, source: 'peg', updatedAt: new Date().toISOString() },
-  'EURC/EUR': { rate: 1.0, source: 'peg', updatedAt: new Date().toISOString() },
-  'USD/CHF': { rate: 0.88, source: 'indicative', updatedAt: new Date().toISOString() },
-  'USD/SGD': { rate: 1.34, source: 'indicative', updatedAt: new Date().toISOString() },
-  'USD/GBP': { rate: 0.79, source: 'indicative', updatedAt: new Date().toISOString() },
-  'USD/AED': { rate: 3.67, source: 'indicative', updatedAt: new Date().toISOString() },
-  'USD/EUR': { rate: 0.92, source: 'indicative', updatedAt: new Date().toISOString() },
+const EXCHANGE_RATES: Record<string, { rate: number; source: string }> = {
+  'USDC/USD': { rate: 1.0, source: 'peg' },
+  'USDT/USD': { rate: 1.0, source: 'peg' },
+  'EURC/EUR': { rate: 1.0, source: 'peg' },
+  'USD/CHF': { rate: 0.88, source: 'indicative' },
+  'USD/SGD': { rate: 1.34, source: 'indicative' },
+  'USD/GBP': { rate: 0.79, source: 'indicative' },
+  'USD/AED': { rate: 3.67, source: 'indicative' },
+  'USD/EUR': { rate: 0.92, source: 'indicative' },
 };
 
 const SANCTIONED_REGIONS = ['RU', 'BY', 'KP', 'IR', 'SY', 'CU'];
@@ -22,7 +22,11 @@ const SANCTIONED_REGIONS = ['RU', 'BY', 'KP', 'IR', 'SY', 'CU'];
 router.get('/api/v1/institution/exchange-rates', standardRateLimiter, requireInstitutionAuth,
   async (_req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
-      res.status(200).json({ success: true, data: EXCHANGE_RATES, disclaimer: 'Indicative rates only. Actual settlement uses on-chain USDC at 1:1.', timestamp: new Date().toISOString() });
+      const now = new Date().toISOString();
+      const data = Object.fromEntries(
+        Object.entries(EXCHANGE_RATES).map(([pair, info]) => [pair, { ...info, updatedAt: now }]),
+      );
+      res.status(200).json({ success: true, data, disclaimer: 'Indicative rates only. Actual settlement uses on-chain USDC at 1:1.', timestamp: now });
     } catch (error: any) {
       res.status(500).json({ error: 'Internal Error', message: error.message, timestamp: new Date().toISOString() });
     }

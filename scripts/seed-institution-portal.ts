@@ -1,7 +1,7 @@
 /**
  * Seed Institution Portal Data
  *
- * Usage: npx ts-node scripts/seed-institution-portal.ts
+ * Usage: npm run seed:portal
  */
 
 import { PrismaClient } from '../src/generated/prisma';
@@ -165,6 +165,12 @@ async function main() {
   console.log(`  ✅ ${Object.keys(corridorConfigs).length} corridors seeded`);
 
   console.log('\n👥 Seeding external clients...');
+  // Generate deterministic wallet addresses from email prefix
+  function walletFromEmail(email: string): string {
+    const prefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+    return (prefix + 'Wa11etAddr355' + '0'.repeat(44)).slice(0, 44);
+  }
+
   const externalClients = [
     { email: 'treasury@amina-bank.ch', company: 'AMINA Bank AG', country: 'Switzerland', city: 'Zug', industry: 'Digital Asset Banking', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'FINMA' },
     { email: 'ops@dbs-digital.sg', company: 'DBS Digital Exchange', country: 'Singapore', city: 'Singapore', industry: 'Digital Asset Exchange', tier: 'ENTERPRISE' as const, regulated: true, regBody: 'MAS' },
@@ -184,15 +190,20 @@ async function main() {
   ];
 
   for (const c of externalClients) {
+    const wallet = walletFromEmail(c.email);
     await prisma.institutionClient.upsert({
       where: { email: c.email },
-      create: { email: c.email, passwordHash, companyName: c.company, country: c.country, city: c.city, industry: c.industry, tier: c.tier, status: 'ACTIVE', kycStatus: 'VERIFIED', kybStatus: 'VERIFIED', kybVerifiedAt: daysAgo(120), riskRating: 'LOW', sanctionsStatus: 'CLEAR', isRegulatedEntity: c.regulated, regulatoryBody: c.regBody, isTestAccount: true },
-      update: { companyName: c.company },
+      create: { email: c.email, passwordHash, companyName: c.company, country: c.country, city: c.city, industry: c.industry, tier: c.tier, status: 'ACTIVE', kycStatus: 'VERIFIED', kybStatus: 'VERIFIED', kybVerifiedAt: daysAgo(120), riskRating: 'LOW', sanctionsStatus: 'CLEAR', isRegulatedEntity: c.regulated, regulatoryBody: c.regBody, isTestAccount: true, primaryWallet: wallet, settledWallets: [wallet] },
+      update: { companyName: c.company, primaryWallet: wallet, settledWallets: [wallet] },
     });
   }
   console.log(`  ✅ ${externalClients.length} external clients seeded`);
 
   console.log('\n📦 Seeding escrow records...');
+  // Clean up previous demo data to avoid duplicates on re-run
+  await prisma.institutionAuditLog.deleteMany({ where: { clientId: helvetica.id } });
+  await prisma.institutionEscrow.deleteMany({ where: { clientId: helvetica.id } });
+  await prisma.directPayment.deleteMany({ where: { clientId: helvetica.id } });
   const usdcMint = process.env.USDC_MINT_ADDRESS || '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
   const escrowData = [
     { corridor: 'CH-SG', amount: 125000, status: 'COMPLETE' as const, condition: 'COMPLIANCE_CHECK', days: 30, recipientEmail: 'ops@dbs-digital.sg' },
@@ -261,7 +272,9 @@ async function main() {
   for (const dp of directPayments) {
     const feeBps = 25;
     const platformFee = (dp.amount * feeBps) / 10000;
-    await prisma.directPayment.create({
+    const txHash = dp.status === 'completed' ? `sim_tx_${crypto.randomUUID().slice(0, 16)}` : null;
+    const settledAt = dp.status === 'completed' ? daysAgo(Math.max(0, dp.days - 1)) : null;
+    const payment = await prisma.directPayment.create({
       data: {
         clientId: helvetica.id, sender: dp.sender, senderCountry: dp.senderCountry,
         senderWallet: 'SenderWa11etAddr3550000000000000000000000' + Math.floor(Math.random() * 10),
@@ -269,11 +282,28 @@ async function main() {
         recipientWallet: 'RecipWa11etAddr35500000000000000000000000' + Math.floor(Math.random() * 10),
         amount: dp.amount, corridor: dp.corridor, status: dp.status, platformFee,
         riskScore: Math.floor(Math.random() * 25) + 5,
-        txHash: dp.status === 'completed' ? `sim_tx_${crypto.randomUUID().slice(0, 16)}` : null,
-        settledAt: dp.status === 'completed' ? daysAgo(Math.max(0, dp.days - 1)) : null,
+        txHash,
+        settledAt,
         createdAt: daysAgo(dp.days),
       },
     });
+
+    // Audit log: creation
+    await prisma.institutionAuditLog.create({
+      data: { clientId: helvetica.id, action: 'DIRECT_PAYMENT_CREATED', actor: helvetica.email, details: { paymentId: payment.id, corridor: dp.corridor, amount: dp.amount, recipient: dp.recipient }, createdAt: daysAgo(dp.days) },
+    });
+
+    // Audit log: completion or cancellation
+    if (dp.status === 'completed') {
+      await prisma.institutionAuditLog.create({
+        data: { clientId: helvetica.id, action: 'DIRECT_PAYMENT_COMPLETED', actor: 'system', details: { paymentId: payment.id, txHash, settledAt }, createdAt: settledAt || daysAgo(dp.days) },
+      });
+    } else if (dp.status === 'cancelled') {
+      await prisma.institutionAuditLog.create({
+        data: { clientId: helvetica.id, action: 'DIRECT_PAYMENT_FAILED', actor: 'system', details: { paymentId: payment.id, reason: 'Client-requested cancellation' }, createdAt: daysAgo(Math.max(0, dp.days - 1)) },
+      });
+    }
+
     console.log(`  ✅ ${dp.sender} → ${dp.recipient} ($${dp.amount.toLocaleString()}, ${dp.status})`);
   }
 

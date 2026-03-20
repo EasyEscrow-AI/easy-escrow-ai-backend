@@ -65,29 +65,46 @@ export class InstitutionDashboardService {
     const [escrows, payments] = await Promise.all([
       this.prisma.institutionEscrow.findMany({
         where: { clientId, createdAt: { gte: since } },
-        select: { amount: true, status: true, createdAt: true, corridor: true },
+        select: { amount: true, status: true, createdAt: true, fundedAt: true, resolvedAt: true, corridor: true },
         orderBy: { createdAt: 'asc' },
       }),
       this.prisma.directPayment.findMany({
         where: { clientId, createdAt: { gte: since } },
-        select: { amount: true, status: true, createdAt: true, corridor: true },
+        select: { amount: true, status: true, createdAt: true, settledAt: true, corridor: true },
         orderBy: { createdAt: 'asc' },
       }),
     ]);
 
     const byDate: Record<string, { inflow: number; outflow: number; escrow: number; direct: number }> = {};
     for (const e of escrows) {
-      const date = e.createdAt.toISOString().split('T')[0];
-      if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
-      byDate[date].escrow += Number(e.amount);
-      byDate[date].outflow += Number(e.amount);
+      const amt = Number(e.amount);
+      // Funded = inflow (funds deposited into escrow)
+      if (e.fundedAt && ['FUNDED', 'COMPLETE', 'RELEASED'].includes(e.status)) {
+        const date = e.fundedAt.toISOString().split('T')[0];
+        if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
+        byDate[date].inflow += amt;
+        byDate[date].escrow += amt;
+      }
+      // Released/Complete = outflow (funds sent to recipient)
+      if (e.resolvedAt && ['COMPLETE', 'RELEASED'].includes(e.status)) {
+        const date = e.resolvedAt.toISOString().split('T')[0];
+        if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
+        byDate[date].outflow += amt;
+      }
+      // If neither funded nor resolved, bucket by createdAt
+      if (!e.fundedAt && !e.resolvedAt) {
+        const date = e.createdAt.toISOString().split('T')[0];
+        if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
+        byDate[date].escrow += amt;
+      }
     }
     for (const p of payments) {
-      const date = p.createdAt.toISOString().split('T')[0];
+      const amt = Number(p.amount);
+      const date = (p.settledAt || p.createdAt).toISOString().split('T')[0];
       if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
-      byDate[date].direct += Number(p.amount);
+      byDate[date].direct += amt;
       if (p.status === 'completed') {
-        byDate[date].outflow += Number(p.amount);
+        byDate[date].outflow += amt;
       }
     }
 
@@ -157,35 +174,24 @@ export class InstitutionDashboardService {
     for (const branch of branches) {
       const wallets = branch.accounts.map((a: any) => a.walletAddress);
 
-      const [escrowCount, paymentCount] = await Promise.all([
-        wallets.length > 0
-          ? this.prisma.institutionEscrow.count({
-              where: {
-                clientId,
-                OR: [
-                  { payerWallet: { in: wallets } },
-                  { recipientWallet: { in: wallets } },
-                ],
-              },
-            })
-          : Promise.resolve(0),
-        this.prisma.directPayment.count({
-          where: {
-            clientId,
-            OR: [
-              { senderCountry: branch.countryCode },
-              { recipientCountry: branch.countryCode },
-            ],
-          },
-        }),
-      ]);
+      const escrowCount = wallets.length > 0
+        ? await this.prisma.institutionEscrow.count({
+            where: {
+              clientId,
+              OR: [
+                { payerWallet: { in: wallets } },
+                { recipientWallet: { in: wallets } },
+              ],
+            },
+          })
+        : 0;
 
       results.push({
         id: branch.id, name: branch.name, city: branch.city,
         country: branch.country, countryCode: branch.countryCode,
         complianceStatus: branch.complianceStatus, riskScore: branch.riskScore,
         isSanctioned: branch.isSanctioned, accountCount: branch.accounts.length,
-        escrowCount, paymentCount, totalActivity: escrowCount + paymentCount,
+        escrowCount, totalActivity: escrowCount,
       });
     }
 

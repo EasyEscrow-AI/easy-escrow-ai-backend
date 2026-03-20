@@ -805,7 +805,12 @@ export class InstitutionEscrowService {
   async getEscrow(clientId: string, idOrCode: string): Promise<Record<string, unknown>> {
     // Skip cache for detail view — we need enriched data from DB
     const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
-    return this.formatEscrowEnriched(escrow);
+    // Counterparty requests get the base format (no AI analyses, audit logs)
+    const isOwner = escrow.clientId === clientId;
+    if (isOwner) {
+      return this.formatEscrowEnriched(escrow);
+    }
+    return this.formatEscrow(escrow);
   }
 
   /**
