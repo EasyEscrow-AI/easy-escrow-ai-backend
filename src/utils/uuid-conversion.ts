@@ -84,7 +84,7 @@ export function isValidUuid(uuid: string): boolean {
 
 /**
  * Build a Prisma where clause for looking up an escrow by either
- * escrowCode (EE-XXXX-XXXX) or escrowId (UUID).
+ * escrowCode (EE-XXX-XXX) or escrowId (UUID).
  */
 export function escrowWhere(idOrCode: string): { escrowCode: string } | { escrowId: string } {
   return idOrCode.startsWith('EE-') ? { escrowCode: idOrCode } : { escrowId: idOrCode };

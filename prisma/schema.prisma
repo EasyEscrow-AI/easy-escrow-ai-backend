@@ -1060,6 +1060,7 @@ model InstitutionBranch {
 // Direct payments (non-escrow transfers between institutions)
 model DirectPayment {
   id                String    @id @default(uuid())
+  paymentCode       String?   @unique @map("payment_code") // Human-readable ID: EE-XXX-XXX
   clientId          String    @map("client_id")
   sender            String    // sender name/label
   senderCountry     String    @map("sender_country")
@@ -1083,6 +1084,7 @@ model DirectPayment {
   client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
+  @@index([paymentCode])
   @@index([status])
   @@index([corridor])
   @@index([createdAt])
@@ -1164,7 +1166,7 @@ model InstitutionApiKey {
 model InstitutionEscrow {
   id                    String                    @id @default(uuid())
   escrowId              String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
-  escrowCode            String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
+  escrowCode            String                    @unique @map("escrow_code") // Human-readable ID: EE-XXX-XXX
   clientId              String                    @map("client_id")
   payerWallet           String                    @map("payer_wallet")
   recipientWallet       String?                   @map("recipient_wallet")

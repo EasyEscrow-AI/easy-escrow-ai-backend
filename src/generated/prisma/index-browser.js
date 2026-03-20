@@ -520,6 +520,51 @@ exports.Prisma.InstitutionAccountScalarFieldEnum = {
   isDefault: 'isDefault',
   isActive: 'isActive',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  branchId: 'branchId'
+};
+
+exports.Prisma.InstitutionBranchScalarFieldEnum = {
+  id: 'id',
+  clientId: 'clientId',
+  name: 'name',
+  city: 'city',
+  country: 'country',
+  countryCode: 'countryCode',
+  address: 'address',
+  timezone: 'timezone',
+  riskScore: 'riskScore',
+  complianceStatus: 'complianceStatus',
+  complianceNote: 'complianceNote',
+  regulatoryBody: 'regulatoryBody',
+  isSanctioned: 'isSanctioned',
+  sanctionReason: 'sanctionReason',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DirectPaymentScalarFieldEnum = {
+  id: 'id',
+  paymentCode: 'paymentCode',
+  clientId: 'clientId',
+  sender: 'sender',
+  senderCountry: 'senderCountry',
+  senderWallet: 'senderWallet',
+  recipient: 'recipient',
+  recipientCountry: 'recipientCountry',
+  recipientWallet: 'recipientWallet',
+  amount: 'amount',
+  currency: 'currency',
+  corridor: 'corridor',
+  status: 'status',
+  txHash: 'txHash',
+  platformFee: 'platformFee',
+  riskScore: 'riskScore',
+  settlementMode: 'settlementMode',
+  releaseMode: 'releaseMode',
+  settledAt: 'settledAt',
+  createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
@@ -545,6 +590,13 @@ exports.Prisma.InstitutionClientSettingsScalarFieldEnum = {
   settlementAuthorityWallet: 'settlementAuthorityWallet',
   timezone: 'timezone',
   autoApproveThreshold: 'autoApproveThreshold',
+  manualReviewThreshold: 'manualReviewThreshold',
+  autoTravelRule: 'autoTravelRule',
+  activeSanctionsLists: 'activeSanctionsLists',
+  aiAutoRelease: 'aiAutoRelease',
+  riskTolerance: 'riskTolerance',
+  defaultToken: 'defaultToken',
+  emailNotifications: 'emailNotifications',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1053,6 +1105,8 @@ exports.Prisma.ModelName = {
   InstitutionClient: 'InstitutionClient',
   InstitutionWallet: 'InstitutionWallet',
   InstitutionAccount: 'InstitutionAccount',
+  InstitutionBranch: 'InstitutionBranch',
+  DirectPayment: 'DirectPayment',
   InstitutionRefreshToken: 'InstitutionRefreshToken',
   InstitutionClientSettings: 'InstitutionClientSettings',
   InstitutionApiKey: 'InstitutionApiKey',

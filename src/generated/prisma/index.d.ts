@@ -104,6 +104,16 @@ export type InstitutionWallet = $Result.DefaultSelection<Prisma.$InstitutionWall
  */
 export type InstitutionAccount = $Result.DefaultSelection<Prisma.$InstitutionAccountPayload>
 /**
+ * Model InstitutionBranch
+ * 
+ */
+export type InstitutionBranch = $Result.DefaultSelection<Prisma.$InstitutionBranchPayload>
+/**
+ * Model DirectPayment
+ * 
+ */
+export type DirectPayment = $Result.DefaultSelection<Prisma.$DirectPaymentPayload>
+/**
  * Model InstitutionRefreshToken
  * 
  */
@@ -1007,6 +1017,26 @@ export class PrismaClient<
   get institutionAccount(): Prisma.InstitutionAccountDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.institutionBranch`: Exposes CRUD operations for the **InstitutionBranch** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstitutionBranches
+    * const institutionBranches = await prisma.institutionBranch.findMany()
+    * ```
+    */
+  get institutionBranch(): Prisma.InstitutionBranchDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.directPayment`: Exposes CRUD operations for the **DirectPayment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more DirectPayments
+    * const directPayments = await prisma.directPayment.findMany()
+    * ```
+    */
+  get directPayment(): Prisma.DirectPaymentDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.institutionRefreshToken`: Exposes CRUD operations for the **InstitutionRefreshToken** model.
     * Example usage:
     * ```ts
@@ -1603,6 +1633,8 @@ export namespace Prisma {
     InstitutionClient: 'InstitutionClient',
     InstitutionWallet: 'InstitutionWallet',
     InstitutionAccount: 'InstitutionAccount',
+    InstitutionBranch: 'InstitutionBranch',
+    DirectPayment: 'DirectPayment',
     InstitutionRefreshToken: 'InstitutionRefreshToken',
     InstitutionClientSettings: 'InstitutionClientSettings',
     InstitutionApiKey: 'InstitutionApiKey',
@@ -1635,7 +1667,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionAccount" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionApprovedToken" | "adminUser" | "adminRefreshToken" | "institutionFile" | "institutionNotification" | "systemSetting"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionAccount" | "institutionBranch" | "directPayment" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionApprovedToken" | "adminUser" | "adminRefreshToken" | "institutionFile" | "institutionNotification" | "systemSetting"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2971,6 +3003,154 @@ export namespace Prisma {
           }
         }
       }
+      InstitutionBranch: {
+        payload: Prisma.$InstitutionBranchPayload<ExtArgs>
+        fields: Prisma.InstitutionBranchFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstitutionBranchFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstitutionBranchFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>
+          }
+          findFirst: {
+            args: Prisma.InstitutionBranchFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstitutionBranchFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>
+          }
+          findMany: {
+            args: Prisma.InstitutionBranchFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>[]
+          }
+          create: {
+            args: Prisma.InstitutionBranchCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>
+          }
+          createMany: {
+            args: Prisma.InstitutionBranchCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstitutionBranchCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>[]
+          }
+          delete: {
+            args: Prisma.InstitutionBranchDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>
+          }
+          update: {
+            args: Prisma.InstitutionBranchUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstitutionBranchDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstitutionBranchUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstitutionBranchUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstitutionBranchUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstitutionBranchPayload>
+          }
+          aggregate: {
+            args: Prisma.InstitutionBranchAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstitutionBranch>
+          }
+          groupBy: {
+            args: Prisma.InstitutionBranchGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionBranchGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstitutionBranchCountArgs<ExtArgs>
+            result: $Utils.Optional<InstitutionBranchCountAggregateOutputType> | number
+          }
+        }
+      }
+      DirectPayment: {
+        payload: Prisma.$DirectPaymentPayload<ExtArgs>
+        fields: Prisma.DirectPaymentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.DirectPaymentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.DirectPaymentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>
+          }
+          findFirst: {
+            args: Prisma.DirectPaymentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.DirectPaymentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>
+          }
+          findMany: {
+            args: Prisma.DirectPaymentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>[]
+          }
+          create: {
+            args: Prisma.DirectPaymentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>
+          }
+          createMany: {
+            args: Prisma.DirectPaymentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.DirectPaymentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>[]
+          }
+          delete: {
+            args: Prisma.DirectPaymentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>
+          }
+          update: {
+            args: Prisma.DirectPaymentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>
+          }
+          deleteMany: {
+            args: Prisma.DirectPaymentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.DirectPaymentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.DirectPaymentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>[]
+          }
+          upsert: {
+            args: Prisma.DirectPaymentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DirectPaymentPayload>
+          }
+          aggregate: {
+            args: Prisma.DirectPaymentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateDirectPayment>
+          }
+          groupBy: {
+            args: Prisma.DirectPaymentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<DirectPaymentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.DirectPaymentCountArgs<ExtArgs>
+            result: $Utils.Optional<DirectPaymentCountAggregateOutputType> | number
+          }
+        }
+      }
       InstitutionRefreshToken: {
         payload: Prisma.$InstitutionRefreshTokenPayload<ExtArgs>
         fields: Prisma.InstitutionRefreshTokenFieldRefs
@@ -4121,6 +4301,8 @@ export namespace Prisma {
     institutionClient?: InstitutionClientOmit
     institutionWallet?: InstitutionWalletOmit
     institutionAccount?: InstitutionAccountOmit
+    institutionBranch?: InstitutionBranchOmit
+    directPayment?: DirectPaymentOmit
     institutionRefreshToken?: InstitutionRefreshTokenOmit
     institutionClientSettings?: InstitutionClientSettingsOmit
     institutionApiKey?: InstitutionApiKeyOmit
@@ -4464,6 +4646,8 @@ export namespace Prisma {
     accounts: number
     aiAnalyses: number
     notifications: number
+    branches: number
+    directPayments: number
   }
 
   export type InstitutionClientCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4476,6 +4660,8 @@ export namespace Prisma {
     accounts?: boolean | InstitutionClientCountOutputTypeCountAccountsArgs
     aiAnalyses?: boolean | InstitutionClientCountOutputTypeCountAiAnalysesArgs
     notifications?: boolean | InstitutionClientCountOutputTypeCountNotificationsArgs
+    branches?: boolean | InstitutionClientCountOutputTypeCountBranchesArgs
+    directPayments?: boolean | InstitutionClientCountOutputTypeCountDirectPaymentsArgs
   }
 
   // Custom InputTypes
@@ -4550,6 +4736,51 @@ export namespace Prisma {
    */
   export type InstitutionClientCountOutputTypeCountNotificationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InstitutionNotificationWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountBranchesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionBranchWhereInput
+  }
+
+  /**
+   * InstitutionClientCountOutputType without action
+   */
+  export type InstitutionClientCountOutputTypeCountDirectPaymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DirectPaymentWhereInput
+  }
+
+
+  /**
+   * Count Type InstitutionBranchCountOutputType
+   */
+
+  export type InstitutionBranchCountOutputType = {
+    accounts: number
+  }
+
+  export type InstitutionBranchCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    accounts?: boolean | InstitutionBranchCountOutputTypeCountAccountsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * InstitutionBranchCountOutputType without action
+   */
+  export type InstitutionBranchCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranchCountOutputType
+     */
+    select?: InstitutionBranchCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionBranchCountOutputType without action
+   */
+  export type InstitutionBranchCountOutputTypeCountAccountsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAccountWhereInput
   }
 
 
@@ -24336,6 +24567,8 @@ export namespace Prisma {
     accounts?: boolean | InstitutionClient$accountsArgs<ExtArgs>
     aiAnalyses?: boolean | InstitutionClient$aiAnalysesArgs<ExtArgs>
     notifications?: boolean | InstitutionClient$notificationsArgs<ExtArgs>
+    branches?: boolean | InstitutionClient$branchesArgs<ExtArgs>
+    directPayments?: boolean | InstitutionClient$directPaymentsArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionClient"]>
 
@@ -24546,6 +24779,8 @@ export namespace Prisma {
     accounts?: boolean | InstitutionClient$accountsArgs<ExtArgs>
     aiAnalyses?: boolean | InstitutionClient$aiAnalysesArgs<ExtArgs>
     notifications?: boolean | InstitutionClient$notificationsArgs<ExtArgs>
+    branches?: boolean | InstitutionClient$branchesArgs<ExtArgs>
+    directPayments?: boolean | InstitutionClient$directPaymentsArgs<ExtArgs>
     _count?: boolean | InstitutionClientCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type InstitutionClientIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -24564,6 +24799,8 @@ export namespace Prisma {
       accounts: Prisma.$InstitutionAccountPayload<ExtArgs>[]
       aiAnalyses: Prisma.$InstitutionAiAnalysisPayload<ExtArgs>[]
       notifications: Prisma.$InstitutionNotificationPayload<ExtArgs>[]
+      branches: Prisma.$InstitutionBranchPayload<ExtArgs>[]
+      directPayments: Prisma.$DirectPaymentPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -25032,6 +25269,8 @@ export namespace Prisma {
     accounts<T extends InstitutionClient$accountsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     aiAnalyses<T extends InstitutionClient$aiAnalysesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$aiAnalysesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     notifications<T extends InstitutionClient$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    branches<T extends InstitutionClient$branchesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$branchesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    directPayments<T extends InstitutionClient$directPaymentsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClient$directPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -25743,6 +25982,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: InstitutionNotificationScalarFieldEnum | InstitutionNotificationScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.branches
+   */
+  export type InstitutionClient$branchesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    where?: InstitutionBranchWhereInput
+    orderBy?: InstitutionBranchOrderByWithRelationInput | InstitutionBranchOrderByWithRelationInput[]
+    cursor?: InstitutionBranchWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionBranchScalarFieldEnum | InstitutionBranchScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionClient.directPayments
+   */
+  export type InstitutionClient$directPaymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    where?: DirectPaymentWhereInput
+    orderBy?: DirectPaymentOrderByWithRelationInput | DirectPaymentOrderByWithRelationInput[]
+    cursor?: DirectPaymentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DirectPaymentScalarFieldEnum | DirectPaymentScalarFieldEnum[]
   }
 
   /**
@@ -26965,6 +27252,7 @@ export namespace Prisma {
     isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
+    branchId: string | null
   }
 
   export type InstitutionAccountMaxAggregateOutputType = {
@@ -27000,6 +27288,7 @@ export namespace Prisma {
     isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
+    branchId: string | null
   }
 
   export type InstitutionAccountCountAggregateOutputType = {
@@ -27036,6 +27325,7 @@ export namespace Prisma {
     isActive: number
     createdAt: number
     updatedAt: number
+    branchId: number
     _all: number
   }
 
@@ -27093,6 +27383,7 @@ export namespace Prisma {
     isActive?: true
     createdAt?: true
     updatedAt?: true
+    branchId?: true
   }
 
   export type InstitutionAccountMaxAggregateInputType = {
@@ -27128,6 +27419,7 @@ export namespace Prisma {
     isActive?: true
     createdAt?: true
     updatedAt?: true
+    branchId?: true
   }
 
   export type InstitutionAccountCountAggregateInputType = {
@@ -27164,6 +27456,7 @@ export namespace Prisma {
     isActive?: true
     createdAt?: true
     updatedAt?: true
+    branchId?: true
     _all?: true
   }
 
@@ -27287,6 +27580,7 @@ export namespace Prisma {
     isActive: boolean
     createdAt: Date
     updatedAt: Date
+    branchId: string | null
     _count: InstitutionAccountCountAggregateOutputType | null
     _avg: InstitutionAccountAvgAggregateOutputType | null
     _sum: InstitutionAccountSumAggregateOutputType | null
@@ -27342,7 +27636,9 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAccount"]>
 
   export type InstitutionAccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -27379,7 +27675,9 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAccount"]>
 
   export type InstitutionAccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -27416,7 +27714,9 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAccount"]>
 
   export type InstitutionAccountSelectScalar = {
@@ -27453,23 +27753,28 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    branchId?: boolean
   }
 
-  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "isDefault" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionAccount"]>
+  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "isDefault" | "isActive" | "createdAt" | "updatedAt" | "branchId", ExtArgs["result"]["institutionAccount"]>
   export type InstitutionAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
   }
   export type InstitutionAccountIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
   }
   export type InstitutionAccountIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
   }
 
   export type $InstitutionAccountPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "InstitutionAccount"
     objects: {
       client: Prisma.$InstitutionClientPayload<ExtArgs>
+      branch: Prisma.$InstitutionBranchPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -27505,6 +27810,7 @@ export namespace Prisma {
       isActive: boolean
       createdAt: Date
       updatedAt: Date
+      branchId: string | null
     }, ExtArgs["result"]["institutionAccount"]>
     composites: {}
   }
@@ -27900,6 +28206,7 @@ export namespace Prisma {
   export interface Prisma__InstitutionAccountClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    branch<T extends InstitutionAccount$branchArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionAccount$branchArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -27962,6 +28269,7 @@ export namespace Prisma {
     readonly isActive: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly createdAt: FieldRef<"InstitutionAccount", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionAccount", 'DateTime'>
+    readonly branchId: FieldRef<"InstitutionAccount", 'String'>
   }
     
 
@@ -28358,6 +28666,25 @@ export namespace Prisma {
   }
 
   /**
+   * InstitutionAccount.branch
+   */
+  export type InstitutionAccount$branchArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    where?: InstitutionBranchWhereInput
+  }
+
+  /**
    * InstitutionAccount without action
    */
   export type InstitutionAccountDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -28373,6 +28700,2592 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: InstitutionAccountInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model InstitutionBranch
+   */
+
+  export type AggregateInstitutionBranch = {
+    _count: InstitutionBranchCountAggregateOutputType | null
+    _avg: InstitutionBranchAvgAggregateOutputType | null
+    _sum: InstitutionBranchSumAggregateOutputType | null
+    _min: InstitutionBranchMinAggregateOutputType | null
+    _max: InstitutionBranchMaxAggregateOutputType | null
+  }
+
+  export type InstitutionBranchAvgAggregateOutputType = {
+    riskScore: number | null
+  }
+
+  export type InstitutionBranchSumAggregateOutputType = {
+    riskScore: number | null
+  }
+
+  export type InstitutionBranchMinAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    name: string | null
+    city: string | null
+    country: string | null
+    countryCode: string | null
+    address: string | null
+    timezone: string | null
+    riskScore: number | null
+    complianceStatus: string | null
+    complianceNote: string | null
+    regulatoryBody: string | null
+    isSanctioned: boolean | null
+    sanctionReason: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionBranchMaxAggregateOutputType = {
+    id: string | null
+    clientId: string | null
+    name: string | null
+    city: string | null
+    country: string | null
+    countryCode: string | null
+    address: string | null
+    timezone: string | null
+    riskScore: number | null
+    complianceStatus: string | null
+    complianceNote: string | null
+    regulatoryBody: string | null
+    isSanctioned: boolean | null
+    sanctionReason: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InstitutionBranchCountAggregateOutputType = {
+    id: number
+    clientId: number
+    name: number
+    city: number
+    country: number
+    countryCode: number
+    address: number
+    timezone: number
+    riskScore: number
+    complianceStatus: number
+    complianceNote: number
+    regulatoryBody: number
+    isSanctioned: number
+    sanctionReason: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InstitutionBranchAvgAggregateInputType = {
+    riskScore?: true
+  }
+
+  export type InstitutionBranchSumAggregateInputType = {
+    riskScore?: true
+  }
+
+  export type InstitutionBranchMinAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    city?: true
+    country?: true
+    countryCode?: true
+    address?: true
+    timezone?: true
+    riskScore?: true
+    complianceStatus?: true
+    complianceNote?: true
+    regulatoryBody?: true
+    isSanctioned?: true
+    sanctionReason?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionBranchMaxAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    city?: true
+    country?: true
+    countryCode?: true
+    address?: true
+    timezone?: true
+    riskScore?: true
+    complianceStatus?: true
+    complianceNote?: true
+    regulatoryBody?: true
+    isSanctioned?: true
+    sanctionReason?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InstitutionBranchCountAggregateInputType = {
+    id?: true
+    clientId?: true
+    name?: true
+    city?: true
+    country?: true
+    countryCode?: true
+    address?: true
+    timezone?: true
+    riskScore?: true
+    complianceStatus?: true
+    complianceNote?: true
+    regulatoryBody?: true
+    isSanctioned?: true
+    sanctionReason?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InstitutionBranchAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionBranch to aggregate.
+     */
+    where?: InstitutionBranchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionBranches to fetch.
+     */
+    orderBy?: InstitutionBranchOrderByWithRelationInput | InstitutionBranchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstitutionBranchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionBranches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionBranches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstitutionBranches
+    **/
+    _count?: true | InstitutionBranchCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: InstitutionBranchAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: InstitutionBranchSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstitutionBranchMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstitutionBranchMaxAggregateInputType
+  }
+
+  export type GetInstitutionBranchAggregateType<T extends InstitutionBranchAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstitutionBranch]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstitutionBranch[P]>
+      : GetScalarType<T[P], AggregateInstitutionBranch[P]>
+  }
+
+
+
+
+  export type InstitutionBranchGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionBranchWhereInput
+    orderBy?: InstitutionBranchOrderByWithAggregationInput | InstitutionBranchOrderByWithAggregationInput[]
+    by: InstitutionBranchScalarFieldEnum[] | InstitutionBranchScalarFieldEnum
+    having?: InstitutionBranchScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstitutionBranchCountAggregateInputType | true
+    _avg?: InstitutionBranchAvgAggregateInputType
+    _sum?: InstitutionBranchSumAggregateInputType
+    _min?: InstitutionBranchMinAggregateInputType
+    _max?: InstitutionBranchMaxAggregateInputType
+  }
+
+  export type InstitutionBranchGroupByOutputType = {
+    id: string
+    clientId: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address: string | null
+    timezone: string
+    riskScore: number
+    complianceStatus: string
+    complianceNote: string | null
+    regulatoryBody: string | null
+    isSanctioned: boolean
+    sanctionReason: string | null
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: InstitutionBranchCountAggregateOutputType | null
+    _avg: InstitutionBranchAvgAggregateOutputType | null
+    _sum: InstitutionBranchSumAggregateOutputType | null
+    _min: InstitutionBranchMinAggregateOutputType | null
+    _max: InstitutionBranchMaxAggregateOutputType | null
+  }
+
+  type GetInstitutionBranchGroupByPayload<T extends InstitutionBranchGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstitutionBranchGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstitutionBranchGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstitutionBranchGroupByOutputType[P]>
+            : GetScalarType<T[P], InstitutionBranchGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstitutionBranchSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    city?: boolean
+    country?: boolean
+    countryCode?: boolean
+    address?: boolean
+    timezone?: boolean
+    riskScore?: boolean
+    complianceStatus?: boolean
+    complianceNote?: boolean
+    regulatoryBody?: boolean
+    isSanctioned?: boolean
+    sanctionReason?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    accounts?: boolean | InstitutionBranch$accountsArgs<ExtArgs>
+    _count?: boolean | InstitutionBranchCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionBranch"]>
+
+  export type InstitutionBranchSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    city?: boolean
+    country?: boolean
+    countryCode?: boolean
+    address?: boolean
+    timezone?: boolean
+    riskScore?: boolean
+    complianceStatus?: boolean
+    complianceNote?: boolean
+    regulatoryBody?: boolean
+    isSanctioned?: boolean
+    sanctionReason?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionBranch"]>
+
+  export type InstitutionBranchSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    city?: boolean
+    country?: boolean
+    countryCode?: boolean
+    address?: boolean
+    timezone?: boolean
+    riskScore?: boolean
+    complianceStatus?: boolean
+    complianceNote?: boolean
+    regulatoryBody?: boolean
+    isSanctioned?: boolean
+    sanctionReason?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["institutionBranch"]>
+
+  export type InstitutionBranchSelectScalar = {
+    id?: boolean
+    clientId?: boolean
+    name?: boolean
+    city?: boolean
+    country?: boolean
+    countryCode?: boolean
+    address?: boolean
+    timezone?: boolean
+    riskScore?: boolean
+    complianceStatus?: boolean
+    complianceNote?: boolean
+    regulatoryBody?: boolean
+    isSanctioned?: boolean
+    sanctionReason?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InstitutionBranchOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "city" | "country" | "countryCode" | "address" | "timezone" | "riskScore" | "complianceStatus" | "complianceNote" | "regulatoryBody" | "isSanctioned" | "sanctionReason" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionBranch"]>
+  export type InstitutionBranchInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+    accounts?: boolean | InstitutionBranch$accountsArgs<ExtArgs>
+    _count?: boolean | InstitutionBranchCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type InstitutionBranchIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type InstitutionBranchIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $InstitutionBranchPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstitutionBranch"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+      accounts: Prisma.$InstitutionAccountPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      clientId: string
+      name: string
+      city: string
+      country: string
+      countryCode: string
+      address: string | null
+      timezone: string
+      riskScore: number
+      complianceStatus: string
+      complianceNote: string | null
+      regulatoryBody: string | null
+      isSanctioned: boolean
+      sanctionReason: string | null
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["institutionBranch"]>
+    composites: {}
+  }
+
+  type InstitutionBranchGetPayload<S extends boolean | null | undefined | InstitutionBranchDefaultArgs> = $Result.GetResult<Prisma.$InstitutionBranchPayload, S>
+
+  type InstitutionBranchCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstitutionBranchFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstitutionBranchCountAggregateInputType | true
+    }
+
+  export interface InstitutionBranchDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstitutionBranch'], meta: { name: 'InstitutionBranch' } }
+    /**
+     * Find zero or one InstitutionBranch that matches the filter.
+     * @param {InstitutionBranchFindUniqueArgs} args - Arguments to find a InstitutionBranch
+     * @example
+     * // Get one InstitutionBranch
+     * const institutionBranch = await prisma.institutionBranch.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstitutionBranchFindUniqueArgs>(args: SelectSubset<T, InstitutionBranchFindUniqueArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstitutionBranch that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstitutionBranchFindUniqueOrThrowArgs} args - Arguments to find a InstitutionBranch
+     * @example
+     * // Get one InstitutionBranch
+     * const institutionBranch = await prisma.institutionBranch.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstitutionBranchFindUniqueOrThrowArgs>(args: SelectSubset<T, InstitutionBranchFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionBranch that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionBranchFindFirstArgs} args - Arguments to find a InstitutionBranch
+     * @example
+     * // Get one InstitutionBranch
+     * const institutionBranch = await prisma.institutionBranch.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstitutionBranchFindFirstArgs>(args?: SelectSubset<T, InstitutionBranchFindFirstArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstitutionBranch that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionBranchFindFirstOrThrowArgs} args - Arguments to find a InstitutionBranch
+     * @example
+     * // Get one InstitutionBranch
+     * const institutionBranch = await prisma.institutionBranch.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstitutionBranchFindFirstOrThrowArgs>(args?: SelectSubset<T, InstitutionBranchFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstitutionBranches that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionBranchFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstitutionBranches
+     * const institutionBranches = await prisma.institutionBranch.findMany()
+     * 
+     * // Get first 10 InstitutionBranches
+     * const institutionBranches = await prisma.institutionBranch.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const institutionBranchWithIdOnly = await prisma.institutionBranch.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstitutionBranchFindManyArgs>(args?: SelectSubset<T, InstitutionBranchFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstitutionBranch.
+     * @param {InstitutionBranchCreateArgs} args - Arguments to create a InstitutionBranch.
+     * @example
+     * // Create one InstitutionBranch
+     * const InstitutionBranch = await prisma.institutionBranch.create({
+     *   data: {
+     *     // ... data to create a InstitutionBranch
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstitutionBranchCreateArgs>(args: SelectSubset<T, InstitutionBranchCreateArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstitutionBranches.
+     * @param {InstitutionBranchCreateManyArgs} args - Arguments to create many InstitutionBranches.
+     * @example
+     * // Create many InstitutionBranches
+     * const institutionBranch = await prisma.institutionBranch.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstitutionBranchCreateManyArgs>(args?: SelectSubset<T, InstitutionBranchCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstitutionBranches and returns the data saved in the database.
+     * @param {InstitutionBranchCreateManyAndReturnArgs} args - Arguments to create many InstitutionBranches.
+     * @example
+     * // Create many InstitutionBranches
+     * const institutionBranch = await prisma.institutionBranch.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstitutionBranches and only return the `id`
+     * const institutionBranchWithIdOnly = await prisma.institutionBranch.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstitutionBranchCreateManyAndReturnArgs>(args?: SelectSubset<T, InstitutionBranchCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstitutionBranch.
+     * @param {InstitutionBranchDeleteArgs} args - Arguments to delete one InstitutionBranch.
+     * @example
+     * // Delete one InstitutionBranch
+     * const InstitutionBranch = await prisma.institutionBranch.delete({
+     *   where: {
+     *     // ... filter to delete one InstitutionBranch
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstitutionBranchDeleteArgs>(args: SelectSubset<T, InstitutionBranchDeleteArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstitutionBranch.
+     * @param {InstitutionBranchUpdateArgs} args - Arguments to update one InstitutionBranch.
+     * @example
+     * // Update one InstitutionBranch
+     * const institutionBranch = await prisma.institutionBranch.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstitutionBranchUpdateArgs>(args: SelectSubset<T, InstitutionBranchUpdateArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstitutionBranches.
+     * @param {InstitutionBranchDeleteManyArgs} args - Arguments to filter InstitutionBranches to delete.
+     * @example
+     * // Delete a few InstitutionBranches
+     * const { count } = await prisma.institutionBranch.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstitutionBranchDeleteManyArgs>(args?: SelectSubset<T, InstitutionBranchDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionBranches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionBranchUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstitutionBranches
+     * const institutionBranch = await prisma.institutionBranch.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstitutionBranchUpdateManyArgs>(args: SelectSubset<T, InstitutionBranchUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstitutionBranches and returns the data updated in the database.
+     * @param {InstitutionBranchUpdateManyAndReturnArgs} args - Arguments to update many InstitutionBranches.
+     * @example
+     * // Update many InstitutionBranches
+     * const institutionBranch = await prisma.institutionBranch.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstitutionBranches and only return the `id`
+     * const institutionBranchWithIdOnly = await prisma.institutionBranch.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstitutionBranchUpdateManyAndReturnArgs>(args: SelectSubset<T, InstitutionBranchUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstitutionBranch.
+     * @param {InstitutionBranchUpsertArgs} args - Arguments to update or create a InstitutionBranch.
+     * @example
+     * // Update or create a InstitutionBranch
+     * const institutionBranch = await prisma.institutionBranch.upsert({
+     *   create: {
+     *     // ... data to create a InstitutionBranch
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstitutionBranch we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstitutionBranchUpsertArgs>(args: SelectSubset<T, InstitutionBranchUpsertArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstitutionBranches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionBranchCountArgs} args - Arguments to filter InstitutionBranches to count.
+     * @example
+     * // Count the number of InstitutionBranches
+     * const count = await prisma.institutionBranch.count({
+     *   where: {
+     *     // ... the filter for the InstitutionBranches we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstitutionBranchCountArgs>(
+      args?: Subset<T, InstitutionBranchCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstitutionBranchCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstitutionBranch.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionBranchAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstitutionBranchAggregateArgs>(args: Subset<T, InstitutionBranchAggregateArgs>): Prisma.PrismaPromise<GetInstitutionBranchAggregateType<T>>
+
+    /**
+     * Group by InstitutionBranch.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstitutionBranchGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstitutionBranchGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstitutionBranchGroupByArgs['orderBy'] }
+        : { orderBy?: InstitutionBranchGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstitutionBranchGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstitutionBranchGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstitutionBranch model
+   */
+  readonly fields: InstitutionBranchFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstitutionBranch.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstitutionBranchClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    accounts<T extends InstitutionBranch$accountsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionBranch$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstitutionBranch model
+   */
+  interface InstitutionBranchFieldRefs {
+    readonly id: FieldRef<"InstitutionBranch", 'String'>
+    readonly clientId: FieldRef<"InstitutionBranch", 'String'>
+    readonly name: FieldRef<"InstitutionBranch", 'String'>
+    readonly city: FieldRef<"InstitutionBranch", 'String'>
+    readonly country: FieldRef<"InstitutionBranch", 'String'>
+    readonly countryCode: FieldRef<"InstitutionBranch", 'String'>
+    readonly address: FieldRef<"InstitutionBranch", 'String'>
+    readonly timezone: FieldRef<"InstitutionBranch", 'String'>
+    readonly riskScore: FieldRef<"InstitutionBranch", 'Int'>
+    readonly complianceStatus: FieldRef<"InstitutionBranch", 'String'>
+    readonly complianceNote: FieldRef<"InstitutionBranch", 'String'>
+    readonly regulatoryBody: FieldRef<"InstitutionBranch", 'String'>
+    readonly isSanctioned: FieldRef<"InstitutionBranch", 'Boolean'>
+    readonly sanctionReason: FieldRef<"InstitutionBranch", 'String'>
+    readonly isActive: FieldRef<"InstitutionBranch", 'Boolean'>
+    readonly createdAt: FieldRef<"InstitutionBranch", 'DateTime'>
+    readonly updatedAt: FieldRef<"InstitutionBranch", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstitutionBranch findUnique
+   */
+  export type InstitutionBranchFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionBranch to fetch.
+     */
+    where: InstitutionBranchWhereUniqueInput
+  }
+
+  /**
+   * InstitutionBranch findUniqueOrThrow
+   */
+  export type InstitutionBranchFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionBranch to fetch.
+     */
+    where: InstitutionBranchWhereUniqueInput
+  }
+
+  /**
+   * InstitutionBranch findFirst
+   */
+  export type InstitutionBranchFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionBranch to fetch.
+     */
+    where?: InstitutionBranchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionBranches to fetch.
+     */
+    orderBy?: InstitutionBranchOrderByWithRelationInput | InstitutionBranchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionBranches.
+     */
+    cursor?: InstitutionBranchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionBranches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionBranches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionBranches.
+     */
+    distinct?: InstitutionBranchScalarFieldEnum | InstitutionBranchScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionBranch findFirstOrThrow
+   */
+  export type InstitutionBranchFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionBranch to fetch.
+     */
+    where?: InstitutionBranchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionBranches to fetch.
+     */
+    orderBy?: InstitutionBranchOrderByWithRelationInput | InstitutionBranchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstitutionBranches.
+     */
+    cursor?: InstitutionBranchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionBranches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionBranches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstitutionBranches.
+     */
+    distinct?: InstitutionBranchScalarFieldEnum | InstitutionBranchScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionBranch findMany
+   */
+  export type InstitutionBranchFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * Filter, which InstitutionBranches to fetch.
+     */
+    where?: InstitutionBranchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstitutionBranches to fetch.
+     */
+    orderBy?: InstitutionBranchOrderByWithRelationInput | InstitutionBranchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstitutionBranches.
+     */
+    cursor?: InstitutionBranchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstitutionBranches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstitutionBranches.
+     */
+    skip?: number
+    distinct?: InstitutionBranchScalarFieldEnum | InstitutionBranchScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionBranch create
+   */
+  export type InstitutionBranchCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * The data needed to create a InstitutionBranch.
+     */
+    data: XOR<InstitutionBranchCreateInput, InstitutionBranchUncheckedCreateInput>
+  }
+
+  /**
+   * InstitutionBranch createMany
+   */
+  export type InstitutionBranchCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstitutionBranches.
+     */
+    data: InstitutionBranchCreateManyInput | InstitutionBranchCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstitutionBranch createManyAndReturn
+   */
+  export type InstitutionBranchCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstitutionBranches.
+     */
+    data: InstitutionBranchCreateManyInput | InstitutionBranchCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionBranch update
+   */
+  export type InstitutionBranchUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * The data needed to update a InstitutionBranch.
+     */
+    data: XOR<InstitutionBranchUpdateInput, InstitutionBranchUncheckedUpdateInput>
+    /**
+     * Choose, which InstitutionBranch to update.
+     */
+    where: InstitutionBranchWhereUniqueInput
+  }
+
+  /**
+   * InstitutionBranch updateMany
+   */
+  export type InstitutionBranchUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstitutionBranches.
+     */
+    data: XOR<InstitutionBranchUpdateManyMutationInput, InstitutionBranchUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionBranches to update
+     */
+    where?: InstitutionBranchWhereInput
+    /**
+     * Limit how many InstitutionBranches to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionBranch updateManyAndReturn
+   */
+  export type InstitutionBranchUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * The data used to update InstitutionBranches.
+     */
+    data: XOR<InstitutionBranchUpdateManyMutationInput, InstitutionBranchUncheckedUpdateManyInput>
+    /**
+     * Filter which InstitutionBranches to update
+     */
+    where?: InstitutionBranchWhereInput
+    /**
+     * Limit how many InstitutionBranches to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionBranch upsert
+   */
+  export type InstitutionBranchUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * The filter to search for the InstitutionBranch to update in case it exists.
+     */
+    where: InstitutionBranchWhereUniqueInput
+    /**
+     * In case the InstitutionBranch found by the `where` argument doesn't exist, create a new InstitutionBranch with this data.
+     */
+    create: XOR<InstitutionBranchCreateInput, InstitutionBranchUncheckedCreateInput>
+    /**
+     * In case the InstitutionBranch was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstitutionBranchUpdateInput, InstitutionBranchUncheckedUpdateInput>
+  }
+
+  /**
+   * InstitutionBranch delete
+   */
+  export type InstitutionBranchDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+    /**
+     * Filter which InstitutionBranch to delete.
+     */
+    where: InstitutionBranchWhereUniqueInput
+  }
+
+  /**
+   * InstitutionBranch deleteMany
+   */
+  export type InstitutionBranchDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstitutionBranches to delete
+     */
+    where?: InstitutionBranchWhereInput
+    /**
+     * Limit how many InstitutionBranches to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstitutionBranch.accounts
+   */
+  export type InstitutionBranch$accountsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    where?: InstitutionAccountWhereInput
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    cursor?: InstitutionAccountWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
+  }
+
+  /**
+   * InstitutionBranch without action
+   */
+  export type InstitutionBranchDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionBranch
+     */
+    select?: InstitutionBranchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionBranch
+     */
+    omit?: InstitutionBranchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionBranchInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model DirectPayment
+   */
+
+  export type AggregateDirectPayment = {
+    _count: DirectPaymentCountAggregateOutputType | null
+    _avg: DirectPaymentAvgAggregateOutputType | null
+    _sum: DirectPaymentSumAggregateOutputType | null
+    _min: DirectPaymentMinAggregateOutputType | null
+    _max: DirectPaymentMaxAggregateOutputType | null
+  }
+
+  export type DirectPaymentAvgAggregateOutputType = {
+    amount: Decimal | null
+    platformFee: Decimal | null
+    riskScore: number | null
+  }
+
+  export type DirectPaymentSumAggregateOutputType = {
+    amount: Decimal | null
+    platformFee: Decimal | null
+    riskScore: number | null
+  }
+
+  export type DirectPaymentMinAggregateOutputType = {
+    id: string | null
+    paymentCode: string | null
+    clientId: string | null
+    sender: string | null
+    senderCountry: string | null
+    senderWallet: string | null
+    recipient: string | null
+    recipientCountry: string | null
+    recipientWallet: string | null
+    amount: Decimal | null
+    currency: string | null
+    corridor: string | null
+    status: string | null
+    txHash: string | null
+    platformFee: Decimal | null
+    riskScore: number | null
+    settlementMode: string | null
+    releaseMode: string | null
+    settledAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type DirectPaymentMaxAggregateOutputType = {
+    id: string | null
+    paymentCode: string | null
+    clientId: string | null
+    sender: string | null
+    senderCountry: string | null
+    senderWallet: string | null
+    recipient: string | null
+    recipientCountry: string | null
+    recipientWallet: string | null
+    amount: Decimal | null
+    currency: string | null
+    corridor: string | null
+    status: string | null
+    txHash: string | null
+    platformFee: Decimal | null
+    riskScore: number | null
+    settlementMode: string | null
+    releaseMode: string | null
+    settledAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type DirectPaymentCountAggregateOutputType = {
+    id: number
+    paymentCode: number
+    clientId: number
+    sender: number
+    senderCountry: number
+    senderWallet: number
+    recipient: number
+    recipientCountry: number
+    recipientWallet: number
+    amount: number
+    currency: number
+    corridor: number
+    status: number
+    txHash: number
+    platformFee: number
+    riskScore: number
+    settlementMode: number
+    releaseMode: number
+    settledAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type DirectPaymentAvgAggregateInputType = {
+    amount?: true
+    platformFee?: true
+    riskScore?: true
+  }
+
+  export type DirectPaymentSumAggregateInputType = {
+    amount?: true
+    platformFee?: true
+    riskScore?: true
+  }
+
+  export type DirectPaymentMinAggregateInputType = {
+    id?: true
+    paymentCode?: true
+    clientId?: true
+    sender?: true
+    senderCountry?: true
+    senderWallet?: true
+    recipient?: true
+    recipientCountry?: true
+    recipientWallet?: true
+    amount?: true
+    currency?: true
+    corridor?: true
+    status?: true
+    txHash?: true
+    platformFee?: true
+    riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    settledAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type DirectPaymentMaxAggregateInputType = {
+    id?: true
+    paymentCode?: true
+    clientId?: true
+    sender?: true
+    senderCountry?: true
+    senderWallet?: true
+    recipient?: true
+    recipientCountry?: true
+    recipientWallet?: true
+    amount?: true
+    currency?: true
+    corridor?: true
+    status?: true
+    txHash?: true
+    platformFee?: true
+    riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    settledAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type DirectPaymentCountAggregateInputType = {
+    id?: true
+    paymentCode?: true
+    clientId?: true
+    sender?: true
+    senderCountry?: true
+    senderWallet?: true
+    recipient?: true
+    recipientCountry?: true
+    recipientWallet?: true
+    amount?: true
+    currency?: true
+    corridor?: true
+    status?: true
+    txHash?: true
+    platformFee?: true
+    riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    settledAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type DirectPaymentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which DirectPayment to aggregate.
+     */
+    where?: DirectPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DirectPayments to fetch.
+     */
+    orderBy?: DirectPaymentOrderByWithRelationInput | DirectPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: DirectPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DirectPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DirectPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned DirectPayments
+    **/
+    _count?: true | DirectPaymentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: DirectPaymentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: DirectPaymentSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: DirectPaymentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: DirectPaymentMaxAggregateInputType
+  }
+
+  export type GetDirectPaymentAggregateType<T extends DirectPaymentAggregateArgs> = {
+        [P in keyof T & keyof AggregateDirectPayment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateDirectPayment[P]>
+      : GetScalarType<T[P], AggregateDirectPayment[P]>
+  }
+
+
+
+
+  export type DirectPaymentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DirectPaymentWhereInput
+    orderBy?: DirectPaymentOrderByWithAggregationInput | DirectPaymentOrderByWithAggregationInput[]
+    by: DirectPaymentScalarFieldEnum[] | DirectPaymentScalarFieldEnum
+    having?: DirectPaymentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: DirectPaymentCountAggregateInputType | true
+    _avg?: DirectPaymentAvgAggregateInputType
+    _sum?: DirectPaymentSumAggregateInputType
+    _min?: DirectPaymentMinAggregateInputType
+    _max?: DirectPaymentMaxAggregateInputType
+  }
+
+  export type DirectPaymentGroupByOutputType = {
+    id: string
+    paymentCode: string | null
+    clientId: string
+    sender: string
+    senderCountry: string
+    senderWallet: string
+    recipient: string
+    recipientCountry: string
+    recipientWallet: string
+    amount: Decimal
+    currency: string
+    corridor: string
+    status: string
+    txHash: string | null
+    platformFee: Decimal
+    riskScore: number | null
+    settlementMode: string
+    releaseMode: string
+    settledAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: DirectPaymentCountAggregateOutputType | null
+    _avg: DirectPaymentAvgAggregateOutputType | null
+    _sum: DirectPaymentSumAggregateOutputType | null
+    _min: DirectPaymentMinAggregateOutputType | null
+    _max: DirectPaymentMaxAggregateOutputType | null
+  }
+
+  type GetDirectPaymentGroupByPayload<T extends DirectPaymentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<DirectPaymentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof DirectPaymentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], DirectPaymentGroupByOutputType[P]>
+            : GetScalarType<T[P], DirectPaymentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type DirectPaymentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentCode?: boolean
+    clientId?: boolean
+    sender?: boolean
+    senderCountry?: boolean
+    senderWallet?: boolean
+    recipient?: boolean
+    recipientCountry?: boolean
+    recipientWallet?: boolean
+    amount?: boolean
+    currency?: boolean
+    corridor?: boolean
+    status?: boolean
+    txHash?: boolean
+    platformFee?: boolean
+    riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    settledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["directPayment"]>
+
+  export type DirectPaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentCode?: boolean
+    clientId?: boolean
+    sender?: boolean
+    senderCountry?: boolean
+    senderWallet?: boolean
+    recipient?: boolean
+    recipientCountry?: boolean
+    recipientWallet?: boolean
+    amount?: boolean
+    currency?: boolean
+    corridor?: boolean
+    status?: boolean
+    txHash?: boolean
+    platformFee?: boolean
+    riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    settledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["directPayment"]>
+
+  export type DirectPaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentCode?: boolean
+    clientId?: boolean
+    sender?: boolean
+    senderCountry?: boolean
+    senderWallet?: boolean
+    recipient?: boolean
+    recipientCountry?: boolean
+    recipientWallet?: boolean
+    amount?: boolean
+    currency?: boolean
+    corridor?: boolean
+    status?: boolean
+    txHash?: boolean
+    platformFee?: boolean
+    riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    settledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["directPayment"]>
+
+  export type DirectPaymentSelectScalar = {
+    id?: boolean
+    paymentCode?: boolean
+    clientId?: boolean
+    sender?: boolean
+    senderCountry?: boolean
+    senderWallet?: boolean
+    recipient?: boolean
+    recipientCountry?: boolean
+    recipientWallet?: boolean
+    amount?: boolean
+    currency?: boolean
+    corridor?: boolean
+    status?: boolean
+    txHash?: boolean
+    platformFee?: boolean
+    riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    settledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type DirectPaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "paymentCode" | "clientId" | "sender" | "senderCountry" | "senderWallet" | "recipient" | "recipientCountry" | "recipientWallet" | "amount" | "currency" | "corridor" | "status" | "txHash" | "platformFee" | "riskScore" | "settlementMode" | "releaseMode" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["directPayment"]>
+  export type DirectPaymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type DirectPaymentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+  export type DirectPaymentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
+  }
+
+  export type $DirectPaymentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "DirectPayment"
+    objects: {
+      client: Prisma.$InstitutionClientPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      paymentCode: string | null
+      clientId: string
+      sender: string
+      senderCountry: string
+      senderWallet: string
+      recipient: string
+      recipientCountry: string
+      recipientWallet: string
+      amount: Prisma.Decimal
+      currency: string
+      corridor: string
+      status: string
+      txHash: string | null
+      platformFee: Prisma.Decimal
+      riskScore: number | null
+      settlementMode: string
+      releaseMode: string
+      settledAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["directPayment"]>
+    composites: {}
+  }
+
+  type DirectPaymentGetPayload<S extends boolean | null | undefined | DirectPaymentDefaultArgs> = $Result.GetResult<Prisma.$DirectPaymentPayload, S>
+
+  type DirectPaymentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<DirectPaymentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: DirectPaymentCountAggregateInputType | true
+    }
+
+  export interface DirectPaymentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['DirectPayment'], meta: { name: 'DirectPayment' } }
+    /**
+     * Find zero or one DirectPayment that matches the filter.
+     * @param {DirectPaymentFindUniqueArgs} args - Arguments to find a DirectPayment
+     * @example
+     * // Get one DirectPayment
+     * const directPayment = await prisma.directPayment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends DirectPaymentFindUniqueArgs>(args: SelectSubset<T, DirectPaymentFindUniqueArgs<ExtArgs>>): Prisma__DirectPaymentClient<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one DirectPayment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {DirectPaymentFindUniqueOrThrowArgs} args - Arguments to find a DirectPayment
+     * @example
+     * // Get one DirectPayment
+     * const directPayment = await prisma.directPayment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends DirectPaymentFindUniqueOrThrowArgs>(args: SelectSubset<T, DirectPaymentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__DirectPaymentClient<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first DirectPayment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DirectPaymentFindFirstArgs} args - Arguments to find a DirectPayment
+     * @example
+     * // Get one DirectPayment
+     * const directPayment = await prisma.directPayment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends DirectPaymentFindFirstArgs>(args?: SelectSubset<T, DirectPaymentFindFirstArgs<ExtArgs>>): Prisma__DirectPaymentClient<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first DirectPayment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DirectPaymentFindFirstOrThrowArgs} args - Arguments to find a DirectPayment
+     * @example
+     * // Get one DirectPayment
+     * const directPayment = await prisma.directPayment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends DirectPaymentFindFirstOrThrowArgs>(args?: SelectSubset<T, DirectPaymentFindFirstOrThrowArgs<ExtArgs>>): Prisma__DirectPaymentClient<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more DirectPayments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DirectPaymentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all DirectPayments
+     * const directPayments = await prisma.directPayment.findMany()
+     * 
+     * // Get first 10 DirectPayments
+     * const directPayments = await prisma.directPayment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const directPaymentWithIdOnly = await prisma.directPayment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends DirectPaymentFindManyArgs>(args?: SelectSubset<T, DirectPaymentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a DirectPayment.
+     * @param {DirectPaymentCreateArgs} args - Arguments to create a DirectPayment.
+     * @example
+     * // Create one DirectPayment
+     * const DirectPayment = await prisma.directPayment.create({
+     *   data: {
+     *     // ... data to create a DirectPayment
+     *   }
+     * })
+     * 
+     */
+    create<T extends DirectPaymentCreateArgs>(args: SelectSubset<T, DirectPaymentCreateArgs<ExtArgs>>): Prisma__DirectPaymentClient<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many DirectPayments.
+     * @param {DirectPaymentCreateManyArgs} args - Arguments to create many DirectPayments.
+     * @example
+     * // Create many DirectPayments
+     * const directPayment = await prisma.directPayment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends DirectPaymentCreateManyArgs>(args?: SelectSubset<T, DirectPaymentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many DirectPayments and returns the data saved in the database.
+     * @param {DirectPaymentCreateManyAndReturnArgs} args - Arguments to create many DirectPayments.
+     * @example
+     * // Create many DirectPayments
+     * const directPayment = await prisma.directPayment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many DirectPayments and only return the `id`
+     * const directPaymentWithIdOnly = await prisma.directPayment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends DirectPaymentCreateManyAndReturnArgs>(args?: SelectSubset<T, DirectPaymentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a DirectPayment.
+     * @param {DirectPaymentDeleteArgs} args - Arguments to delete one DirectPayment.
+     * @example
+     * // Delete one DirectPayment
+     * const DirectPayment = await prisma.directPayment.delete({
+     *   where: {
+     *     // ... filter to delete one DirectPayment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends DirectPaymentDeleteArgs>(args: SelectSubset<T, DirectPaymentDeleteArgs<ExtArgs>>): Prisma__DirectPaymentClient<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one DirectPayment.
+     * @param {DirectPaymentUpdateArgs} args - Arguments to update one DirectPayment.
+     * @example
+     * // Update one DirectPayment
+     * const directPayment = await prisma.directPayment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends DirectPaymentUpdateArgs>(args: SelectSubset<T, DirectPaymentUpdateArgs<ExtArgs>>): Prisma__DirectPaymentClient<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more DirectPayments.
+     * @param {DirectPaymentDeleteManyArgs} args - Arguments to filter DirectPayments to delete.
+     * @example
+     * // Delete a few DirectPayments
+     * const { count } = await prisma.directPayment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends DirectPaymentDeleteManyArgs>(args?: SelectSubset<T, DirectPaymentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more DirectPayments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DirectPaymentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many DirectPayments
+     * const directPayment = await prisma.directPayment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends DirectPaymentUpdateManyArgs>(args: SelectSubset<T, DirectPaymentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more DirectPayments and returns the data updated in the database.
+     * @param {DirectPaymentUpdateManyAndReturnArgs} args - Arguments to update many DirectPayments.
+     * @example
+     * // Update many DirectPayments
+     * const directPayment = await prisma.directPayment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more DirectPayments and only return the `id`
+     * const directPaymentWithIdOnly = await prisma.directPayment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends DirectPaymentUpdateManyAndReturnArgs>(args: SelectSubset<T, DirectPaymentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one DirectPayment.
+     * @param {DirectPaymentUpsertArgs} args - Arguments to update or create a DirectPayment.
+     * @example
+     * // Update or create a DirectPayment
+     * const directPayment = await prisma.directPayment.upsert({
+     *   create: {
+     *     // ... data to create a DirectPayment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the DirectPayment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends DirectPaymentUpsertArgs>(args: SelectSubset<T, DirectPaymentUpsertArgs<ExtArgs>>): Prisma__DirectPaymentClient<$Result.GetResult<Prisma.$DirectPaymentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of DirectPayments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DirectPaymentCountArgs} args - Arguments to filter DirectPayments to count.
+     * @example
+     * // Count the number of DirectPayments
+     * const count = await prisma.directPayment.count({
+     *   where: {
+     *     // ... the filter for the DirectPayments we want to count
+     *   }
+     * })
+    **/
+    count<T extends DirectPaymentCountArgs>(
+      args?: Subset<T, DirectPaymentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], DirectPaymentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a DirectPayment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DirectPaymentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends DirectPaymentAggregateArgs>(args: Subset<T, DirectPaymentAggregateArgs>): Prisma.PrismaPromise<GetDirectPaymentAggregateType<T>>
+
+    /**
+     * Group by DirectPayment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DirectPaymentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends DirectPaymentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: DirectPaymentGroupByArgs['orderBy'] }
+        : { orderBy?: DirectPaymentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, DirectPaymentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetDirectPaymentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the DirectPayment model
+   */
+  readonly fields: DirectPaymentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for DirectPayment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__DirectPaymentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the DirectPayment model
+   */
+  interface DirectPaymentFieldRefs {
+    readonly id: FieldRef<"DirectPayment", 'String'>
+    readonly paymentCode: FieldRef<"DirectPayment", 'String'>
+    readonly clientId: FieldRef<"DirectPayment", 'String'>
+    readonly sender: FieldRef<"DirectPayment", 'String'>
+    readonly senderCountry: FieldRef<"DirectPayment", 'String'>
+    readonly senderWallet: FieldRef<"DirectPayment", 'String'>
+    readonly recipient: FieldRef<"DirectPayment", 'String'>
+    readonly recipientCountry: FieldRef<"DirectPayment", 'String'>
+    readonly recipientWallet: FieldRef<"DirectPayment", 'String'>
+    readonly amount: FieldRef<"DirectPayment", 'Decimal'>
+    readonly currency: FieldRef<"DirectPayment", 'String'>
+    readonly corridor: FieldRef<"DirectPayment", 'String'>
+    readonly status: FieldRef<"DirectPayment", 'String'>
+    readonly txHash: FieldRef<"DirectPayment", 'String'>
+    readonly platformFee: FieldRef<"DirectPayment", 'Decimal'>
+    readonly riskScore: FieldRef<"DirectPayment", 'Int'>
+    readonly settlementMode: FieldRef<"DirectPayment", 'String'>
+    readonly releaseMode: FieldRef<"DirectPayment", 'String'>
+    readonly settledAt: FieldRef<"DirectPayment", 'DateTime'>
+    readonly createdAt: FieldRef<"DirectPayment", 'DateTime'>
+    readonly updatedAt: FieldRef<"DirectPayment", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * DirectPayment findUnique
+   */
+  export type DirectPaymentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which DirectPayment to fetch.
+     */
+    where: DirectPaymentWhereUniqueInput
+  }
+
+  /**
+   * DirectPayment findUniqueOrThrow
+   */
+  export type DirectPaymentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which DirectPayment to fetch.
+     */
+    where: DirectPaymentWhereUniqueInput
+  }
+
+  /**
+   * DirectPayment findFirst
+   */
+  export type DirectPaymentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which DirectPayment to fetch.
+     */
+    where?: DirectPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DirectPayments to fetch.
+     */
+    orderBy?: DirectPaymentOrderByWithRelationInput | DirectPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for DirectPayments.
+     */
+    cursor?: DirectPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DirectPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DirectPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of DirectPayments.
+     */
+    distinct?: DirectPaymentScalarFieldEnum | DirectPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * DirectPayment findFirstOrThrow
+   */
+  export type DirectPaymentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which DirectPayment to fetch.
+     */
+    where?: DirectPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DirectPayments to fetch.
+     */
+    orderBy?: DirectPaymentOrderByWithRelationInput | DirectPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for DirectPayments.
+     */
+    cursor?: DirectPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DirectPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DirectPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of DirectPayments.
+     */
+    distinct?: DirectPaymentScalarFieldEnum | DirectPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * DirectPayment findMany
+   */
+  export type DirectPaymentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which DirectPayments to fetch.
+     */
+    where?: DirectPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DirectPayments to fetch.
+     */
+    orderBy?: DirectPaymentOrderByWithRelationInput | DirectPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing DirectPayments.
+     */
+    cursor?: DirectPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DirectPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DirectPayments.
+     */
+    skip?: number
+    distinct?: DirectPaymentScalarFieldEnum | DirectPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * DirectPayment create
+   */
+  export type DirectPaymentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a DirectPayment.
+     */
+    data: XOR<DirectPaymentCreateInput, DirectPaymentUncheckedCreateInput>
+  }
+
+  /**
+   * DirectPayment createMany
+   */
+  export type DirectPaymentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many DirectPayments.
+     */
+    data: DirectPaymentCreateManyInput | DirectPaymentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * DirectPayment createManyAndReturn
+   */
+  export type DirectPaymentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * The data used to create many DirectPayments.
+     */
+    data: DirectPaymentCreateManyInput | DirectPaymentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * DirectPayment update
+   */
+  export type DirectPaymentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a DirectPayment.
+     */
+    data: XOR<DirectPaymentUpdateInput, DirectPaymentUncheckedUpdateInput>
+    /**
+     * Choose, which DirectPayment to update.
+     */
+    where: DirectPaymentWhereUniqueInput
+  }
+
+  /**
+   * DirectPayment updateMany
+   */
+  export type DirectPaymentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update DirectPayments.
+     */
+    data: XOR<DirectPaymentUpdateManyMutationInput, DirectPaymentUncheckedUpdateManyInput>
+    /**
+     * Filter which DirectPayments to update
+     */
+    where?: DirectPaymentWhereInput
+    /**
+     * Limit how many DirectPayments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * DirectPayment updateManyAndReturn
+   */
+  export type DirectPaymentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * The data used to update DirectPayments.
+     */
+    data: XOR<DirectPaymentUpdateManyMutationInput, DirectPaymentUncheckedUpdateManyInput>
+    /**
+     * Filter which DirectPayments to update
+     */
+    where?: DirectPaymentWhereInput
+    /**
+     * Limit how many DirectPayments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * DirectPayment upsert
+   */
+  export type DirectPaymentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the DirectPayment to update in case it exists.
+     */
+    where: DirectPaymentWhereUniqueInput
+    /**
+     * In case the DirectPayment found by the `where` argument doesn't exist, create a new DirectPayment with this data.
+     */
+    create: XOR<DirectPaymentCreateInput, DirectPaymentUncheckedCreateInput>
+    /**
+     * In case the DirectPayment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<DirectPaymentUpdateInput, DirectPaymentUncheckedUpdateInput>
+  }
+
+  /**
+   * DirectPayment delete
+   */
+  export type DirectPaymentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
+    /**
+     * Filter which DirectPayment to delete.
+     */
+    where: DirectPaymentWhereUniqueInput
+  }
+
+  /**
+   * DirectPayment deleteMany
+   */
+  export type DirectPaymentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which DirectPayments to delete
+     */
+    where?: DirectPaymentWhereInput
+    /**
+     * Limit how many DirectPayments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * DirectPayment without action
+   */
+  export type DirectPaymentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DirectPayment
+     */
+    select?: DirectPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DirectPayment
+     */
+    omit?: DirectPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DirectPaymentInclude<ExtArgs> | null
   }
 
 
@@ -29487,10 +32400,12 @@ export namespace Prisma {
 
   export type InstitutionClientSettingsAvgAggregateOutputType = {
     autoApproveThreshold: Decimal | null
+    manualReviewThreshold: Decimal | null
   }
 
   export type InstitutionClientSettingsSumAggregateOutputType = {
     autoApproveThreshold: Decimal | null
+    manualReviewThreshold: Decimal | null
   }
 
   export type InstitutionClientSettingsMinAggregateOutputType = {
@@ -29504,6 +32419,12 @@ export namespace Prisma {
     settlementAuthorityWallet: string | null
     timezone: string | null
     autoApproveThreshold: Decimal | null
+    manualReviewThreshold: Decimal | null
+    autoTravelRule: boolean | null
+    aiAutoRelease: boolean | null
+    riskTolerance: string | null
+    defaultToken: string | null
+    emailNotifications: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -29519,6 +32440,12 @@ export namespace Prisma {
     settlementAuthorityWallet: string | null
     timezone: string | null
     autoApproveThreshold: Decimal | null
+    manualReviewThreshold: Decimal | null
+    autoTravelRule: boolean | null
+    aiAutoRelease: boolean | null
+    riskTolerance: string | null
+    defaultToken: string | null
+    emailNotifications: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -29534,6 +32461,13 @@ export namespace Prisma {
     settlementAuthorityWallet: number
     timezone: number
     autoApproveThreshold: number
+    manualReviewThreshold: number
+    autoTravelRule: number
+    activeSanctionsLists: number
+    aiAutoRelease: number
+    riskTolerance: number
+    defaultToken: number
+    emailNotifications: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -29542,10 +32476,12 @@ export namespace Prisma {
 
   export type InstitutionClientSettingsAvgAggregateInputType = {
     autoApproveThreshold?: true
+    manualReviewThreshold?: true
   }
 
   export type InstitutionClientSettingsSumAggregateInputType = {
     autoApproveThreshold?: true
+    manualReviewThreshold?: true
   }
 
   export type InstitutionClientSettingsMinAggregateInputType = {
@@ -29559,6 +32495,12 @@ export namespace Prisma {
     settlementAuthorityWallet?: true
     timezone?: true
     autoApproveThreshold?: true
+    manualReviewThreshold?: true
+    autoTravelRule?: true
+    aiAutoRelease?: true
+    riskTolerance?: true
+    defaultToken?: true
+    emailNotifications?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -29574,6 +32516,12 @@ export namespace Prisma {
     settlementAuthorityWallet?: true
     timezone?: true
     autoApproveThreshold?: true
+    manualReviewThreshold?: true
+    autoTravelRule?: true
+    aiAutoRelease?: true
+    riskTolerance?: true
+    defaultToken?: true
+    emailNotifications?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -29589,6 +32537,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: true
     timezone?: true
     autoApproveThreshold?: true
+    manualReviewThreshold?: true
+    autoTravelRule?: true
+    activeSanctionsLists?: true
+    aiAutoRelease?: true
+    riskTolerance?: true
+    defaultToken?: true
+    emailNotifications?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -29691,6 +32646,13 @@ export namespace Prisma {
     settlementAuthorityWallet: string | null
     timezone: string
     autoApproveThreshold: Decimal | null
+    manualReviewThreshold: Decimal | null
+    autoTravelRule: boolean
+    activeSanctionsLists: string[]
+    aiAutoRelease: boolean
+    riskTolerance: string
+    defaultToken: string
+    emailNotifications: boolean
     createdAt: Date
     updatedAt: Date
     _count: InstitutionClientSettingsCountAggregateOutputType | null
@@ -29725,6 +32687,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: boolean
     timezone?: boolean
     autoApproveThreshold?: boolean
+    manualReviewThreshold?: boolean
+    autoTravelRule?: boolean
+    activeSanctionsLists?: boolean
+    aiAutoRelease?: boolean
+    riskTolerance?: boolean
+    defaultToken?: boolean
+    emailNotifications?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -29741,6 +32710,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: boolean
     timezone?: boolean
     autoApproveThreshold?: boolean
+    manualReviewThreshold?: boolean
+    autoTravelRule?: boolean
+    activeSanctionsLists?: boolean
+    aiAutoRelease?: boolean
+    riskTolerance?: boolean
+    defaultToken?: boolean
+    emailNotifications?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -29757,6 +32733,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: boolean
     timezone?: boolean
     autoApproveThreshold?: boolean
+    manualReviewThreshold?: boolean
+    autoTravelRule?: boolean
+    activeSanctionsLists?: boolean
+    aiAutoRelease?: boolean
+    riskTolerance?: boolean
+    defaultToken?: boolean
+    emailNotifications?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -29773,11 +32756,18 @@ export namespace Prisma {
     settlementAuthorityWallet?: boolean
     timezone?: boolean
     autoApproveThreshold?: boolean
+    manualReviewThreshold?: boolean
+    autoTravelRule?: boolean
+    activeSanctionsLists?: boolean
+    aiAutoRelease?: boolean
+    riskTolerance?: boolean
+    defaultToken?: boolean
+    emailNotifications?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
+  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
   export type InstitutionClientSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -29804,6 +32794,13 @@ export namespace Prisma {
       settlementAuthorityWallet: string | null
       timezone: string
       autoApproveThreshold: Prisma.Decimal | null
+      manualReviewThreshold: Prisma.Decimal | null
+      autoTravelRule: boolean
+      activeSanctionsLists: string[]
+      aiAutoRelease: boolean
+      riskTolerance: string
+      defaultToken: string
+      emailNotifications: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["institutionClientSettings"]>
@@ -30240,6 +33237,13 @@ export namespace Prisma {
     readonly settlementAuthorityWallet: FieldRef<"InstitutionClientSettings", 'String'>
     readonly timezone: FieldRef<"InstitutionClientSettings", 'String'>
     readonly autoApproveThreshold: FieldRef<"InstitutionClientSettings", 'Decimal'>
+    readonly manualReviewThreshold: FieldRef<"InstitutionClientSettings", 'Decimal'>
+    readonly autoTravelRule: FieldRef<"InstitutionClientSettings", 'Boolean'>
+    readonly activeSanctionsLists: FieldRef<"InstitutionClientSettings", 'String[]'>
+    readonly aiAutoRelease: FieldRef<"InstitutionClientSettings", 'Boolean'>
+    readonly riskTolerance: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly defaultToken: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly emailNotifications: FieldRef<"InstitutionClientSettings", 'Boolean'>
     readonly createdAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
   }
@@ -44970,10 +47974,61 @@ export namespace Prisma {
     isDefault: 'isDefault',
     isActive: 'isActive',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    branchId: 'branchId'
   };
 
   export type InstitutionAccountScalarFieldEnum = (typeof InstitutionAccountScalarFieldEnum)[keyof typeof InstitutionAccountScalarFieldEnum]
+
+
+  export const InstitutionBranchScalarFieldEnum: {
+    id: 'id',
+    clientId: 'clientId',
+    name: 'name',
+    city: 'city',
+    country: 'country',
+    countryCode: 'countryCode',
+    address: 'address',
+    timezone: 'timezone',
+    riskScore: 'riskScore',
+    complianceStatus: 'complianceStatus',
+    complianceNote: 'complianceNote',
+    regulatoryBody: 'regulatoryBody',
+    isSanctioned: 'isSanctioned',
+    sanctionReason: 'sanctionReason',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InstitutionBranchScalarFieldEnum = (typeof InstitutionBranchScalarFieldEnum)[keyof typeof InstitutionBranchScalarFieldEnum]
+
+
+  export const DirectPaymentScalarFieldEnum: {
+    id: 'id',
+    paymentCode: 'paymentCode',
+    clientId: 'clientId',
+    sender: 'sender',
+    senderCountry: 'senderCountry',
+    senderWallet: 'senderWallet',
+    recipient: 'recipient',
+    recipientCountry: 'recipientCountry',
+    recipientWallet: 'recipientWallet',
+    amount: 'amount',
+    currency: 'currency',
+    corridor: 'corridor',
+    status: 'status',
+    txHash: 'txHash',
+    platformFee: 'platformFee',
+    riskScore: 'riskScore',
+    settlementMode: 'settlementMode',
+    releaseMode: 'releaseMode',
+    settledAt: 'settledAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type DirectPaymentScalarFieldEnum = (typeof DirectPaymentScalarFieldEnum)[keyof typeof DirectPaymentScalarFieldEnum]
 
 
   export const InstitutionRefreshTokenScalarFieldEnum: {
@@ -45001,6 +48056,13 @@ export namespace Prisma {
     settlementAuthorityWallet: 'settlementAuthorityWallet',
     timezone: 'timezone',
     autoApproveThreshold: 'autoApproveThreshold',
+    manualReviewThreshold: 'manualReviewThreshold',
+    autoTravelRule: 'autoTravelRule',
+    activeSanctionsLists: 'activeSanctionsLists',
+    aiAutoRelease: 'aiAutoRelease',
+    riskTolerance: 'riskTolerance',
+    defaultToken: 'defaultToken',
+    emailNotifications: 'emailNotifications',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -47662,6 +50724,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
     notifications?: InstitutionNotificationListRelationFilter
+    branches?: InstitutionBranchListRelationFilter
+    directPayments?: DirectPaymentListRelationFilter
   }
 
   export type InstitutionClientOrderByWithRelationInput = {
@@ -47737,6 +50801,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountOrderByRelationAggregateInput
     aiAnalyses?: InstitutionAiAnalysisOrderByRelationAggregateInput
     notifications?: InstitutionNotificationOrderByRelationAggregateInput
+    branches?: InstitutionBranchOrderByRelationAggregateInput
+    directPayments?: DirectPaymentOrderByRelationAggregateInput
   }
 
   export type InstitutionClientWhereUniqueInput = Prisma.AtLeast<{
@@ -47815,6 +50881,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
     notifications?: InstitutionNotificationListRelationFilter
+    branches?: InstitutionBranchListRelationFilter
+    directPayments?: DirectPaymentListRelationFilter
   }, "id" | "email">
 
   export type InstitutionClientOrderByWithAggregationInput = {
@@ -48077,7 +51145,9 @@ export namespace Prisma {
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+    branch?: XOR<InstitutionBranchNullableScalarRelationFilter, InstitutionBranchWhereInput> | null
   }
 
   export type InstitutionAccountOrderByWithRelationInput = {
@@ -48114,7 +51184,9 @@ export namespace Prisma {
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    branchId?: SortOrderInput | SortOrder
     client?: InstitutionClientOrderByWithRelationInput
+    branch?: InstitutionBranchOrderByWithRelationInput
   }
 
   export type InstitutionAccountWhereUniqueInput = Prisma.AtLeast<{
@@ -48155,7 +51227,9 @@ export namespace Prisma {
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+    branch?: XOR<InstitutionBranchNullableScalarRelationFilter, InstitutionBranchWhereInput> | null
   }, "id" | "clientId_name">
 
   export type InstitutionAccountOrderByWithAggregationInput = {
@@ -48192,6 +51266,7 @@ export namespace Prisma {
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    branchId?: SortOrderInput | SortOrder
     _count?: InstitutionAccountCountOrderByAggregateInput
     _avg?: InstitutionAccountAvgOrderByAggregateInput
     _max?: InstitutionAccountMaxOrderByAggregateInput
@@ -48236,6 +51311,264 @@ export namespace Prisma {
     isActive?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
+    branchId?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
+  }
+
+  export type InstitutionBranchWhereInput = {
+    AND?: InstitutionBranchWhereInput | InstitutionBranchWhereInput[]
+    OR?: InstitutionBranchWhereInput[]
+    NOT?: InstitutionBranchWhereInput | InstitutionBranchWhereInput[]
+    id?: StringFilter<"InstitutionBranch"> | string
+    clientId?: StringFilter<"InstitutionBranch"> | string
+    name?: StringFilter<"InstitutionBranch"> | string
+    city?: StringFilter<"InstitutionBranch"> | string
+    country?: StringFilter<"InstitutionBranch"> | string
+    countryCode?: StringFilter<"InstitutionBranch"> | string
+    address?: StringNullableFilter<"InstitutionBranch"> | string | null
+    timezone?: StringFilter<"InstitutionBranch"> | string
+    riskScore?: IntFilter<"InstitutionBranch"> | number
+    complianceStatus?: StringFilter<"InstitutionBranch"> | string
+    complianceNote?: StringNullableFilter<"InstitutionBranch"> | string | null
+    regulatoryBody?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isSanctioned?: BoolFilter<"InstitutionBranch"> | boolean
+    sanctionReason?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isActive?: BoolFilter<"InstitutionBranch"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+    accounts?: InstitutionAccountListRelationFilter
+  }
+
+  export type InstitutionBranchOrderByWithRelationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    city?: SortOrder
+    country?: SortOrder
+    countryCode?: SortOrder
+    address?: SortOrderInput | SortOrder
+    timezone?: SortOrder
+    riskScore?: SortOrder
+    complianceStatus?: SortOrder
+    complianceNote?: SortOrderInput | SortOrder
+    regulatoryBody?: SortOrderInput | SortOrder
+    isSanctioned?: SortOrder
+    sanctionReason?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+    accounts?: InstitutionAccountOrderByRelationAggregateInput
+  }
+
+  export type InstitutionBranchWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: InstitutionBranchWhereInput | InstitutionBranchWhereInput[]
+    OR?: InstitutionBranchWhereInput[]
+    NOT?: InstitutionBranchWhereInput | InstitutionBranchWhereInput[]
+    clientId?: StringFilter<"InstitutionBranch"> | string
+    name?: StringFilter<"InstitutionBranch"> | string
+    city?: StringFilter<"InstitutionBranch"> | string
+    country?: StringFilter<"InstitutionBranch"> | string
+    countryCode?: StringFilter<"InstitutionBranch"> | string
+    address?: StringNullableFilter<"InstitutionBranch"> | string | null
+    timezone?: StringFilter<"InstitutionBranch"> | string
+    riskScore?: IntFilter<"InstitutionBranch"> | number
+    complianceStatus?: StringFilter<"InstitutionBranch"> | string
+    complianceNote?: StringNullableFilter<"InstitutionBranch"> | string | null
+    regulatoryBody?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isSanctioned?: BoolFilter<"InstitutionBranch"> | boolean
+    sanctionReason?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isActive?: BoolFilter<"InstitutionBranch"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+    accounts?: InstitutionAccountListRelationFilter
+  }, "id">
+
+  export type InstitutionBranchOrderByWithAggregationInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    city?: SortOrder
+    country?: SortOrder
+    countryCode?: SortOrder
+    address?: SortOrderInput | SortOrder
+    timezone?: SortOrder
+    riskScore?: SortOrder
+    complianceStatus?: SortOrder
+    complianceNote?: SortOrderInput | SortOrder
+    regulatoryBody?: SortOrderInput | SortOrder
+    isSanctioned?: SortOrder
+    sanctionReason?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InstitutionBranchCountOrderByAggregateInput
+    _avg?: InstitutionBranchAvgOrderByAggregateInput
+    _max?: InstitutionBranchMaxOrderByAggregateInput
+    _min?: InstitutionBranchMinOrderByAggregateInput
+    _sum?: InstitutionBranchSumOrderByAggregateInput
+  }
+
+  export type InstitutionBranchScalarWhereWithAggregatesInput = {
+    AND?: InstitutionBranchScalarWhereWithAggregatesInput | InstitutionBranchScalarWhereWithAggregatesInput[]
+    OR?: InstitutionBranchScalarWhereWithAggregatesInput[]
+    NOT?: InstitutionBranchScalarWhereWithAggregatesInput | InstitutionBranchScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    clientId?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    name?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    city?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    country?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    countryCode?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    address?: StringNullableWithAggregatesFilter<"InstitutionBranch"> | string | null
+    timezone?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    riskScore?: IntWithAggregatesFilter<"InstitutionBranch"> | number
+    complianceStatus?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    complianceNote?: StringNullableWithAggregatesFilter<"InstitutionBranch"> | string | null
+    regulatoryBody?: StringNullableWithAggregatesFilter<"InstitutionBranch"> | string | null
+    isSanctioned?: BoolWithAggregatesFilter<"InstitutionBranch"> | boolean
+    sanctionReason?: StringNullableWithAggregatesFilter<"InstitutionBranch"> | string | null
+    isActive?: BoolWithAggregatesFilter<"InstitutionBranch"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"InstitutionBranch"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InstitutionBranch"> | Date | string
+  }
+
+  export type DirectPaymentWhereInput = {
+    AND?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
+    OR?: DirectPaymentWhereInput[]
+    NOT?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
+    id?: StringFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableFilter<"DirectPayment"> | string | null
+    clientId?: StringFilter<"DirectPayment"> | string
+    sender?: StringFilter<"DirectPayment"> | string
+    senderCountry?: StringFilter<"DirectPayment"> | string
+    senderWallet?: StringFilter<"DirectPayment"> | string
+    recipient?: StringFilter<"DirectPayment"> | string
+    recipientCountry?: StringFilter<"DirectPayment"> | string
+    recipientWallet?: StringFilter<"DirectPayment"> | string
+    amount?: DecimalFilter<"DirectPayment"> | Decimal | DecimalJsLike | number | string
+    currency?: StringFilter<"DirectPayment"> | string
+    corridor?: StringFilter<"DirectPayment"> | string
+    status?: StringFilter<"DirectPayment"> | string
+    txHash?: StringNullableFilter<"DirectPayment"> | string | null
+    platformFee?: DecimalFilter<"DirectPayment"> | Decimal | DecimalJsLike | number | string
+    riskScore?: IntNullableFilter<"DirectPayment"> | number | null
+    settlementMode?: StringFilter<"DirectPayment"> | string
+    releaseMode?: StringFilter<"DirectPayment"> | string
+    settledAt?: DateTimeNullableFilter<"DirectPayment"> | Date | string | null
+    createdAt?: DateTimeFilter<"DirectPayment"> | Date | string
+    updatedAt?: DateTimeFilter<"DirectPayment"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }
+
+  export type DirectPaymentOrderByWithRelationInput = {
+    id?: SortOrder
+    paymentCode?: SortOrderInput | SortOrder
+    clientId?: SortOrder
+    sender?: SortOrder
+    senderCountry?: SortOrder
+    senderWallet?: SortOrder
+    recipient?: SortOrder
+    recipientCountry?: SortOrder
+    recipientWallet?: SortOrder
+    amount?: SortOrder
+    currency?: SortOrder
+    corridor?: SortOrder
+    status?: SortOrder
+    txHash?: SortOrderInput | SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrderInput | SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    settledAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    client?: InstitutionClientOrderByWithRelationInput
+  }
+
+  export type DirectPaymentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    paymentCode?: string
+    AND?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
+    OR?: DirectPaymentWhereInput[]
+    NOT?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
+    clientId?: StringFilter<"DirectPayment"> | string
+    sender?: StringFilter<"DirectPayment"> | string
+    senderCountry?: StringFilter<"DirectPayment"> | string
+    senderWallet?: StringFilter<"DirectPayment"> | string
+    recipient?: StringFilter<"DirectPayment"> | string
+    recipientCountry?: StringFilter<"DirectPayment"> | string
+    recipientWallet?: StringFilter<"DirectPayment"> | string
+    amount?: DecimalFilter<"DirectPayment"> | Decimal | DecimalJsLike | number | string
+    currency?: StringFilter<"DirectPayment"> | string
+    corridor?: StringFilter<"DirectPayment"> | string
+    status?: StringFilter<"DirectPayment"> | string
+    txHash?: StringNullableFilter<"DirectPayment"> | string | null
+    platformFee?: DecimalFilter<"DirectPayment"> | Decimal | DecimalJsLike | number | string
+    riskScore?: IntNullableFilter<"DirectPayment"> | number | null
+    settlementMode?: StringFilter<"DirectPayment"> | string
+    releaseMode?: StringFilter<"DirectPayment"> | string
+    settledAt?: DateTimeNullableFilter<"DirectPayment"> | Date | string | null
+    createdAt?: DateTimeFilter<"DirectPayment"> | Date | string
+    updatedAt?: DateTimeFilter<"DirectPayment"> | Date | string
+    client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
+  }, "id" | "paymentCode">
+
+  export type DirectPaymentOrderByWithAggregationInput = {
+    id?: SortOrder
+    paymentCode?: SortOrderInput | SortOrder
+    clientId?: SortOrder
+    sender?: SortOrder
+    senderCountry?: SortOrder
+    senderWallet?: SortOrder
+    recipient?: SortOrder
+    recipientCountry?: SortOrder
+    recipientWallet?: SortOrder
+    amount?: SortOrder
+    currency?: SortOrder
+    corridor?: SortOrder
+    status?: SortOrder
+    txHash?: SortOrderInput | SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrderInput | SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    settledAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: DirectPaymentCountOrderByAggregateInput
+    _avg?: DirectPaymentAvgOrderByAggregateInput
+    _max?: DirectPaymentMaxOrderByAggregateInput
+    _min?: DirectPaymentMinOrderByAggregateInput
+    _sum?: DirectPaymentSumOrderByAggregateInput
+  }
+
+  export type DirectPaymentScalarWhereWithAggregatesInput = {
+    AND?: DirectPaymentScalarWhereWithAggregatesInput | DirectPaymentScalarWhereWithAggregatesInput[]
+    OR?: DirectPaymentScalarWhereWithAggregatesInput[]
+    NOT?: DirectPaymentScalarWhereWithAggregatesInput | DirectPaymentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableWithAggregatesFilter<"DirectPayment"> | string | null
+    clientId?: StringWithAggregatesFilter<"DirectPayment"> | string
+    sender?: StringWithAggregatesFilter<"DirectPayment"> | string
+    senderCountry?: StringWithAggregatesFilter<"DirectPayment"> | string
+    senderWallet?: StringWithAggregatesFilter<"DirectPayment"> | string
+    recipient?: StringWithAggregatesFilter<"DirectPayment"> | string
+    recipientCountry?: StringWithAggregatesFilter<"DirectPayment"> | string
+    recipientWallet?: StringWithAggregatesFilter<"DirectPayment"> | string
+    amount?: DecimalWithAggregatesFilter<"DirectPayment"> | Decimal | DecimalJsLike | number | string
+    currency?: StringWithAggregatesFilter<"DirectPayment"> | string
+    corridor?: StringWithAggregatesFilter<"DirectPayment"> | string
+    status?: StringWithAggregatesFilter<"DirectPayment"> | string
+    txHash?: StringNullableWithAggregatesFilter<"DirectPayment"> | string | null
+    platformFee?: DecimalWithAggregatesFilter<"DirectPayment"> | Decimal | DecimalJsLike | number | string
+    riskScore?: IntNullableWithAggregatesFilter<"DirectPayment"> | number | null
+    settlementMode?: StringWithAggregatesFilter<"DirectPayment"> | string
+    releaseMode?: StringWithAggregatesFilter<"DirectPayment"> | string
+    settledAt?: DateTimeNullableWithAggregatesFilter<"DirectPayment"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"DirectPayment"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"DirectPayment"> | Date | string
   }
 
   export type InstitutionRefreshTokenWhereInput = {
@@ -48322,6 +51655,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: StringNullableFilter<"InstitutionClientSettings"> | string | null
     timezone?: StringFilter<"InstitutionClientSettings"> | string
     autoApproveThreshold?: DecimalNullableFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: DecimalNullableFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolFilter<"InstitutionClientSettings"> | boolean
+    activeSanctionsLists?: StringNullableListFilter<"InstitutionClientSettings">
+    aiAutoRelease?: BoolFilter<"InstitutionClientSettings"> | boolean
+    riskTolerance?: StringFilter<"InstitutionClientSettings"> | string
+    defaultToken?: StringFilter<"InstitutionClientSettings"> | string
+    emailNotifications?: BoolFilter<"InstitutionClientSettings"> | boolean
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -48338,6 +51678,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: SortOrderInput | SortOrder
     timezone?: SortOrder
     autoApproveThreshold?: SortOrderInput | SortOrder
+    manualReviewThreshold?: SortOrderInput | SortOrder
+    autoTravelRule?: SortOrder
+    activeSanctionsLists?: SortOrder
+    aiAutoRelease?: SortOrder
+    riskTolerance?: SortOrder
+    defaultToken?: SortOrder
+    emailNotifications?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     client?: InstitutionClientOrderByWithRelationInput
@@ -48357,6 +51704,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: StringNullableFilter<"InstitutionClientSettings"> | string | null
     timezone?: StringFilter<"InstitutionClientSettings"> | string
     autoApproveThreshold?: DecimalNullableFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: DecimalNullableFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolFilter<"InstitutionClientSettings"> | boolean
+    activeSanctionsLists?: StringNullableListFilter<"InstitutionClientSettings">
+    aiAutoRelease?: BoolFilter<"InstitutionClientSettings"> | boolean
+    riskTolerance?: StringFilter<"InstitutionClientSettings"> | string
+    defaultToken?: StringFilter<"InstitutionClientSettings"> | string
+    emailNotifications?: BoolFilter<"InstitutionClientSettings"> | boolean
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -48373,6 +51727,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: SortOrderInput | SortOrder
     timezone?: SortOrder
     autoApproveThreshold?: SortOrderInput | SortOrder
+    manualReviewThreshold?: SortOrderInput | SortOrder
+    autoTravelRule?: SortOrder
+    activeSanctionsLists?: SortOrder
+    aiAutoRelease?: SortOrder
+    riskTolerance?: SortOrder
+    defaultToken?: SortOrder
+    emailNotifications?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: InstitutionClientSettingsCountOrderByAggregateInput
@@ -48396,6 +51757,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
     timezone?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
     autoApproveThreshold?: DecimalNullableWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: DecimalNullableWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
+    activeSanctionsLists?: StringNullableListFilter<"InstitutionClientSettings">
+    aiAutoRelease?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
+    riskTolerance?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
+    defaultToken?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
+    emailNotifications?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
   }
@@ -51554,6 +54922,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateInput = {
@@ -51629,6 +54999,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUpdateInput = {
@@ -51704,6 +55076,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateInput = {
@@ -51779,6 +55153,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateManyInput = {
@@ -52107,6 +55483,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutAccountsInput
+    branch?: InstitutionBranchCreateNestedOneWithoutAccountsInput
   }
 
   export type InstitutionAccountUncheckedCreateInput = {
@@ -52143,6 +55520,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    branchId?: string | null
   }
 
   export type InstitutionAccountUpdateInput = {
@@ -52179,6 +55557,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput
+    branch?: InstitutionBranchUpdateOneWithoutAccountsNestedInput
   }
 
   export type InstitutionAccountUncheckedUpdateInput = {
@@ -52215,6 +55594,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type InstitutionAccountCreateManyInput = {
@@ -52251,6 +55631,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    branchId?: string | null
   }
 
   export type InstitutionAccountUpdateManyMutationInput = {
@@ -52320,6 +55701,317 @@ export namespace Prisma {
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type InstitutionBranchCreateInput = {
+    id?: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address?: string | null
+    timezone?: string
+    riskScore?: number
+    complianceStatus?: string
+    complianceNote?: string | null
+    regulatoryBody?: string | null
+    isSanctioned?: boolean
+    sanctionReason?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutBranchesInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutBranchInput
+  }
+
+  export type InstitutionBranchUncheckedCreateInput = {
+    id?: string
+    clientId: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address?: string | null
+    timezone?: string
+    riskScore?: number
+    complianceStatus?: string
+    complianceNote?: string | null
+    regulatoryBody?: string | null
+    isSanctioned?: boolean
+    sanctionReason?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutBranchInput
+  }
+
+  export type InstitutionBranchUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutBranchesNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutBranchNestedInput
+  }
+
+  export type InstitutionBranchUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutBranchNestedInput
+  }
+
+  export type InstitutionBranchCreateManyInput = {
+    id?: string
+    clientId: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address?: string | null
+    timezone?: string
+    riskScore?: number
+    complianceStatus?: string
+    complianceNote?: string | null
+    regulatoryBody?: string | null
+    isSanctioned?: boolean
+    sanctionReason?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionBranchUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionBranchUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DirectPaymentCreateInput = {
+    id?: string
+    paymentCode?: string | null
+    sender: string
+    senderCountry: string
+    senderWallet: string
+    recipient: string
+    recipientCountry: string
+    recipientWallet: string
+    amount: Decimal | DecimalJsLike | number | string
+    currency?: string
+    corridor: string
+    status?: string
+    txHash?: string | null
+    platformFee?: Decimal | DecimalJsLike | number | string
+    riskScore?: number | null
+    settlementMode?: string
+    releaseMode?: string
+    settledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutDirectPaymentsInput
+  }
+
+  export type DirectPaymentUncheckedCreateInput = {
+    id?: string
+    paymentCode?: string | null
+    clientId: string
+    sender: string
+    senderCountry: string
+    senderWallet: string
+    recipient: string
+    recipientCountry: string
+    recipientWallet: string
+    amount: Decimal | DecimalJsLike | number | string
+    currency?: string
+    corridor: string
+    status?: string
+    txHash?: string | null
+    platformFee?: Decimal | DecimalJsLike | number | string
+    riskScore?: number | null
+    settlementMode?: string
+    releaseMode?: string
+    settledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DirectPaymentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
+    sender?: StringFieldUpdateOperationsInput | string
+    senderCountry?: StringFieldUpdateOperationsInput | string
+    senderWallet?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    recipientCountry?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: StringFieldUpdateOperationsInput | string
+    releaseMode?: StringFieldUpdateOperationsInput | string
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutDirectPaymentsNestedInput
+  }
+
+  export type DirectPaymentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
+    clientId?: StringFieldUpdateOperationsInput | string
+    sender?: StringFieldUpdateOperationsInput | string
+    senderCountry?: StringFieldUpdateOperationsInput | string
+    senderWallet?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    recipientCountry?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: StringFieldUpdateOperationsInput | string
+    releaseMode?: StringFieldUpdateOperationsInput | string
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DirectPaymentCreateManyInput = {
+    id?: string
+    paymentCode?: string | null
+    clientId: string
+    sender: string
+    senderCountry: string
+    senderWallet: string
+    recipient: string
+    recipientCountry: string
+    recipientWallet: string
+    amount: Decimal | DecimalJsLike | number | string
+    currency?: string
+    corridor: string
+    status?: string
+    txHash?: string | null
+    platformFee?: Decimal | DecimalJsLike | number | string
+    riskScore?: number | null
+    settlementMode?: string
+    releaseMode?: string
+    settledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DirectPaymentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
+    sender?: StringFieldUpdateOperationsInput | string
+    senderCountry?: StringFieldUpdateOperationsInput | string
+    senderWallet?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    recipientCountry?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: StringFieldUpdateOperationsInput | string
+    releaseMode?: StringFieldUpdateOperationsInput | string
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DirectPaymentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
+    clientId?: StringFieldUpdateOperationsInput | string
+    sender?: StringFieldUpdateOperationsInput | string
+    senderCountry?: StringFieldUpdateOperationsInput | string
+    senderWallet?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    recipientCountry?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: StringFieldUpdateOperationsInput | string
+    releaseMode?: StringFieldUpdateOperationsInput | string
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -52410,6 +56102,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: string | null
     timezone?: string
     autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: boolean
+    activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: boolean
+    riskTolerance?: string
+    defaultToken?: string
+    emailNotifications?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutSettingsInput
@@ -52426,6 +56125,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: string | null
     timezone?: string
     autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: boolean
+    activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: boolean
+    riskTolerance?: string
+    defaultToken?: string
+    emailNotifications?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -52440,6 +56146,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
     autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolFieldUpdateOperationsInput | boolean
+    activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
+    riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultToken?: StringFieldUpdateOperationsInput | string
+    emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutSettingsNestedInput
@@ -52456,6 +56169,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
     autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolFieldUpdateOperationsInput | boolean
+    activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
+    riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultToken?: StringFieldUpdateOperationsInput | string
+    emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -52471,6 +56191,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: string | null
     timezone?: string
     autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: boolean
+    activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: boolean
+    riskTolerance?: string
+    defaultToken?: string
+    emailNotifications?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -52485,6 +56212,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
     autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolFieldUpdateOperationsInput | boolean
+    activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
+    riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultToken?: StringFieldUpdateOperationsInput | string
+    emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -52500,6 +56234,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
     autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolFieldUpdateOperationsInput | boolean
+    activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
+    riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultToken?: StringFieldUpdateOperationsInput | string
+    emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -55569,6 +59310,18 @@ export namespace Prisma {
     none?: InstitutionNotificationWhereInput
   }
 
+  export type InstitutionBranchListRelationFilter = {
+    every?: InstitutionBranchWhereInput
+    some?: InstitutionBranchWhereInput
+    none?: InstitutionBranchWhereInput
+  }
+
+  export type DirectPaymentListRelationFilter = {
+    every?: DirectPaymentWhereInput
+    some?: DirectPaymentWhereInput
+    none?: DirectPaymentWhereInput
+  }
+
   export type InstitutionRefreshTokenOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -55602,6 +59355,14 @@ export namespace Prisma {
   }
 
   export type InstitutionNotificationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InstitutionBranchOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type DirectPaymentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -55984,6 +59745,11 @@ export namespace Prisma {
     not?: NestedEnumApprovalModeFilter<$PrismaModel> | $Enums.ApprovalMode
   }
 
+  export type InstitutionBranchNullableScalarRelationFilter = {
+    is?: InstitutionBranchWhereInput | null
+    isNot?: InstitutionBranchWhereInput | null
+  }
+
   export type InstitutionAccountClientIdNameCompoundUniqueInput = {
     clientId: string
     name: string
@@ -56023,6 +59789,7 @@ export namespace Prisma {
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    branchId?: SortOrder
   }
 
   export type InstitutionAccountAvgOrderByAggregateInput = {
@@ -56068,6 +59835,7 @@ export namespace Prisma {
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    branchId?: SortOrder
   }
 
   export type InstitutionAccountMinOrderByAggregateInput = {
@@ -56103,6 +59871,7 @@ export namespace Prisma {
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    branchId?: SortOrder
   }
 
   export type InstitutionAccountSumOrderByAggregateInput = {
@@ -56143,6 +59912,158 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumApprovalModeFilter<$PrismaModel>
     _max?: NestedEnumApprovalModeFilter<$PrismaModel>
+  }
+
+  export type InstitutionBranchCountOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    city?: SortOrder
+    country?: SortOrder
+    countryCode?: SortOrder
+    address?: SortOrder
+    timezone?: SortOrder
+    riskScore?: SortOrder
+    complianceStatus?: SortOrder
+    complianceNote?: SortOrder
+    regulatoryBody?: SortOrder
+    isSanctioned?: SortOrder
+    sanctionReason?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionBranchAvgOrderByAggregateInput = {
+    riskScore?: SortOrder
+  }
+
+  export type InstitutionBranchMaxOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    city?: SortOrder
+    country?: SortOrder
+    countryCode?: SortOrder
+    address?: SortOrder
+    timezone?: SortOrder
+    riskScore?: SortOrder
+    complianceStatus?: SortOrder
+    complianceNote?: SortOrder
+    regulatoryBody?: SortOrder
+    isSanctioned?: SortOrder
+    sanctionReason?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionBranchMinOrderByAggregateInput = {
+    id?: SortOrder
+    clientId?: SortOrder
+    name?: SortOrder
+    city?: SortOrder
+    country?: SortOrder
+    countryCode?: SortOrder
+    address?: SortOrder
+    timezone?: SortOrder
+    riskScore?: SortOrder
+    complianceStatus?: SortOrder
+    complianceNote?: SortOrder
+    regulatoryBody?: SortOrder
+    isSanctioned?: SortOrder
+    sanctionReason?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InstitutionBranchSumOrderByAggregateInput = {
+    riskScore?: SortOrder
+  }
+
+  export type DirectPaymentCountOrderByAggregateInput = {
+    id?: SortOrder
+    paymentCode?: SortOrder
+    clientId?: SortOrder
+    sender?: SortOrder
+    senderCountry?: SortOrder
+    senderWallet?: SortOrder
+    recipient?: SortOrder
+    recipientCountry?: SortOrder
+    recipientWallet?: SortOrder
+    amount?: SortOrder
+    currency?: SortOrder
+    corridor?: SortOrder
+    status?: SortOrder
+    txHash?: SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    settledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DirectPaymentAvgOrderByAggregateInput = {
+    amount?: SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrder
+  }
+
+  export type DirectPaymentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    paymentCode?: SortOrder
+    clientId?: SortOrder
+    sender?: SortOrder
+    senderCountry?: SortOrder
+    senderWallet?: SortOrder
+    recipient?: SortOrder
+    recipientCountry?: SortOrder
+    recipientWallet?: SortOrder
+    amount?: SortOrder
+    currency?: SortOrder
+    corridor?: SortOrder
+    status?: SortOrder
+    txHash?: SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    settledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DirectPaymentMinOrderByAggregateInput = {
+    id?: SortOrder
+    paymentCode?: SortOrder
+    clientId?: SortOrder
+    sender?: SortOrder
+    senderCountry?: SortOrder
+    senderWallet?: SortOrder
+    recipient?: SortOrder
+    recipientCountry?: SortOrder
+    recipientWallet?: SortOrder
+    amount?: SortOrder
+    currency?: SortOrder
+    corridor?: SortOrder
+    status?: SortOrder
+    txHash?: SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    settledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DirectPaymentSumOrderByAggregateInput = {
+    amount?: SortOrder
+    platformFee?: SortOrder
+    riskScore?: SortOrder
   }
 
   export type InstitutionRefreshTokenCountOrderByAggregateInput = {
@@ -56189,12 +60110,20 @@ export namespace Prisma {
     settlementAuthorityWallet?: SortOrder
     timezone?: SortOrder
     autoApproveThreshold?: SortOrder
+    manualReviewThreshold?: SortOrder
+    autoTravelRule?: SortOrder
+    activeSanctionsLists?: SortOrder
+    aiAutoRelease?: SortOrder
+    riskTolerance?: SortOrder
+    defaultToken?: SortOrder
+    emailNotifications?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type InstitutionClientSettingsAvgOrderByAggregateInput = {
     autoApproveThreshold?: SortOrder
+    manualReviewThreshold?: SortOrder
   }
 
   export type InstitutionClientSettingsMaxOrderByAggregateInput = {
@@ -56208,6 +60137,12 @@ export namespace Prisma {
     settlementAuthorityWallet?: SortOrder
     timezone?: SortOrder
     autoApproveThreshold?: SortOrder
+    manualReviewThreshold?: SortOrder
+    autoTravelRule?: SortOrder
+    aiAutoRelease?: SortOrder
+    riskTolerance?: SortOrder
+    defaultToken?: SortOrder
+    emailNotifications?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -56223,12 +60158,19 @@ export namespace Prisma {
     settlementAuthorityWallet?: SortOrder
     timezone?: SortOrder
     autoApproveThreshold?: SortOrder
+    manualReviewThreshold?: SortOrder
+    autoTravelRule?: SortOrder
+    aiAutoRelease?: SortOrder
+    riskTolerance?: SortOrder
+    defaultToken?: SortOrder
+    emailNotifications?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type InstitutionClientSettingsSumOrderByAggregateInput = {
     autoApproveThreshold?: SortOrder
+    manualReviewThreshold?: SortOrder
   }
 
   export type InstitutionApiKeyCountOrderByAggregateInput = {
@@ -57961,6 +61903,20 @@ export namespace Prisma {
     connect?: InstitutionNotificationWhereUniqueInput | InstitutionNotificationWhereUniqueInput[]
   }
 
+  export type InstitutionBranchCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionBranchCreateWithoutClientInput, InstitutionBranchUncheckedCreateWithoutClientInput> | InstitutionBranchCreateWithoutClientInput[] | InstitutionBranchUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionBranchCreateOrConnectWithoutClientInput | InstitutionBranchCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionBranchCreateManyClientInputEnvelope
+    connect?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+  }
+
+  export type DirectPaymentCreateNestedManyWithoutClientInput = {
+    create?: XOR<DirectPaymentCreateWithoutClientInput, DirectPaymentUncheckedCreateWithoutClientInput> | DirectPaymentCreateWithoutClientInput[] | DirectPaymentUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: DirectPaymentCreateOrConnectWithoutClientInput | DirectPaymentCreateOrConnectWithoutClientInput[]
+    createMany?: DirectPaymentCreateManyClientInputEnvelope
+    connect?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+  }
+
   export type InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput = {
     create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
@@ -58028,6 +61984,20 @@ export namespace Prisma {
     connectOrCreate?: InstitutionNotificationCreateOrConnectWithoutClientInput | InstitutionNotificationCreateOrConnectWithoutClientInput[]
     createMany?: InstitutionNotificationCreateManyClientInputEnvelope
     connect?: InstitutionNotificationWhereUniqueInput | InstitutionNotificationWhereUniqueInput[]
+  }
+
+  export type InstitutionBranchUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<InstitutionBranchCreateWithoutClientInput, InstitutionBranchUncheckedCreateWithoutClientInput> | InstitutionBranchCreateWithoutClientInput[] | InstitutionBranchUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionBranchCreateOrConnectWithoutClientInput | InstitutionBranchCreateOrConnectWithoutClientInput[]
+    createMany?: InstitutionBranchCreateManyClientInputEnvelope
+    connect?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+  }
+
+  export type DirectPaymentUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<DirectPaymentCreateWithoutClientInput, DirectPaymentUncheckedCreateWithoutClientInput> | DirectPaymentCreateWithoutClientInput[] | DirectPaymentUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: DirectPaymentCreateOrConnectWithoutClientInput | DirectPaymentCreateOrConnectWithoutClientInput[]
+    createMany?: DirectPaymentCreateManyClientInputEnvelope
+    connect?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
   }
 
   export type EnumClientTierFieldUpdateOperationsInput = {
@@ -58215,6 +62185,34 @@ export namespace Prisma {
     deleteMany?: InstitutionNotificationScalarWhereInput | InstitutionNotificationScalarWhereInput[]
   }
 
+  export type InstitutionBranchUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionBranchCreateWithoutClientInput, InstitutionBranchUncheckedCreateWithoutClientInput> | InstitutionBranchCreateWithoutClientInput[] | InstitutionBranchUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionBranchCreateOrConnectWithoutClientInput | InstitutionBranchCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionBranchUpsertWithWhereUniqueWithoutClientInput | InstitutionBranchUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionBranchCreateManyClientInputEnvelope
+    set?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+    disconnect?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+    delete?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+    connect?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+    update?: InstitutionBranchUpdateWithWhereUniqueWithoutClientInput | InstitutionBranchUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionBranchUpdateManyWithWhereWithoutClientInput | InstitutionBranchUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionBranchScalarWhereInput | InstitutionBranchScalarWhereInput[]
+  }
+
+  export type DirectPaymentUpdateManyWithoutClientNestedInput = {
+    create?: XOR<DirectPaymentCreateWithoutClientInput, DirectPaymentUncheckedCreateWithoutClientInput> | DirectPaymentCreateWithoutClientInput[] | DirectPaymentUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: DirectPaymentCreateOrConnectWithoutClientInput | DirectPaymentCreateOrConnectWithoutClientInput[]
+    upsert?: DirectPaymentUpsertWithWhereUniqueWithoutClientInput | DirectPaymentUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: DirectPaymentCreateManyClientInputEnvelope
+    set?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+    disconnect?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+    delete?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+    connect?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+    update?: DirectPaymentUpdateWithWhereUniqueWithoutClientInput | DirectPaymentUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: DirectPaymentUpdateManyWithWhereWithoutClientInput | DirectPaymentUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: DirectPaymentScalarWhereInput | DirectPaymentScalarWhereInput[]
+  }
+
   export type InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput = {
     create?: XOR<InstitutionRefreshTokenCreateWithoutClientInput, InstitutionRefreshTokenUncheckedCreateWithoutClientInput> | InstitutionRefreshTokenCreateWithoutClientInput[] | InstitutionRefreshTokenUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InstitutionRefreshTokenCreateOrConnectWithoutClientInput | InstitutionRefreshTokenCreateOrConnectWithoutClientInput[]
@@ -58351,6 +62349,34 @@ export namespace Prisma {
     deleteMany?: InstitutionNotificationScalarWhereInput | InstitutionNotificationScalarWhereInput[]
   }
 
+  export type InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<InstitutionBranchCreateWithoutClientInput, InstitutionBranchUncheckedCreateWithoutClientInput> | InstitutionBranchCreateWithoutClientInput[] | InstitutionBranchUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: InstitutionBranchCreateOrConnectWithoutClientInput | InstitutionBranchCreateOrConnectWithoutClientInput[]
+    upsert?: InstitutionBranchUpsertWithWhereUniqueWithoutClientInput | InstitutionBranchUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: InstitutionBranchCreateManyClientInputEnvelope
+    set?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+    disconnect?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+    delete?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+    connect?: InstitutionBranchWhereUniqueInput | InstitutionBranchWhereUniqueInput[]
+    update?: InstitutionBranchUpdateWithWhereUniqueWithoutClientInput | InstitutionBranchUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: InstitutionBranchUpdateManyWithWhereWithoutClientInput | InstitutionBranchUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: InstitutionBranchScalarWhereInput | InstitutionBranchScalarWhereInput[]
+  }
+
+  export type DirectPaymentUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<DirectPaymentCreateWithoutClientInput, DirectPaymentUncheckedCreateWithoutClientInput> | DirectPaymentCreateWithoutClientInput[] | DirectPaymentUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: DirectPaymentCreateOrConnectWithoutClientInput | DirectPaymentCreateOrConnectWithoutClientInput[]
+    upsert?: DirectPaymentUpsertWithWhereUniqueWithoutClientInput | DirectPaymentUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: DirectPaymentCreateManyClientInputEnvelope
+    set?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+    disconnect?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+    delete?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+    connect?: DirectPaymentWhereUniqueInput | DirectPaymentWhereUniqueInput[]
+    update?: DirectPaymentUpdateWithWhereUniqueWithoutClientInput | DirectPaymentUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: DirectPaymentUpdateManyWithWhereWithoutClientInput | DirectPaymentUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: DirectPaymentScalarWhereInput | DirectPaymentScalarWhereInput[]
+  }
+
   export type InstitutionClientCreateNestedOneWithoutWalletsInput = {
     create?: XOR<InstitutionClientCreateWithoutWalletsInput, InstitutionClientUncheckedCreateWithoutWalletsInput>
     connectOrCreate?: InstitutionClientCreateOrConnectWithoutWalletsInput
@@ -58373,6 +62399,12 @@ export namespace Prisma {
     create?: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
     connectOrCreate?: InstitutionClientCreateOrConnectWithoutAccountsInput
     connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionBranchCreateNestedOneWithoutAccountsInput = {
+    create?: XOR<InstitutionBranchCreateWithoutAccountsInput, InstitutionBranchUncheckedCreateWithoutAccountsInput>
+    connectOrCreate?: InstitutionBranchCreateOrConnectWithoutAccountsInput
+    connect?: InstitutionBranchWhereUniqueInput
   }
 
   export type EnumInstitutionAccountTypeFieldUpdateOperationsInput = {
@@ -58400,6 +62432,86 @@ export namespace Prisma {
     update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutAccountsInput, InstitutionClientUpdateWithoutAccountsInput>, InstitutionClientUncheckedUpdateWithoutAccountsInput>
   }
 
+  export type InstitutionBranchUpdateOneWithoutAccountsNestedInput = {
+    create?: XOR<InstitutionBranchCreateWithoutAccountsInput, InstitutionBranchUncheckedCreateWithoutAccountsInput>
+    connectOrCreate?: InstitutionBranchCreateOrConnectWithoutAccountsInput
+    upsert?: InstitutionBranchUpsertWithoutAccountsInput
+    disconnect?: InstitutionBranchWhereInput | boolean
+    delete?: InstitutionBranchWhereInput | boolean
+    connect?: InstitutionBranchWhereUniqueInput
+    update?: XOR<XOR<InstitutionBranchUpdateToOneWithWhereWithoutAccountsInput, InstitutionBranchUpdateWithoutAccountsInput>, InstitutionBranchUncheckedUpdateWithoutAccountsInput>
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutBranchesInput = {
+    create?: XOR<InstitutionClientCreateWithoutBranchesInput, InstitutionClientUncheckedCreateWithoutBranchesInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutBranchesInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionAccountCreateNestedManyWithoutBranchInput = {
+    create?: XOR<InstitutionAccountCreateWithoutBranchInput, InstitutionAccountUncheckedCreateWithoutBranchInput> | InstitutionAccountCreateWithoutBranchInput[] | InstitutionAccountUncheckedCreateWithoutBranchInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutBranchInput | InstitutionAccountCreateOrConnectWithoutBranchInput[]
+    createMany?: InstitutionAccountCreateManyBranchInputEnvelope
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+  }
+
+  export type InstitutionAccountUncheckedCreateNestedManyWithoutBranchInput = {
+    create?: XOR<InstitutionAccountCreateWithoutBranchInput, InstitutionAccountUncheckedCreateWithoutBranchInput> | InstitutionAccountCreateWithoutBranchInput[] | InstitutionAccountUncheckedCreateWithoutBranchInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutBranchInput | InstitutionAccountCreateOrConnectWithoutBranchInput[]
+    createMany?: InstitutionAccountCreateManyBranchInputEnvelope
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutBranchesNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutBranchesInput, InstitutionClientUncheckedCreateWithoutBranchesInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutBranchesInput
+    upsert?: InstitutionClientUpsertWithoutBranchesInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutBranchesInput, InstitutionClientUpdateWithoutBranchesInput>, InstitutionClientUncheckedUpdateWithoutBranchesInput>
+  }
+
+  export type InstitutionAccountUpdateManyWithoutBranchNestedInput = {
+    create?: XOR<InstitutionAccountCreateWithoutBranchInput, InstitutionAccountUncheckedCreateWithoutBranchInput> | InstitutionAccountCreateWithoutBranchInput[] | InstitutionAccountUncheckedCreateWithoutBranchInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutBranchInput | InstitutionAccountCreateOrConnectWithoutBranchInput[]
+    upsert?: InstitutionAccountUpsertWithWhereUniqueWithoutBranchInput | InstitutionAccountUpsertWithWhereUniqueWithoutBranchInput[]
+    createMany?: InstitutionAccountCreateManyBranchInputEnvelope
+    set?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    disconnect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    delete?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    update?: InstitutionAccountUpdateWithWhereUniqueWithoutBranchInput | InstitutionAccountUpdateWithWhereUniqueWithoutBranchInput[]
+    updateMany?: InstitutionAccountUpdateManyWithWhereWithoutBranchInput | InstitutionAccountUpdateManyWithWhereWithoutBranchInput[]
+    deleteMany?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+  }
+
+  export type InstitutionAccountUncheckedUpdateManyWithoutBranchNestedInput = {
+    create?: XOR<InstitutionAccountCreateWithoutBranchInput, InstitutionAccountUncheckedCreateWithoutBranchInput> | InstitutionAccountCreateWithoutBranchInput[] | InstitutionAccountUncheckedCreateWithoutBranchInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutBranchInput | InstitutionAccountCreateOrConnectWithoutBranchInput[]
+    upsert?: InstitutionAccountUpsertWithWhereUniqueWithoutBranchInput | InstitutionAccountUpsertWithWhereUniqueWithoutBranchInput[]
+    createMany?: InstitutionAccountCreateManyBranchInputEnvelope
+    set?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    disconnect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    delete?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    update?: InstitutionAccountUpdateWithWhereUniqueWithoutBranchInput | InstitutionAccountUpdateWithWhereUniqueWithoutBranchInput[]
+    updateMany?: InstitutionAccountUpdateManyWithWhereWithoutBranchInput | InstitutionAccountUpdateManyWithWhereWithoutBranchInput[]
+    deleteMany?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
+  }
+
+  export type InstitutionClientCreateNestedOneWithoutDirectPaymentsInput = {
+    create?: XOR<InstitutionClientCreateWithoutDirectPaymentsInput, InstitutionClientUncheckedCreateWithoutDirectPaymentsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutDirectPaymentsInput
+    connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionClientUpdateOneRequiredWithoutDirectPaymentsNestedInput = {
+    create?: XOR<InstitutionClientCreateWithoutDirectPaymentsInput, InstitutionClientUncheckedCreateWithoutDirectPaymentsInput>
+    connectOrCreate?: InstitutionClientCreateOrConnectWithoutDirectPaymentsInput
+    upsert?: InstitutionClientUpsertWithoutDirectPaymentsInput
+    connect?: InstitutionClientWhereUniqueInput
+    update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutDirectPaymentsInput, InstitutionClientUpdateWithoutDirectPaymentsInput>, InstitutionClientUncheckedUpdateWithoutDirectPaymentsInput>
+  }
+
   export type InstitutionClientCreateNestedOneWithoutRefreshTokensInput = {
     create?: XOR<InstitutionClientCreateWithoutRefreshTokensInput, InstitutionClientUncheckedCreateWithoutRefreshTokensInput>
     connectOrCreate?: InstitutionClientCreateOrConnectWithoutRefreshTokensInput
@@ -58414,10 +62526,19 @@ export namespace Prisma {
     update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutRefreshTokensInput, InstitutionClientUpdateWithoutRefreshTokensInput>, InstitutionClientUncheckedUpdateWithoutRefreshTokensInput>
   }
 
+  export type InstitutionClientSettingsCreateactiveSanctionsListsInput = {
+    set: string[]
+  }
+
   export type InstitutionClientCreateNestedOneWithoutSettingsInput = {
     create?: XOR<InstitutionClientCreateWithoutSettingsInput, InstitutionClientUncheckedCreateWithoutSettingsInput>
     connectOrCreate?: InstitutionClientCreateOrConnectWithoutSettingsInput
     connect?: InstitutionClientWhereUniqueInput
+  }
+
+  export type InstitutionClientSettingsUpdateactiveSanctionsListsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type InstitutionClientUpdateOneRequiredWithoutSettingsNestedInput = {
@@ -62994,6 +67115,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: string | null
     timezone?: string
     autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: boolean
+    activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: boolean
+    riskTolerance?: string
+    defaultToken?: string
+    emailNotifications?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -63008,6 +67136,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: string | null
     timezone?: string
     autoApproveThreshold?: Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: boolean
+    activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: boolean
+    riskTolerance?: string
+    defaultToken?: string
+    emailNotifications?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -63254,6 +67389,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    branch?: InstitutionBranchCreateNestedOneWithoutAccountsInput
   }
 
   export type InstitutionAccountUncheckedCreateWithoutClientInput = {
@@ -63289,6 +67425,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    branchId?: string | null
   }
 
   export type InstitutionAccountCreateOrConnectWithoutClientInput = {
@@ -63377,6 +67514,112 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type InstitutionBranchCreateWithoutClientInput = {
+    id?: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address?: string | null
+    timezone?: string
+    riskScore?: number
+    complianceStatus?: string
+    complianceNote?: string | null
+    regulatoryBody?: string | null
+    isSanctioned?: boolean
+    sanctionReason?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: InstitutionAccountCreateNestedManyWithoutBranchInput
+  }
+
+  export type InstitutionBranchUncheckedCreateWithoutClientInput = {
+    id?: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address?: string | null
+    timezone?: string
+    riskScore?: number
+    complianceStatus?: string
+    complianceNote?: string | null
+    regulatoryBody?: string | null
+    isSanctioned?: boolean
+    sanctionReason?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutBranchInput
+  }
+
+  export type InstitutionBranchCreateOrConnectWithoutClientInput = {
+    where: InstitutionBranchWhereUniqueInput
+    create: XOR<InstitutionBranchCreateWithoutClientInput, InstitutionBranchUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionBranchCreateManyClientInputEnvelope = {
+    data: InstitutionBranchCreateManyClientInput | InstitutionBranchCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type DirectPaymentCreateWithoutClientInput = {
+    id?: string
+    paymentCode?: string | null
+    sender: string
+    senderCountry: string
+    senderWallet: string
+    recipient: string
+    recipientCountry: string
+    recipientWallet: string
+    amount: Decimal | DecimalJsLike | number | string
+    currency?: string
+    corridor: string
+    status?: string
+    txHash?: string | null
+    platformFee?: Decimal | DecimalJsLike | number | string
+    riskScore?: number | null
+    settlementMode?: string
+    releaseMode?: string
+    settledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DirectPaymentUncheckedCreateWithoutClientInput = {
+    id?: string
+    paymentCode?: string | null
+    sender: string
+    senderCountry: string
+    senderWallet: string
+    recipient: string
+    recipientCountry: string
+    recipientWallet: string
+    amount: Decimal | DecimalJsLike | number | string
+    currency?: string
+    corridor: string
+    status?: string
+    txHash?: string | null
+    platformFee?: Decimal | DecimalJsLike | number | string
+    riskScore?: number | null
+    settlementMode?: string
+    releaseMode?: string
+    settledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DirectPaymentCreateOrConnectWithoutClientInput = {
+    where: DirectPaymentWhereUniqueInput
+    create: XOR<DirectPaymentCreateWithoutClientInput, DirectPaymentUncheckedCreateWithoutClientInput>
+  }
+
+  export type DirectPaymentCreateManyClientInputEnvelope = {
+    data: DirectPaymentCreateManyClientInput | DirectPaymentCreateManyClientInput[]
+    skipDuplicates?: boolean
+  }
+
   export type InstitutionRefreshTokenUpsertWithWhereUniqueWithoutClientInput = {
     where: InstitutionRefreshTokenWhereUniqueInput
     update: XOR<InstitutionRefreshTokenUpdateWithoutClientInput, InstitutionRefreshTokenUncheckedUpdateWithoutClientInput>
@@ -63428,6 +67671,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
     autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolFieldUpdateOperationsInput | boolean
+    activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
+    riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultToken?: StringFieldUpdateOperationsInput | string
+    emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -63442,6 +67692,13 @@ export namespace Prisma {
     settlementAuthorityWallet?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
     autoApproveThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    manualReviewThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoTravelRule?: BoolFieldUpdateOperationsInput | boolean
+    activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
+    aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
+    riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultToken?: StringFieldUpdateOperationsInput | string
+    emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -63672,6 +67929,7 @@ export namespace Prisma {
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
+    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
   }
 
   export type InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput = {
@@ -63740,6 +67998,88 @@ export namespace Prisma {
     isRead?: BoolFilter<"InstitutionNotification"> | boolean
     readAt?: DateTimeNullableFilter<"InstitutionNotification"> | Date | string | null
     createdAt?: DateTimeFilter<"InstitutionNotification"> | Date | string
+  }
+
+  export type InstitutionBranchUpsertWithWhereUniqueWithoutClientInput = {
+    where: InstitutionBranchWhereUniqueInput
+    update: XOR<InstitutionBranchUpdateWithoutClientInput, InstitutionBranchUncheckedUpdateWithoutClientInput>
+    create: XOR<InstitutionBranchCreateWithoutClientInput, InstitutionBranchUncheckedCreateWithoutClientInput>
+  }
+
+  export type InstitutionBranchUpdateWithWhereUniqueWithoutClientInput = {
+    where: InstitutionBranchWhereUniqueInput
+    data: XOR<InstitutionBranchUpdateWithoutClientInput, InstitutionBranchUncheckedUpdateWithoutClientInput>
+  }
+
+  export type InstitutionBranchUpdateManyWithWhereWithoutClientInput = {
+    where: InstitutionBranchScalarWhereInput
+    data: XOR<InstitutionBranchUpdateManyMutationInput, InstitutionBranchUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type InstitutionBranchScalarWhereInput = {
+    AND?: InstitutionBranchScalarWhereInput | InstitutionBranchScalarWhereInput[]
+    OR?: InstitutionBranchScalarWhereInput[]
+    NOT?: InstitutionBranchScalarWhereInput | InstitutionBranchScalarWhereInput[]
+    id?: StringFilter<"InstitutionBranch"> | string
+    clientId?: StringFilter<"InstitutionBranch"> | string
+    name?: StringFilter<"InstitutionBranch"> | string
+    city?: StringFilter<"InstitutionBranch"> | string
+    country?: StringFilter<"InstitutionBranch"> | string
+    countryCode?: StringFilter<"InstitutionBranch"> | string
+    address?: StringNullableFilter<"InstitutionBranch"> | string | null
+    timezone?: StringFilter<"InstitutionBranch"> | string
+    riskScore?: IntFilter<"InstitutionBranch"> | number
+    complianceStatus?: StringFilter<"InstitutionBranch"> | string
+    complianceNote?: StringNullableFilter<"InstitutionBranch"> | string | null
+    regulatoryBody?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isSanctioned?: BoolFilter<"InstitutionBranch"> | boolean
+    sanctionReason?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isActive?: BoolFilter<"InstitutionBranch"> | boolean
+    createdAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
+    updatedAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
+  }
+
+  export type DirectPaymentUpsertWithWhereUniqueWithoutClientInput = {
+    where: DirectPaymentWhereUniqueInput
+    update: XOR<DirectPaymentUpdateWithoutClientInput, DirectPaymentUncheckedUpdateWithoutClientInput>
+    create: XOR<DirectPaymentCreateWithoutClientInput, DirectPaymentUncheckedCreateWithoutClientInput>
+  }
+
+  export type DirectPaymentUpdateWithWhereUniqueWithoutClientInput = {
+    where: DirectPaymentWhereUniqueInput
+    data: XOR<DirectPaymentUpdateWithoutClientInput, DirectPaymentUncheckedUpdateWithoutClientInput>
+  }
+
+  export type DirectPaymentUpdateManyWithWhereWithoutClientInput = {
+    where: DirectPaymentScalarWhereInput
+    data: XOR<DirectPaymentUpdateManyMutationInput, DirectPaymentUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type DirectPaymentScalarWhereInput = {
+    AND?: DirectPaymentScalarWhereInput | DirectPaymentScalarWhereInput[]
+    OR?: DirectPaymentScalarWhereInput[]
+    NOT?: DirectPaymentScalarWhereInput | DirectPaymentScalarWhereInput[]
+    id?: StringFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableFilter<"DirectPayment"> | string | null
+    clientId?: StringFilter<"DirectPayment"> | string
+    sender?: StringFilter<"DirectPayment"> | string
+    senderCountry?: StringFilter<"DirectPayment"> | string
+    senderWallet?: StringFilter<"DirectPayment"> | string
+    recipient?: StringFilter<"DirectPayment"> | string
+    recipientCountry?: StringFilter<"DirectPayment"> | string
+    recipientWallet?: StringFilter<"DirectPayment"> | string
+    amount?: DecimalFilter<"DirectPayment"> | Decimal | DecimalJsLike | number | string
+    currency?: StringFilter<"DirectPayment"> | string
+    corridor?: StringFilter<"DirectPayment"> | string
+    status?: StringFilter<"DirectPayment"> | string
+    txHash?: StringNullableFilter<"DirectPayment"> | string | null
+    platformFee?: DecimalFilter<"DirectPayment"> | Decimal | DecimalJsLike | number | string
+    riskScore?: IntNullableFilter<"DirectPayment"> | number | null
+    settlementMode?: StringFilter<"DirectPayment"> | string
+    releaseMode?: StringFilter<"DirectPayment"> | string
+    settledAt?: DateTimeNullableFilter<"DirectPayment"> | Date | string | null
+    createdAt?: DateTimeFilter<"DirectPayment"> | Date | string
+    updatedAt?: DateTimeFilter<"DirectPayment"> | Date | string
   }
 
   export type InstitutionClientCreateWithoutWalletsInput = {
@@ -63814,6 +68154,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutWalletsInput = {
@@ -63888,6 +68230,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutWalletsInput = {
@@ -63978,6 +68322,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutWalletsInput = {
@@ -64052,6 +68398,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutAccountsInput = {
@@ -64126,6 +68474,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutAccountsInput = {
@@ -64200,11 +68550,58 @@ export namespace Prisma {
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutAccountsInput = {
     where: InstitutionClientWhereUniqueInput
     create: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
+  }
+
+  export type InstitutionBranchCreateWithoutAccountsInput = {
+    id?: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address?: string | null
+    timezone?: string
+    riskScore?: number
+    complianceStatus?: string
+    complianceNote?: string | null
+    regulatoryBody?: string | null
+    isSanctioned?: boolean
+    sanctionReason?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutBranchesInput
+  }
+
+  export type InstitutionBranchUncheckedCreateWithoutAccountsInput = {
+    id?: string
+    clientId: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address?: string | null
+    timezone?: string
+    riskScore?: number
+    complianceStatus?: string
+    complianceNote?: string | null
+    regulatoryBody?: string | null
+    isSanctioned?: boolean
+    sanctionReason?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionBranchCreateOrConnectWithoutAccountsInput = {
+    where: InstitutionBranchWhereUniqueInput
+    create: XOR<InstitutionBranchCreateWithoutAccountsInput, InstitutionBranchUncheckedCreateWithoutAccountsInput>
   }
 
   export type InstitutionClientUpsertWithoutAccountsInput = {
@@ -64290,6 +68687,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutAccountsInput = {
@@ -64364,6 +68763,797 @@ export namespace Prisma {
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionBranchUpsertWithoutAccountsInput = {
+    update: XOR<InstitutionBranchUpdateWithoutAccountsInput, InstitutionBranchUncheckedUpdateWithoutAccountsInput>
+    create: XOR<InstitutionBranchCreateWithoutAccountsInput, InstitutionBranchUncheckedCreateWithoutAccountsInput>
+    where?: InstitutionBranchWhereInput
+  }
+
+  export type InstitutionBranchUpdateToOneWithWhereWithoutAccountsInput = {
+    where?: InstitutionBranchWhereInput
+    data: XOR<InstitutionBranchUpdateWithoutAccountsInput, InstitutionBranchUncheckedUpdateWithoutAccountsInput>
+  }
+
+  export type InstitutionBranchUpdateWithoutAccountsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutBranchesNestedInput
+  }
+
+  export type InstitutionBranchUncheckedUpdateWithoutAccountsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionClientCreateWithoutBranchesInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
+    notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutBranchesInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
+    notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutBranchesInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutBranchesInput, InstitutionClientUncheckedCreateWithoutBranchesInput>
+  }
+
+  export type InstitutionAccountCreateWithoutBranchInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutAccountsInput
+  }
+
+  export type InstitutionAccountUncheckedCreateWithoutBranchInput = {
+    id?: string
+    clientId: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountCreateOrConnectWithoutBranchInput = {
+    where: InstitutionAccountWhereUniqueInput
+    create: XOR<InstitutionAccountCreateWithoutBranchInput, InstitutionAccountUncheckedCreateWithoutBranchInput>
+  }
+
+  export type InstitutionAccountCreateManyBranchInputEnvelope = {
+    data: InstitutionAccountCreateManyBranchInput | InstitutionAccountCreateManyBranchInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InstitutionClientUpsertWithoutBranchesInput = {
+    update: XOR<InstitutionClientUpdateWithoutBranchesInput, InstitutionClientUncheckedUpdateWithoutBranchesInput>
+    create: XOR<InstitutionClientCreateWithoutBranchesInput, InstitutionClientUncheckedCreateWithoutBranchesInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutBranchesInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutBranchesInput, InstitutionClientUncheckedUpdateWithoutBranchesInput>
+  }
+
+  export type InstitutionClientUpdateWithoutBranchesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
+    notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutBranchesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
+    notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionAccountUpsertWithWhereUniqueWithoutBranchInput = {
+    where: InstitutionAccountWhereUniqueInput
+    update: XOR<InstitutionAccountUpdateWithoutBranchInput, InstitutionAccountUncheckedUpdateWithoutBranchInput>
+    create: XOR<InstitutionAccountCreateWithoutBranchInput, InstitutionAccountUncheckedCreateWithoutBranchInput>
+  }
+
+  export type InstitutionAccountUpdateWithWhereUniqueWithoutBranchInput = {
+    where: InstitutionAccountWhereUniqueInput
+    data: XOR<InstitutionAccountUpdateWithoutBranchInput, InstitutionAccountUncheckedUpdateWithoutBranchInput>
+  }
+
+  export type InstitutionAccountUpdateManyWithWhereWithoutBranchInput = {
+    where: InstitutionAccountScalarWhereInput
+    data: XOR<InstitutionAccountUpdateManyMutationInput, InstitutionAccountUncheckedUpdateManyWithoutBranchInput>
+  }
+
+  export type InstitutionClientCreateWithoutDirectPaymentsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutClientInput
+    files?: InstitutionFileCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
+    notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientUncheckedCreateWithoutDirectPaymentsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    companyName: string
+    tier?: $Enums.ClientTier
+    status?: $Enums.ClientStatus
+    kycStatus?: string
+    jurisdiction?: string | null
+    primaryWallet?: string | null
+    settledWallets?: InstitutionClientCreatesettledWalletsInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    legalName?: string | null
+    tradingName?: string | null
+    registrationNumber?: string | null
+    registrationCountry?: string | null
+    entityType?: $Enums.EntityType | null
+    lei?: string | null
+    taxId?: string | null
+    taxCountry?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    contactFirstName?: string | null
+    contactLastName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    contactTitle?: string | null
+    kybStatus?: $Enums.KybStatus | null
+    kybVerifiedAt?: Date | string | null
+    kybExpiresAt?: Date | string | null
+    riskRating?: $Enums.RiskRating | null
+    riskNotes?: string | null
+    sanctionsStatus?: $Enums.SanctionsStatus | null
+    sourceOfFunds?: string | null
+    isRegulatedEntity?: boolean | null
+    regulatoryStatus?: $Enums.RegulatoryStatus | null
+    licenseType?: string | null
+    licenseNumber?: string | null
+    regulatoryBody?: string | null
+    industry?: string | null
+    websiteUrl?: string | null
+    businessDescription?: string | null
+    yearEstablished?: number | null
+    employeeCountRange?: $Enums.EmployeeCountRange | null
+    annualRevenueRange?: $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: string | null
+    walletCustodyType?: $Enums.WalletCustodyType | null
+    custodianName?: string | null
+    preferredSettlementChain?: string | null
+    accountManagerName?: string | null
+    accountManagerEmail?: string | null
+    onboardingCompletedAt?: Date | string | null
+    nextReviewDate?: Date | string | null
+    referralSource?: string | null
+    isTestAccount?: boolean
+    isArchived?: boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedCreateNestedManyWithoutClientInput
+    settings?: InstitutionClientSettingsUncheckedCreateNestedOneWithoutClientInput
+    apiKeys?: InstitutionApiKeyUncheckedCreateNestedManyWithoutClientInput
+    escrows?: InstitutionEscrowUncheckedCreateNestedManyWithoutClientInput
+    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutClientInput
+    files?: InstitutionFileUncheckedCreateNestedManyWithoutClientInput
+    wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
+    notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type InstitutionClientCreateOrConnectWithoutDirectPaymentsInput = {
+    where: InstitutionClientWhereUniqueInput
+    create: XOR<InstitutionClientCreateWithoutDirectPaymentsInput, InstitutionClientUncheckedCreateWithoutDirectPaymentsInput>
+  }
+
+  export type InstitutionClientUpsertWithoutDirectPaymentsInput = {
+    update: XOR<InstitutionClientUpdateWithoutDirectPaymentsInput, InstitutionClientUncheckedUpdateWithoutDirectPaymentsInput>
+    create: XOR<InstitutionClientCreateWithoutDirectPaymentsInput, InstitutionClientUncheckedCreateWithoutDirectPaymentsInput>
+    where?: InstitutionClientWhereInput
+  }
+
+  export type InstitutionClientUpdateToOneWithWhereWithoutDirectPaymentsInput = {
+    where?: InstitutionClientWhereInput
+    data: XOR<InstitutionClientUpdateWithoutDirectPaymentsInput, InstitutionClientUncheckedUpdateWithoutDirectPaymentsInput>
+  }
+
+  export type InstitutionClientUpdateWithoutDirectPaymentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
+    notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+  }
+
+  export type InstitutionClientUncheckedUpdateWithoutDirectPaymentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    companyName?: StringFieldUpdateOperationsInput | string
+    tier?: EnumClientTierFieldUpdateOperationsInput | $Enums.ClientTier
+    status?: EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+    kycStatus?: StringFieldUpdateOperationsInput | string
+    jurisdiction?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    settledWallets?: InstitutionClientUpdatesettledWalletsInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    legalName?: NullableStringFieldUpdateOperationsInput | string | null
+    tradingName?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    registrationCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: NullableEnumEntityTypeFieldUpdateOperationsInput | $Enums.EntityType | null
+    lei?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine1?: NullableStringFieldUpdateOperationsInput | string | null
+    addressLine2?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    contactFirstName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactLastName?: NullableStringFieldUpdateOperationsInput | string | null
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    contactTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    kybStatus?: NullableEnumKybStatusFieldUpdateOperationsInput | $Enums.KybStatus | null
+    kybVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    kybExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    riskRating?: NullableEnumRiskRatingFieldUpdateOperationsInput | $Enums.RiskRating | null
+    riskNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionsStatus?: NullableEnumSanctionsStatusFieldUpdateOperationsInput | $Enums.SanctionsStatus | null
+    sourceOfFunds?: NullableStringFieldUpdateOperationsInput | string | null
+    isRegulatedEntity?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    regulatoryStatus?: NullableEnumRegulatoryStatusFieldUpdateOperationsInput | $Enums.RegulatoryStatus | null
+    licenseType?: NullableStringFieldUpdateOperationsInput | string | null
+    licenseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    businessDescription?: NullableStringFieldUpdateOperationsInput | string | null
+    yearEstablished?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeCountRange?: NullableEnumEmployeeCountRangeFieldUpdateOperationsInput | $Enums.EmployeeCountRange | null
+    annualRevenueRange?: NullableEnumAnnualRevenueRangeFieldUpdateOperationsInput | $Enums.AnnualRevenueRange | null
+    expectedMonthlyVolume?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    purposeOfAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    walletCustodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    custodianName?: NullableStringFieldUpdateOperationsInput | string | null
+    preferredSettlementChain?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerName?: NullableStringFieldUpdateOperationsInput | string | null
+    accountManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextReviewDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    referralSource?: NullableStringFieldUpdateOperationsInput | string | null
+    isTestAccount?: BoolFieldUpdateOperationsInput | boolean
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    refreshTokens?: InstitutionRefreshTokenUncheckedUpdateManyWithoutClientNestedInput
+    settings?: InstitutionClientSettingsUncheckedUpdateOneWithoutClientNestedInput
+    apiKeys?: InstitutionApiKeyUncheckedUpdateManyWithoutClientNestedInput
+    escrows?: InstitutionEscrowUncheckedUpdateManyWithoutClientNestedInput
+    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutClientNestedInput
+    files?: InstitutionFileUncheckedUpdateManyWithoutClientNestedInput
+    wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
+    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
+    notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutRefreshTokensInput = {
@@ -64438,6 +69628,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutRefreshTokensInput = {
@@ -64512,6 +69704,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutRefreshTokensInput = {
@@ -64602,6 +69796,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutRefreshTokensInput = {
@@ -64676,6 +69872,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutSettingsInput = {
@@ -64750,6 +69948,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutSettingsInput = {
@@ -64824,6 +70024,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutSettingsInput = {
@@ -64914,6 +70116,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutSettingsInput = {
@@ -64988,6 +70192,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutApiKeysInput = {
@@ -65062,6 +70268,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutApiKeysInput = {
@@ -65136,6 +70344,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutApiKeysInput = {
@@ -65226,6 +70436,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutApiKeysInput = {
@@ -65300,6 +70512,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientCreateWithoutEscrowsInput = {
@@ -65374,6 +70588,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutEscrowsInput = {
@@ -65448,6 +70664,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutEscrowsInput = {
@@ -65668,6 +70886,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutEscrowsInput = {
@@ -65742,6 +70962,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionDepositUpsertWithWhereUniqueWithoutEscrowInput = {
@@ -66100,6 +71322,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutAuditLogsInput = {
@@ -66174,6 +71398,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutAuditLogsInput = {
@@ -66337,6 +71563,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutAuditLogsInput = {
@@ -66411,6 +71639,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionEscrowCreateWithoutAiAnalysesInput = {
@@ -66552,6 +71782,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutAiAnalysesInput = {
@@ -66626,6 +71858,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutAiAnalysesInput = {
@@ -66789,6 +72023,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutAiAnalysesInput = {
@@ -66863,6 +72099,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type AdminRefreshTokenCreateWithoutAdminInput = {
@@ -67055,6 +72293,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutFilesInput = {
@@ -67129,6 +72369,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
     notifications?: InstitutionNotificationUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutFilesInput = {
@@ -67286,6 +72528,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutFilesInput = {
@@ -67360,6 +72604,8 @@ export namespace Prisma {
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
     notifications?: InstitutionNotificationUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionEscrowUpsertWithoutFilesInput = {
@@ -67507,6 +72753,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletCreateNestedManyWithoutClientInput
     accounts?: InstitutionAccountCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientUncheckedCreateWithoutNotificationsInput = {
@@ -67581,6 +72829,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletUncheckedCreateNestedManyWithoutClientInput
     accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutClientInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutClientInput
+    branches?: InstitutionBranchUncheckedCreateNestedManyWithoutClientInput
+    directPayments?: DirectPaymentUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type InstitutionClientCreateOrConnectWithoutNotificationsInput = {
@@ -67671,6 +72921,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletUpdateManyWithoutClientNestedInput
     accounts?: InstitutionAccountUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUpdateManyWithoutClientNestedInput
   }
 
   export type InstitutionClientUncheckedUpdateWithoutNotificationsInput = {
@@ -67745,6 +72997,8 @@ export namespace Prisma {
     wallets?: InstitutionWalletUncheckedUpdateManyWithoutClientNestedInput
     accounts?: InstitutionAccountUncheckedUpdateManyWithoutClientNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutClientNestedInput
+    branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
+    directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type DepositCreateManyAgreementInput = {
@@ -69008,6 +74262,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    branchId?: string | null
   }
 
   export type InstitutionAiAnalysisCreateManyClientInput = {
@@ -69036,6 +74291,48 @@ export namespace Prisma {
     isRead?: boolean
     readAt?: Date | string | null
     createdAt?: Date | string
+  }
+
+  export type InstitutionBranchCreateManyClientInput = {
+    id?: string
+    name: string
+    city: string
+    country: string
+    countryCode: string
+    address?: string | null
+    timezone?: string
+    riskScore?: number
+    complianceStatus?: string
+    complianceNote?: string | null
+    regulatoryBody?: string | null
+    isSanctioned?: boolean
+    sanctionReason?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DirectPaymentCreateManyClientInput = {
+    id?: string
+    paymentCode?: string | null
+    sender: string
+    senderCountry: string
+    senderWallet: string
+    recipient: string
+    recipientCountry: string
+    recipientWallet: string
+    amount: Decimal | DecimalJsLike | number | string
+    currency?: string
+    corridor: string
+    status?: string
+    txHash?: string | null
+    platformFee?: Decimal | DecimalJsLike | number | string
+    riskScore?: number | null
+    settlementMode?: string
+    releaseMode?: string
+    settledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type InstitutionRefreshTokenUpdateWithoutClientInput = {
@@ -69328,6 +74625,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    branch?: InstitutionBranchUpdateOneWithoutAccountsNestedInput
   }
 
   export type InstitutionAccountUncheckedUpdateWithoutClientInput = {
@@ -69363,6 +74661,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type InstitutionAccountUncheckedUpdateManyWithoutClientInput = {
@@ -69398,6 +74697,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type InstitutionAiAnalysisUpdateWithoutClientInput = {
@@ -69482,6 +74782,278 @@ export namespace Prisma {
     isRead?: BoolFieldUpdateOperationsInput | boolean
     readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionBranchUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: InstitutionAccountUpdateManyWithoutBranchNestedInput
+  }
+
+  export type InstitutionBranchUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutBranchNestedInput
+  }
+
+  export type InstitutionBranchUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    city?: StringFieldUpdateOperationsInput | string
+    country?: StringFieldUpdateOperationsInput | string
+    countryCode?: StringFieldUpdateOperationsInput | string
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: StringFieldUpdateOperationsInput | string
+    riskScore?: IntFieldUpdateOperationsInput | number
+    complianceStatus?: StringFieldUpdateOperationsInput | string
+    complianceNote?: NullableStringFieldUpdateOperationsInput | string | null
+    regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
+    isSanctioned?: BoolFieldUpdateOperationsInput | boolean
+    sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DirectPaymentUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
+    sender?: StringFieldUpdateOperationsInput | string
+    senderCountry?: StringFieldUpdateOperationsInput | string
+    senderWallet?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    recipientCountry?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: StringFieldUpdateOperationsInput | string
+    releaseMode?: StringFieldUpdateOperationsInput | string
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DirectPaymentUncheckedUpdateWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
+    sender?: StringFieldUpdateOperationsInput | string
+    senderCountry?: StringFieldUpdateOperationsInput | string
+    senderWallet?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    recipientCountry?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: StringFieldUpdateOperationsInput | string
+    releaseMode?: StringFieldUpdateOperationsInput | string
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DirectPaymentUncheckedUpdateManyWithoutClientInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
+    sender?: StringFieldUpdateOperationsInput | string
+    senderCountry?: StringFieldUpdateOperationsInput | string
+    senderWallet?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    recipientCountry?: StringFieldUpdateOperationsInput | string
+    recipientWallet?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    corridor?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
+    settlementMode?: StringFieldUpdateOperationsInput | string
+    releaseMode?: StringFieldUpdateOperationsInput | string
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountCreateManyBranchInput = {
+    id?: string
+    clientId: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionAccountUpdateWithoutBranchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput
+  }
+
+  export type InstitutionAccountUncheckedUpdateWithoutBranchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionAccountUncheckedUpdateManyWithoutBranchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type InstitutionDepositCreateManyEscrowInput = {
