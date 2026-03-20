@@ -45,6 +45,15 @@ class InstitutionEmailService {
     this.fromAddress = process.env.RESEND_FROM_ADDRESS || 'notifications@easyescrow.ai';
   }
 
+  private escapeHtml(unsafe: string): string {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   async sendNotificationEmail(params: SendNotificationEmailParams): Promise<void> {
     const { to, recipientName, type, title, message, escrowId, metadata } = params;
 
@@ -60,12 +69,17 @@ class InstitutionEmailService {
       metadata,
     });
 
-    await this.resend.emails.send({
-      from: this.fromAddress,
-      to,
-      subject,
-      html,
-    });
+    try {
+      await this.resend.emails.send({
+        from: this.fromAddress,
+        to,
+        subject,
+        html,
+      });
+    } catch (error) {
+      console.error(`[EmailService] Failed to send email to ${to}:`, error);
+      throw error;
+    }
   }
 
   private buildEmailHtml(params: {
@@ -79,7 +93,7 @@ class InstitutionEmailService {
     const { recipientName, title, message, escrowId, metadata } = params;
 
     const escrowLine = escrowId
-      ? `<p style="color:#666;font-size:13px;">Escrow ID: ${escrowId}</p>`
+      ? `<p style="color:#666;font-size:13px;">Escrow ID: ${this.escapeHtml(escrowId)}</p>`
       : '';
 
     const metadataLines =
@@ -89,7 +103,7 @@ class InstitutionEmailService {
               .filter(([, v]) => v !== null && v !== undefined)
               .map(
                 ([k, v]) =>
-                  `<tr><td style="padding:4px 12px 4px 0;font-weight:600;">${k}</td><td style="padding:4px 0;">${v}</td></tr>`
+                  `<tr><td style="padding:4px 12px 4px 0;font-weight:600;">${this.escapeHtml(k)}</td><td style="padding:4px 0;">${this.escapeHtml(String(v))}</td></tr>`
               )
               .join('')}
            </table>`
@@ -105,9 +119,9 @@ class InstitutionEmailService {
       <div style="border-bottom:2px solid #2563eb;padding-bottom:16px;margin-bottom:24px;">
         <h2 style="margin:0;color:#1e293b;font-size:20px;">EasyEscrow.ai</h2>
       </div>
-      <p style="color:#374151;margin:0 0 8px;">Hi ${recipientName},</p>
-      <h3 style="color:#1e293b;margin:16px 0 8px;">${title}</h3>
-      <p style="color:#4b5563;line-height:1.6;">${message}</p>
+      <p style="color:#374151;margin:0 0 8px;">Hi ${this.escapeHtml(recipientName)},</p>
+      <h3 style="color:#1e293b;margin:16px 0 8px;">${this.escapeHtml(title)}</h3>
+      <p style="color:#4b5563;line-height:1.6;">${this.escapeHtml(message)}</p>
       ${escrowLine}
       ${metadataLines}
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
@@ -123,8 +137,11 @@ class InstitutionEmailService {
 
 let instance: InstitutionEmailService | null = null;
 
-export function getEmailService(): InstitutionEmailService {
+export function getEmailService(): InstitutionEmailService | null {
   if (!instance) {
+    if (!process.env.RESEND_API_KEY) {
+      return null;
+    }
     instance = new InstitutionEmailService();
   }
   return instance;
