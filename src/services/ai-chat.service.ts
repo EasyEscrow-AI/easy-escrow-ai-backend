@@ -116,9 +116,6 @@ const CACHED_SYSTEM_BLOCKS: Anthropic.TextBlockParam[] = [
   },
 ];
 
-// Legacy single-string system prompt (used by non-streaming fallback)
-const SYSTEM_PROMPT = SYSTEM_INSTRUCTIONS + '\n\n' + KNOWLEDGEBASE;
-
 const CHAT_TOOLS: Anthropic.Tool[] = [
   {
     name: 'search_escrows',
@@ -326,7 +323,7 @@ export class AiChatService {
    *   event: done        data: {"usage":{...},"toolsUsed":[...]}  — stream finished
    *   event: error       data: {"message":"..."}         — error
    */
-  async chatStream(clientId: string, request: ChatRequest, res: Response): Promise<void> {
+  async chatStream(clientId: string, request: ChatRequest, res: Response, signal?: AbortSignal): Promise<void> {
     await this.checkRateLimit(clientId);
 
     const anthropic = this.getAnthropicClient();
@@ -396,6 +393,8 @@ export class AiChatService {
 
     try {
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+        if (signal?.aborted) return;
+
         // Use streaming API with prompt caching
         const stream = anthropic.messages.stream({
           model,
@@ -405,38 +404,39 @@ export class AiChatService {
           tools: CHAT_TOOLS,
         });
 
-        // Collect full message content for potential tool-use follow-up
-        let stopReason: string | null = null;
-        const contentBlocks: Anthropic.ContentBlock[] = [];
-        let currentToolInput = '';
-        let currentToolName = '';
+        // If client disconnects, abort the stream
+        const onAbort = () => stream.abort();
+        signal?.addEventListener('abort', onAbort, { once: true });
 
-        for await (const event of stream) {
-          if (event.type === 'content_block_start') {
-            if (event.content_block.type === 'tool_use') {
-              // Flush any buffered text before tool use
-              flushBuffer(true);
-              currentToolName = event.content_block.name;
-              currentToolInput = '';
-              toolsUsed.push(currentToolName);
-              sendEvent('tool_start', { tool: currentToolName });
+        let stopReason: string | null = null;
+
+        try {
+          for await (const event of stream) {
+            if (signal?.aborted) return;
+
+            if (event.type === 'content_block_start') {
+              if (event.content_block.type === 'tool_use') {
+                flushBuffer(true);
+                toolsUsed.push(event.content_block.name);
+                sendEvent('tool_start', { tool: event.content_block.name });
+              }
+            } else if (event.type === 'content_block_delta') {
+              if (event.delta.type === 'text_delta') {
+                textBuffer += event.delta.text;
+                flushBuffer();
+              }
+            } else if (event.type === 'message_delta') {
+              stopReason = event.delta.stop_reason;
+              totalOutputTokens += event.usage.output_tokens;
+            } else if (event.type === 'message_start') {
+              totalInputTokens += event.message.usage.input_tokens;
             }
-          } else if (event.type === 'content_block_delta') {
-            if (event.delta.type === 'text_delta') {
-              textBuffer += event.delta.text;
-              flushBuffer();
-            } else if (event.delta.type === 'input_json_delta') {
-              currentToolInput += event.delta.partial_json;
-            }
-          } else if (event.type === 'content_block_stop') {
-            // Block finished — nothing extra needed
-          } else if (event.type === 'message_delta') {
-            stopReason = event.delta.stop_reason;
-            totalOutputTokens += event.usage.output_tokens;
-          } else if (event.type === 'message_start') {
-            totalInputTokens += event.message.usage.input_tokens;
           }
+        } finally {
+          signal?.removeEventListener('abort', onAbort);
         }
+
+        if (signal?.aborted) return;
 
         // Flush any remaining text
         flushBuffer(true);
@@ -460,6 +460,7 @@ export class AiChatService {
         const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
         for (const block of assistantContent) {
+          if (signal?.aborted) return;
           if (block.type === 'tool_use') {
             const result = await this.executeTool(
               block.name,
@@ -481,12 +482,15 @@ export class AiChatService {
       }
 
       // Exhausted tool rounds
-      sendEvent('text', { delta: 'I was unable to complete your request. Please try rephrasing your question.' });
-      sendEvent('done', {
-        usage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
-        toolsUsed: toolsUsed.length > 0 ? toolsUsed : undefined,
-      });
+      if (!signal?.aborted) {
+        sendEvent('text', { delta: 'I was unable to complete your request. Please try rephrasing your question.' });
+        sendEvent('done', {
+          usage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
+          toolsUsed: toolsUsed.length > 0 ? toolsUsed : undefined,
+        });
+      }
     } catch (error) {
+      if (signal?.aborted) return;
       const message = error instanceof Error ? error.message : String(error);
       sendEvent('error', { message });
     }

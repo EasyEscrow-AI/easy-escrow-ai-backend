@@ -128,10 +128,12 @@ router.post(
       'X-Accel-Buffering': 'no', // Disable nginx buffering
     });
 
-    // Handle client disconnect
+    // Handle client disconnect — abort controller propagates to service
+    const abortController = new AbortController();
     let aborted = false;
     req.on('close', () => {
       aborted = true;
+      abortController.abort();
     });
 
     try {
@@ -143,10 +145,16 @@ router.post(
           history: req.body.history,
         },
         res,
+        abortController.signal,
       );
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
       if (!aborted) {
+        const errObj = error as Record<string, unknown>;
+        const status = typeof errObj?.status === 'number' ? errObj.status
+          : typeof errObj?.statusCode === 'number' ? errObj.statusCode
+          : 500;
+        const raw = error instanceof Error ? error.message : String(error);
+        const message = status >= 500 ? 'An internal error occurred' : raw;
         res.write(`event: error\ndata: ${JSON.stringify({ message })}\n\n`);
       }
     } finally {
