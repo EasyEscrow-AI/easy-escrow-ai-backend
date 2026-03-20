@@ -546,6 +546,7 @@ exports.Prisma.InstitutionBranchScalarFieldEnum = {
 
 exports.Prisma.DirectPaymentScalarFieldEnum = {
   id: 'id',
+  paymentCode: 'paymentCode',
   clientId: 'clientId',
   sender: 'sender',
   senderCountry: 'senderCountry',
@@ -632,6 +633,11 @@ exports.Prisma.InstitutionEscrowScalarFieldEnum = {
   status: 'status',
   settlementAuthority: 'settlementAuthority',
   riskScore: 'riskScore',
+  settlementMode: 'settlementMode',
+  releaseMode: 'releaseMode',
+  approvalParties: 'approvalParties',
+  releaseConditions: 'releaseConditions',
+  approvalInstructions: 'approvalInstructions',
   escrowPda: 'escrowPda',
   vaultPda: 'vaultPda',
   nonceAccount: 'nonceAccount',

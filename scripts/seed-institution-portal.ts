@@ -365,7 +365,7 @@ async function main() {
 
   for (const e of escrows) {
     const escrowId = crypto.randomUUID();
-    const feeBps = 50;
+    const feeBps = 20;
     const platformFee = (e.amount * feeBps) / 10000;
 
     await prisma.institutionEscrow.create({
