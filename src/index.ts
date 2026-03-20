@@ -180,37 +180,10 @@ try {
   const openApiFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
   openApiDocument = YAML.load(openApiFilePath);
 
-  // 🔧 Environment-aware server configuration
-  const isProd = process.env.NODE_ENV === 'production';
-  const isStaging = process.env.NODE_ENV === 'staging';
-
-  if (isProd) {
-    openApiDocument.servers = [
-      {
-        url: 'https://api.easyescrow.ai',
-        description: 'Production server',
-      },
-    ];
-  } else if (isStaging) {
-    openApiDocument.servers = [
-      {
-        url: 'https://staging-api.easyescrow.ai',
-        description: 'Staging server',
-      },
-    ];
-  } else {
-    openApiDocument.servers = [
-      {
-        url: 'http://localhost:3000',
-        description: 'Development server',
-      },
-    ];
-  }
+  // Remove servers to hide the server dropdown in Redoc endpoint details
+  delete openApiDocument.servers;
 
   console.log(`✅ API documentation loaded successfully from ${openApiFilePath}`);
-  console.log(
-    `🌐 API servers configured for environment: ${process.env.NODE_ENV || 'development'}`
-  );
 } catch (error: any) {
   console.warn('⚠️  Warning: Failed to load API documentation');
   console.warn(`   Error: ${error.message}`);
@@ -443,6 +416,9 @@ if (openApiDocument) {
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
     /* Hide Redoc's built-in sidebar search (we have the topbar instead) */
     .redoc-wrap [role="search"] { display: none !important; }
+    /* Hide servers dropdown in endpoint operations */
+    .redoc-wrap [class*="servers"] { display: none !important; }
+    .redoc-wrap [class*="server-response-table"] { display: none !important; }
     /* Topbar search highlight */
     .topbar-search-highlight {
       outline: 2px solid #818cf8 !important;
