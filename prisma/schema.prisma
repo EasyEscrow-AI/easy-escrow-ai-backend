@@ -1003,6 +1003,9 @@ model InstitutionAccount {
   notifyOnEscrowReleased  Boolean  @default(true) @map("notify_on_escrow_released")
   notifyOnComplianceAlert Boolean  @default(true) @map("notify_on_compliance_alert")
 
+  // Account preferences
+  defaultCurrency String @default("USDC") @map("default_currency")
+
   // Status
   isDefault Boolean @default(false) @map("is_default")
   isActive  Boolean @default(true)  @map("is_active")

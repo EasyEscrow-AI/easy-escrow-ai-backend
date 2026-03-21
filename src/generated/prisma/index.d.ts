@@ -27248,6 +27248,7 @@ export namespace Prisma {
     notifyOnEscrowFunded: boolean | null
     notifyOnEscrowReleased: boolean | null
     notifyOnComplianceAlert: boolean | null
+    defaultCurrency: string | null
     isDefault: boolean | null
     isActive: boolean | null
     createdAt: Date | null
@@ -27284,6 +27285,7 @@ export namespace Prisma {
     notifyOnEscrowFunded: boolean | null
     notifyOnEscrowReleased: boolean | null
     notifyOnComplianceAlert: boolean | null
+    defaultCurrency: string | null
     isDefault: boolean | null
     isActive: boolean | null
     createdAt: Date | null
@@ -27321,6 +27323,7 @@ export namespace Prisma {
     notifyOnEscrowFunded: number
     notifyOnEscrowReleased: number
     notifyOnComplianceAlert: number
+    defaultCurrency: number
     isDefault: number
     isActive: number
     createdAt: number
@@ -27379,6 +27382,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: true
     notifyOnEscrowReleased?: true
     notifyOnComplianceAlert?: true
+    defaultCurrency?: true
     isDefault?: true
     isActive?: true
     createdAt?: true
@@ -27415,6 +27419,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: true
     notifyOnEscrowReleased?: true
     notifyOnComplianceAlert?: true
+    defaultCurrency?: true
     isDefault?: true
     isActive?: true
     createdAt?: true
@@ -27452,6 +27457,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: true
     notifyOnEscrowReleased?: true
     notifyOnComplianceAlert?: true
+    defaultCurrency?: true
     isDefault?: true
     isActive?: true
     createdAt?: true
@@ -27576,6 +27582,7 @@ export namespace Prisma {
     notifyOnEscrowFunded: boolean
     notifyOnEscrowReleased: boolean
     notifyOnComplianceAlert: boolean
+    defaultCurrency: string
     isDefault: boolean
     isActive: boolean
     createdAt: Date
@@ -27632,6 +27639,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
     createdAt?: boolean
@@ -27671,6 +27679,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
     createdAt?: boolean
@@ -27710,6 +27719,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
     createdAt?: boolean
@@ -27749,6 +27759,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
     createdAt?: boolean
@@ -27756,7 +27767,7 @@ export namespace Prisma {
     branchId?: boolean
   }
 
-  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "isDefault" | "isActive" | "createdAt" | "updatedAt" | "branchId", ExtArgs["result"]["institutionAccount"]>
+  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "defaultCurrency" | "isDefault" | "isActive" | "createdAt" | "updatedAt" | "branchId", ExtArgs["result"]["institutionAccount"]>
   export type InstitutionAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
@@ -27806,6 +27817,7 @@ export namespace Prisma {
       notifyOnEscrowFunded: boolean
       notifyOnEscrowReleased: boolean
       notifyOnComplianceAlert: boolean
+      defaultCurrency: string
       isDefault: boolean
       isActive: boolean
       createdAt: Date
@@ -28265,6 +28277,7 @@ export namespace Prisma {
     readonly notifyOnEscrowFunded: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly notifyOnEscrowReleased: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly notifyOnComplianceAlert: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly defaultCurrency: FieldRef<"InstitutionAccount", 'String'>
     readonly isDefault: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly isActive: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly createdAt: FieldRef<"InstitutionAccount", 'DateTime'>
@@ -48080,6 +48093,7 @@ export namespace Prisma {
     notifyOnEscrowFunded: 'notifyOnEscrowFunded',
     notifyOnEscrowReleased: 'notifyOnEscrowReleased',
     notifyOnComplianceAlert: 'notifyOnComplianceAlert',
+    defaultCurrency: 'defaultCurrency',
     isDefault: 'isDefault',
     isActive: 'isActive',
     createdAt: 'createdAt',
@@ -51259,6 +51273,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
@@ -51298,6 +51313,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -51341,6 +51357,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
@@ -51380,6 +51397,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -51425,6 +51443,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     notifyOnEscrowReleased?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     notifyOnComplianceAlert?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    defaultCurrency?: StringWithAggregatesFilter<"InstitutionAccount"> | string
     isDefault?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     isActive?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
@@ -55641,6 +55660,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -55679,6 +55699,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -55715,6 +55736,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -55753,6 +55775,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -55790,6 +55813,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -55826,6 +55850,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -55862,6 +55887,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -60011,6 +60037,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -60057,6 +60084,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -60093,6 +60121,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -67670,6 +67699,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -67706,6 +67736,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -68223,6 +68254,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
@@ -69302,6 +69334,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -69339,6 +69372,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -74641,6 +74675,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -75019,6 +75054,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75055,6 +75091,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75091,6 +75128,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75340,6 +75378,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
@@ -75375,6 +75414,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75412,6 +75452,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75448,6 +75489,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
