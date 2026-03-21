@@ -517,6 +517,7 @@ exports.Prisma.InstitutionAccountScalarFieldEnum = {
   notifyOnEscrowFunded: 'notifyOnEscrowFunded',
   notifyOnEscrowReleased: 'notifyOnEscrowReleased',
   notifyOnComplianceAlert: 'notifyOnComplianceAlert',
+  defaultCurrency: 'defaultCurrency',
   isDefault: 'isDefault',
   isActive: 'isActive',
   createdAt: 'createdAt',

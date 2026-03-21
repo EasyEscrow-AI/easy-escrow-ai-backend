@@ -48,7 +48,25 @@ const ALLOWED_UPDATE_FIELDS = [
   'notifyOnEscrowFunded',
   'notifyOnEscrowReleased',
   'notifyOnComplianceAlert',
+  'defaultCurrency',
 ] as const;
+
+// Fields exposed in the per-account settings view
+const ACCOUNT_SETTINGS_FIELDS = [
+  'defaultCurrency',
+  'notifyOnEscrowCreated',
+  'notifyOnEscrowFunded',
+  'notifyOnEscrowReleased',
+  'notifyOnComplianceAlert',
+  'notificationEmail',
+  'webhookUrl',
+  'approvalMode',
+  'approvalThreshold',
+  'whitelistEnforced',
+  'isActive',
+] as const;
+
+const VALID_CURRENCIES = ['USDC', 'USDT', 'EURC'] as const;
 
 interface CreateAccountInput {
   name: string;
@@ -263,6 +281,178 @@ export class InstitutionAccountService {
     ]);
 
     return this.prisma.institutionAccount.findUnique({ where: { id: accountId } });
+  }
+
+  async getClientProfile(clientId: string) {
+    const client = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+      select: {
+        id: true,
+        companyName: true,
+        legalName: true,
+        tradingName: true,
+        tier: true,
+        status: true,
+        kycStatus: true,
+        kybStatus: true,
+        jurisdiction: true,
+        entityType: true,
+        registrationNumber: true,
+        registrationCountry: true,
+        industry: true,
+        websiteUrl: true,
+        businessDescription: true,
+        yearEstablished: true,
+        contactFirstName: true,
+        contactLastName: true,
+        contactEmail: true,
+        contactTitle: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        state: true,
+        postalCode: true,
+        country: true,
+        riskRating: true,
+        isRegulatedEntity: true,
+        regulatoryStatus: true,
+        licenseType: true,
+        regulatoryBody: true,
+        accountManagerName: true,
+        accountManagerEmail: true,
+        onboardingCompletedAt: true,
+        nextReviewDate: true,
+        createdAt: true,
+        updatedAt: true,
+        settings: {
+          select: {
+            defaultCurrency: true,
+            defaultCorridor: true,
+            timezone: true,
+            emailNotifications: true,
+            language: true,
+            theme: true,
+            twoFactorEnabled: true,
+            aiRecommendations: true,
+            riskTolerance: true,
+            defaultToken: true,
+          },
+        },
+        accounts: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            label: true,
+            accountType: true,
+            walletAddress: true,
+            verificationStatus: true,
+            defaultCurrency: true,
+            isDefault: true,
+            isActive: true,
+          },
+          orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+        },
+      },
+    });
+
+    if (!client) {
+      throw new Error('Client not found');
+    }
+
+    return client;
+  }
+
+  async getAccountSettings(clientId: string, accountId: string) {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { id: accountId, clientId },
+      select: {
+        id: true,
+        name: true,
+        label: true,
+        accountType: true,
+        defaultCurrency: true,
+        isActive: true,
+        isDefault: true,
+        notifyOnEscrowCreated: true,
+        notifyOnEscrowFunded: true,
+        notifyOnEscrowReleased: true,
+        notifyOnComplianceAlert: true,
+        notificationEmail: true,
+        webhookUrl: true,
+        approvalMode: true,
+        approvalThreshold: true,
+        whitelistEnforced: true,
+      },
+    });
+
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    return account;
+  }
+
+  async updateAccountSettings(clientId: string, accountId: string, data: Record<string, any>) {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { id: accountId, clientId },
+    });
+
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    // Filter to only settings fields
+    const updates: Record<string, any> = {};
+    for (const field of ACCOUNT_SETTINGS_FIELDS) {
+      if (field in data) {
+        updates[field] = data[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      throw new Error('No valid settings fields to update');
+    }
+
+    // Validate defaultCurrency
+    if (updates.defaultCurrency) {
+      const currency = updates.defaultCurrency.toUpperCase();
+      if (!VALID_CURRENCIES.includes(currency as any)) {
+        throw new Error(
+          `Invalid currency: ${updates.defaultCurrency}. Supported: ${VALID_CURRENCIES.join(', ')}`
+        );
+      }
+      updates.defaultCurrency = currency;
+    }
+
+    // Validate boolean toggles
+    const booleanFields = [
+      'notifyOnEscrowCreated',
+      'notifyOnEscrowFunded',
+      'notifyOnEscrowReleased',
+      'notifyOnComplianceAlert',
+      'whitelistEnforced',
+      'isActive',
+    ];
+    for (const field of booleanFields) {
+      if (field in updates && typeof updates[field] !== 'boolean') {
+        throw new Error(`${field} must be a boolean`);
+      }
+    }
+
+    // Prevent deactivating default account
+    if (updates.isActive === false && account.isDefault) {
+      throw new Error(
+        'Cannot deactivate the default account. Set another account as default first.'
+      );
+    }
+
+    const updated = await this.prisma.institutionAccount.update({
+      where: { id: accountId },
+      data: updates,
+    });
+
+    return updated;
   }
 
   async getAccountBalance(walletAddress: string): Promise<AccountBalance> {
