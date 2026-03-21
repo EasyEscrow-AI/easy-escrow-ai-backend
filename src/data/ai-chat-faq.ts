@@ -18,7 +18,8 @@ export interface FaqEntry {
   category: 'fees' | 'platform' | 'compliance' | 'technical' | 'account' | 'comparison' | 'yield';
   patterns: string[];
   keywords: string[];
-  answer: string;
+  shortAnswer: string;
+  detailedAnswer: string;
 }
 
 export const FAQ_ENTRIES: FaqEntry[] = [
@@ -47,7 +48,8 @@ export const FAQ_ENTRIES: FaqEntry[] = [
       '20 basis points',
     ],
     keywords: ['fee', 'cost', 'charge', 'price', 'pricing', 'bps', 'basis', 'percent', 'platform'],
-    answer: `### Platform Fee
+    shortAnswer: `**0.20% (20 bps)** of the escrow amount. Covers smart contract execution, AI compliance analysis, Solana network fees, and 24/7 settlement. Compare: SWIFT costs 1-3% + $25-50 fixed fees and takes 1-5 days. Example: $100K escrow = **$200 fee** vs $1,000-$3,000+ traditional.`,
+    detailedAnswer: `### Platform Fee
 
 EasyEscrow charges a **0.20% (20 basis points)** platform fee on institution escrow transactions. This is calculated on the escrow amount at the time of creation.
 
@@ -89,7 +91,8 @@ The fee is deducted from the escrow amount when the escrow is released to the re
       'what is the maximum',
     ],
     keywords: ['limit', 'minimum', 'maximum', 'amount', 'min', 'max', 'escrow'],
-    answer: `### Escrow Amount Limits
+    shortAnswer: `**Min: $10 USDC** / **Max: $100,000,000 USDC** per escrow. No limit on number of escrows. Corridor-specific limits may also apply.`,
+    detailedAnswer: `### Escrow Amount Limits
 
 | Limit | Amount |
 |-------|--------|
@@ -123,7 +126,8 @@ Enterprise-tier clients may have customized limits. Contact your account manager
       'explain how payments work',
     ],
     keywords: ['escrow', 'process', 'work', 'lifecycle', 'flow', 'step', 'how'],
-    answer: `### How EasyEscrow Works
+    shortAnswer: `Trustless USDC escrow on Solana. **5 steps:** Create escrow → Fund with USDC → AI compliance check → Release to recipient → Done. Settles in **seconds**. Payer can cancel anytime before release for a full refund. Escrows expire after 72 hours if not completed.`,
+    detailedAnswer: `### How EasyEscrow Works
 
 EasyEscrow provides trustless USDC escrow for cross-border payments. Here's the lifecycle:
 
@@ -170,7 +174,8 @@ The entire process settles in **seconds** on Solana, compared to days with tradi
       'escrow duration',
     ],
     keywords: ['expiry', 'expire', 'timeout', 'duration', 'long', 'last', 'hours'],
-    answer: `### Escrow Expiry
+    shortAnswer: `**72 hours** from creation (configurable). If not completed within that window, the escrow expires and funded USDC is automatically refunded to the payer.`,
+    detailedAnswer: `### Escrow Expiry
 
 The default escrow expiry is **72 hours** from creation. If the escrow is not funded and released within this window, it automatically expires and any deposited funds are refunded to the payer's wallet.
 
@@ -204,7 +209,8 @@ The default escrow expiry is **72 hours** from creation. If the escrow is not fu
       'hold',
       'created',
     ],
-    answer: `### Escrow Statuses
+    shortAnswer: `**Happy path:** CREATED → FUNDED → RELEASING → RELEASED. Other states: COMPLIANCE_HOLD (flagged for review), CANCELLING/CANCELLED (refunded), EXPIRED (auto-refunded after 72h), FAILED (rare error).`,
+    detailedAnswer: `### Escrow Statuses
 
 | Status | Meaning |
 |--------|---------|
@@ -235,7 +241,8 @@ The default escrow expiry is **72 hours** from creation. If the escrow is not fu
       'escrow identifier',
     ],
     keywords: ['code', 'ee', 'reference', 'identifier', 'format'],
-    answer: `### Escrow Codes
+    shortAnswer: `Format: **\`EE-XXX-XXX\`** (e.g., \`EE-ABC-123\`). Assigned at creation, permanent. Use it to look up escrows or share as a payment reference. Ask me *"show me EE-ABC"* to search.`,
+    detailedAnswer: `### Escrow Codes
 
 Every institution escrow is assigned a unique human-readable code in the format **\`EE-XXX-XXX\`** (e.g., \`EE-ABC-123\`).
 
@@ -270,7 +277,8 @@ You can search for escrows by code (partial match supported) — just ask me som
       'singapore',
       'switzerland',
     ],
-    answer: `### Supported Payment Corridors
+    shortAnswer: `Currently: **SG-CH** (Singapore ↔ Switzerland). Each corridor has its own amount limits and risk level. More corridors being added. Ask me to *"get platform info"* for current details.`,
+    detailedAnswer: `### Supported Payment Corridors
 
 EasyEscrow currently supports institutional cross-border payments on the following corridors:
 
@@ -303,7 +311,8 @@ Additional corridors are being added based on institutional demand and regulator
       'compliance review',
     ],
     keywords: ['compliance', 'risk', 'check', 'analysis', 'score', 'ai', 'review', 'assessment'],
-    answer: `### AI-Powered Compliance Analysis
+    shortAnswer: `Every escrow undergoes **AI-powered compliance analysis**. Risk score 0-100: **Low (0-30)** auto-approved, **Medium (31-70)** flagged for review, **High (71-100)** placed on COMPLIANCE_HOLD. Analyzes transaction details, documents, sanctions, and patterns. Completes in **seconds**.`,
+    detailedAnswer: `### AI-Powered Compliance Analysis
 
 Every institution escrow undergoes automated compliance analysis powered by Claude AI. Here's how it works:
 
@@ -353,7 +362,8 @@ Compliance analysis typically completes in **seconds**, compared to days for man
       'what documents do i need to onboard',
     ],
     keywords: ['kyc', 'kyb', 'onboard', 'onboarding', 'verification', 'identity'],
-    answer: `### KYC/KYB Onboarding
+    shortAnswer: `**Allowlist-based** onboarding (not open signup). Requires company registration docs, beneficial ownership info, and authorized signatory ID. Process: Application → KYB review → KYC check → Approval → Wallet registration. Contact your relationship manager to get started.`,
+    detailedAnswer: `### KYC/KYB Onboarding
 
 EasyEscrow uses an **allowlist-based onboarding** process for institutional clients (not open signup).
 
@@ -392,7 +402,8 @@ EasyEscrow uses an **allowlist-based onboarding** process for institutional clie
       'document types',
     ],
     keywords: ['document', 'upload', 'required', 'supporting', 'invoice', 'contract'],
-    answer: `### Document Requirements
+    shortAnswer: `Upload supporting docs (invoices, contracts, proof of delivery) to speed up compliance. Formats: **PDF, PNG, JPG**. Up to 5 docs per escrow. Not always mandatory, but significantly speeds up review. AI auto-analyzes and cross-references with escrow details.`,
+    detailedAnswer: `### Document Requirements
 
 For each escrow transaction, you can upload supporting documents to facilitate compliance review. While not always mandatory, documents significantly speed up the compliance process.
 
@@ -426,7 +437,8 @@ The more complete your documentation, the faster and smoother the compliance rev
       'aml screening',
     ],
     keywords: ['sanction', 'ofac', 'screening', 'aml', 'sanctioned', 'list'],
-    answer: `### Sanctions Screening
+    shortAnswer: `Screens against **OFAC, EU, UN, and Swiss SECO** sanctions lists. Checks wallet addresses, company names, beneficial owners, and corridors. Runs at onboarding, escrow creation, and release. Uses blockchain analytics for on-chain compliance.`,
+    detailedAnswer: `### Sanctions Screening
 
 EasyEscrow implements comprehensive sanctions screening at multiple levels:
 
@@ -468,7 +480,8 @@ Blockchain analytics tools are used for on-chain compliance, detecting interacti
       'time to settle',
     ],
     keywords: ['settlement', 'speed', 'fast', 'time', 'quick', 'instant', 'seconds'],
-    answer: `### Settlement Speed
+    shortAnswer: `On-chain confirmation in **~400ms**, full finality in **~13 seconds**. End-to-end happy path (create → fund → compliance → release) takes about **1 minute**. Compare: SWIFT takes 1-5 business days.`,
+    detailedAnswer: `### Settlement Speed
 
 EasyEscrow transactions settle on the Solana blockchain:
 
@@ -508,7 +521,8 @@ Solana's ~$0.01 transaction fees mean the settlement cost is negligible regardle
       'why not use usdt',
     ],
     keywords: ['usdc', 'stablecoin', 'circle', 'backing', 'reserve', 'usd'],
-    answer: `### USDC (USD Coin)
+    shortAnswer: `**USDC** is a fully-backed USD stablecoin by **Circle**. 1:1 USD backing with monthly attestations. Native on Solana as an SPL token (6 decimals). Preferred for institutional use due to transparent reserves and regulatory standing.`,
+    detailedAnswer: `### USDC (USD Coin)
 
 **USDC** is a fully-backed USD stablecoin issued by **Circle**. Each USDC is redeemable 1:1 for US dollars.
 
@@ -544,7 +558,8 @@ USDC is preferred for institutional use due to its transparent reserves and regu
       'add a wallet',
     ],
     keywords: ['wallet', 'phantom', 'setup', 'connect', 'register', 'solana', 'add'],
-    answer: `### Wallet Setup
+    shortAnswer: `You need a **Solana wallet** (Phantom recommended) with USDC and a small SOL balance (~0.01 SOL for fees). Register your wallet address through the institution portal. Only registered wallets can create/fund escrows.`,
+    detailedAnswer: `### Wallet Setup
 
 EasyEscrow operates on the **Solana blockchain**, so you need a Solana-compatible wallet.
 
@@ -581,7 +596,8 @@ EasyEscrow operates on the **Solana blockchain**, so you need a Solana-compatibl
       'how do you protect funds',
     ],
     keywords: ['secure', 'security', 'safe', 'protect', 'fund', 'smart', 'contract', 'audit'],
-    answer: `### Security
+    shortAnswer: `Funds are held in **on-chain PDAs** controlled by the Solana program — not any individual. All transactions are atomic (all-or-nothing). Settlement requires a separate authorized key. JWT auth, rate limiting, PII anonymization, encrypted storage, and allowlist-only registration.`,
+    detailedAnswer: `### Security
 
 EasyEscrow employs multiple layers of security:
 
@@ -626,7 +642,8 @@ EasyEscrow employs multiple layers of security:
       'error during payment',
     ],
     keywords: ['fail', 'failed', 'error', 'wrong', 'problem', 'issue', 'transaction'],
-    answer: `### Failed Transactions
+    shortAnswer: `Rare on Solana. If funding fails — USDC stays in your wallet, retry anytime. If release fails — funds stay safely in the escrow PDA (never lost). Solana's atomic model means funds are never in limbo. Check the escrow audit log for details.`,
+    detailedAnswer: `### Failed Transactions
 
 Transaction failures are rare on EasyEscrow, but here's how they're handled:
 
@@ -671,7 +688,8 @@ Solana's atomic transaction model means funds are never in a "limbo" state — t
       'account tiers',
     ],
     keywords: ['tier', 'standard', 'enterprise', 'upgrade', 'level', 'account'],
-    answer: `### Client Tiers
+    shortAnswer: `Two tiers: **STANDARD** (default) and **ENTERPRISE**. Both get escrow creation, AI compliance, document uploads, and API access. Enterprise adds custom limits, custom expiry, priority support, and a dedicated account manager. Contact your relationship manager to upgrade.`,
+    detailedAnswer: `### Client Tiers
 
 EasyEscrow offers two tiers for institutional clients:
 
@@ -718,7 +736,8 @@ Contact your relationship manager or account manager to discuss Enterprise tier 
       'bank',
       'advantage',
     ],
-    answer: `### EasyEscrow vs Traditional Cross-Border Payments
+    shortAnswer: `**EasyEscrow:** 0.20% fee, settles in seconds, 24/7, no intermediaries. **SWIFT:** 1-3% + $25-50 fees, 1-5 business days, banking hours only, 1-4 correspondent banks. Up to **90% cheaper** and **orders of magnitude faster**.`,
+    detailedAnswer: `### EasyEscrow vs Traditional Cross-Border Payments
 
 | Feature | EasyEscrow (USDC) | SWIFT Wire Transfer |
 |---------|-------------------|---------------------|
@@ -759,7 +778,8 @@ Contact your relationship manager or account manager to discuss Enterprise tier 
       'solstice integration',
     ],
     keywords: ['solstice', 'yield', 'earn', 'interest', 'idle', 'return'],
-    answer: `### Solstice Yield
+    shortAnswer: `**Solstice** is EasyEscrow's planned yield integration for idle USDC. Institutional-grade strategies with transparent reporting. Currently in development — details on returns and eligibility will be announced at launch.`,
+    detailedAnswer: `### Solstice Yield
 
 **Solstice** is EasyEscrow's planned integration for earning yield on stablecoin holdings.
 
@@ -791,7 +811,8 @@ Contact your relationship manager or account manager to discuss Enterprise tier 
       'crypto bank partner',
     ],
     keywords: ['amina', 'seba', 'bank', 'partner', 'finma', 'swiss'],
-    answer: `### AMINA Group (formerly SEBA Bank)
+    shortAnswer: `**AMINA Group** (formerly SEBA Bank) is a FINMA-licensed Swiss crypto bank in Zug. Provides custody, fiat on/off ramp, trading, and staking for institutional clients. Acts as the regulated banking bridge between on-chain stablecoin transfers and traditional banking.`,
+    detailedAnswer: `### AMINA Group (formerly SEBA Bank)
 
 **AMINA Group AG** (rebranded from SEBA Bank AG in October 2023) is a FINMA-licensed Swiss bank specializing in digital assets and traditional financial services.
 
@@ -838,7 +859,8 @@ AMINA provides the regulated banking rails for institutional stablecoin settleme
       'comply',
       'compliance',
     ],
-    answer: `### Regulatory Framework
+    shortAnswer: `Compliant with **Swiss AMLA**, **FATF Travel Rule**, **EU MiCA**, **Singapore PSA**, and **OFAC/EU/UN sanctions**. Allowlist-only onboarding with KYC/KYB, automated sanctions screening, AI risk scoring, and complete audit trails. Banking partner AMINA provides FINMA-regulated infrastructure.`,
+    detailedAnswer: `### Regulatory Framework
 
 EasyEscrow operates within a comprehensive regulatory framework:
 
@@ -876,7 +898,8 @@ EasyEscrow operates within a comprehensive regulatory framework:
       'originator beneficiary information',
     ],
     keywords: ['travel', 'rule', 'fatf', 'originator', 'beneficiary'],
-    answer: `### FATF Travel Rule
+    shortAnswer: `Requires originator and beneficiary info for transfers above **$1,000**. EasyEscrow collects all required Travel Rule data during escrow creation and validates completeness via AI compliance analysis.`,
+    detailedAnswer: `### FATF Travel Rule
 
 The **FATF Travel Rule** requires Virtual Asset Service Providers (VASPs) to exchange originator and beneficiary information for virtual asset transfers above **$1,000**.
 
@@ -910,7 +933,8 @@ This applies to all cross-border stablecoin transfers processed through the plat
       'what can i ask you',
     ],
     keywords: ['help', 'can', 'do', 'capability', 'know', 'ask'],
-    answer: `### How I Can Help
+    shortAnswer: `I can **look up your escrows and account**, explain platform features (fees, limits, corridors), cover compliance and regulations, and discuss USDC/Solana technical topics. Just ask a question or say *"show me my escrows"*.`,
+    detailedAnswer: `### How I Can Help
 
 I'm the **EasyEscrow AI Assistant**. Here's what I can do:
 
@@ -950,7 +974,8 @@ I'm the **EasyEscrow AI Assistant**. Here's what I can do:
       'swap nfts',
     ],
     keywords: ['atomic', 'swap', 'nft', 'peer', 'p2p', 'trading'],
-    answer: `### Atomic Swaps
+    shortAnswer: `Trustless peer-to-peer NFT/SOL exchanges on Solana. Supports NFT↔SOL, NFT↔NFT, cNFT↔SOL, and bulk swaps (up to 4 NFTs). All-or-nothing execution — both sides complete or neither does. Fees paid in SOL. *Separate from institution escrow (USDC).*`,
+    detailedAnswer: `### Atomic Swaps
 
 EasyEscrow's **atomic swap** system enables trustless peer-to-peer NFT and SOL exchanges on Solana.
 
@@ -989,7 +1014,8 @@ EasyEscrow's **atomic swap** system enables trustless peer-to-peer NFT and SOL e
       'create payment',
     ],
     keywords: ['create', 'new', 'start', 'initiate', 'send', 'make', 'payment'],
-    answer: `### Creating an Escrow
+    shortAnswer: `Go to **Escrows → Create New Escrow** in the portal. Enter amount (USDC), recipient wallet, corridor, and conditions. Review the 0.20% fee and confirm. You'll get an escrow code (\`EE-XXX-XXX\`). Then fund it from your registered wallet.`,
+    detailedAnswer: `### Creating an Escrow
 
 To create a new institution escrow payment:
 
@@ -1030,7 +1056,8 @@ To create a new institution escrow payment:
       'how to cancel',
     ],
     keywords: ['cancel', 'refund', 'back', 'undo', 'reverse', 'return'],
-    answer: `### Cancelling an Escrow
+    shortAnswer: `Cancel anytime **before release** (CREATED, FUNDED, or COMPLIANCE_HOLD status). Funded USDC is refunded to your payer wallet in **seconds**. No platform fee on cancelled escrows. Can't cancel once RELEASING or RELEASED.`,
+    detailedAnswer: `### Cancelling an Escrow
 
 You can cancel an escrow and receive a refund **before it has been released**.
 

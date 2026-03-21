@@ -367,3 +367,36 @@ export function requiresLiveData(message: string): boolean {
 
   return liveDataPatterns.some((pattern) => lower.includes(pattern));
 }
+
+/**
+ * Check if a message is asking for more details on a previous FAQ answer.
+ * Used to serve the detailed answer when the user says "tell me more".
+ */
+export function isTellMeMore(message: string): boolean {
+  const lower = message.toLowerCase().trim();
+  const patterns = [
+    'tell me more',
+    'more details',
+    'more detail',
+    'more info',
+    'more information',
+    'go deeper',
+    'explain more',
+    'elaborate',
+    'expand on that',
+    'in more detail',
+    'full details',
+    'can you elaborate',
+    'tell me everything',
+    'give me more',
+    'detailed answer',
+    'detailed explanation',
+    'longer answer',
+    'full answer',
+    'yes please',
+    'yes, more',
+    'go on',
+    'continue',
+  ];
+  return patterns.some((p) => lower.includes(p));
+}

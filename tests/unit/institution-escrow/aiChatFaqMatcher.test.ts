@@ -12,7 +12,11 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
 process.env.USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-import { matchFaq, requiresLiveData } from '../../../src/services/ai-chat-faq-matcher';
+import {
+  matchFaq,
+  requiresLiveData,
+  isTellMeMore,
+} from '../../../src/services/ai-chat-faq-matcher';
 import { FAQ_ENTRIES } from '../../../src/data/ai-chat-faq';
 import * as redisModule from '../../../src/config/redis';
 
@@ -47,7 +51,20 @@ describe('AI Chat FAQ Matcher', () => {
       for (const entry of FAQ_ENTRIES) {
         expect(entry.patterns.length, `${entry.id} has no patterns`).to.be.greaterThan(0);
         expect(entry.keywords.length, `${entry.id} has no keywords`).to.be.greaterThan(0);
-        expect(entry.answer.length, `${entry.id} has empty answer`).to.be.greaterThan(50);
+        expect(entry.shortAnswer.length, `${entry.id} has empty shortAnswer`).to.be.greaterThan(20);
+        expect(
+          entry.detailedAnswer.length,
+          `${entry.id} has empty detailedAnswer`
+        ).to.be.greaterThan(50);
+      }
+    });
+
+    it('should have short answers that are shorter than detailed answers', () => {
+      for (const entry of FAQ_ENTRIES) {
+        expect(
+          entry.shortAnswer.length,
+          `${entry.id} shortAnswer should be shorter than detailedAnswer`
+        ).to.be.lessThan(entry.detailedAnswer.length);
       }
     });
   });
@@ -292,6 +309,36 @@ describe('AI Chat FAQ Matcher', () => {
 
     it('should return false for compliance questions', () => {
       expect(requiresLiveData('What compliance checks are performed?')).to.be.false;
+    });
+  });
+
+  describe('isTellMeMore()', () => {
+    it('should return true for "tell me more"', () => {
+      expect(isTellMeMore('Tell me more')).to.be.true;
+    });
+
+    it('should return true for "more details"', () => {
+      expect(isTellMeMore('Can you give me more details?')).to.be.true;
+    });
+
+    it('should return true for "elaborate"', () => {
+      expect(isTellMeMore('Please elaborate')).to.be.true;
+    });
+
+    it('should return true for "yes please"', () => {
+      expect(isTellMeMore('Yes please')).to.be.true;
+    });
+
+    it('should return true for "go on"', () => {
+      expect(isTellMeMore('Go on')).to.be.true;
+    });
+
+    it('should return false for unrelated messages', () => {
+      expect(isTellMeMore('What is the platform fee?')).to.be.false;
+    });
+
+    it('should return false for general questions', () => {
+      expect(isTellMeMore('How does escrow work?')).to.be.false;
     });
   });
 
