@@ -18,6 +18,7 @@ import { PrismaClient } from '../generated/prisma';
 import { redisClient } from '../config/redis';
 import { DataAnonymizer, CLIENT_SENSITIVE_FIELDS } from '../utils/data-anonymizer';
 import { KNOWLEDGEBASE } from '../data/ai-chat-knowledgebase';
+import { matchFaq, requiresLiveData } from './ai-chat-faq-matcher';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 
 const CHAT_RATE_LIMIT_KEY_PREFIX = 'institution:ai:chat:ratelimit:';
@@ -200,6 +201,20 @@ export class AiChatService {
 
   async chat(clientId: string, request: ChatRequest): Promise<ChatResponse> {
     await this.checkRateLimit(clientId);
+
+    // FAQ fast-path: check for common questions that can be answered instantly
+    // Skip if message requires live data (specific escrows, account details)
+    // Skip if there's conversation history (follow-up questions need context)
+    if (!request.history?.length && !requiresLiveData(request.message)) {
+      const faqMatch = await matchFaq(request.message);
+      if (faqMatch) {
+        return {
+          reply: faqMatch.entry.answer,
+          toolsUsed: undefined,
+          usage: { inputTokens: 0, outputTokens: 0 },
+        };
+      }
+    }
 
     const anthropic = this.getAnthropicClient();
     const model = process.env.AI_CHAT_MODEL || process.env.AI_ANALYSIS_MODEL || CHAT_MODEL;
