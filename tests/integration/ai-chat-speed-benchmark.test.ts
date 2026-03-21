@@ -128,12 +128,10 @@ describe('AI Chat Speed Benchmark', function () {
       expect(faqIdMatch, 'FAQ response should contain hidden FAQ ID').to.not.be.null;
 
       // Now ask "tell me more" with the FAQ response in history
-      const start = Date.now();
       const { data: expandedResponse, durationMs } = await sendChat('Tell me more', [
         { role: 'user', content: 'What is the platform fee?' },
         { role: 'assistant', content: faqResponse.data.reply },
       ]);
-      const expandMs = Date.now() - start;
 
       expect(expandedResponse.success).to.be.true;
       expect(expandedResponse.data.reply.length).to.be.greaterThan(

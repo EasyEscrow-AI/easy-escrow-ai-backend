@@ -19,6 +19,7 @@ import { redisClient } from '../config/redis';
 import { DataAnonymizer, CLIENT_SENSITIVE_FIELDS } from '../utils/data-anonymizer';
 import { KNOWLEDGEBASE } from '../data/ai-chat-knowledgebase';
 import { matchFaq, requiresLiveData, isTellMeMore } from './ai-chat-faq-matcher';
+import { FAQ_ENTRIES } from '../data/ai-chat-faq';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 
 const CHAT_RATE_LIMIT_KEY_PREFIX = 'institution:ai:chat:ratelimit:';
@@ -225,7 +226,6 @@ export class AiChatService {
       if (request.history?.length && isTellMeMore(request.message)) {
         const lastFaqId = this.extractFaqId(request.history);
         if (lastFaqId) {
-          const { FAQ_ENTRIES } = await import('../data/ai-chat-faq');
           const entry = FAQ_ENTRIES.find((e) => e.id === lastFaqId);
           if (entry) {
             return {

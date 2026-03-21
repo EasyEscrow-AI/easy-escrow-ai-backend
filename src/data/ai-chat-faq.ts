@@ -9,8 +9,8 @@
  * Each entry has:
  * - patterns: Phrases that trigger this FAQ (normalized, lowercase)
  * - keywords: Weighted terms for scoring (order = priority)
- * - answer: Pre-built markdown response
- * - requiresTools: If true, skip FAQ and always use Claude (needs live data)
+ * - shortAnswer: Concise 2-3 sentence response (returned by default)
+ * - detailedAnswer: Full markdown response (returned on "tell me more")
  */
 
 export interface FaqEntry {
@@ -43,7 +43,7 @@ export const FAQ_ENTRIES: FaqEntry[] = [
       'pricing',
       'cost of escrow',
       'fee structure',
-      '0.02% fee',
+      '0.20% fee',
       '20 bps',
       '20 basis points',
     ],
