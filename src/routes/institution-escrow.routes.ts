@@ -5,6 +5,7 @@
  * POST   /api/v1/institution-escrow/draft        → saveDraft
  * PUT    /api/v1/institution-escrow/:id/draft    → updateDraft
  * POST   /api/v1/institution-escrow/:id/submit   → submitDraft
+ * GET    /api/v1/institution-escrow/:id/deposit-tx → getDepositTransaction
  * POST   /api/v1/institution-escrow/:id/deposit  → recordDeposit
  * POST   /api/v1/institution-escrow/:id/release  → releaseFunds
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
@@ -229,6 +230,34 @@ router.post(
       });
     }
   }
+);
+
+// GET /api/v1/institution-escrow/:id/deposit-tx
+router.get(
+  '/api/v1/institution-escrow/:id/deposit-tx',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getInstitutionEscrowService();
+      const result = await service.getDepositTransaction(
+        req.institutionClient!.clientId,
+        req.params.id,
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        error: 'Deposit Transaction Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
 );
 
 // POST /api/v1/institution-escrow/:id/deposit
