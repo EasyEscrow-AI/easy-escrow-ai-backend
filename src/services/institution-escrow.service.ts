@@ -726,12 +726,18 @@ export class InstitutionEscrowService {
     if (programService2 && escrow.escrowPda) {
       try {
         const onChainState = await programService2.verifyOnChainState(escrowId);
-        if (onChainState.exists && onChainState.status !== 1) {
-          console.warn(
-            `[InstitutionEscrow] On-chain status mismatch for ${escrowId}: expected Funded (1), got ${onChainState.status}`,
-          );
-        } else if (onChainState.exists) {
-          console.log(`[InstitutionEscrow] On-chain state verified as Funded for ${escrowId}`);
+        if (onChainState.exists) {
+          if (onChainState.status === undefined) {
+            console.warn(
+              `[InstitutionEscrow] On-chain account exists but status decoding failed for ${escrowId}`,
+            );
+          } else if (onChainState.status !== 1) {
+            console.warn(
+              `[InstitutionEscrow] On-chain status mismatch for ${escrowId}: expected Funded (1), got ${onChainState.status}`,
+            );
+          } else {
+            console.log(`[InstitutionEscrow] On-chain state verified as Funded for ${escrowId}`);
+          }
         }
       } catch (err) {
         console.warn('[InstitutionEscrow] On-chain verification failed (non-critical):', err);
@@ -795,7 +801,7 @@ export class InstitutionEscrowService {
     });
 
     tx.feePayer = payerWallet;
-    const { blockhash } = await new Connection(config.solana.rpcUrl, 'confirmed').getLatestBlockhash('confirmed');
+    const { blockhash } = await programService.getConnection().getLatestBlockhash('confirmed');
     tx.recentBlockhash = blockhash;
 
     const serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');

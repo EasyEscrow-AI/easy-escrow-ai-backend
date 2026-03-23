@@ -13,7 +13,6 @@ import {
   Transaction,
   TransactionInstruction,
   SYSVAR_RENT_PUBKEY,
-  sendAndConfirmRawTransaction,
 } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
@@ -29,6 +28,17 @@ import { loadAdminKeypair } from '../utils/loadAdminKeypair';
 // PDA seeds matching the Rust program
 const INST_ESCROW_SEED = Buffer.from('inst_escrow');
 const INST_VAULT_SEED = Buffer.from('inst_vault');
+
+/**
+ * Safely convert a decimal USDC amount to micro-USDC integer string
+ * without floating-point multiplication.
+ * E.g. 1000.50 → "1000500000", 0.123456 → "123456"
+ */
+function decimalToMicroUsdc(amount: number): string {
+  const str = amount.toFixed(6);
+  const [whole, frac] = str.split('.');
+  return (BigInt(whole) * BigInt(1_000_000) + BigInt(frac)).toString();
+}
 
 // Map condition type strings to Anchor enum variants
 const CONDITION_TYPE_MAP: Record<string, Record<string, Record<string, never>>> = {
@@ -65,6 +75,11 @@ export class InstitutionEscrowProgramService {
 
   get adminPublicKey(): PublicKey {
     return this.adminKeypair.publicKey;
+  }
+
+  /** Expose the shared Connection so callers don't create per-request instances */
+  getConnection(): Connection {
+    return this.connection;
   }
 
   /**
@@ -126,8 +141,8 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     feeCollector: PublicKey;
     settlementAuthority: PublicKey;
-    amount: number;
-    platformFee: number;
+    amountMicroUsdc: string;
+    platformFeeMicroUsdc: string;
     conditionType: number | string;
     corridor: string;
     expiryTimestamp: number;
@@ -144,9 +159,9 @@ export class InstitutionEscrowProgramService {
     Buffer.from(params.corridor).copy(corridorBuf);
     const corridorArray = Array.from(corridorBuf);
 
-    // Convert USDC amounts to micro-USDC (6 decimals)
-    const amountBN = new BN(Math.round(params.amount * 1_000_000));
-    const feeBN = new BN(Math.round(params.platformFee * 1_000_000));
+    // Construct BN directly from integer micro-USDC strings (avoids float precision loss)
+    const amountBN = new BN(params.amountMicroUsdc);
+    const feeBN = new BN(params.platformFeeMicroUsdc);
     const expiryBN = new BN(params.expiryTimestamp);
 
     // Map condition type to Anchor enum variant
@@ -347,6 +362,9 @@ export class InstitutionEscrowProgramService {
     corridor: string;
     expiryTimestamp: number;
   }): Promise<{ txSignature: string; escrowPda: string; vaultPda: string }> {
+    // Convert decimal amounts to micro-USDC strings safely (no float multiplication)
+    const amountMicroUsdc = decimalToMicroUsdc(params.amount);
+    const platformFeeMicroUsdc = decimalToMicroUsdc(params.platformFee);
     // Idempotency guard: check if PDA already exists
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -368,8 +386,18 @@ export class InstitutionEscrowProgramService {
       escrowPda: escrowPdaStr,
       vaultPda,
     } = await this.buildInitTransaction({
-      ...params,
+      escrowId: params.escrowId,
       authority: this.adminKeypair.publicKey,
+      payerWallet: params.payerWallet,
+      recipientWallet: params.recipientWallet,
+      usdcMint: params.usdcMint,
+      feeCollector: params.feeCollector,
+      settlementAuthority: params.settlementAuthority,
+      amountMicroUsdc,
+      platformFeeMicroUsdc,
+      conditionType: params.conditionType,
+      corridor: params.corridor,
+      expiryTimestamp: params.expiryTimestamp,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
