@@ -354,6 +354,49 @@ describe('InstitutionEscrowProgramService', () => {
       // Fourth arg is condition type enum
       expect(args[3]).to.deep.equal({ complianceCheck: {} });
     });
+
+    it('should append SPL Memo instruction when memo is provided', async () => {
+      const result = await service.buildInitTransaction({
+        escrowId: TEST_UUID,
+        authority: PAYER_PUBKEY,
+        payerWallet: PAYER_PUBKEY,
+        recipientWallet: RECIPIENT_PUBKEY,
+        usdcMint: USDC_MINT,
+        feeCollector: PAYER_PUBKEY,
+        settlementAuthority: PAYER_PUBKEY,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
+        conditionType: 0,
+        corridor: 'US-MX',
+        expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
+        memo: 'EasyEscrow:init:EE-A3K7-9WFP',
+      });
+
+      // 1 init instruction + 1 memo instruction
+      expect(result.transaction.instructions.length).to.equal(2);
+      const memoIx = result.transaction.instructions[1];
+      expect(memoIx.programId.toBase58()).to.equal('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+      expect(memoIx.data.toString('utf-8')).to.equal('EasyEscrow:init:EE-A3K7-9WFP');
+    });
+
+    it('should not append memo when memo is omitted', async () => {
+      const result = await service.buildInitTransaction({
+        escrowId: TEST_UUID,
+        authority: PAYER_PUBKEY,
+        payerWallet: PAYER_PUBKEY,
+        recipientWallet: RECIPIENT_PUBKEY,
+        usdcMint: USDC_MINT,
+        feeCollector: PAYER_PUBKEY,
+        settlementAuthority: PAYER_PUBKEY,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
+        conditionType: 0,
+        corridor: 'US-MX',
+        expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
+      });
+
+      expect(result.transaction.instructions.length).to.equal(1);
+    });
   });
 
   // ─── buildDepositTransaction ────────────────────────────────
