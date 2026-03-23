@@ -48,10 +48,24 @@ export const FAQ_ENTRIES: FaqEntry[] = [
       '20 basis points',
     ],
     keywords: ['fee', 'cost', 'charge', 'price', 'pricing', 'bps', 'basis', 'percent', 'platform'],
-    shortAnswer: `**0.20% (20 bps)** of the escrow amount. Covers smart contract execution, AI compliance analysis, Solana network fees, and 24/7 settlement. Compare: SWIFT costs 1-3% + $25-50 fixed fees and takes 1-5 days. Example: $100K escrow = **$200 fee** vs $1,000-$3,000+ traditional.`,
+    shortAnswer: `**0.20% (20 bps)** of the escrow amount, with a **minimum fee of $0.20** and **maximum fee of $20.00**. Covers smart contract execution, AI compliance analysis, Solana network fees, and 24/7 settlement. Compare: SWIFT costs 1-3% + $25-50 fixed fees and takes 1-5 days. Example: $100K escrow = **$20 fee** (capped) vs $1,000-$3,000+ traditional.`,
     detailedAnswer: `### Platform Fee
 
 EasyEscrow charges a **0.20% (20 basis points)** platform fee on institution escrow transactions. This is calculated on the escrow amount at the time of creation.
+
+**Fee Limits:**
+- **Minimum fee:** $0.20 USDC — ensures cost recovery on small transactions
+- **Maximum fee:** $20.00 USDC — caps the fee regardless of escrow size
+- Institutions can configure custom fee rates (within protocol limits) via Settings
+
+**Examples:**
+| Escrow Amount | Raw 0.20% Fee | Actual Fee (capped) |
+|---|---|---|
+| $50 | $0.10 | **$0.20** (minimum) |
+| $1,000 | $2.00 | $2.00 |
+| $10,000 | $20.00 | $20.00 |
+| $100,000 | $200.00 | **$20.00** (maximum) |
+| $1,000,000 | $2,000.00 | **$20.00** (maximum) |
 
 **What the fee covers:**
 - **Escrow smart contract execution** — on-chain program interactions for creating, funding, and releasing escrows
@@ -64,13 +78,13 @@ EasyEscrow charges a **0.20% (20 basis points)** platform fee on institution esc
 
 | Method | Typical Cost | Settlement Time |
 |--------|-------------|-----------------|
-| **EasyEscrow** | **0.20%** | **Seconds** |
+| **EasyEscrow** | **0.20% (min $0.20, max $20)** | **Seconds** |
 | SWIFT wire transfer | 1-3% + $25-50 fixed fees | 1-5 business days |
 | Traditional escrow | 1-2% of transaction value | Days to weeks |
 | PayPal cross-border | 3-5% | 1-3 business days |
 | Bank letter of credit | 1.5-8% | Weeks |
 
-**Example:** On a $100,000 USDC escrow, the platform fee is just **$200** — compared to $1,000-$3,000+ via traditional methods.
+**Example:** On a $100,000 USDC escrow, the platform fee is capped at **$20** — compared to $1,000-$3,000+ via traditional methods.
 
 The fee is deducted from the escrow amount when the escrow is released to the recipient.`,
   },
