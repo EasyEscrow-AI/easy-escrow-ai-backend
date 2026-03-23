@@ -15,9 +15,14 @@ import { AllowlistService, getAllowlistService } from './allowlist.service';
 import { ComplianceService, getComplianceService } from './compliance.service';
 import { getTokenWhitelistService } from './institution-token-whitelist.service';
 import { getInstitutionNotificationService } from './institution-notification.service';
+import {
+  getInstitutionEscrowProgramService,
+  InstitutionEscrowProgramService,
+} from './institution-escrow-program.service';
 import type { NoncePoolManager } from './noncePoolManager';
 import crypto from 'crypto';
 import { Connection, PublicKey } from '@solana/web3.js';
+import { config } from '../config';
 import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
@@ -79,6 +84,18 @@ export class InstitutionEscrowService {
     this.prisma = new PrismaClient();
     this.allowlistService = getAllowlistService();
     this.complianceService = getComplianceService();
+  }
+
+  /**
+   * Lazy getter for InstitutionEscrowProgramService.
+   */
+  private getProgramService(): InstitutionEscrowProgramService | null {
+    try {
+      return getInstitutionEscrowProgramService();
+    } catch (err) {
+      console.warn('[InstitutionEscrow] ProgramService not available:', (err as Error).message);
+      return null;
+    }
   }
 
   /**
@@ -204,7 +221,44 @@ export class InstitutionEscrowService {
       );
     }
 
-    // 10. Store in Prisma
+    // 10. Initialize escrow on-chain
+    let escrowPda: string | null = null;
+    let vaultPda: string | null = null;
+    let initTxSignature: string | null = null;
+    const programService = this.getProgramService();
+    if (programService) {
+      try {
+        const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
+        const result = await programService.initEscrowOnChain({
+          escrowId,
+          payerWallet: new PublicKey(payerWallet),
+          recipientWallet: new PublicKey(recipientWallet),
+          usdcMint: new PublicKey(resolvedMint),
+          feeCollector,
+          settlementAuthority: new PublicKey(resolvedSettlementAuthority),
+          amount,
+          platformFee,
+          conditionType: conditionType as string,
+          corridor,
+          expiryTimestamp: Math.floor(expiresAt.getTime() / 1000),
+        });
+        escrowPda = result.escrowPda;
+        vaultPda = result.vaultPda;
+        initTxSignature = result.txSignature;
+        console.log(`[InstitutionEscrow] On-chain init success for ${escrowCode}, tx: ${initTxSignature}`);
+      } catch (error) {
+        console.error('[InstitutionEscrow] On-chain init failed:', error);
+        if (nonceAccount && npm) {
+          try { await npm.releaseNonce(nonceAccount); } catch { /* non-critical */ }
+        }
+        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', payerWallet, {
+          error: (error as Error).message,
+        });
+        throw new Error(`On-chain escrow initialization failed: ${(error as Error).message}`);
+      }
+    }
+
+    // 11. Store in Prisma
     const escrow = await this.prisma.institutionEscrow.create({
       data: {
         escrowId,
@@ -221,15 +275,20 @@ export class InstitutionEscrowService {
         settlementAuthority: resolvedSettlementAuthority,
         riskScore: complianceResult.riskScore,
         nonceAccount,
+        escrowPda,
+        vaultPda,
         expiresAt,
       },
     });
 
-    // 10. Create audit log
+    // 12. Create audit log
     await this.createAuditLog(escrowId, clientId, 'ESCROW_CREATED', payerWallet, {
       amount,
       corridor,
       conditionType,
+      escrowPda,
+      vaultPda,
+      initTxSignature,
       complianceResult: {
         passed: complianceResult.passed,
         riskScore: complianceResult.riskScore,
@@ -446,12 +505,52 @@ export class InstitutionEscrowService {
       }
     }
 
+    // Initialize escrow on-chain
+    let escrowPda: string | null = null;
+    let vaultPda: string | null = null;
+    let initTxSignature: string | null = null;
+    const programService = this.getProgramService();
+    if (programService) {
+      try {
+        const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
+        const resolvedSettlementAuthority = escrow.settlementAuthority || escrow.payerWallet;
+        const result = await programService.initEscrowOnChain({
+          escrowId,
+          payerWallet: new PublicKey(escrow.payerWallet),
+          recipientWallet: new PublicKey(escrow.recipientWallet!),
+          usdcMint: new PublicKey(escrow.usdcMint),
+          feeCollector,
+          settlementAuthority: new PublicKey(resolvedSettlementAuthority),
+          amount: Number(escrow.amount),
+          platformFee: Number(escrow.platformFee),
+          conditionType: escrow.conditionType as string,
+          corridor: escrow.corridor!,
+          expiryTimestamp: Math.floor(expiresAt.getTime() / 1000),
+        });
+        escrowPda = result.escrowPda;
+        vaultPda = result.vaultPda;
+        initTxSignature = result.txSignature;
+        console.log(`[InstitutionEscrow] On-chain init success for draft ${escrow.escrowCode}, tx: ${initTxSignature}`);
+      } catch (error) {
+        console.error('[InstitutionEscrow] On-chain init failed for draft:', error);
+        if (nonceAccount && npm) {
+          try { await npm.releaseNonce(nonceAccount); } catch { /* non-critical */ }
+        }
+        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', escrow.payerWallet, {
+          error: (error as Error).message,
+        });
+        throw new Error(`On-chain escrow initialization failed: ${(error as Error).message}`);
+      }
+    }
+
     const updated = await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: {
         status: newStatus,
         riskScore: complianceResult.riskScore,
         nonceAccount,
+        escrowPda,
+        vaultPda,
         expiresAt,
       },
     });
@@ -523,6 +622,23 @@ export class InstitutionEscrowService {
       },
     });
 
+    // Verify on-chain state matches (non-blocking)
+    const programService2 = this.getProgramService();
+    if (programService2 && escrow.escrowPda) {
+      try {
+        const onChainState = await programService2.verifyOnChainState(escrowId);
+        if (onChainState.exists && onChainState.status !== 1) {
+          console.warn(
+            `[InstitutionEscrow] On-chain status mismatch for ${escrowId}: expected Funded (1), got ${onChainState.status}`,
+          );
+        } else if (onChainState.exists) {
+          console.log(`[InstitutionEscrow] On-chain state verified as Funded for ${escrowId}`);
+        }
+      } catch (err) {
+        console.warn('[InstitutionEscrow] On-chain verification failed (non-critical):', err);
+      }
+    }
+
     await this.createAuditLog(escrowId, clientId, 'DEPOSIT_CONFIRMED', escrow.payerWallet, {
       txSignature,
       amount: Number(escrow.amount),
@@ -542,6 +658,46 @@ export class InstitutionEscrowService {
     await this.cacheEscrow(updated);
 
     return this.formatEscrow(updated);
+  }
+
+  /**
+   * Get a serialized unsigned deposit transaction for an escrow.
+   * The frontend signs this with the payer's wallet and submits it.
+   */
+  async getDepositTransaction(
+    clientId: string,
+    idOrCode: string,
+  ): Promise<{ transaction: string; escrowId: string }> {
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
+
+    if (escrow.status !== 'CREATED') {
+      throw new Error(
+        `Cannot get deposit transaction: escrow status is ${escrow.status}, expected CREATED`,
+      );
+    }
+
+    const programService = this.getProgramService();
+    if (!programService) {
+      throw new Error('Program service not available');
+    }
+
+    const payerWallet = new PublicKey(escrow.payerWallet);
+    const usdcMint = new PublicKey(escrow.usdcMint);
+
+    const tx = await programService.buildDepositTransaction({
+      escrowId,
+      payer: payerWallet,
+      usdcMint,
+    });
+
+    tx.feePayer = payerWallet;
+    const { blockhash } = await new Connection(config.solana.rpcUrl, 'confirmed').getLatestBlockhash('confirmed');
+    tx.recentBlockhash = blockhash;
+
+    const serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
+
+    return { transaction: serialized, escrowId };
   }
 
   /**
@@ -575,9 +731,32 @@ export class InstitutionEscrowService {
     // Check payer's token balance before settlement
     await this.checkPayerBalance(escrow, clientId, originalStatus);
 
-    // Advance durable nonce to prove atomic settlement on-chain
+    // Execute on-chain release (transfer USDC from vault to recipient)
     let releaseTxSig: string | null = null;
-    if (escrow.nonceAccount) {
+    const releaseProgramService = this.getProgramService();
+    if (releaseProgramService && escrow.escrowPda) {
+      try {
+        const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
+        releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
+          escrowId,
+          recipientWallet: new PublicKey(escrow.recipientWallet!),
+          feeCollector,
+          usdcMint: new PublicKey(escrow.usdcMint),
+        });
+        console.log(`[InstitutionEscrow] On-chain release success for ${escrowId}, tx: ${releaseTxSig}`);
+      } catch (error) {
+        console.error('[InstitutionEscrow] On-chain release failed:', error);
+        await this.prisma.institutionEscrow.update({
+          where: { escrowId },
+          data: { status: 'FUNDED' },
+        });
+        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_RELEASE_FAILED', escrow.settlementAuthority, {
+          error: (error as Error).message,
+        });
+        throw new Error(`On-chain release failed: ${(error as Error).message}`);
+      }
+    } else if (escrow.nonceAccount) {
+      // Fallback: advance nonce if no PDA (legacy escrows created before on-chain wiring)
       try {
         const npm = this.getNoncePoolManager();
         if (npm) {
@@ -586,7 +765,6 @@ export class InstitutionEscrowService {
         }
       } catch (error) {
         console.error('[InstitutionEscrow] Nonce advance failed during release:', error);
-        // Revert to FUNDED on failure so release can be retried
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
           data: { status: 'FUNDED' },
@@ -694,11 +872,37 @@ export class InstitutionEscrowService {
       data: { status: 'CANCELLING' },
     });
 
-    // If funded, the route handler will build the on-chain cancel transaction
+    // For funded escrows with on-chain PDA, execute on-chain cancel (refund USDC to payer)
+    let cancelTxSignature: string | null = null;
+    if (escrow.status === 'FUNDED' && escrow.escrowPda) {
+      const cancelProgramService = this.getProgramService();
+      if (cancelProgramService) {
+        try {
+          cancelTxSignature = await cancelProgramService.cancelEscrowOnChain({
+            escrowId,
+            payerWallet: new PublicKey(escrow.payerWallet),
+            usdcMint: new PublicKey(escrow.usdcMint),
+          });
+          console.log(`[InstitutionEscrow] On-chain cancel success for ${escrowId}, tx: ${cancelTxSignature}`);
+        } catch (error) {
+          console.error('[InstitutionEscrow] On-chain cancel failed:', error);
+          await this.prisma.institutionEscrow.update({
+            where: { escrowId },
+            data: { status: escrow.status },
+          });
+          await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_CANCEL_FAILED', escrow.payerWallet, {
+            error: (error as Error).message,
+          });
+          throw new Error(`On-chain cancel failed: ${(error as Error).message}`);
+        }
+      }
+    }
+
     const updated = await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: {
         status: 'CANCELLED',
+        cancelTxSignature,
         resolvedAt: new Date(),
       },
     });
