@@ -42,6 +42,7 @@ export interface ChatRequest {
 export interface ChatResponse {
   reply: string;
   toolsUsed?: string[];
+  faqId?: string;
   usage?: {
     inputTokens: number;
     outputTokens: number;
@@ -241,10 +242,11 @@ export class AiChatService {
       if (!request.history?.length) {
         const faqMatch = await matchFaq(request.message);
         if (faqMatch) {
-          const reply = `${faqMatch.entry.shortAnswer}\n\n---\n*Want more details? Just say "tell me more".*\n\n<!-- faq:${faqMatch.entry.id} -->`;
+          const reply = `${faqMatch.entry.shortAnswer}\n\n---\n*Want more details? Just say "tell me more".*`;
           return {
             reply,
             toolsUsed: undefined,
+            faqId: faqMatch.entry.id,
             usage: { inputTokens: 0, outputTokens: 0 },
           };
         }
@@ -676,13 +678,20 @@ export class AiChatService {
 
   /**
    * Extract FAQ entry ID from the last assistant message in history.
-   * FAQ responses include a hidden HTML comment: <!-- faq:entry-id -->
+   * Checks for legacy HTML comment tag or matches against FAQ short answers.
    */
   private extractFaqId(history: ChatMessage[]): string | null {
     for (let i = history.length - 1; i >= 0; i--) {
       if (history[i].role === 'assistant') {
-        const match = history[i].content.match(/<!-- faq:([a-z0-9-]+) -->/);
-        return match ? match[1] : null;
+        const content = history[i].content;
+        // Legacy: HTML comment tag
+        const tagMatch = content.match(/<!-- faq:([a-z0-9-]+) -->/);
+        if (tagMatch) return tagMatch[1];
+        // New: match against FAQ short answers
+        for (const entry of FAQ_ENTRIES) {
+          if (content.includes(entry.shortAnswer)) return entry.id;
+        }
+        return null;
       }
     }
     return null;
