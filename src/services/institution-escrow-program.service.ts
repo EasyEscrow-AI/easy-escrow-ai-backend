@@ -47,6 +47,17 @@ const CONDITION_TYPE_MAP: Record<string, Record<string, Record<string, never>>> 
   COMPLIANCE_CHECK: { complianceCheck: {} },
 };
 
+// SPL Memo program — used to embed the human-readable escrow code (EE-XXX-XXX) in transactions
+const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+
+function createMemoInstruction(text: string, signer?: PublicKey): TransactionInstruction {
+  return new TransactionInstruction({
+    keys: signer ? [{ pubkey: signer, isSigner: true, isWritable: false }] : [],
+    programId: MEMO_PROGRAM_ID,
+    data: Buffer.from(text, 'utf-8'),
+  });
+}
+
 export class InstitutionEscrowProgramService {
   private connection: Connection;
   private programId: PublicKey;
@@ -146,6 +157,7 @@ export class InstitutionEscrowProgramService {
     conditionType: number | string;
     corridor: string;
     expiryTimestamp: number;
+    memo?: string;
   }): Promise<{ transaction: Transaction; escrowPda: string; vaultPda: string }> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -199,6 +211,9 @@ export class InstitutionEscrowProgramService {
       .instruction();
 
     const transaction = new Transaction().add(ix);
+    if (params.memo) {
+      transaction.add(createMemoInstruction(params.memo, params.authority));
+    }
 
     return {
       transaction,
@@ -214,6 +229,7 @@ export class InstitutionEscrowProgramService {
     escrowId: string;
     payer: PublicKey;
     usdcMint: PublicKey;
+    memo?: string;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -233,7 +249,11 @@ export class InstitutionEscrowProgramService {
       })
       .instruction();
 
-    return new Transaction().add(ix);
+    const transaction = new Transaction().add(ix);
+    if (params.memo) {
+      transaction.add(createMemoInstruction(params.memo, params.payer));
+    }
+    return transaction;
   }
 
   /**
@@ -245,6 +265,7 @@ export class InstitutionEscrowProgramService {
     recipientWallet: PublicKey;
     feeCollector: PublicKey;
     usdcMint: PublicKey;
+    memo?: string;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -286,6 +307,9 @@ export class InstitutionEscrowProgramService {
       .instruction();
 
     transaction.add(ix);
+    if (params.memo) {
+      transaction.add(createMemoInstruction(params.memo, params.authority));
+    }
 
     return transaction;
   }
@@ -298,6 +322,7 @@ export class InstitutionEscrowProgramService {
     caller: PublicKey;
     payerWallet: PublicKey;
     usdcMint: PublicKey;
+    memo?: string;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -318,7 +343,11 @@ export class InstitutionEscrowProgramService {
       })
       .instruction();
 
-    return new Transaction().add(ix);
+    const transaction = new Transaction().add(ix);
+    if (params.memo) {
+      transaction.add(createMemoInstruction(params.memo, params.caller));
+    }
+    return transaction;
   }
 
   /**
@@ -361,6 +390,7 @@ export class InstitutionEscrowProgramService {
     conditionType: number | string;
     corridor: string;
     expiryTimestamp: number;
+    escrowCode?: string;
   }): Promise<{ txSignature: string; escrowPda: string; vaultPda: string }> {
     // Convert decimal amounts to micro-USDC strings safely (no float multiplication)
     const amountMicroUsdc = decimalToMicroUsdc(params.amount);
@@ -398,6 +428,7 @@ export class InstitutionEscrowProgramService {
       conditionType: params.conditionType,
       corridor: params.corridor,
       expiryTimestamp: params.expiryTimestamp,
+      memo: params.escrowCode ? `EasyEscrow:init:${params.escrowCode}` : undefined,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
@@ -417,10 +448,12 @@ export class InstitutionEscrowProgramService {
     recipientWallet: PublicKey;
     feeCollector: PublicKey;
     usdcMint: PublicKey;
+    escrowCode?: string;
   }): Promise<string> {
     const transaction = await this.buildReleaseTransaction({
       ...params,
       authority: this.adminKeypair.publicKey,
+      memo: params.escrowCode ? `EasyEscrow:release:${params.escrowCode}` : undefined,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
@@ -439,10 +472,12 @@ export class InstitutionEscrowProgramService {
     escrowId: string;
     payerWallet: PublicKey;
     usdcMint: PublicKey;
+    escrowCode?: string;
   }): Promise<string> {
     const transaction = await this.buildCancelTransaction({
       ...params,
       caller: this.adminKeypair.publicKey,
+      memo: params.escrowCode ? `EasyEscrow:cancel:${params.escrowCode}` : undefined,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
