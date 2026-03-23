@@ -32414,11 +32414,17 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgAggregateOutputType = {
     autoApproveThreshold: Decimal | null
     manualReviewThreshold: Decimal | null
+    feeBps: number | null
+    minFeeUsdc: Decimal | null
+    maxFeeUsdc: Decimal | null
   }
 
   export type InstitutionClientSettingsSumAggregateOutputType = {
     autoApproveThreshold: Decimal | null
     manualReviewThreshold: Decimal | null
+    feeBps: number | null
+    minFeeUsdc: Decimal | null
+    maxFeeUsdc: Decimal | null
   }
 
   export type InstitutionClientSettingsMinAggregateOutputType = {
@@ -32442,6 +32448,9 @@ export namespace Prisma {
     theme: string | null
     twoFactorEnabled: boolean | null
     aiRecommendations: boolean | null
+    feeBps: number | null
+    minFeeUsdc: Decimal | null
+    maxFeeUsdc: Decimal | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -32467,6 +32476,9 @@ export namespace Prisma {
     theme: string | null
     twoFactorEnabled: boolean | null
     aiRecommendations: boolean | null
+    feeBps: number | null
+    minFeeUsdc: Decimal | null
+    maxFeeUsdc: Decimal | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -32493,6 +32505,9 @@ export namespace Prisma {
     theme: number
     twoFactorEnabled: number
     aiRecommendations: number
+    feeBps: number
+    minFeeUsdc: number
+    maxFeeUsdc: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -32502,11 +32517,17 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgAggregateInputType = {
     autoApproveThreshold?: true
     manualReviewThreshold?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
   }
 
   export type InstitutionClientSettingsSumAggregateInputType = {
     autoApproveThreshold?: true
     manualReviewThreshold?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
   }
 
   export type InstitutionClientSettingsMinAggregateInputType = {
@@ -32530,6 +32551,9 @@ export namespace Prisma {
     theme?: true
     twoFactorEnabled?: true
     aiRecommendations?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -32555,6 +32579,9 @@ export namespace Prisma {
     theme?: true
     twoFactorEnabled?: true
     aiRecommendations?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -32581,6 +32608,9 @@ export namespace Prisma {
     theme?: true
     twoFactorEnabled?: true
     aiRecommendations?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -32694,6 +32724,9 @@ export namespace Prisma {
     theme: string | null
     twoFactorEnabled: boolean
     aiRecommendations: boolean
+    feeBps: number
+    minFeeUsdc: Decimal
+    maxFeeUsdc: Decimal
     createdAt: Date
     updatedAt: Date
     _count: InstitutionClientSettingsCountAggregateOutputType | null
@@ -32739,6 +32772,9 @@ export namespace Prisma {
     theme?: boolean
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: boolean
+    minFeeUsdc?: boolean
+    maxFeeUsdc?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32766,6 +32802,9 @@ export namespace Prisma {
     theme?: boolean
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: boolean
+    minFeeUsdc?: boolean
+    maxFeeUsdc?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32793,6 +32832,9 @@ export namespace Prisma {
     theme?: boolean
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: boolean
+    minFeeUsdc?: boolean
+    maxFeeUsdc?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32820,11 +32862,14 @@ export namespace Prisma {
     theme?: boolean
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: boolean
+    minFeeUsdc?: boolean
+    maxFeeUsdc?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "language" | "theme" | "twoFactorEnabled" | "aiRecommendations" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
+  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "language" | "theme" | "twoFactorEnabled" | "aiRecommendations" | "feeBps" | "minFeeUsdc" | "maxFeeUsdc" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
   export type InstitutionClientSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -32862,6 +32907,9 @@ export namespace Prisma {
       theme: string | null
       twoFactorEnabled: boolean
       aiRecommendations: boolean
+      feeBps: number
+      minFeeUsdc: Prisma.Decimal
+      maxFeeUsdc: Prisma.Decimal
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["institutionClientSettings"]>
@@ -33309,6 +33357,9 @@ export namespace Prisma {
     readonly theme: FieldRef<"InstitutionClientSettings", 'String'>
     readonly twoFactorEnabled: FieldRef<"InstitutionClientSettings", 'Boolean'>
     readonly aiRecommendations: FieldRef<"InstitutionClientSettings", 'Boolean'>
+    readonly feeBps: FieldRef<"InstitutionClientSettings", 'Int'>
+    readonly minFeeUsdc: FieldRef<"InstitutionClientSettings", 'Decimal'>
+    readonly maxFeeUsdc: FieldRef<"InstitutionClientSettings", 'Decimal'>
     readonly createdAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
   }
@@ -48190,6 +48241,9 @@ export namespace Prisma {
     theme: 'theme',
     twoFactorEnabled: 'twoFactorEnabled',
     aiRecommendations: 'aiRecommendations',
+    feeBps: 'feeBps',
+    minFeeUsdc: 'minFeeUsdc',
+    maxFeeUsdc: 'maxFeeUsdc',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -51803,6 +51857,9 @@ export namespace Prisma {
     theme?: StringNullableFilter<"InstitutionClientSettings"> | string | null
     twoFactorEnabled?: BoolFilter<"InstitutionClientSettings"> | boolean
     aiRecommendations?: BoolFilter<"InstitutionClientSettings"> | boolean
+    feeBps?: IntFilter<"InstitutionClientSettings"> | number
+    minFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -51830,6 +51887,9 @@ export namespace Prisma {
     theme?: SortOrderInput | SortOrder
     twoFactorEnabled?: SortOrder
     aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     client?: InstitutionClientOrderByWithRelationInput
@@ -51860,6 +51920,9 @@ export namespace Prisma {
     theme?: StringNullableFilter<"InstitutionClientSettings"> | string | null
     twoFactorEnabled?: BoolFilter<"InstitutionClientSettings"> | boolean
     aiRecommendations?: BoolFilter<"InstitutionClientSettings"> | boolean
+    feeBps?: IntFilter<"InstitutionClientSettings"> | number
+    minFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -51887,6 +51950,9 @@ export namespace Prisma {
     theme?: SortOrderInput | SortOrder
     twoFactorEnabled?: SortOrder
     aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: InstitutionClientSettingsCountOrderByAggregateInput
@@ -51921,6 +51987,9 @@ export namespace Prisma {
     theme?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
     twoFactorEnabled?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
     aiRecommendations?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
+    feeBps?: IntWithAggregatesFilter<"InstitutionClientSettings"> | number
+    minFeeUsdc?: DecimalWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
   }
@@ -56302,6 +56371,9 @@ export namespace Prisma {
     theme?: string | null
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutSettingsInput
@@ -56329,6 +56401,9 @@ export namespace Prisma {
     theme?: string | null
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -56354,6 +56429,9 @@ export namespace Prisma {
     theme?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
     aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutSettingsNestedInput
@@ -56381,6 +56459,9 @@ export namespace Prisma {
     theme?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
     aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -56407,6 +56488,9 @@ export namespace Prisma {
     theme?: string | null
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -56432,6 +56516,9 @@ export namespace Prisma {
     theme?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
     aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -56458,6 +56545,9 @@ export namespace Prisma {
     theme?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
     aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -60376,6 +60466,9 @@ export namespace Prisma {
     theme?: SortOrder
     twoFactorEnabled?: SortOrder
     aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -60383,6 +60476,9 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgOrderByAggregateInput = {
     autoApproveThreshold?: SortOrder
     manualReviewThreshold?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
   }
 
   export type InstitutionClientSettingsMaxOrderByAggregateInput = {
@@ -60406,6 +60502,9 @@ export namespace Prisma {
     theme?: SortOrder
     twoFactorEnabled?: SortOrder
     aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -60431,6 +60530,9 @@ export namespace Prisma {
     theme?: SortOrder
     twoFactorEnabled?: SortOrder
     aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -60438,6 +60540,9 @@ export namespace Prisma {
   export type InstitutionClientSettingsSumOrderByAggregateInput = {
     autoApproveThreshold?: SortOrder
     manualReviewThreshold?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
   }
 
   export type InstitutionApiKeyCountOrderByAggregateInput = {
@@ -67422,6 +67527,9 @@ export namespace Prisma {
     theme?: string | null
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -67447,6 +67555,9 @@ export namespace Prisma {
     theme?: string | null
     twoFactorEnabled?: boolean
     aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -67998,6 +68109,9 @@ export namespace Prisma {
     theme?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
     aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -68023,6 +68137,9 @@ export namespace Prisma {
     theme?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
     aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

@@ -185,7 +185,9 @@ EasyEscrow.ai is a Solana-based platform providing trustless escrow services for
 - Document uploads for supporting trade documentation
 - KYC/KYB onboarding with tiered access levels
 - Escrow lifecycle: Created → Funded → (Compliance Check) → Released/Cancelled
-- Platform fees calculated on escrow amount
+- Platform fees: 0.20% (20 bps) with a minimum of $0.20 and maximum cap of $20 per escrow
+- Fee limits are configurable per institution via admin settings (within protocol limits)
+- All Solana network fees absorbed by the platform
 - Settlement authority pattern for secure release operations
 - Default escrow expiry: 72 hours (configurable)
 - Amount limits: $10 minimum, $100,000,000 maximum (default)

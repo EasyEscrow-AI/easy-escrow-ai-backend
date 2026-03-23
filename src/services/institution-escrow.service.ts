@@ -153,6 +153,32 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Calculate platform fee with min/max clamping from client settings.
+   */
+  private async calculatePlatformFee(clientId: string, amount: number): Promise<number> {
+    let feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10);
+    let minFee = 0.2;
+    let maxFee = 20.0;
+
+    try {
+      const settings = await this.prisma.institutionClientSettings.findUnique({
+        where: { clientId },
+        select: { feeBps: true, minFeeUsdc: true, maxFeeUsdc: true },
+      });
+      if (settings) {
+        feeBps = settings.feeBps ?? feeBps;
+        minFee = settings.minFeeUsdc ? Number(settings.minFeeUsdc) : minFee;
+        maxFee = settings.maxFeeUsdc ? Number(settings.maxFeeUsdc) : maxFee;
+      }
+    } catch {
+      // Fall back to defaults if settings lookup fails
+    }
+
+    const rawFee = (amount * feeBps) / 10000;
+    return Math.min(maxFee, Math.max(minFee, rawFee));
+  }
+
+  /**
    * Create a new institution escrow
    */
   async createEscrow(params: CreateEscrowParams): Promise<CreateEscrowResult> {
@@ -219,9 +245,8 @@ export class InstitutionEscrowService {
       resolvedMint = await tokenWhitelist.getDefaultMint();
     }
 
-    // 5. Calculate platform fee (basis points from config, default 20 bps = 0.2%)
-    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10);
-    const platformFee = (amount * feeBps) / 10000;
+    // 5. Calculate platform fee with min/max clamping from client settings
+    const platformFee = await this.calculatePlatformFee(clientId, amount);
 
     // 6. Determine status based on compliance
     const initialStatus: InstitutionEscrowStatus = complianceResult.passed
@@ -421,8 +446,8 @@ export class InstitutionEscrowService {
     }
 
     const resolvedAmount = amount || 0;
-    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10);
-    const platformFee = (resolvedAmount * feeBps) / 10000;
+    const platformFee =
+      resolvedAmount > 0 ? await this.calculatePlatformFee(clientId, resolvedAmount) : 0;
 
     const escrow = await this.prisma.institutionEscrow.create({
       data: {
@@ -483,8 +508,8 @@ export class InstitutionEscrowService {
 
     if (params.amount !== undefined) {
       updateData.amount = params.amount;
-      const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10);
-      updateData.platformFee = (params.amount * feeBps) / 10000;
+      updateData.platformFee =
+        params.amount > 0 ? await this.calculatePlatformFee(escrow.clientId, params.amount) : 0;
     }
 
     if (params.tokenMint !== undefined) {

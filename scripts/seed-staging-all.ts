@@ -215,7 +215,8 @@ const loginableClients: ClientDef[] = [
     regulatoryBody: 'FINMA',
     industry: 'Crypto Custody',
     websiteUrl: 'https://alpine-custody.ch',
-    businessDescription: 'Regulated crypto custody provider specializing in institutional-grade cold storage and staking',
+    businessDescription:
+      'Regulated crypto custody provider specializing in institutional-grade cold storage and staking',
     yearEstablished: 2020,
     employeeCountRange: 'RANGE_51_200',
     annualRevenueRange: 'RANGE_10M_50M',
@@ -262,7 +263,8 @@ const loginableClients: ClientDef[] = [
     regulatoryBody: 'FinCEN / State DFPI',
     industry: 'Cross-Chain Infrastructure',
     websiteUrl: 'https://satoshi-bridge.io',
-    businessDescription: 'Cross-chain bridge protocol enabling institutional USDC transfers across Solana, Ethereum, and traditional rail',
+    businessDescription:
+      'Cross-chain bridge protocol enabling institutional USDC transfers across Solana, Ethereum, and traditional rail',
     yearEstablished: 2021,
     employeeCountRange: 'RANGE_51_200',
     annualRevenueRange: 'RANGE_50M_100M',
@@ -308,7 +310,8 @@ const loginableClients: ClientDef[] = [
     regulatoryBody: 'MAS',
     industry: 'Crypto Remittance',
     websiteUrl: 'https://chainflow-remit.sg',
-    businessDescription: 'MAS-licensed crypto remittance platform serving SG-ASEAN corridors with USDC settlement',
+    businessDescription:
+      'MAS-licensed crypto remittance platform serving SG-ASEAN corridors with USDC settlement',
     yearEstablished: 2022,
     employeeCountRange: 'RANGE_11_50',
     annualRevenueRange: 'RANGE_10M_50M',
@@ -356,7 +359,8 @@ const loginableClients: ClientDef[] = [
     regulatoryBody: 'FINMA',
     industry: 'Digital Asset Banking',
     websiteUrl: 'https://aminagroup.com',
-    businessDescription: 'FINMA-regulated crypto bank providing institutional custody, trading, and tokenization services',
+    businessDescription:
+      'FINMA-regulated crypto bank providing institutional custody, trading, and tokenization services',
     yearEstablished: 2018,
     employeeCountRange: 'RANGE_201_500',
     annualRevenueRange: 'RANGE_100M_500M',
@@ -404,7 +408,8 @@ const loginableClients: ClientDef[] = [
     regulatoryBody: 'FCA',
     industry: 'Trade Finance',
     websiteUrl: 'https://meridian-trade.co.uk',
-    businessDescription: 'FCA-authorized trade finance house providing cross-border LC and USDC settlement for commodity importers',
+    businessDescription:
+      'FCA-authorized trade finance house providing cross-border LC and USDC settlement for commodity importers',
     yearEstablished: 2015,
     employeeCountRange: 'RANGE_501_1000',
     annualRevenueRange: 'RANGE_500M_1B',
@@ -447,7 +452,8 @@ const loginableClients: ClientDef[] = [
     regulatoryStatus: 'EXEMPT',
     industry: 'Export Trading',
     websiteUrl: 'https://pacificrim-exports.sg',
-    businessDescription: 'Singapore-based commodity exporter leveraging USDC for fast cross-border settlement',
+    businessDescription:
+      'Singapore-based commodity exporter leveraging USDC for fast cross-border settlement',
     yearEstablished: 2018,
     employeeCountRange: 'RANGE_51_200',
     annualRevenueRange: 'RANGE_50M_100M',
@@ -556,33 +562,211 @@ const allClients = [...loginableClients, ...counterpartyClients];
 
 // ── Corridors ──────────────────────────────────────────────────────────────
 
-const corridorConfigs: Record<string, { risk: string; min: number; max: number; daily: number; monthly: number; docs: string[] }> = {
-  'CH-SG': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE', 'CONTRACT'] },
-  'SG-CH': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE', 'CONTRACT'] },
-  'CH-US': { risk: 'LOW', min: 500, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
-  'US-CH': { risk: 'LOW', min: 500, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
-  'SG-JP': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE', 'CONTRACT'] },
-  'JP-SG': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE', 'CONTRACT'] },
-  'GB-CH': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
-  'CH-GB': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
-  'AE-AE': { risk: 'LOW', min: 100, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE'] },
+const corridorConfigs: Record<
+  string,
+  { risk: string; min: number; max: number; daily: number; monthly: number; docs: string[] }
+> = {
+  'CH-SG': {
+    risk: 'LOW',
+    min: 100,
+    max: 5000000,
+    daily: 20000000,
+    monthly: 200000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
+  'SG-CH': {
+    risk: 'LOW',
+    min: 100,
+    max: 5000000,
+    daily: 20000000,
+    monthly: 200000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
+  'CH-US': {
+    risk: 'LOW',
+    min: 500,
+    max: 5000000,
+    daily: 20000000,
+    monthly: 200000000,
+    docs: ['INVOICE'],
+  },
+  'US-CH': {
+    risk: 'LOW',
+    min: 500,
+    max: 5000000,
+    daily: 20000000,
+    monthly: 200000000,
+    docs: ['INVOICE'],
+  },
+  'SG-JP': {
+    risk: 'LOW',
+    min: 100,
+    max: 3000000,
+    daily: 15000000,
+    monthly: 150000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
+  'JP-SG': {
+    risk: 'LOW',
+    min: 100,
+    max: 3000000,
+    daily: 15000000,
+    monthly: 150000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
+  'GB-CH': {
+    risk: 'LOW',
+    min: 100,
+    max: 5000000,
+    daily: 20000000,
+    monthly: 200000000,
+    docs: ['INVOICE'],
+  },
+  'CH-GB': {
+    risk: 'LOW',
+    min: 100,
+    max: 5000000,
+    daily: 20000000,
+    monthly: 200000000,
+    docs: ['INVOICE'],
+  },
+  'AE-AE': {
+    risk: 'LOW',
+    min: 100,
+    max: 2000000,
+    daily: 10000000,
+    monthly: 100000000,
+    docs: ['INVOICE'],
+  },
   'CH-CH': { risk: 'LOW', min: 100, max: 10000000, daily: 50000000, monthly: 500000000, docs: [] },
-  'US-DE': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
-  'DE-US': { risk: 'LOW', min: 100, max: 5000000, daily: 20000000, monthly: 200000000, docs: ['INVOICE'] },
-  'GB-SG': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
-  'SG-GB': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
-  'US-MX': { risk: 'MEDIUM', min: 100, max: 500000, daily: 2000000, monthly: 20000000, docs: ['INVOICE'] },
-  'US-PH': { risk: 'MEDIUM', min: 50, max: 250000, daily: 1000000, monthly: 10000000, docs: ['INVOICE', 'SHIPPING_DOC'] },
-  'EU-UK': { risk: 'LOW', min: 500, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE'] },
-  'SG-US': { risk: 'LOW', min: 100, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT'] },
-  'GB-HK': { risk: 'MEDIUM', min: 500, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE', 'CONTRACT'] },
-  'HK-GB': { risk: 'MEDIUM', min: 500, max: 2000000, daily: 10000000, monthly: 100000000, docs: ['INVOICE', 'CONTRACT'] },
-  'CH-AE': { risk: 'MEDIUM', min: 1000, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT', 'LETTER_OF_CREDIT'] },
-  'AE-CH': { risk: 'MEDIUM', min: 1000, max: 1000000, daily: 5000000, monthly: 50000000, docs: ['INVOICE', 'CONTRACT', 'LETTER_OF_CREDIT'] },
-  'CH-IT': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
-  'IT-CH': { risk: 'LOW', min: 100, max: 3000000, daily: 15000000, monthly: 150000000, docs: ['INVOICE'] },
-  'SG-AE': { risk: 'MEDIUM', min: 500, max: 2000000, daily: 8000000, monthly: 80000000, docs: ['INVOICE', 'CONTRACT'] },
-  'AE-SG': { risk: 'MEDIUM', min: 500, max: 2000000, daily: 8000000, monthly: 80000000, docs: ['INVOICE', 'CONTRACT'] },
+  'US-DE': {
+    risk: 'LOW',
+    min: 100,
+    max: 5000000,
+    daily: 20000000,
+    monthly: 200000000,
+    docs: ['INVOICE'],
+  },
+  'DE-US': {
+    risk: 'LOW',
+    min: 100,
+    max: 5000000,
+    daily: 20000000,
+    monthly: 200000000,
+    docs: ['INVOICE'],
+  },
+  'GB-SG': {
+    risk: 'LOW',
+    min: 100,
+    max: 3000000,
+    daily: 15000000,
+    monthly: 150000000,
+    docs: ['INVOICE'],
+  },
+  'SG-GB': {
+    risk: 'LOW',
+    min: 100,
+    max: 3000000,
+    daily: 15000000,
+    monthly: 150000000,
+    docs: ['INVOICE'],
+  },
+  'US-MX': {
+    risk: 'MEDIUM',
+    min: 100,
+    max: 500000,
+    daily: 2000000,
+    monthly: 20000000,
+    docs: ['INVOICE'],
+  },
+  'US-PH': {
+    risk: 'MEDIUM',
+    min: 50,
+    max: 250000,
+    daily: 1000000,
+    monthly: 10000000,
+    docs: ['INVOICE', 'SHIPPING_DOC'],
+  },
+  'EU-UK': {
+    risk: 'LOW',
+    min: 500,
+    max: 2000000,
+    daily: 10000000,
+    monthly: 100000000,
+    docs: ['INVOICE'],
+  },
+  'SG-US': {
+    risk: 'LOW',
+    min: 100,
+    max: 1000000,
+    daily: 5000000,
+    monthly: 50000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
+  'GB-HK': {
+    risk: 'MEDIUM',
+    min: 500,
+    max: 2000000,
+    daily: 10000000,
+    monthly: 100000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
+  'HK-GB': {
+    risk: 'MEDIUM',
+    min: 500,
+    max: 2000000,
+    daily: 10000000,
+    monthly: 100000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
+  'CH-AE': {
+    risk: 'MEDIUM',
+    min: 1000,
+    max: 1000000,
+    daily: 5000000,
+    monthly: 50000000,
+    docs: ['INVOICE', 'CONTRACT', 'LETTER_OF_CREDIT'],
+  },
+  'AE-CH': {
+    risk: 'MEDIUM',
+    min: 1000,
+    max: 1000000,
+    daily: 5000000,
+    monthly: 50000000,
+    docs: ['INVOICE', 'CONTRACT', 'LETTER_OF_CREDIT'],
+  },
+  'CH-IT': {
+    risk: 'LOW',
+    min: 100,
+    max: 3000000,
+    daily: 15000000,
+    monthly: 150000000,
+    docs: ['INVOICE'],
+  },
+  'IT-CH': {
+    risk: 'LOW',
+    min: 100,
+    max: 3000000,
+    daily: 15000000,
+    monthly: 150000000,
+    docs: ['INVOICE'],
+  },
+  'SG-AE': {
+    risk: 'MEDIUM',
+    min: 500,
+    max: 2000000,
+    daily: 8000000,
+    monthly: 80000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
+  'AE-SG': {
+    risk: 'MEDIUM',
+    min: 500,
+    max: 2000000,
+    daily: 8000000,
+    monthly: 80000000,
+    docs: ['INVOICE', 'CONTRACT'],
+  },
 };
 
 // ── Account definitions per loginable client ───────────────────────────────
@@ -599,59 +783,297 @@ interface AccountDef {
 
 const accountsByClient: Record<string, AccountDef[]> = {
   'ops@helvetica-digital.ch': [
-    { name: 'Operating Account', label: 'Operating Account', accountType: 'OPERATIONS', walletSeed: 'helvetica-ops', branchCountryCode: 'CH', isDefault: true, description: 'Primary operating account for daily USDC settlements' },
-    { name: 'Escrow Reserve', label: 'Escrow Reserve', accountType: 'COLLATERAL', walletSeed: 'helvetica-escrow', branchCountryCode: 'CH', isDefault: false, description: 'Collateral reserve for active escrow positions' },
-    { name: 'Settlement Float', label: 'Settlement Float', accountType: 'SETTLEMENT', walletSeed: 'helvetica-settlement', branchCountryCode: 'CH', isDefault: false, description: 'Settlement float for cross-border payments' },
+    {
+      name: 'Operating Account',
+      label: 'Operating Account',
+      accountType: 'OPERATIONS',
+      walletSeed: 'helvetica-ops',
+      branchCountryCode: 'CH',
+      isDefault: true,
+      description: 'Primary operating account for daily USDC settlements',
+    },
+    {
+      name: 'Escrow Reserve',
+      label: 'Escrow Reserve',
+      accountType: 'COLLATERAL',
+      walletSeed: 'helvetica-escrow',
+      branchCountryCode: 'CH',
+      isDefault: false,
+      description: 'Collateral reserve for active escrow positions',
+    },
+    {
+      name: 'Settlement Float',
+      label: 'Settlement Float',
+      accountType: 'SETTLEMENT',
+      walletSeed: 'helvetica-settlement',
+      branchCountryCode: 'CH',
+      isDefault: false,
+      description: 'Settlement float for cross-border payments',
+    },
   ],
   'treasury@alpine-custody.ch': [
-    { name: 'Treasury Account', label: 'Treasury Account', accountType: 'TREASURY', walletSeed: 'alpine-treasury', isDefault: true, description: 'Primary treasury account for custody settlements' },
-    { name: 'Staking Rewards', label: 'Staking Rewards', accountType: 'OPERATIONS', walletSeed: 'alpine-staking', isDefault: false, description: 'Accumulated staking rewards and fee collection' },
+    {
+      name: 'Treasury Account',
+      label: 'Treasury Account',
+      accountType: 'TREASURY',
+      walletSeed: 'alpine-treasury',
+      isDefault: true,
+      description: 'Primary treasury account for custody settlements',
+    },
+    {
+      name: 'Staking Rewards',
+      label: 'Staking Rewards',
+      accountType: 'OPERATIONS',
+      walletSeed: 'alpine-staking',
+      isDefault: false,
+      description: 'Accumulated staking rewards and fee collection',
+    },
   ],
   'finance@satoshi-bridge.io': [
-    { name: 'Bridge Liquidity', label: 'Bridge Liquidity', accountType: 'OPERATIONS', walletSeed: 'satoshi-liquidity', isDefault: true, description: 'Main liquidity pool for bridge operations' },
-    { name: 'Settlement Reserve', label: 'Settlement Reserve', accountType: 'SETTLEMENT', walletSeed: 'satoshi-settlement', isDefault: false, description: 'Reserve for cross-chain settlement finality' },
-    { name: 'Fee Collection', label: 'Fee Collection', accountType: 'TREASURY', walletSeed: 'satoshi-fees', isDefault: false, description: 'Bridge fee accumulation account' },
+    {
+      name: 'Bridge Liquidity',
+      label: 'Bridge Liquidity',
+      accountType: 'OPERATIONS',
+      walletSeed: 'satoshi-liquidity',
+      isDefault: true,
+      description: 'Main liquidity pool for bridge operations',
+    },
+    {
+      name: 'Settlement Reserve',
+      label: 'Settlement Reserve',
+      accountType: 'SETTLEMENT',
+      walletSeed: 'satoshi-settlement',
+      isDefault: false,
+      description: 'Reserve for cross-chain settlement finality',
+    },
+    {
+      name: 'Fee Collection',
+      label: 'Fee Collection',
+      accountType: 'TREASURY',
+      walletSeed: 'satoshi-fees',
+      isDefault: false,
+      description: 'Bridge fee accumulation account',
+    },
   ],
   'ops@chainflow-remit.sg': [
-    { name: 'Remittance Pool', label: 'Remittance Pool', accountType: 'OPERATIONS', walletSeed: 'chainflow-pool', isDefault: true, description: 'Primary pool for SG-ASEAN remittance flows' },
-    { name: 'Float Account', label: 'Float Account', accountType: 'SETTLEMENT', walletSeed: 'chainflow-float', isDefault: false, description: 'Working capital float for instant settlement' },
+    {
+      name: 'Remittance Pool',
+      label: 'Remittance Pool',
+      accountType: 'OPERATIONS',
+      walletSeed: 'chainflow-pool',
+      isDefault: true,
+      description: 'Primary pool for SG-ASEAN remittance flows',
+    },
+    {
+      name: 'Float Account',
+      label: 'Float Account',
+      accountType: 'SETTLEMENT',
+      walletSeed: 'chainflow-float',
+      isDefault: false,
+      description: 'Working capital float for instant settlement',
+    },
   ],
   'admin@aminagroup.com': [
-    { name: 'Institutional Custody', label: 'Institutional Custody', accountType: 'OPERATIONS', walletSeed: 'amina-custody', isDefault: true, description: 'Primary custody settlement account' },
-    { name: 'Trading Desk', label: 'Trading Desk', accountType: 'TREASURY', walletSeed: 'amina-trading', isDefault: false, description: 'OTC trading desk settlement account' },
-    { name: 'Client Escrow Pool', label: 'Client Escrow Pool', accountType: 'COLLATERAL', walletSeed: 'amina-escrow-pool', isDefault: false, description: 'Pooled escrow collateral for client positions' },
+    {
+      name: 'Institutional Custody',
+      label: 'Institutional Custody',
+      accountType: 'OPERATIONS',
+      walletSeed: 'amina-custody',
+      isDefault: true,
+      description: 'Primary custody settlement account',
+    },
+    {
+      name: 'Trading Desk',
+      label: 'Trading Desk',
+      accountType: 'TREASURY',
+      walletSeed: 'amina-trading',
+      isDefault: false,
+      description: 'OTC trading desk settlement account',
+    },
+    {
+      name: 'Client Escrow Pool',
+      label: 'Client Escrow Pool',
+      accountType: 'COLLATERAL',
+      walletSeed: 'amina-escrow-pool',
+      isDefault: false,
+      description: 'Pooled escrow collateral for client positions',
+    },
   ],
   'treasury@meridian-trade.co.uk': [
-    { name: 'Trade Finance Account', label: 'Trade Finance Account', accountType: 'OPERATIONS', walletSeed: 'meridian-trade', isDefault: true, description: 'Primary trade finance settlement account' },
-    { name: 'LC Collateral', label: 'LC Collateral', accountType: 'COLLATERAL', walletSeed: 'meridian-lc', isDefault: false, description: 'Letter of credit collateral pool' },
+    {
+      name: 'Trade Finance Account',
+      label: 'Trade Finance Account',
+      accountType: 'OPERATIONS',
+      walletSeed: 'meridian-trade',
+      isDefault: true,
+      description: 'Primary trade finance settlement account',
+    },
+    {
+      name: 'LC Collateral',
+      label: 'LC Collateral',
+      accountType: 'COLLATERAL',
+      walletSeed: 'meridian-lc',
+      isDefault: false,
+      description: 'Letter of credit collateral pool',
+    },
   ],
   'finance@pacificrim-exports.sg': [
-    { name: 'Export Settlements', label: 'Export Settlements', accountType: 'OPERATIONS', walletSeed: 'pacificrim-exports', isDefault: true, description: 'Export payment settlement account' },
-    { name: 'Receivables Account', label: 'Receivables Account', accountType: 'SETTLEMENT', walletSeed: 'pacificrim-receivables', isDefault: false, description: 'Trade receivables and pending settlements' },
+    {
+      name: 'Export Settlements',
+      label: 'Export Settlements',
+      accountType: 'OPERATIONS',
+      walletSeed: 'pacificrim-exports',
+      isDefault: true,
+      description: 'Export payment settlement account',
+    },
+    {
+      name: 'Receivables Account',
+      label: 'Receivables Account',
+      accountType: 'SETTLEMENT',
+      walletSeed: 'pacificrim-receivables',
+      isDefault: false,
+      description: 'Trade receivables and pending settlements',
+    },
   ],
 };
 
 // ── Branch definitions (Helvetica only has branches) ──────────────────────
 
 const helveticaBranches = [
-  { name: 'Zurich HQ', city: 'Zurich', country: 'Switzerland', countryCode: 'CH', address: 'Bahnhofstrasse 42, 8001 Zurich', timezone: 'Europe/Zurich', riskScore: 5, complianceStatus: 'ACTIVE', regulatoryBody: 'FINMA' },
-  { name: 'New York Branch', city: 'New York', country: 'United States', countryCode: 'US', address: '55 Water Street, New York, NY 10041', timezone: 'America/New_York', riskScore: 10, complianceStatus: 'ACTIVE', regulatoryBody: 'FinCEN' },
-  { name: 'Singapore Branch', city: 'Singapore', country: 'Singapore', countryCode: 'SG', address: '1 Raffles Place, #20-01, Tower 2', timezone: 'Asia/Singapore', riskScore: 8, complianceStatus: 'ACTIVE', regulatoryBody: 'MAS' },
-  { name: 'London Branch', city: 'London', country: 'United Kingdom', countryCode: 'GB', address: '25 Old Broad Street, EC2N 1HQ', timezone: 'Europe/London', riskScore: 6, complianceStatus: 'ACTIVE', regulatoryBody: 'FCA' },
-  { name: 'Dubai Branch', city: 'Dubai', country: 'United Arab Emirates', countryCode: 'AE', address: 'Gate Village, Building 3, DIFC', timezone: 'Asia/Dubai', riskScore: 15, complianceStatus: 'ACTIVE', regulatoryBody: 'DFSA' },
-  { name: 'Moscow Office', city: 'Moscow', country: 'Russia', countryCode: 'RU', address: 'Tverskaya Street 22, Moscow 125009', timezone: 'Europe/Moscow', riskScore: 100, complianceStatus: 'BLOCKED', regulatoryBody: 'CBR', isSanctioned: true, sanctionReason: 'All operations suspended per EU/US/CH sanctions', isActive: false },
+  {
+    name: 'Zurich HQ',
+    city: 'Zurich',
+    country: 'Switzerland',
+    countryCode: 'CH',
+    address: 'Bahnhofstrasse 42, 8001 Zurich',
+    timezone: 'Europe/Zurich',
+    riskScore: 5,
+    complianceStatus: 'ACTIVE',
+    regulatoryBody: 'FINMA',
+  },
+  {
+    name: 'New York Branch',
+    city: 'New York',
+    country: 'United States',
+    countryCode: 'US',
+    address: '55 Water Street, New York, NY 10041',
+    timezone: 'America/New_York',
+    riskScore: 10,
+    complianceStatus: 'ACTIVE',
+    regulatoryBody: 'FinCEN',
+  },
+  {
+    name: 'Singapore Branch',
+    city: 'Singapore',
+    country: 'Singapore',
+    countryCode: 'SG',
+    address: '1 Raffles Place, #20-01, Tower 2',
+    timezone: 'Asia/Singapore',
+    riskScore: 8,
+    complianceStatus: 'ACTIVE',
+    regulatoryBody: 'MAS',
+  },
+  {
+    name: 'London Branch',
+    city: 'London',
+    country: 'United Kingdom',
+    countryCode: 'GB',
+    address: '25 Old Broad Street, EC2N 1HQ',
+    timezone: 'Europe/London',
+    riskScore: 6,
+    complianceStatus: 'ACTIVE',
+    regulatoryBody: 'FCA',
+  },
+  {
+    name: 'Dubai Branch',
+    city: 'Dubai',
+    country: 'United Arab Emirates',
+    countryCode: 'AE',
+    address: 'Gate Village, Building 3, DIFC',
+    timezone: 'Asia/Dubai',
+    riskScore: 15,
+    complianceStatus: 'ACTIVE',
+    regulatoryBody: 'DFSA',
+  },
+  {
+    name: 'Moscow Office',
+    city: 'Moscow',
+    country: 'Russia',
+    countryCode: 'RU',
+    address: 'Tverskaya Street 22, Moscow 125009',
+    timezone: 'Europe/Moscow',
+    riskScore: 100,
+    complianceStatus: 'BLOCKED',
+    regulatoryBody: 'CBR',
+    isSanctioned: true,
+    sanctionReason: 'All operations suspended per EU/US/CH sanctions',
+    isActive: false,
+  },
 ];
 
 // ── Settings per loginable client ──────────────────────────────────────────
 
-const settingsByClient: Record<string, { corridor: string | null; timezone: string; autoApprove?: number; manualReview?: number; riskTolerance?: string; defaultToken?: string }> = {
-  'ops@helvetica-digital.ch': { corridor: 'CH-SG', timezone: 'Europe/Zurich', autoApprove: 10000, manualReview: 50000, riskTolerance: 'low', defaultToken: 'usdc' },
-  'treasury@alpine-custody.ch': { corridor: 'CH-US', timezone: 'Europe/Zurich', autoApprove: 25000, riskTolerance: 'low', defaultToken: 'usdc' },
-  'finance@satoshi-bridge.io': { corridor: 'US-MX', timezone: 'America/Los_Angeles', autoApprove: 100000, riskTolerance: 'medium', defaultToken: 'usdc' },
-  'ops@chainflow-remit.sg': { corridor: 'SG-CH', timezone: 'Asia/Singapore', autoApprove: 50000, riskTolerance: 'medium', defaultToken: 'usdc' },
-  'admin@aminagroup.com': { corridor: 'CH-SG', timezone: 'Europe/Zurich', autoApprove: 500000, riskTolerance: 'low', defaultToken: 'usdc' },
-  'treasury@meridian-trade.co.uk': { corridor: 'EU-UK', timezone: 'Europe/London', autoApprove: 200000, riskTolerance: 'low', defaultToken: 'usdc' },
-  'finance@pacificrim-exports.sg': { corridor: 'SG-US', timezone: 'Asia/Singapore', autoApprove: 75000, riskTolerance: 'medium', defaultToken: 'usdc' },
+const settingsByClient: Record<
+  string,
+  {
+    corridor: string | null;
+    timezone: string;
+    autoApprove?: number;
+    manualReview?: number;
+    riskTolerance?: string;
+    defaultToken?: string;
+  }
+> = {
+  'ops@helvetica-digital.ch': {
+    corridor: 'CH-SG',
+    timezone: 'Europe/Zurich',
+    autoApprove: 10000,
+    manualReview: 50000,
+    riskTolerance: 'low',
+    defaultToken: 'usdc',
+  },
+  'treasury@alpine-custody.ch': {
+    corridor: 'CH-US',
+    timezone: 'Europe/Zurich',
+    autoApprove: 25000,
+    riskTolerance: 'low',
+    defaultToken: 'usdc',
+  },
+  'finance@satoshi-bridge.io': {
+    corridor: 'US-MX',
+    timezone: 'America/Los_Angeles',
+    autoApprove: 100000,
+    riskTolerance: 'medium',
+    defaultToken: 'usdc',
+  },
+  'ops@chainflow-remit.sg': {
+    corridor: 'SG-CH',
+    timezone: 'Asia/Singapore',
+    autoApprove: 50000,
+    riskTolerance: 'medium',
+    defaultToken: 'usdc',
+  },
+  'admin@aminagroup.com': {
+    corridor: 'CH-SG',
+    timezone: 'Europe/Zurich',
+    autoApprove: 500000,
+    riskTolerance: 'low',
+    defaultToken: 'usdc',
+  },
+  'treasury@meridian-trade.co.uk': {
+    corridor: 'EU-UK',
+    timezone: 'Europe/London',
+    autoApprove: 200000,
+    riskTolerance: 'low',
+    defaultToken: 'usdc',
+  },
+  'finance@pacificrim-exports.sg': {
+    corridor: 'SG-US',
+    timezone: 'Asia/Singapore',
+    autoApprove: 75000,
+    riskTolerance: 'medium',
+    defaultToken: 'usdc',
+  },
 };
 
 // ── Escrow definitions (all reference loginable clients as payer) ─────────
@@ -670,46 +1092,316 @@ interface EscrowDef {
 
 const escrowDefs: EscrowDef[] = [
   // ── Helvetica Digital escrows ──
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'ops@globaltrade-industries.com', corridor: 'CH-SG', amount: 2500000, status: 'FUNDED', conditionType: 'ADMIN_RELEASE', riskScore: 12, createdAt: hoursAgo(2), code: 'esc-a1b2c3d4' },
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'finance@pacificrim-exports.sg', corridor: 'SG-JP', amount: 1800000, status: 'COMPLIANCE_HOLD', conditionType: 'COMPLIANCE_CHECK', riskScore: 42, createdAt: hoursAgo(5), code: 'esc-e5f6a7b8' },
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'finance@swiss-precision.ch', corridor: 'GB-CH', amount: 4200000, status: 'CREATED', conditionType: 'ADMIN_RELEASE', riskScore: 8, createdAt: hoursAgo(9), code: 'esc-a3b4c5d6' },
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'ops@globaltrade-industries.com', corridor: 'AE-AE', amount: 1100000, status: 'RELEASING', conditionType: 'ADMIN_RELEASE', riskScore: 18, createdAt: daysAgo(1), code: 'esc-c1d2e3f4' },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'ops@globaltrade-industries.com',
+    corridor: 'CH-SG',
+    amount: 2500000,
+    status: 'FUNDED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 12,
+    createdAt: hoursAgo(2),
+    code: 'esc-a1b2c3d4',
+  },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'finance@pacificrim-exports.sg',
+    corridor: 'SG-JP',
+    amount: 1800000,
+    status: 'COMPLIANCE_HOLD',
+    conditionType: 'COMPLIANCE_CHECK',
+    riskScore: 42,
+    createdAt: hoursAgo(5),
+    code: 'esc-e5f6a7b8',
+  },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'finance@swiss-precision.ch',
+    corridor: 'GB-CH',
+    amount: 4200000,
+    status: 'CREATED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 8,
+    createdAt: hoursAgo(9),
+    code: 'esc-a3b4c5d6',
+  },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'ops@globaltrade-industries.com',
+    corridor: 'AE-AE',
+    amount: 1100000,
+    status: 'RELEASING',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 18,
+    createdAt: daysAgo(1),
+    code: 'esc-c1d2e3f4',
+  },
   // Historical released
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'ops@chainflow-remit.sg', corridor: 'CH-SG', amount: 150000, status: 'RELEASED', conditionType: 'ADMIN_RELEASE', riskScore: 10, createdAt: daysAgo(30), code: escrowCode('helv-rel-30d') },
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'finance@satoshi-bridge.io', corridor: 'CH-US', amount: 420000, status: 'RELEASED', conditionType: 'COMPLIANCE_CHECK', riskScore: 20, createdAt: daysAgo(45), code: escrowCode('helv-rel-45d') },
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'ops@dbs-digital.sg', corridor: 'SG-CH', amount: 85000, status: 'RELEASED', conditionType: 'ADMIN_RELEASE', riskScore: 5, createdAt: daysAgo(60), code: escrowCode('helv-rel-60d') },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'ops@chainflow-remit.sg',
+    corridor: 'CH-SG',
+    amount: 150000,
+    status: 'RELEASED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 10,
+    createdAt: daysAgo(30),
+    code: escrowCode('helv-rel-30d'),
+  },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'finance@satoshi-bridge.io',
+    corridor: 'CH-US',
+    amount: 420000,
+    status: 'RELEASED',
+    conditionType: 'COMPLIANCE_CHECK',
+    riskScore: 20,
+    createdAt: daysAgo(45),
+    code: escrowCode('helv-rel-45d'),
+  },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'ops@dbs-digital.sg',
+    corridor: 'SG-CH',
+    amount: 85000,
+    status: 'RELEASED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 5,
+    createdAt: daysAgo(60),
+    code: escrowCode('helv-rel-60d'),
+  },
 
   // ── Alpine Custody escrows ──
-  { payerEmail: 'treasury@alpine-custody.ch', recipientEmail: 'finance@satoshi-bridge.io', corridor: 'CH-US', amount: 500000, status: 'COMPLIANCE_HOLD', conditionType: 'COMPLIANCE_CHECK', riskScore: 65, createdAt: daysAgo(3), code: escrowCode('alpine-hold') },
-  { payerEmail: 'treasury@alpine-custody.ch', recipientEmail: 'ops@helvetica-digital.ch', corridor: 'CH-SG', amount: 180000, status: 'FUNDED', conditionType: 'ADMIN_RELEASE', riskScore: 10, createdAt: daysAgo(1), code: escrowCode('alpine-funded') },
-  { payerEmail: 'treasury@alpine-custody.ch', recipientEmail: 'digital@hsbc.co.uk', corridor: 'CH-GB', amount: 25000, status: 'CANCELLED', conditionType: 'TIME_LOCK', riskScore: null, createdAt: daysAgo(20), code: escrowCode('alpine-cancelled') },
+  {
+    payerEmail: 'treasury@alpine-custody.ch',
+    recipientEmail: 'finance@satoshi-bridge.io',
+    corridor: 'CH-US',
+    amount: 500000,
+    status: 'COMPLIANCE_HOLD',
+    conditionType: 'COMPLIANCE_CHECK',
+    riskScore: 65,
+    createdAt: daysAgo(3),
+    code: escrowCode('alpine-hold'),
+  },
+  {
+    payerEmail: 'treasury@alpine-custody.ch',
+    recipientEmail: 'ops@helvetica-digital.ch',
+    corridor: 'CH-SG',
+    amount: 180000,
+    status: 'FUNDED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 10,
+    createdAt: daysAgo(1),
+    code: escrowCode('alpine-funded'),
+  },
+  {
+    payerEmail: 'treasury@alpine-custody.ch',
+    recipientEmail: 'digital@hsbc.co.uk',
+    corridor: 'CH-GB',
+    amount: 25000,
+    status: 'CANCELLED',
+    conditionType: 'TIME_LOCK',
+    riskScore: null,
+    createdAt: daysAgo(20),
+    code: escrowCode('alpine-cancelled'),
+  },
 
   // ── Satoshi Bridge escrows ──
-  { payerEmail: 'finance@satoshi-bridge.io', recipientEmail: 'ops@eurolink-trading.de', corridor: 'US-MX', amount: 100000, status: 'CREATED', conditionType: 'TIME_LOCK', riskScore: null, createdAt: hoursAgo(3), code: escrowCode('satoshi-created') },
-  { payerEmail: 'finance@satoshi-bridge.io', recipientEmail: 'ops@chainflow-remit.sg', corridor: 'US-PH', amount: 450000, status: 'FUNDED', conditionType: 'COMPLIANCE_CHECK', riskScore: 25, createdAt: daysAgo(1), code: escrowCode('satoshi-funded') },
-  { payerEmail: 'finance@satoshi-bridge.io', recipientEmail: 'treasury@meridian-trade.co.uk', corridor: 'US-CH', amount: 500000, status: 'RELEASED', conditionType: 'TIME_LOCK', riskScore: 12, createdAt: daysAgo(14), code: escrowCode('satoshi-released') },
-  { payerEmail: 'finance@satoshi-bridge.io', recipientEmail: 'admin@aminagroup.com', corridor: 'CH-US', amount: 75000, status: 'FAILED', conditionType: 'ADMIN_RELEASE', riskScore: 40, createdAt: daysAgo(6), code: escrowCode('satoshi-failed') },
+  {
+    payerEmail: 'finance@satoshi-bridge.io',
+    recipientEmail: 'ops@eurolink-trading.de',
+    corridor: 'US-MX',
+    amount: 100000,
+    status: 'CREATED',
+    conditionType: 'TIME_LOCK',
+    riskScore: null,
+    createdAt: hoursAgo(3),
+    code: escrowCode('satoshi-created'),
+  },
+  {
+    payerEmail: 'finance@satoshi-bridge.io',
+    recipientEmail: 'ops@chainflow-remit.sg',
+    corridor: 'US-PH',
+    amount: 450000,
+    status: 'FUNDED',
+    conditionType: 'COMPLIANCE_CHECK',
+    riskScore: 25,
+    createdAt: daysAgo(1),
+    code: escrowCode('satoshi-funded'),
+  },
+  {
+    payerEmail: 'finance@satoshi-bridge.io',
+    recipientEmail: 'treasury@meridian-trade.co.uk',
+    corridor: 'US-CH',
+    amount: 500000,
+    status: 'RELEASED',
+    conditionType: 'TIME_LOCK',
+    riskScore: 12,
+    createdAt: daysAgo(14),
+    code: escrowCode('satoshi-released'),
+  },
+  {
+    payerEmail: 'finance@satoshi-bridge.io',
+    recipientEmail: 'admin@aminagroup.com',
+    corridor: 'CH-US',
+    amount: 75000,
+    status: 'FAILED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 40,
+    createdAt: daysAgo(6),
+    code: escrowCode('satoshi-failed'),
+  },
 
   // ── ChainFlow Remittance escrows ──
-  { payerEmail: 'ops@chainflow-remit.sg', recipientEmail: 'ops@helvetica-digital.ch', corridor: 'SG-CH', amount: 75000, status: 'FUNDED', conditionType: 'COMPLIANCE_CHECK', riskScore: 22, createdAt: daysAgo(1), code: escrowCode('chainflow-funded') },
-  { payerEmail: 'ops@chainflow-remit.sg', recipientEmail: 'treasury@alpine-custody.ch', corridor: 'SG-CH', amount: 60000, status: 'CANCELLED', conditionType: 'ADMIN_RELEASE', riskScore: 30, createdAt: daysAgo(12), code: escrowCode('chainflow-cancelled') },
-  { payerEmail: 'ops@chainflow-remit.sg', recipientEmail: 'finance@pacificrim-exports.sg', corridor: 'SG-US', amount: 220000, status: 'RELEASING', conditionType: 'ADMIN_RELEASE', riskScore: 14, createdAt: daysAgo(2), code: escrowCode('chainflow-releasing') },
+  {
+    payerEmail: 'ops@chainflow-remit.sg',
+    recipientEmail: 'ops@helvetica-digital.ch',
+    corridor: 'SG-CH',
+    amount: 75000,
+    status: 'FUNDED',
+    conditionType: 'COMPLIANCE_CHECK',
+    riskScore: 22,
+    createdAt: daysAgo(1),
+    code: escrowCode('chainflow-funded'),
+  },
+  {
+    payerEmail: 'ops@chainflow-remit.sg',
+    recipientEmail: 'treasury@alpine-custody.ch',
+    corridor: 'SG-CH',
+    amount: 60000,
+    status: 'CANCELLED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 30,
+    createdAt: daysAgo(12),
+    code: escrowCode('chainflow-cancelled'),
+  },
+  {
+    payerEmail: 'ops@chainflow-remit.sg',
+    recipientEmail: 'finance@pacificrim-exports.sg',
+    corridor: 'SG-US',
+    amount: 220000,
+    status: 'RELEASING',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 14,
+    createdAt: daysAgo(2),
+    code: escrowCode('chainflow-releasing'),
+  },
 
   // ── AMINA Bank escrows ──
-  { payerEmail: 'admin@aminagroup.com', recipientEmail: 'ops@globaltrade-industries.com', corridor: 'CH-SG', amount: 3000000, status: 'FUNDED', conditionType: 'ADMIN_RELEASE', riskScore: 8, createdAt: hoursAgo(6), code: escrowCode('amina-funded') },
-  { payerEmail: 'admin@aminagroup.com', recipientEmail: 'digital@emirates-nbd.ae', corridor: 'CH-AE', amount: 750000, status: 'COMPLIANCE_HOLD', conditionType: 'COMPLIANCE_CHECK', riskScore: 55, createdAt: daysAgo(2), code: escrowCode('amina-hold') },
-  { payerEmail: 'admin@aminagroup.com', recipientEmail: 'treasury@alpine-custody.ch', corridor: 'US-MX', amount: 30000, status: 'CANCELLING', conditionType: 'ADMIN_RELEASE', riskScore: 45, createdAt: daysAgo(4), code: escrowCode('amina-cancelling') },
-  { payerEmail: 'admin@aminagroup.com', recipientEmail: 'finance@satoshi-bridge.io', corridor: 'US-MX', amount: 10000, status: 'EXPIRED', conditionType: 'ADMIN_RELEASE', riskScore: null, createdAt: daysAgo(15), code: escrowCode('amina-expired') },
+  {
+    payerEmail: 'admin@aminagroup.com',
+    recipientEmail: 'ops@globaltrade-industries.com',
+    corridor: 'CH-SG',
+    amount: 3000000,
+    status: 'FUNDED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 8,
+    createdAt: hoursAgo(6),
+    code: escrowCode('amina-funded'),
+  },
+  {
+    payerEmail: 'admin@aminagroup.com',
+    recipientEmail: 'digital@emirates-nbd.ae',
+    corridor: 'CH-AE',
+    amount: 750000,
+    status: 'COMPLIANCE_HOLD',
+    conditionType: 'COMPLIANCE_CHECK',
+    riskScore: 55,
+    createdAt: daysAgo(2),
+    code: escrowCode('amina-hold'),
+  },
+  {
+    payerEmail: 'admin@aminagroup.com',
+    recipientEmail: 'treasury@alpine-custody.ch',
+    corridor: 'US-MX',
+    amount: 30000,
+    status: 'CANCELLING',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 45,
+    createdAt: daysAgo(4),
+    code: escrowCode('amina-cancelling'),
+  },
+  {
+    payerEmail: 'admin@aminagroup.com',
+    recipientEmail: 'finance@satoshi-bridge.io',
+    corridor: 'US-MX',
+    amount: 10000,
+    status: 'EXPIRED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: null,
+    createdAt: daysAgo(15),
+    code: escrowCode('amina-expired'),
+  },
 
   // ── Meridian Trade Finance escrows ──
-  { payerEmail: 'treasury@meridian-trade.co.uk', recipientEmail: 'finance@pacificrim-exports.sg', corridor: 'EU-UK', amount: 1000000, status: 'RELEASING', conditionType: 'ADMIN_RELEASE', riskScore: 10, createdAt: daysAgo(5), code: escrowCode('meridian-releasing') },
-  { payerEmail: 'treasury@meridian-trade.co.uk', recipientEmail: 'digital@hsbc.co.uk', corridor: 'EU-UK', amount: 400000, status: 'EXPIRED', conditionType: 'COMPLIANCE_CHECK', riskScore: 55, createdAt: daysAgo(8), code: escrowCode('meridian-expired') },
-  { payerEmail: 'treasury@meridian-trade.co.uk', recipientEmail: 'ops@eurolink-trading.de', corridor: 'GB-CH', amount: 650000, status: 'FUNDED', conditionType: 'ADMIN_RELEASE', riskScore: 12, createdAt: daysAgo(1), code: escrowCode('meridian-funded') },
+  {
+    payerEmail: 'treasury@meridian-trade.co.uk',
+    recipientEmail: 'finance@pacificrim-exports.sg',
+    corridor: 'EU-UK',
+    amount: 1000000,
+    status: 'RELEASING',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 10,
+    createdAt: daysAgo(5),
+    code: escrowCode('meridian-releasing'),
+  },
+  {
+    payerEmail: 'treasury@meridian-trade.co.uk',
+    recipientEmail: 'digital@hsbc.co.uk',
+    corridor: 'EU-UK',
+    amount: 400000,
+    status: 'EXPIRED',
+    conditionType: 'COMPLIANCE_CHECK',
+    riskScore: 55,
+    createdAt: daysAgo(8),
+    code: escrowCode('meridian-expired'),
+  },
+  {
+    payerEmail: 'treasury@meridian-trade.co.uk',
+    recipientEmail: 'ops@eurolink-trading.de',
+    corridor: 'GB-CH',
+    amount: 650000,
+    status: 'FUNDED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 12,
+    createdAt: daysAgo(1),
+    code: escrowCode('meridian-funded'),
+  },
 
   // ── Pacific Rim Exports escrows ──
-  { payerEmail: 'finance@pacificrim-exports.sg', recipientEmail: 'ops@helvetica-digital.ch', corridor: 'SG-CH', amount: 180000, status: 'RELEASED', conditionType: 'COMPLIANCE_CHECK', riskScore: 18, createdAt: daysAgo(7), code: escrowCode('pacificrim-released') },
-  { payerEmail: 'finance@pacificrim-exports.sg', recipientEmail: 'finance@satoshi-bridge.io', corridor: 'SG-US', amount: 320000, status: 'FUNDED', conditionType: 'ADMIN_RELEASE', riskScore: 15, createdAt: daysAgo(1), code: escrowCode('pacificrim-funded') },
-  { payerEmail: 'finance@pacificrim-exports.sg', recipientEmail: 'digital@emirates-nbd.ae', corridor: 'SG-AE', amount: 95000, status: 'CREATED', conditionType: 'TIME_LOCK', riskScore: null, createdAt: hoursAgo(4), code: escrowCode('pacificrim-created') },
+  {
+    payerEmail: 'finance@pacificrim-exports.sg',
+    recipientEmail: 'ops@helvetica-digital.ch',
+    corridor: 'SG-CH',
+    amount: 180000,
+    status: 'RELEASED',
+    conditionType: 'COMPLIANCE_CHECK',
+    riskScore: 18,
+    createdAt: daysAgo(7),
+    code: escrowCode('pacificrim-released'),
+  },
+  {
+    payerEmail: 'finance@pacificrim-exports.sg',
+    recipientEmail: 'finance@satoshi-bridge.io',
+    corridor: 'SG-US',
+    amount: 320000,
+    status: 'FUNDED',
+    conditionType: 'ADMIN_RELEASE',
+    riskScore: 15,
+    createdAt: daysAgo(1),
+    code: escrowCode('pacificrim-funded'),
+  },
+  {
+    payerEmail: 'finance@pacificrim-exports.sg',
+    recipientEmail: 'digital@emirates-nbd.ae',
+    corridor: 'SG-AE',
+    amount: 95000,
+    status: 'CREATED',
+    conditionType: 'TIME_LOCK',
+    riskScore: null,
+    createdAt: hoursAgo(4),
+    code: escrowCode('pacificrim-created'),
+  },
 ];
 
 // ── Direct payments (all wired to real DB clients) ─────────────────────────
@@ -727,36 +1419,198 @@ interface PaymentDef {
 
 const paymentDefs: PaymentDef[] = [
   // Helvetica payments
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'finance@swiss-precision.ch', corridor: 'CH-CH', amount: 450000, currency: 'USDC', status: 'completed', createdAt: hoursAgo(18), code: 'dp-001' },
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'finance@pacificrim-exports.sg', corridor: 'SG-JP', amount: 1200000, currency: 'USDC', status: 'completed', createdAt: hoursAgo(20), code: 'dp-002' },
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'ops@eurolink-trading.de', corridor: 'US-DE', amount: 780000, currency: 'EURC', status: 'completed', createdAt: daysAgo(1), code: 'dp-003' },
-  { payerEmail: 'ops@helvetica-digital.ch', recipientEmail: 'ops@globaltrade-industries.com', corridor: 'GB-SG', amount: 2100000, currency: 'USDC', status: 'pending', createdAt: minutesAgo(2), code: 'dp-004' },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'finance@swiss-precision.ch',
+    corridor: 'CH-CH',
+    amount: 450000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: hoursAgo(18),
+    code: 'dp-001',
+  },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'finance@pacificrim-exports.sg',
+    corridor: 'SG-JP',
+    amount: 1200000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: hoursAgo(20),
+    code: 'dp-002',
+  },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'ops@eurolink-trading.de',
+    corridor: 'US-DE',
+    amount: 780000,
+    currency: 'EURC',
+    status: 'completed',
+    createdAt: daysAgo(1),
+    code: 'dp-003',
+  },
+  {
+    payerEmail: 'ops@helvetica-digital.ch',
+    recipientEmail: 'ops@globaltrade-industries.com',
+    corridor: 'GB-SG',
+    amount: 2100000,
+    currency: 'USDC',
+    status: 'pending',
+    createdAt: minutesAgo(2),
+    code: 'dp-004',
+  },
 
   // Alpine payments
-  { payerEmail: 'treasury@alpine-custody.ch', recipientEmail: 'ops@helvetica-digital.ch', corridor: 'CH-CH', amount: 320000, currency: 'USDC', status: 'completed', createdAt: daysAgo(2), code: 'dp-alp-001' },
-  { payerEmail: 'treasury@alpine-custody.ch', recipientEmail: 'admin@aminagroup.com', corridor: 'CH-CH', amount: 175000, currency: 'USDC', status: 'completed', createdAt: daysAgo(5), code: 'dp-alp-002' },
+  {
+    payerEmail: 'treasury@alpine-custody.ch',
+    recipientEmail: 'ops@helvetica-digital.ch',
+    corridor: 'CH-CH',
+    amount: 320000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(2),
+    code: 'dp-alp-001',
+  },
+  {
+    payerEmail: 'treasury@alpine-custody.ch',
+    recipientEmail: 'admin@aminagroup.com',
+    corridor: 'CH-CH',
+    amount: 175000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(5),
+    code: 'dp-alp-002',
+  },
 
   // Satoshi Bridge payments
-  { payerEmail: 'finance@satoshi-bridge.io', recipientEmail: 'ops@chainflow-remit.sg', corridor: 'US-CH', amount: 890000, currency: 'USDC', status: 'completed', createdAt: daysAgo(3), code: 'dp-sat-001' },
-  { payerEmail: 'finance@satoshi-bridge.io', recipientEmail: 'treasury@meridian-trade.co.uk', corridor: 'US-DE', amount: 540000, currency: 'USDC', status: 'completed', createdAt: daysAgo(7), code: 'dp-sat-002' },
-  { payerEmail: 'finance@satoshi-bridge.io', recipientEmail: 'ops@eurolink-trading.de', corridor: 'US-DE', amount: 125000, currency: 'USDC', status: 'pending', createdAt: hoursAgo(1), code: 'dp-sat-003' },
+  {
+    payerEmail: 'finance@satoshi-bridge.io',
+    recipientEmail: 'ops@chainflow-remit.sg',
+    corridor: 'US-CH',
+    amount: 890000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(3),
+    code: 'dp-sat-001',
+  },
+  {
+    payerEmail: 'finance@satoshi-bridge.io',
+    recipientEmail: 'treasury@meridian-trade.co.uk',
+    corridor: 'US-DE',
+    amount: 540000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(7),
+    code: 'dp-sat-002',
+  },
+  {
+    payerEmail: 'finance@satoshi-bridge.io',
+    recipientEmail: 'ops@eurolink-trading.de',
+    corridor: 'US-DE',
+    amount: 125000,
+    currency: 'USDC',
+    status: 'pending',
+    createdAt: hoursAgo(1),
+    code: 'dp-sat-003',
+  },
 
   // ChainFlow payments
-  { payerEmail: 'ops@chainflow-remit.sg', recipientEmail: 'ops@helvetica-digital.ch', corridor: 'SG-CH', amount: 410000, currency: 'USDC', status: 'completed', createdAt: daysAgo(4), code: 'dp-cf-001' },
-  { payerEmail: 'ops@chainflow-remit.sg', recipientEmail: 'finance@pacificrim-exports.sg', corridor: 'SG-US', amount: 155000, currency: 'USDC', status: 'completed', createdAt: daysAgo(6), code: 'dp-cf-002' },
+  {
+    payerEmail: 'ops@chainflow-remit.sg',
+    recipientEmail: 'ops@helvetica-digital.ch',
+    corridor: 'SG-CH',
+    amount: 410000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(4),
+    code: 'dp-cf-001',
+  },
+  {
+    payerEmail: 'ops@chainflow-remit.sg',
+    recipientEmail: 'finance@pacificrim-exports.sg',
+    corridor: 'SG-US',
+    amount: 155000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(6),
+    code: 'dp-cf-002',
+  },
 
   // AMINA payments
-  { payerEmail: 'admin@aminagroup.com', recipientEmail: 'treasury@alpine-custody.ch', corridor: 'CH-CH', amount: 1500000, currency: 'USDC', status: 'completed', createdAt: daysAgo(2), code: 'dp-amn-001' },
-  { payerEmail: 'admin@aminagroup.com', recipientEmail: 'ops@globaltrade-industries.com', corridor: 'CH-SG', amount: 2200000, currency: 'USDC', status: 'completed', createdAt: daysAgo(8), code: 'dp-amn-002' },
-  { payerEmail: 'admin@aminagroup.com', recipientEmail: 'digital@hsbc.co.uk', corridor: 'CH-GB', amount: 800000, currency: 'USDC', status: 'pending', createdAt: hoursAgo(3), code: 'dp-amn-003' },
+  {
+    payerEmail: 'admin@aminagroup.com',
+    recipientEmail: 'treasury@alpine-custody.ch',
+    corridor: 'CH-CH',
+    amount: 1500000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(2),
+    code: 'dp-amn-001',
+  },
+  {
+    payerEmail: 'admin@aminagroup.com',
+    recipientEmail: 'ops@globaltrade-industries.com',
+    corridor: 'CH-SG',
+    amount: 2200000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(8),
+    code: 'dp-amn-002',
+  },
+  {
+    payerEmail: 'admin@aminagroup.com',
+    recipientEmail: 'digital@hsbc.co.uk',
+    corridor: 'CH-GB',
+    amount: 800000,
+    currency: 'USDC',
+    status: 'pending',
+    createdAt: hoursAgo(3),
+    code: 'dp-amn-003',
+  },
 
   // Meridian payments
-  { payerEmail: 'treasury@meridian-trade.co.uk', recipientEmail: 'finance@pacificrim-exports.sg', corridor: 'GB-SG', amount: 620000, currency: 'USDC', status: 'completed', createdAt: daysAgo(3), code: 'dp-mer-001' },
-  { payerEmail: 'treasury@meridian-trade.co.uk', recipientEmail: 'ops@eurolink-trading.de', corridor: 'GB-CH', amount: 350000, currency: 'EURC', status: 'completed', createdAt: daysAgo(10), code: 'dp-mer-002' },
+  {
+    payerEmail: 'treasury@meridian-trade.co.uk',
+    recipientEmail: 'finance@pacificrim-exports.sg',
+    corridor: 'GB-SG',
+    amount: 620000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(3),
+    code: 'dp-mer-001',
+  },
+  {
+    payerEmail: 'treasury@meridian-trade.co.uk',
+    recipientEmail: 'ops@eurolink-trading.de',
+    corridor: 'GB-CH',
+    amount: 350000,
+    currency: 'EURC',
+    status: 'completed',
+    createdAt: daysAgo(10),
+    code: 'dp-mer-002',
+  },
 
   // Pacific Rim payments
-  { payerEmail: 'finance@pacificrim-exports.sg', recipientEmail: 'ops@helvetica-digital.ch', corridor: 'SG-CH', amount: 280000, currency: 'USDC', status: 'completed', createdAt: daysAgo(5), code: 'dp-pr-001' },
-  { payerEmail: 'finance@pacificrim-exports.sg', recipientEmail: 'ops@dbs-digital.sg', corridor: 'SG-US', amount: 190000, currency: 'USDC', status: 'completed', createdAt: daysAgo(9), code: 'dp-pr-002' },
+  {
+    payerEmail: 'finance@pacificrim-exports.sg',
+    recipientEmail: 'ops@helvetica-digital.ch',
+    corridor: 'SG-CH',
+    amount: 280000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(5),
+    code: 'dp-pr-001',
+  },
+  {
+    payerEmail: 'finance@pacificrim-exports.sg',
+    recipientEmail: 'ops@dbs-digital.sg',
+    corridor: 'SG-US',
+    amount: 190000,
+    currency: 'USDC',
+    status: 'completed',
+    createdAt: daysAgo(9),
+    code: 'dp-pr-002',
+  },
 ];
 
 // ── Notifications per loginable client (unique for each) ───────────────────
@@ -779,7 +1633,8 @@ const notificationDefs: NotifDef[] = [
     type: 'COMPLIANCE_REVIEW_REQUIRED',
     priority: 'HIGH',
     title: 'Pacific Rim Exports — compliance review required',
-    message: '1,800,000 USDC escrow on SG-JP corridor flagged for compliance review. Risk score: 42.',
+    message:
+      '1,800,000 USDC escrow on SG-JP corridor flagged for compliance review. Risk score: 42.',
     metadata: { escrowCode: 'esc-e5f6a7b8', corridor: 'SG-JP', amount: 1800000 },
     createdAt: daysAgo(2),
   },
@@ -816,7 +1671,8 @@ const notificationDefs: NotifDef[] = [
     type: 'SECURITY_ALERT',
     priority: 'HIGH',
     title: 'Moscow Office — operations suspended',
-    message: 'Russia branch blocked due to EU/US/CH sanctions. All transactions through RU corridor suspended.',
+    message:
+      'Russia branch blocked due to EU/US/CH sanctions. All transactions through RU corridor suspended.',
     metadata: { branch: 'Moscow Office', countryCode: 'RU' },
     createdAt: daysAgo(14),
     isRead: true,
@@ -828,8 +1684,16 @@ const notificationDefs: NotifDef[] = [
     type: 'ESCROW_COMPLIANCE_HOLD',
     priority: 'HIGH',
     title: 'Escrow Held for Compliance Review',
-    message: 'Escrow ' + escrowCode('alpine-hold') + ' (500,000 USDC) on CH-US corridor requires compliance review. Risk score: 65.',
-    metadata: { escrowCode: escrowCode('alpine-hold'), corridor: 'CH-US', amount: 500000, riskScore: 65 },
+    message:
+      'Escrow ' +
+      escrowCode('alpine-hold') +
+      ' (500,000 USDC) on CH-US corridor requires compliance review. Risk score: 65.',
+    metadata: {
+      escrowCode: escrowCode('alpine-hold'),
+      corridor: 'CH-US',
+      amount: 500000,
+      riskScore: 65,
+    },
     createdAt: daysAgo(3),
   },
   {
@@ -876,8 +1740,16 @@ const notificationDefs: NotifDef[] = [
     type: 'ESCROW_COMPLIANCE_HOLD',
     priority: 'HIGH',
     title: 'Escrow Held for Compliance Review',
-    message: 'Escrow ' + escrowCode('satoshi-funded') + ' (450,000 USDC) on US-PH corridor requires compliance review before proceeding.',
-    metadata: { escrowCode: escrowCode('satoshi-funded'), corridor: 'US-PH', amount: 450000, riskScore: 25 },
+    message:
+      'Escrow ' +
+      escrowCode('satoshi-funded') +
+      ' (450,000 USDC) on US-PH corridor requires compliance review before proceeding.',
+    metadata: {
+      escrowCode: escrowCode('satoshi-funded'),
+      corridor: 'US-PH',
+      amount: 450000,
+      riskScore: 25,
+    },
     createdAt: daysAgo(1),
   },
   {
@@ -885,7 +1757,8 @@ const notificationDefs: NotifDef[] = [
     type: 'ESCROW_RELEASED',
     priority: 'LOW',
     title: 'Settlement complete — Meridian Trade Finance',
-    message: '500,000 USDC escrow on US-CH corridor successfully released to Meridian Trade Finance.',
+    message:
+      '500,000 USDC escrow on US-CH corridor successfully released to Meridian Trade Finance.',
     metadata: { escrowCode: escrowCode('satoshi-released'), corridor: 'US-CH', amount: 500000 },
     createdAt: daysAgo(14),
     isRead: true,
@@ -895,8 +1768,14 @@ const notificationDefs: NotifDef[] = [
     type: 'COMPLIANCE_CHECK_FAILED',
     priority: 'CRITICAL',
     title: 'Escrow failed — AMINA Bank settlement',
-    message: '75,000 USDC escrow on CH-US corridor failed during release. Manual intervention required.',
-    metadata: { escrowCode: escrowCode('satoshi-failed'), corridor: 'CH-US', amount: 75000, riskScore: 40 },
+    message:
+      '75,000 USDC escrow on CH-US corridor failed during release. Manual intervention required.',
+    metadata: {
+      escrowCode: escrowCode('satoshi-failed'),
+      corridor: 'CH-US',
+      amount: 75000,
+      riskScore: 40,
+    },
     createdAt: daysAgo(6),
   },
   {
@@ -944,7 +1823,8 @@ const notificationDefs: NotifDef[] = [
     type: 'COMPLIANCE_REVIEW_REQUIRED',
     priority: 'HIGH',
     title: 'Compliance review — US-PH corridor transaction',
-    message: 'A 75,000 USDC transaction on SG-CH corridor has been flagged for enhanced due diligence. Risk score: 22.',
+    message:
+      'A 75,000 USDC transaction on SG-CH corridor has been flagged for enhanced due diligence. Risk score: 22.',
     metadata: { corridor: 'SG-CH', riskScore: 22 },
     createdAt: daysAgo(1),
   },
@@ -964,8 +1844,16 @@ const notificationDefs: NotifDef[] = [
     type: 'ESCROW_COMPLIANCE_HOLD',
     priority: 'HIGH',
     title: 'Escrow Held for Compliance Review',
-    message: 'Escrow ' + escrowCode('amina-hold') + ' (750,000 USDC) on CH-AE corridor requires compliance review. Risk score: 55.',
-    metadata: { escrowCode: escrowCode('amina-hold'), corridor: 'CH-AE', amount: 750000, riskScore: 55 },
+    message:
+      'Escrow ' +
+      escrowCode('amina-hold') +
+      ' (750,000 USDC) on CH-AE corridor requires compliance review. Risk score: 55.',
+    metadata: {
+      escrowCode: escrowCode('amina-hold'),
+      corridor: 'CH-AE',
+      amount: 750000,
+      riskScore: 55,
+    },
     createdAt: daysAgo(2),
   },
   {
@@ -983,7 +1871,8 @@ const notificationDefs: NotifDef[] = [
     type: 'COMPLIANCE_CHECK_PASSED',
     priority: 'LOW',
     title: 'Compliance check passed — Q1 review',
-    message: 'Quarterly compliance review for AMINA Bank AG completed successfully. All accounts cleared.',
+    message:
+      'Quarterly compliance review for AMINA Bank AG completed successfully. All accounts cleared.',
     metadata: {},
     createdAt: daysAgo(30),
     isRead: true,
@@ -993,7 +1882,8 @@ const notificationDefs: NotifDef[] = [
     type: 'SYSTEM_MAINTENANCE',
     priority: 'LOW',
     title: 'Scheduled maintenance — March 25',
-    message: 'Platform maintenance window scheduled for March 25, 02:00-04:00 UTC. Settlement processing may be delayed.',
+    message:
+      'Platform maintenance window scheduled for March 25, 02:00-04:00 UTC. Settlement processing may be delayed.',
     metadata: { maintenanceDate: '2026-03-25' },
     createdAt: daysAgo(1),
   },
@@ -1013,8 +1903,14 @@ const notificationDefs: NotifDef[] = [
     type: 'ESCROW_EXPIRED',
     priority: 'MEDIUM',
     title: 'Escrow expired — HSBC Digital Assets',
-    message: '400,000 USDC escrow on EU-UK corridor expired under compliance review. Risk score: 55.',
-    metadata: { escrowCode: escrowCode('meridian-expired'), corridor: 'EU-UK', amount: 400000, riskScore: 55 },
+    message:
+      '400,000 USDC escrow on EU-UK corridor expired under compliance review. Risk score: 55.',
+    metadata: {
+      escrowCode: escrowCode('meridian-expired'),
+      corridor: 'EU-UK',
+      amount: 400000,
+      riskScore: 55,
+    },
     createdAt: daysAgo(8),
   },
   {
@@ -1031,7 +1927,8 @@ const notificationDefs: NotifDef[] = [
     type: 'KYB_EXPIRING',
     priority: 'HIGH',
     title: 'KYB verification expiring in 185 days',
-    message: 'Your FCA authorization KYB verification will expire soon. Please initiate renewal with updated trade finance documentation.',
+    message:
+      'Your FCA authorization KYB verification will expire soon. Please initiate renewal with updated trade finance documentation.',
     metadata: {},
     createdAt: daysAgo(3),
   },
@@ -1042,7 +1939,8 @@ const notificationDefs: NotifDef[] = [
     type: 'ESCROW_RELEASED',
     priority: 'LOW',
     title: 'Settlement complete — Helvetica Digital',
-    message: '180,000 USDC escrow on SG-CH corridor successfully released. Funds available in your account.',
+    message:
+      '180,000 USDC escrow on SG-CH corridor successfully released. Funds available in your account.',
     metadata: { escrowCode: escrowCode('pacificrim-released'), corridor: 'SG-CH', amount: 180000 },
     createdAt: daysAgo(7),
     isRead: true,
@@ -1070,7 +1968,8 @@ const notificationDefs: NotifDef[] = [
     type: 'COMPLIANCE_CHECK_PASSED',
     priority: 'LOW',
     title: 'Export compliance check cleared',
-    message: 'Your latest SG-US corridor export transaction passed compliance review. No further action required.',
+    message:
+      'Your latest SG-US corridor export transaction passed compliance review. No further action required.',
     metadata: { corridor: 'SG-US' },
     createdAt: daysAgo(10),
     isRead: true,
@@ -1096,7 +1995,18 @@ async function main() {
     const [src, dst] = code.split('-');
     await prisma.institutionCorridor.upsert({
       where: { code },
-      create: { code, sourceCountry: src, destCountry: dst, minAmount: cfg.min, maxAmount: cfg.max, dailyLimit: cfg.daily, monthlyLimit: cfg.monthly, requiredDocuments: cfg.docs, riskLevel: cfg.risk, status: 'ACTIVE' },
+      create: {
+        code,
+        sourceCountry: src,
+        destCountry: dst,
+        minAmount: cfg.min,
+        maxAmount: cfg.max,
+        dailyLimit: cfg.daily,
+        monthlyLimit: cfg.monthly,
+        requiredDocuments: cfg.docs,
+        riskLevel: cfg.risk,
+        status: 'ACTIVE',
+      },
       update: { minAmount: cfg.min, maxAmount: cfg.max, riskLevel: cfg.risk, status: 'ACTIVE' },
     });
   }
@@ -1120,20 +2030,45 @@ async function main() {
     };
     // Optional KYB fields
     const optionals: Record<string, any> = {
-      legalName: c.legalName, tradingName: c.tradingName, registrationNumber: c.registrationNumber,
-      registrationCountry: c.registrationCountry, entityType: c.entityType, lei: c.lei,
-      taxId: c.taxId, taxCountry: c.taxCountry, addressLine1: c.addressLine1, city: c.city,
-      state: c.state, postalCode: c.postalCode, country: c.country, jurisdiction: c.jurisdiction,
-      contactFirstName: c.contactFirstName, contactLastName: c.contactLastName,
-      contactEmail: c.contactEmail, contactPhone: c.contactPhone, contactTitle: c.contactTitle,
-      kybStatus: c.kybStatus, kybVerifiedAt: c.kybVerifiedAt, kybExpiresAt: c.kybExpiresAt,
-      riskRating: c.riskRating, sanctionsStatus: c.sanctionsStatus, sourceOfFunds: c.sourceOfFunds,
-      isRegulatedEntity: c.isRegulatedEntity, regulatoryStatus: c.regulatoryStatus,
-      licenseType: c.licenseType, licenseNumber: c.licenseNumber, regulatoryBody: c.regulatoryBody,
-      industry: c.industry, websiteUrl: c.websiteUrl, businessDescription: c.businessDescription,
-      yearEstablished: c.yearEstablished, employeeCountRange: c.employeeCountRange,
-      annualRevenueRange: c.annualRevenueRange, expectedMonthlyVolume: c.expectedMonthlyVolume,
-      walletCustodyType: c.walletCustodyType, custodianName: c.custodianName,
+      legalName: c.legalName,
+      tradingName: c.tradingName,
+      registrationNumber: c.registrationNumber,
+      registrationCountry: c.registrationCountry,
+      entityType: c.entityType,
+      lei: c.lei,
+      taxId: c.taxId,
+      taxCountry: c.taxCountry,
+      addressLine1: c.addressLine1,
+      city: c.city,
+      state: c.state,
+      postalCode: c.postalCode,
+      country: c.country,
+      jurisdiction: c.jurisdiction,
+      contactFirstName: c.contactFirstName,
+      contactLastName: c.contactLastName,
+      contactEmail: c.contactEmail,
+      contactPhone: c.contactPhone,
+      contactTitle: c.contactTitle,
+      kybStatus: c.kybStatus,
+      kybVerifiedAt: c.kybVerifiedAt,
+      kybExpiresAt: c.kybExpiresAt,
+      riskRating: c.riskRating,
+      sanctionsStatus: c.sanctionsStatus,
+      sourceOfFunds: c.sourceOfFunds,
+      isRegulatedEntity: c.isRegulatedEntity,
+      regulatoryStatus: c.regulatoryStatus,
+      licenseType: c.licenseType,
+      licenseNumber: c.licenseNumber,
+      regulatoryBody: c.regulatoryBody,
+      industry: c.industry,
+      websiteUrl: c.websiteUrl,
+      businessDescription: c.businessDescription,
+      yearEstablished: c.yearEstablished,
+      employeeCountRange: c.employeeCountRange,
+      annualRevenueRange: c.annualRevenueRange,
+      expectedMonthlyVolume: c.expectedMonthlyVolume,
+      walletCustodyType: c.walletCustodyType,
+      custodianName: c.custodianName,
       preferredSettlementChain: c.preferredSettlementChain,
     };
     for (const [k, v] of Object.entries(optionals)) {
@@ -1143,7 +2078,13 @@ async function main() {
     const client = await prisma.institutionClient.upsert({
       where: { email: c.email },
       create: data,
-      update: { companyName: c.companyName, primaryWallet: c.wallet, settledWallets: [c.wallet], status: c.status, kycStatus: c.kycStatus },
+      update: {
+        companyName: c.companyName,
+        primaryWallet: c.wallet,
+        settledWallets: [c.wallet],
+        status: c.status,
+        kycStatus: c.kycStatus,
+      },
     });
     clientMap.set(c.email, { id: client.id, wallet: c.wallet, company: c.companyName });
     console.log(`   [${c.counterpartyOnly ? 'CP' : 'OK'}] ${c.companyName} (${c.tier})`);
@@ -1192,14 +2133,22 @@ async function main() {
     const branch = await prisma.institutionBranch.create({
       data: {
         clientId: helveticaId,
-        name: b.name, city: b.city, country: b.country, countryCode: b.countryCode,
-        address: b.address, timezone: b.timezone, riskScore: b.riskScore,
-        complianceStatus: b.complianceStatus, regulatoryBody: b.regulatoryBody,
-        ...(('isSanctioned' in b) ? { isSanctioned: true, sanctionReason: (b as any).sanctionReason, isActive: false } : {}),
+        name: b.name,
+        city: b.city,
+        country: b.country,
+        countryCode: b.countryCode,
+        address: b.address,
+        timezone: b.timezone,
+        riskScore: b.riskScore,
+        complianceStatus: b.complianceStatus,
+        regulatoryBody: b.regulatoryBody,
+        ...('isSanctioned' in b
+          ? { isSanctioned: true, sanctionReason: (b as any).sanctionReason, isActive: false }
+          : {}),
       },
     });
     branchMap[b.countryCode] = branch.id;
-    console.log(`   ${b.name} (${b.countryCode})${('isSanctioned' in b) ? ' [SANCTIONED]' : ''}`);
+    console.log(`   ${b.name} (${b.countryCode})${'isSanctioned' in b ? ' [SANCTIONED]' : ''}`);
   }
 
   // ── 5. Accounts ───────────────────────────────────────────────────────
@@ -1233,7 +2182,9 @@ async function main() {
       totalAccounts++;
     }
   }
-  console.log(`   ${totalAccounts} accounts across ${Object.keys(accountsByClient).length} clients`);
+  console.log(
+    `   ${totalAccounts} accounts across ${Object.keys(accountsByClient).length} clients`
+  );
 
   // ── 6. Clean old data for all loginable clients ───────────────────────
   console.log('\n6. Cleaning previous escrows/payments/notifications...');
@@ -1258,10 +2209,18 @@ async function main() {
 
     const escrowId = crypto.randomUUID();
     const feeBps = 20;
-    const platformFee = (e.amount * feeBps) / 10000;
+    const rawFee = (e.amount * feeBps) / 10000;
+    const platformFee = Math.min(20, Math.max(0.2, rawFee));
     const expiresAt = new Date(e.createdAt.getTime() + 72 * 3600000);
 
-    const fundedAt = ['FUNDED', 'RELEASING', 'RELEASED', 'COMPLIANCE_HOLD', 'CANCELLING', 'FAILED'].includes(e.status)
+    const fundedAt = [
+      'FUNDED',
+      'RELEASING',
+      'RELEASED',
+      'COMPLIANCE_HOLD',
+      'CANCELLING',
+      'FAILED',
+    ].includes(e.status)
       ? new Date(e.createdAt.getTime() + 30 * 60000)
       : undefined;
 
@@ -1294,8 +2253,10 @@ async function main() {
     // Audit log
     await prisma.institutionAuditLog.create({
       data: {
-        escrowId, clientId: payer.id,
-        action: 'ESCROW_CREATED', actor: e.payerEmail,
+        escrowId,
+        clientId: payer.id,
+        action: 'ESCROW_CREATED',
+        actor: e.payerEmail,
         details: { corridor: e.corridor, amount: e.amount, recipient: recipient.company },
         createdAt: e.createdAt,
       },
@@ -1304,8 +2265,10 @@ async function main() {
     if (fundedAt) {
       await prisma.institutionAuditLog.create({
         data: {
-          escrowId, clientId: payer.id,
-          action: 'DEPOSIT_CONFIRMED', actor: 'system',
+          escrowId,
+          clientId: payer.id,
+          action: 'DEPOSIT_CONFIRMED',
+          actor: 'system',
           details: { amount: e.amount, txSignature: depositTx },
           createdAt: fundedAt,
         },
@@ -1315,15 +2278,24 @@ async function main() {
     if (e.status === 'COMPLIANCE_HOLD') {
       await prisma.institutionAuditLog.create({
         data: {
-          escrowId, clientId: payer.id,
-          action: 'COMPLIANCE_REVIEW_REQUIRED', actor: 'system',
-          details: { reason: 'Automated compliance check flagged for manual review', riskScore: e.riskScore },
+          escrowId,
+          clientId: payer.id,
+          action: 'COMPLIANCE_REVIEW_REQUIRED',
+          actor: 'system',
+          details: {
+            reason: 'Automated compliance check flagged for manual review',
+            riskScore: e.riskScore,
+          },
           createdAt: new Date(e.createdAt.getTime() + 15 * 60000),
         },
       });
     }
 
-    console.log(`   ${e.code} (${payer.company} -> ${recipient.company}, $${e.amount.toLocaleString()}, ${e.status})`);
+    console.log(
+      `   ${e.code} (${payer.company} -> ${recipient.company}, $${e.amount.toLocaleString()}, ${
+        e.status
+      })`
+    );
   }
 
   // ── 8. Direct Payments ────────────────────────────────────────────────
@@ -1337,9 +2309,11 @@ async function main() {
     }
 
     const feeBps = 25;
-    const platformFee = (dp.amount * feeBps) / 10000;
+    const rawFee = (dp.amount * feeBps) / 10000;
+    const platformFee = Math.min(20, Math.max(0.2, rawFee));
     const txHash = dp.status === 'completed' ? fakeTxSig(`dp-${dp.code}`) : null;
-    const settledAt = dp.status === 'completed' ? new Date(dp.createdAt.getTime() + 10 * 60000) : null;
+    const settledAt =
+      dp.status === 'completed' ? new Date(dp.createdAt.getTime() + 10 * 60000) : null;
 
     await prisma.directPayment.deleteMany({ where: { paymentCode: dp.code } });
 
@@ -1365,7 +2339,11 @@ async function main() {
       },
     });
 
-    console.log(`   ${dp.code}: ${payer.company} -> ${recipient.company} ($${dp.amount.toLocaleString()} ${dp.currency}, ${dp.status})`);
+    console.log(
+      `   ${dp.code}: ${payer.company} -> ${recipient.company} ($${dp.amount.toLocaleString()} ${
+        dp.currency
+      }, ${dp.status})`
+    );
   }
 
   // ── 9. Notifications ──────────────────────────────────────────────────
@@ -1388,12 +2366,16 @@ async function main() {
       },
     });
   }
-  console.log(`   ${notificationDefs.length} notifications across ${loginableClients.length} clients`);
+  console.log(
+    `   ${notificationDefs.length} notifications across ${loginableClients.length} clients`
+  );
 
   // ── Summary ───────────────────────────────────────────────────────────
   console.log('\n=== Staging Seed Complete ===');
   console.log(`   Corridors: ${Object.keys(corridorConfigs).length}`);
-  console.log(`   Clients: ${allClients.length} (${loginableClients.length} loginable + ${counterpartyClients.length} counterparty)`);
+  console.log(
+    `   Clients: ${allClients.length} (${loginableClients.length} loginable + ${counterpartyClients.length} counterparty)`
+  );
   console.log(`   Accounts: ${totalAccounts}`);
   console.log(`   Branches: ${helveticaBranches.length} (Helvetica)`);
   console.log(`   Escrows: ${escrowDefs.length}`);
@@ -1407,5 +2389,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => { console.error('Seed failed:', e); process.exit(1); })
-  .finally(async () => { await prisma.$disconnect(); });
+  .catch((e) => {
+    console.error('Seed failed:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

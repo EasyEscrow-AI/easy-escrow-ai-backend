@@ -106,3 +106,15 @@ export const institutionEscrowConfig = {
   load: loadInstitutionEscrowConfig,
   reset: resetInstitutionEscrowConfig,
 };
+
+/** Protocol-level fee constraints — admin settings cannot exceed these */
+export const PROTOCOL_FEE_LIMITS = {
+  /** Absolute minimum fee in USDC */
+  MIN_FEE_USDC: 0.2,
+  /** Absolute maximum fee in USDC */
+  MAX_FEE_USDC: 20.0,
+  /** Minimum allowed feeBps setting */
+  MIN_FEE_BPS: 1,
+  /** Maximum allowed feeBps setting */
+  MAX_FEE_BPS: 500,
+} as const;
