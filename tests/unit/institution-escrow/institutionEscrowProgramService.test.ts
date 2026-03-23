@@ -263,8 +263,8 @@ describe('InstitutionEscrowProgramService', () => {
         usdcMint: USDC_MINT,
         feeCollector: PAYER_PUBKEY,
         settlementAuthority: PAYER_PUBKEY,
-        amount: 1000,
-        platformFee: 10,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
         conditionType: 0,
         corridor: 'US-MX',
         expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
@@ -287,8 +287,8 @@ describe('InstitutionEscrowProgramService', () => {
         usdcMint: USDC_MINT,
         feeCollector: PAYER_PUBKEY,
         settlementAuthority: PAYER_PUBKEY,
-        amount: 1000,
-        platformFee: 10,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
         conditionType: 0,
         corridor: 'US-MX',
         expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
@@ -309,8 +309,8 @@ describe('InstitutionEscrowProgramService', () => {
         usdcMint: USDC_MINT,
         feeCollector: PAYER_PUBKEY,
         settlementAuthority: PAYER_PUBKEY,
-        amount: 1000,
-        platformFee: 10,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
         conditionType: 0,
         corridor: 'US-MX',
         expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
@@ -324,8 +324,8 @@ describe('InstitutionEscrowProgramService', () => {
         usdcMint: USDC_MINT,
         feeCollector: PAYER_PUBKEY,
         settlementAuthority: PAYER_PUBKEY,
-        amount: 1000,
-        platformFee: 10,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
         conditionType: 0,
         corridor: 'US-MX',
         expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
@@ -343,8 +343,8 @@ describe('InstitutionEscrowProgramService', () => {
         usdcMint: USDC_MINT,
         feeCollector: PAYER_PUBKEY,
         settlementAuthority: PAYER_PUBKEY,
-        amount: 1000,
-        platformFee: 10,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
         conditionType: 'COMPLIANCE_CHECK',
         corridor: 'US-MX',
         expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
@@ -459,9 +459,11 @@ describe('InstitutionEscrowProgramService', () => {
     });
 
     it('should return decoded state when account exists with funded status', async () => {
+      // Mock amount with valueOf() so Number(decoded.amount) works like a real BN
+      const bnLikeAmount = { valueOf: () => 1000000, toNumber: () => 1000000 };
       programAccountStub.institutionEscrow.fetchNullable.resolves({
         status: { funded: {} },
-        amount: { toNumber: () => 1000000 },
+        amount: bnLikeAmount,
         payer: PAYER_PUBKEY,
         recipient: RECIPIENT_PUBKEY,
       });
@@ -470,14 +472,16 @@ describe('InstitutionEscrowProgramService', () => {
 
       expect(result.exists).to.be.true;
       expect(result.status).to.equal(1);
+      expect(result.amount).to.equal(1000000);
       expect(result.payer).to.equal(PAYER_PUBKEY.toBase58());
       expect(result.recipient).to.equal(RECIPIENT_PUBKEY.toBase58());
     });
 
     it('should return created status (0) correctly', async () => {
+      const bnLikeAmount = { valueOf: () => 500000, toNumber: () => 500000 };
       programAccountStub.institutionEscrow.fetchNullable.resolves({
         status: { created: {} },
-        amount: { toNumber: () => 500000 },
+        amount: bnLikeAmount,
         payer: PAYER_PUBKEY,
         recipient: RECIPIENT_PUBKEY,
       });

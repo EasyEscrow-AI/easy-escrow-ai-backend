@@ -236,8 +236,11 @@ router.post(
 router.get(
   '/api/v1/institution-escrow/:id/deposit-tx',
   standardRateLimiter,
+  param('id').notEmpty().withMessage('Escrow ID or code is required'),
   requireInstitutionAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
     try {
       const service = getInstitutionEscrowService();
       const result = await service.getDepositTransaction(
@@ -251,7 +254,12 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      res.status(400).json({
+      const status = error.message.includes('not found')
+        ? 404
+        : error.message.includes('Access denied')
+          ? 403
+          : 400;
+      res.status(status).json({
         error: 'Deposit Transaction Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
