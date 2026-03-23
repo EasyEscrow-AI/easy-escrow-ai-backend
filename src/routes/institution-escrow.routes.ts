@@ -5,6 +5,7 @@
  * POST   /api/v1/institution-escrow/draft        → saveDraft
  * PUT    /api/v1/institution-escrow/:id/draft    → updateDraft
  * POST   /api/v1/institution-escrow/:id/submit   → submitDraft
+ * GET    /api/v1/institution-escrow/:id/deposit-tx → getDepositTransaction
  * POST   /api/v1/institution-escrow/:id/deposit  → recordDeposit
  * POST   /api/v1/institution-escrow/:id/release  → releaseFunds
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
@@ -14,7 +15,7 @@
 
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { validationResult } from 'express-validator';
+import { param, validationResult } from 'express-validator';
 import {
   requireInstitutionAuth,
   requireSettlementAuthority,
@@ -153,19 +154,15 @@ router.put(
 
     try {
       const service = getInstitutionEscrowService();
-      const result = await service.updateDraft(
-        req.institutionClient!.clientId,
-        req.params.id,
-        {
-          payerWallet: req.body.payerWallet,
-          recipientWallet: req.body.recipientWallet,
-          amount: req.body.amount,
-          corridor: req.body.corridor,
-          conditionType: req.body.conditionType,
-          settlementAuthority: req.body.settlementAuthority,
-          tokenMint: req.body.tokenMint,
-        },
-      );
+      const result = await service.updateDraft(req.institutionClient!.clientId, req.params.id, {
+        payerWallet: req.body.payerWallet,
+        recipientWallet: req.body.recipientWallet,
+        amount: req.body.amount,
+        corridor: req.body.corridor,
+        conditionType: req.body.conditionType,
+        settlementAuthority: req.body.settlementAuthority,
+        tokenMint: req.body.tokenMint,
+      });
 
       res.status(200).json({
         success: true,
@@ -197,7 +194,7 @@ router.post(
       const result = await service.submitDraft(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.expiryHours,
+        req.body.expiryHours
       );
 
       res.status(200).json({
@@ -209,6 +206,42 @@ router.post(
       const status = error.message.includes('Compliance') ? 422 : 400;
       res.status(status).json({
         error: 'Draft Submission Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// GET /api/v1/institution-escrow/:id/deposit-tx
+router.get(
+  '/api/v1/institution-escrow/:id/deposit-tx',
+  standardRateLimiter,
+  param('id').notEmpty().withMessage('Escrow ID or code is required'),
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
+    try {
+      const service = getInstitutionEscrowService();
+      const result = await service.getDepositTransaction(
+        req.institutionClient!.clientId,
+        req.params.id
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('not found')
+        ? 404
+        : error.message.includes('Access denied')
+        ? 403
+        : 400;
+      res.status(status).json({
+        error: 'Deposit Transaction Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
