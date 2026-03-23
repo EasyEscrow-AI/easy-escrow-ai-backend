@@ -2,6 +2,7 @@ import { prisma } from '../config/database';
 import * as crypto from 'crypto';
 import type { PrismaClient } from '../generated/prisma';
 import { isValidSolanaAddress } from '../models/validators/solana.validator';
+import { PROTOCOL_FEE_LIMITS } from '../config/institution-escrow.config';
 
 // Fields allowed to be updated via updateSettings
 const ALLOWED_SETTINGS_FIELDS = [
@@ -23,6 +24,9 @@ const ALLOWED_SETTINGS_FIELDS = [
   'theme',
   'twoFactorEnabled',
   'aiRecommendations',
+  'feeBps',
+  'minFeeUsdc',
+  'maxFeeUsdc',
 ] as const;
 
 export class InstitutionClientSettingsService {
@@ -67,6 +71,9 @@ export class InstitutionClientSettingsService {
       defaultToken: settings.defaultToken,
       emailNotifications: settings.emailNotifications,
       kycStatus: client?.kycStatus ?? null,
+      feeBps: settings.feeBps,
+      minFeeUsdc: settings.minFeeUsdc ? Number(settings.minFeeUsdc) : 0.2,
+      maxFeeUsdc: settings.maxFeeUsdc ? Number(settings.maxFeeUsdc) : 20.0,
     };
   }
 
@@ -89,13 +96,19 @@ export class InstitutionClientSettingsService {
         throw new Error('manualReviewThreshold must be a non-negative number or null');
       }
     }
-    if ('autoTravelRule' in filteredUpdates && typeof filteredUpdates.autoTravelRule !== 'boolean') {
+    if (
+      'autoTravelRule' in filteredUpdates &&
+      typeof filteredUpdates.autoTravelRule !== 'boolean'
+    ) {
       throw new Error('autoTravelRule must be a boolean');
     }
     if ('aiAutoRelease' in filteredUpdates && typeof filteredUpdates.aiAutoRelease !== 'boolean') {
       throw new Error('aiAutoRelease must be a boolean');
     }
-    if ('emailNotifications' in filteredUpdates && typeof filteredUpdates.emailNotifications !== 'boolean') {
+    if (
+      'emailNotifications' in filteredUpdates &&
+      typeof filteredUpdates.emailNotifications !== 'boolean'
+    ) {
       throw new Error('emailNotifications must be a boolean');
     }
     if ('riskTolerance' in filteredUpdates) {
@@ -110,7 +123,10 @@ export class InstitutionClientSettingsService {
       }
     }
     if ('defaultToken' in filteredUpdates) {
-      if (typeof filteredUpdates.defaultToken !== 'string' || filteredUpdates.defaultToken.trim().length === 0) {
+      if (
+        typeof filteredUpdates.defaultToken !== 'string' ||
+        filteredUpdates.defaultToken.trim().length === 0
+      ) {
         throw new Error('defaultToken must be a non-empty string');
       }
     }
@@ -126,11 +142,42 @@ export class InstitutionClientSettingsService {
         throw new Error('theme must be one of: light, dark, system (or null)');
       }
     }
-    if ('twoFactorEnabled' in filteredUpdates && typeof filteredUpdates.twoFactorEnabled !== 'boolean') {
+    if (
+      'twoFactorEnabled' in filteredUpdates &&
+      typeof filteredUpdates.twoFactorEnabled !== 'boolean'
+    ) {
       throw new Error('twoFactorEnabled must be a boolean');
     }
-    if ('aiRecommendations' in filteredUpdates && typeof filteredUpdates.aiRecommendations !== 'boolean') {
+    if (
+      'aiRecommendations' in filteredUpdates &&
+      typeof filteredUpdates.aiRecommendations !== 'boolean'
+    ) {
       throw new Error('aiRecommendations must be a boolean');
+    }
+    if ('feeBps' in filteredUpdates) {
+      const v = filteredUpdates.feeBps;
+      if (
+        typeof v !== 'number' ||
+        !Number.isInteger(v) ||
+        v < PROTOCOL_FEE_LIMITS.MIN_FEE_BPS ||
+        v > PROTOCOL_FEE_LIMITS.MAX_FEE_BPS
+      ) {
+        throw new Error(
+          `feeBps must be an integer between ${PROTOCOL_FEE_LIMITS.MIN_FEE_BPS} and ${PROTOCOL_FEE_LIMITS.MAX_FEE_BPS}`
+        );
+      }
+    }
+    if ('minFeeUsdc' in filteredUpdates) {
+      const v = filteredUpdates.minFeeUsdc;
+      if (typeof v !== 'number' || v < PROTOCOL_FEE_LIMITS.MIN_FEE_USDC) {
+        throw new Error(`minFeeUsdc must be at least ${PROTOCOL_FEE_LIMITS.MIN_FEE_USDC}`);
+      }
+    }
+    if ('maxFeeUsdc' in filteredUpdates) {
+      const v = filteredUpdates.maxFeeUsdc;
+      if (typeof v !== 'number' || v > PROTOCOL_FEE_LIMITS.MAX_FEE_USDC) {
+        throw new Error(`maxFeeUsdc must be at most ${PROTOCOL_FEE_LIMITS.MAX_FEE_USDC}`);
+      }
     }
 
     const settings = await this.prisma.institutionClientSettings.upsert({
@@ -156,17 +203,10 @@ export class InstitutionClientSettingsService {
     wallets: { primaryWallet?: string; settlementWallet?: string }
   ) {
     if (wallets.primaryWallet && !isValidSolanaAddress(wallets.primaryWallet)) {
-      throw new Error(
-        `Invalid Solana address for primaryWallet: ${wallets.primaryWallet}`
-      );
+      throw new Error(`Invalid Solana address for primaryWallet: ${wallets.primaryWallet}`);
     }
-    if (
-      wallets.settlementWallet &&
-      !isValidSolanaAddress(wallets.settlementWallet)
-    ) {
-      throw new Error(
-        `Invalid Solana address for settlementWallet: ${wallets.settlementWallet}`
-      );
+    if (wallets.settlementWallet && !isValidSolanaAddress(wallets.settlementWallet)) {
+      throw new Error(`Invalid Solana address for settlementWallet: ${wallets.settlementWallet}`);
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -223,7 +263,7 @@ export class InstitutionClientSettingsService {
       provider?: string;
       isPrimary?: boolean;
       isSettlement?: boolean;
-    },
+    }
   ) {
     if (!data.name || !data.address) {
       throw new Error('name and address are required');
@@ -268,7 +308,8 @@ export class InstitutionClientSettingsService {
             description: data.description !== undefined ? data.description : existing.description,
             provider: data.provider !== undefined ? data.provider : existing.provider,
             isPrimary: data.isPrimary !== undefined ? data.isPrimary : existing.isPrimary,
-            isSettlement: data.isSettlement !== undefined ? data.isSettlement : existing.isSettlement,
+            isSettlement:
+              data.isSettlement !== undefined ? data.isSettlement : existing.isSettlement,
           },
         });
       } else {
@@ -306,7 +347,12 @@ export class InstitutionClientSettingsService {
         await tx.institutionClientSettings.upsert({
           where: { clientId },
           update: { settlementAuthorityWallet: wallet.address },
-          create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC', settlementAuthorityWallet: wallet.address },
+          create: {
+            clientId,
+            defaultCurrency: 'USDC',
+            timezone: 'UTC',
+            settlementAuthorityWallet: wallet.address,
+          },
         });
       }
 
@@ -347,11 +393,7 @@ export class InstitutionClientSettingsService {
    * Generate a new API key for a client
    * Returns the raw key only once at creation time
    */
-  async generateApiKey(
-    clientId: string,
-    name: string,
-    permissions: string[]
-  ) {
+  async generateApiKey(clientId: string, name: string, permissions: string[]) {
     const rawKey = `inst_${crypto.randomBytes(32).toString('hex')}`;
     const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
 

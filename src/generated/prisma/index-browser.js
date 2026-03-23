@@ -602,6 +602,9 @@ exports.Prisma.InstitutionClientSettingsScalarFieldEnum = {
   theme: 'theme',
   twoFactorEnabled: 'twoFactorEnabled',
   aiRecommendations: 'aiRecommendations',
+  feeBps: 'feeBps',
+  minFeeUsdc: 'minFeeUsdc',
+  maxFeeUsdc: 'maxFeeUsdc',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

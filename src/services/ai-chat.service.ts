@@ -609,6 +609,10 @@ export class AiChatService {
         rateBps: feeBps,
         ratePercent: `${feeBps / 100}%`,
         description: `${feeBps / 100}% of escrow amount`,
+        minFeeUsdc: 0.2,
+        maxFeeUsdc: 20.0,
+        feeNote:
+          'Fees are clamped to min $0.20 / max $20.00 per escrow. Institutions can customize via settings.',
       },
       defaultExpiryHours: escrowConfig.defaultExpiryHours,
       supportedCorridors: corridors.map((c) => ({

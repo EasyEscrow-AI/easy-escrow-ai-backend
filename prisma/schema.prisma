@@ -1129,6 +1129,9 @@ model InstitutionClientSettings {
   theme                     String?   // light, dark, system
   twoFactorEnabled          Boolean   @default(false) @map("two_factor_enabled")
   aiRecommendations         Boolean   @default(true) @map("ai_recommendations")
+  feeBps                    Int       @default(20) @map("fee_bps")  // Fee in basis points (default 0.20%)
+  minFeeUsdc                Decimal   @default(0.20) @map("min_fee_usdc") @db.Decimal(20, 6)  // Minimum fee in USDC
+  maxFeeUsdc                Decimal   @default(20.00) @map("max_fee_usdc") @db.Decimal(20, 6)  // Maximum fee in USDC
   createdAt                 DateTime  @default(now()) @map("created_at")
   updatedAt                 DateTime  @updatedAt @map("updated_at")
 
