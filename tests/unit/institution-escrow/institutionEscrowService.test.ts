@@ -96,6 +96,8 @@ describe('InstitutionEscrowService', () => {
     prismaStub = {
       institutionClient: {
         findUnique: sandbox.stub().resolves(makeClient()),
+        findFirst: sandbox.stub().resolves(makeClient()),
+        findMany: sandbox.stub().resolves([]),
       },
       institutionEscrow: {
         create: sandbox.stub().callsFake(async (params: any) => ({
@@ -118,8 +120,15 @@ describe('InstitutionEscrowService', () => {
       },
       institutionAuditLog: {
         create: sandbox.stub().resolves({}),
+        findMany: sandbox.stub().resolves([]),
       },
       institutionAccount: {
+        findMany: sandbox.stub().resolves([]),
+      },
+      institutionCorridor: {
+        findUnique: sandbox.stub().resolves(null),
+      },
+      institutionAiAnalysis: {
         findMany: sandbox.stub().resolves([]),
       },
     };
@@ -497,6 +506,125 @@ describe('InstitutionEscrowService', () => {
       expect(findManyCall.args[0].skip).to.equal(0);
       expect(result).to.have.property('limit', 20);
       expect(result).to.have.property('offset', 0);
+    });
+  });
+
+  // ─── Party Name Fields ──────────────────────────────────
+
+  describe('party name fields', () => {
+    it('should include party name fields in list response', async () => {
+      prismaStub.institutionEscrow.findMany.resolves([makeEscrow()]);
+      prismaStub.institutionEscrow.count.resolves(1);
+
+      const result = await service.listEscrows({ clientId: CLIENT_ID });
+
+      const escrow = result.escrows[0];
+      expect(escrow).to.have.property('payerName');
+      expect(escrow).to.have.property('payerAccountLabel');
+      expect(escrow).to.have.property('recipientName');
+      expect(escrow).to.have.property('recipientAccountLabel');
+      expect(escrow).to.have.property('counterpartyId');
+    });
+
+    it('should resolve payerName from client companyName', async () => {
+      prismaStub.institutionEscrow.findMany.resolves([makeEscrow()]);
+      prismaStub.institutionEscrow.count.resolves(1);
+      prismaStub.institutionClient.findUnique.resolves(makeClient({ companyName: 'Optimus Exchange AG' }));
+
+      const result = await service.listEscrows({ clientId: CLIENT_ID });
+
+      expect(result.escrows[0].payerName).to.equal('Optimus Exchange AG');
+    });
+
+    it('should resolve payerAccountLabel from matching account', async () => {
+      prismaStub.institutionEscrow.findMany.resolves([makeEscrow()]);
+      prismaStub.institutionEscrow.count.resolves(1);
+
+      // Stub the account query — first call is for payer accounts (matching clientId + payerWallet)
+      prismaStub.institutionAccount.findMany
+        .onFirstCall().resolves([{ walletAddress: PAYER_WALLET, label: 'Operating Account', name: 'Main' }])
+        .onSecondCall().resolves([]); // recipient accounts
+
+      const result = await service.listEscrows({ clientId: CLIENT_ID });
+
+      expect(result.escrows[0].payerAccountLabel).to.equal('Operating Account');
+    });
+
+    it('should resolve recipientName from account client relation', async () => {
+      prismaStub.institutionEscrow.findMany.resolves([makeEscrow()]);
+      prismaStub.institutionEscrow.count.resolves(1);
+
+      // Second account query (recipient accounts) returns match with client
+      prismaStub.institutionAccount.findMany
+        .onFirstCall().resolves([]) // payer accounts
+        .onSecondCall().resolves([{
+          walletAddress: RECIPIENT_WALLET,
+          label: 'Treasury',
+          name: 'Treasury Account',
+          client: { id: 'recipient-client-id', companyName: 'Satoshi Industries' },
+        }]);
+
+      const result = await service.listEscrows({ clientId: CLIENT_ID });
+
+      expect(result.escrows[0].recipientName).to.equal('Satoshi Industries');
+      expect(result.escrows[0].recipientAccountLabel).to.equal('Treasury');
+      expect(result.escrows[0].counterpartyId).to.equal('recipient-client-id');
+    });
+
+    it('should resolve recipientName from client primaryWallet', async () => {
+      prismaStub.institutionEscrow.findMany.resolves([makeEscrow()]);
+      prismaStub.institutionEscrow.count.resolves(1);
+
+      // No account matches
+      prismaStub.institutionAccount.findMany.resolves([]);
+      // But client primaryWallet matches
+      prismaStub.institutionClient.findMany.resolves([{
+        id: 'recipient-client-id',
+        companyName: 'Recipient Corp',
+        primaryWallet: RECIPIENT_WALLET,
+        settledWallets: [],
+      }]);
+
+      const result = await service.listEscrows({ clientId: CLIENT_ID });
+
+      expect(result.escrows[0].recipientName).to.equal('Recipient Corp');
+      expect(result.escrows[0].recipientAccountLabel).to.be.null;
+      expect(result.escrows[0].counterpartyId).to.equal('recipient-client-id');
+    });
+
+    it('should return null fields when no matches found', async () => {
+      prismaStub.institutionEscrow.findMany.resolves([makeEscrow({ recipientWallet: 'unknown-wallet' })]);
+      prismaStub.institutionEscrow.count.resolves(1);
+      prismaStub.institutionAccount.findMany.resolves([]);
+      prismaStub.institutionClient.findMany.resolves([]);
+
+      const result = await service.listEscrows({ clientId: CLIENT_ID });
+
+      expect(result.escrows[0].recipientName).to.be.null;
+      expect(result.escrows[0].recipientAccountLabel).to.be.null;
+      expect(result.escrows[0].counterpartyId).to.be.null;
+    });
+
+    it('should include party name fields in counterparty getEscrow', async () => {
+      // Escrow owned by another client, counterparty access via account wallet
+      prismaStub.institutionEscrow.findUnique.resolves(
+        makeEscrow({
+          clientId: 'other-client',
+          payerWallet: 'SomeOtherPayer1111111111111111111111111111111',
+          recipientWallet: PAYER_WALLET,
+        }),
+      );
+      prismaStub.institutionAccount.findMany.resolves([
+        { walletAddress: PAYER_WALLET },
+      ]);
+
+      const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
+
+      expect(result).to.have.property('payerName');
+      expect(result).to.have.property('payerAccountLabel');
+      expect(result).to.have.property('recipientName');
+      expect(result).to.have.property('recipientAccountLabel');
+      expect(result).to.have.property('counterpartyId');
     });
   });
 });
