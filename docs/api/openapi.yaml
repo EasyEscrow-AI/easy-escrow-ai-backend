@@ -6130,6 +6130,10 @@ components:
           type: string
           nullable: true
           description: On-chain escrow USDC address. Only populated after submission/deposit.
+        initTxSignature:
+          type: string
+          nullable: true
+          description: Initialization transaction signature (on-chain escrow creation)
         depositTxSignature:
           type: string
           nullable: true

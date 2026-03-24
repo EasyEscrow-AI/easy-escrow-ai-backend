@@ -1201,6 +1201,7 @@ model InstitutionEscrow {
   escrowPda          String? @map("escrow_pda")
   vaultPda           String? @map("vault_pda")
   nonceAccount       String? @map("nonce_account")
+  initTxSignature    String? @map("init_tx_signature")
   depositTxSignature String? @map("deposit_tx_signature")
   releaseTxSignature String? @map("release_tx_signature")
   cancelTxSignature  String? @map("cancel_tx_signature")
