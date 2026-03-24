@@ -127,6 +127,7 @@ describe('InstitutionEscrowService', () => {
     // Stub compliance service
     complianceStub = {
       validateTransaction: sandbox.stub().resolves(defaultComplianceResult),
+      getComplianceThresholds: sandbox.stub().resolves({ rejectScore: 90, holdScore: 70 }),
     };
 
     // Stub allowlist service
@@ -201,7 +202,7 @@ describe('InstitutionEscrowService', () => {
       }
     });
 
-    it('should create with COMPLIANCE_HOLD when risk score is medium', async () => {
+    it('should create with CREATED status even when compliance has warnings', async () => {
       complianceStub.validateTransaction.resolves({
         ...defaultComplianceResult,
         passed: false,
@@ -211,9 +212,9 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.createEscrow(defaultParams);
 
-      // The escrow should be created with COMPLIANCE_HOLD status
+      // Escrow should always be CREATED — COMPLIANCE_HOLD is only for post-funding
       const createCall = prismaStub.institutionEscrow.create.firstCall;
-      expect(createCall.args[0].data.status).to.equal('COMPLIANCE_HOLD');
+      expect(createCall.args[0].data.status).to.equal('CREATED');
       expect(result.complianceResult).to.have.property('passed', false);
     });
 

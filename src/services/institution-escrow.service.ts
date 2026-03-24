@@ -41,6 +41,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   ESCROW_CREATED: 'Escrow Created',
   COMPLIANCE_SCREENING: 'Compliance Screening',
   COMPLIANCE_HOLD: 'Compliance Hold',
+  COMPLIANCE_WARNING: 'Compliance Warning',
   DEPOSIT_CONFIRMED: 'Escrow Funded',
   AI_RELEASE_CHECK: 'AI Analysis',
   FUNDS_RELEASED: 'Funds Released',
@@ -284,10 +285,10 @@ export class InstitutionEscrowService {
     // 5. Calculate platform fee with min/max clamping from client settings
     const platformFee = await this.calculatePlatformFee(clientId, amount);
 
-    // 6. Determine status based on compliance
-    const initialStatus: InstitutionEscrowStatus = complianceResult.passed
-      ? 'CREATED'
-      : 'COMPLIANCE_HOLD';
+    // 6. Determine initial status — always CREATED per lifecycle design.
+    // Compliance concerns are recorded in riskScore and audit trail;
+    // COMPLIANCE_HOLD is only applied after funding (at release time).
+    const initialStatus: InstitutionEscrowStatus = 'CREATED';
 
     // 7. Calculate expiry
     const expiresAt = new Date();
@@ -435,38 +436,26 @@ export class InstitutionEscrowService {
         : `${failedChecks.length} failed, ${warnChecks.length} warnings — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
     });
 
-    // If held for compliance, log the hold separately
-    if (initialStatus === 'COMPLIANCE_HOLD') {
-      await this.createKytAuditLog(escrow, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
+    // Log compliance warnings if any checks failed (but don't hold the escrow)
+    if (!complianceResult.passed) {
+      await this.createKytAuditLog(escrow, 'COMPLIANCE_WARNING', 'EasyEscrow AI Assistant', {
         riskScore: complianceResult.riskScore,
         riskLevel: complianceResult.riskLevel,
-        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
+        message: `Compliance warnings noted — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel}). Review recommended before release.`,
       });
     }
 
     // 11. Send notifications
     try {
       const notificationService = getInstitutionNotificationService();
-      if (initialStatus === 'COMPLIANCE_HOLD') {
-        await notificationService.notify({
-          clientId,
-          escrowId,
-          type: 'ESCROW_COMPLIANCE_HOLD',
-          priority: 'HIGH',
-          title: 'Escrow Held for Compliance Review',
-          message: `Escrow ${escrowCode} (${amount} USDC) requires compliance review before proceeding.`,
-          metadata: { amount, corridor, riskScore: complianceResult.riskScore },
-        });
-      } else {
-        await notificationService.notify({
-          clientId,
-          escrowId,
-          type: 'ESCROW_CREATED',
-          title: 'Escrow Created',
-          message: `Escrow ${escrowCode} created for ${amount} USDC on corridor ${corridor}. Awaiting deposit.`,
-          metadata: { amount, corridor, escrowCode },
-        });
-      }
+      await notificationService.notify({
+        clientId,
+        escrowId,
+        type: 'ESCROW_CREATED',
+        title: 'Escrow Created',
+        message: `Escrow ${escrowCode} created for ${amount} USDC on corridor ${corridor}. Awaiting deposit.`,
+        metadata: { amount, corridor, escrowCode, riskScore: complianceResult.riskScore },
+      });
     } catch (error) {
       console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
     }
@@ -632,7 +621,7 @@ export class InstitutionEscrowService {
 
   /**
    * Submit a DRAFT escrow — validates all required fields are present,
-   * runs compliance checks, assigns nonce, and transitions to CREATED (or COMPLIANCE_HOLD).
+   * runs compliance checks, assigns nonce, and transitions to CREATED.
    */
   async submitDraft(
     clientId: string,
@@ -680,10 +669,9 @@ export class InstitutionEscrowService {
       }
     }
 
-    // Determine status
-    const newStatus: InstitutionEscrowStatus = complianceResult.passed
-      ? 'CREATED'
-      : 'COMPLIANCE_HOLD';
+    // Determine status — always CREATED per lifecycle design.
+    // COMPLIANCE_HOLD is only applied after funding (at release time).
+    const newStatus: InstitutionEscrowStatus = 'CREATED';
 
     // Calculate expiry
     const expiresAt = new Date();
@@ -796,51 +784,35 @@ export class InstitutionEscrowService {
         : `${failedChecks2.length} failed, ${warnChecks2.length} warnings — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
     });
 
-    if (newStatus === 'COMPLIANCE_HOLD') {
-      await this.createKytAuditLog(updated, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
+    // Log compliance warnings if any checks failed (but don't hold the escrow)
+    if (!complianceResult.passed) {
+      await this.createKytAuditLog(updated, 'COMPLIANCE_WARNING', 'EasyEscrow AI Assistant', {
         riskScore: complianceResult.riskScore,
         riskLevel: complianceResult.riskLevel,
-        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
+        message: `Compliance warnings noted — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel}). Review recommended before release.`,
       });
     }
 
     await this.cacheEscrow(updated);
 
-    // Send notification (same as createEscrow)
+    // Send notification
     try {
       const notificationService = getInstitutionNotificationService();
-      if (newStatus === 'COMPLIANCE_HOLD') {
-        await notificationService.notify({
-          clientId,
-          escrowId,
-          type: 'ESCROW_COMPLIANCE_HOLD',
-          priority: 'HIGH',
-          title: 'Escrow Held for Compliance Review',
-          message: `Escrow ${escrow.escrowCode} (${Number(
-            escrow.amount
-          )} USDC) requires compliance review before proceeding.`,
-          metadata: {
-            amount: Number(escrow.amount),
-            corridor: escrow.corridor,
-            riskScore: complianceResult.riskScore,
-          },
-        });
-      } else {
-        await notificationService.notify({
-          clientId,
-          escrowId,
-          type: 'ESCROW_CREATED',
-          title: 'Escrow Created',
-          message: `Escrow ${escrow.escrowCode} created for ${Number(
-            escrow.amount
-          )} USDC on corridor ${escrow.corridor}. Awaiting deposit.`,
-          metadata: {
-            amount: Number(escrow.amount),
-            corridor: escrow.corridor,
-            escrowCode: escrow.escrowCode,
-          },
-        });
-      }
+      await notificationService.notify({
+        clientId,
+        escrowId,
+        type: 'ESCROW_CREATED',
+        title: 'Escrow Created',
+        message: `Escrow ${escrow.escrowCode} created for ${Number(
+          escrow.amount
+        )} USDC on corridor ${escrow.corridor}. Awaiting deposit.`,
+        metadata: {
+          amount: Number(escrow.amount),
+          corridor: escrow.corridor,
+          escrowCode: escrow.escrowCode,
+          riskScore: complianceResult.riskScore,
+        },
+      });
     } catch (error) {
       console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
     }
