@@ -374,7 +374,7 @@ export class InstitutionEscrowService {
             /* non-critical */
           }
         }
-        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', payerWallet, {
+        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', client.companyName, {
           error: (error as Error).message,
         });
         throw new Error(`On-chain escrow initialization failed: ${(error as Error).message}`);
@@ -411,7 +411,7 @@ export class InstitutionEscrowService {
     });
 
     // 12. Create KYT-enriched audit logs
-    await this.createKytAuditLog(escrow, 'ESCROW_CREATED', payerWallet, {
+    await this.createKytAuditLog(escrow, 'ESCROW_CREATED', client.companyName, {
       initTxSignature,
       conditionType,
       releaseMode,
@@ -544,7 +544,7 @@ export class InstitutionEscrowService {
       },
     });
 
-    await this.createAuditLog(escrowId, clientId, 'DRAFT_SAVED', payerWallet, {
+    await this.createAuditLog(escrowId, clientId, 'DRAFT_SAVED', client.companyName, {
       amount: resolvedAmount,
       corridor: corridor || null,
     });
@@ -610,7 +610,7 @@ export class InstitutionEscrowService {
       data: updateData as any,
     });
 
-    await this.createAuditLog(escrowId, clientId, 'DRAFT_UPDATED', escrow.payerWallet, {
+    await this.createAuditLog(escrowId, clientId, 'DRAFT_UPDATED', await this.resolveActorName(clientId), {
       updatedFields: Object.keys(updateData),
     });
 
@@ -742,7 +742,7 @@ export class InstitutionEscrowService {
             /* non-critical */
           }
         }
-        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', escrow.payerWallet, {
+        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', await this.resolveActorName(clientId), {
           error: (error as Error).message,
         });
         throw new Error(`On-chain escrow initialization failed: ${(error as Error).message}`);
@@ -762,7 +762,7 @@ export class InstitutionEscrowService {
       },
     });
 
-    await this.createKytAuditLog(updated, 'DRAFT_SUBMITTED', escrow.payerWallet, {
+    await this.createKytAuditLog(updated, 'DRAFT_SUBMITTED', client.companyName, {
       conditionType: escrow.conditionType,
       message: `Draft submitted for ${Number(escrow.amount)} USDC on corridor ${escrow.corridor}`,
     });
@@ -913,7 +913,7 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createKytAuditLog(escrow, 'DEPOSIT_CONFIRMED', escrow.payerWallet, {
+    await this.createKytAuditLog(escrow, 'DEPOSIT_CONFIRMED', await this.resolveActorName(escrow.clientId), {
       txSignature,
       message: `${Number(escrow.amount)} USDC deposited to PDA`,
     });
@@ -1347,7 +1347,7 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createKytAuditLog(escrow, 'ESCROW_CANCELLED', escrow.payerWallet, {
+    await this.createKytAuditLog(escrow, 'ESCROW_CANCELLED', await this.resolveActorName(escrow.clientId), {
       reason,
       previousStatus: escrow.status,
       cancelTxSignature,
@@ -1405,7 +1405,7 @@ export class InstitutionEscrowService {
             where: { escrowId },
             data: { status: 'INSUFFICIENT_FUNDS' },
           });
-          await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
+          await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', await this.resolveActorName(escrow.clientId), {
             available: tokenAccount.amount.toString(),
             required: requiredMicroUsdc.toString(),
             message: `Insufficient balance: has ${tokenAccount.amount}, needs ${requiredMicroUsdc} micro-USDC`,
@@ -1443,7 +1443,7 @@ export class InstitutionEscrowService {
           where: { escrowId },
           data: { status: 'INSUFFICIENT_FUNDS' },
         });
-        await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
+        await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', await this.resolveActorName(escrow.clientId), {
           reason: 'Token account does not exist',
           message: 'Payer token account does not exist',
         });
@@ -1658,6 +1658,17 @@ export class InstitutionEscrowService {
     } catch (error) {
       console.error('[InstitutionEscrowService] Failed to create audit log:', error);
     }
+  }
+
+  /**
+   * Resolve a clientId to the client's company name for audit log actor field.
+   */
+  private async resolveActorName(clientId: string): Promise<string> {
+    const client = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+      select: { companyName: true },
+    });
+    return client?.companyName || clientId;
   }
 
   /**
