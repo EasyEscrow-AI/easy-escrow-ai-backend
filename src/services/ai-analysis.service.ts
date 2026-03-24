@@ -23,7 +23,14 @@ import {
   CLIENT_SENSITIVE_FIELDS,
 } from '../utils/data-anonymizer';
 import { escrowWhere } from '../utils/uuid-conversion';
-import { evaluateEscrow, EscrowData, RulesEngineResult, RiskLevel } from './escrow-rules-engine';
+import {
+  evaluateEscrow,
+  EscrowData,
+  RulesEngineResult,
+  RiskLevel,
+  TriggeredRule,
+  ThresholdRule,
+} from './escrow-rules-engine';
 
 const AI_RATE_LIMIT_KEY_PREFIX = 'institution:ai:ratelimit:';
 const AI_RATE_LIMIT_MAX = 5; // 5 requests per minute per client
@@ -43,6 +50,7 @@ export interface EscrowAnalysisResult extends AiAnalysisResult {
   summary: string;
   risk: RiskLevel;
   sections?: Record<string, { risk: RiskLevel; title: string; finding: string }>;
+  triggeredRules?: TriggeredRule[];
   tier?: 'preliminary' | 'full';
   aiAnalysisAvailable?: boolean;
   model?: string;
@@ -400,10 +408,10 @@ export class AiAnalysisService {
         existing.riskScore <= 25
           ? 'low_risk'
           : existing.riskScore <= 60
-            ? 'medium_risk'
-            : existing.riskScore <= 80
-              ? 'high_risk'
-              : 'blocked';
+          ? 'medium_risk'
+          : existing.riskScore <= 80
+          ? 'high_risk'
+          : 'blocked';
       const result: EscrowAnalysisResult = {
         risk: existingRisk,
         riskScore: existing.riskScore,
@@ -656,6 +664,33 @@ RESPONSE FORMAT (valid JSON only, no other text):
       availableCorridors: availableCorridors.length > 0 ? availableCorridors : null,
     };
 
+    // Fetch corridor threshold rules if corridor is set
+    if (escrow.corridor) {
+      try {
+        const rules = await this.prisma.corridorThresholdRule.findMany({
+          where: { corridorCode: escrow.corridor, isActive: true },
+          select: {
+            ruleId: true,
+            label: true,
+            riskLevel: true,
+            thresholdType: true,
+            thresholdAmount: true,
+            thresholdMax: true,
+            currency: true,
+            detailTemplate: true,
+            regulationRef: true,
+          },
+        });
+        escrowData.thresholdRules = rules.map((r: any) => ({
+          ...r,
+          thresholdAmount: r.thresholdAmount ? Number(r.thresholdAmount) : null,
+          thresholdMax: r.thresholdMax ? Number(r.thresholdMax) : null,
+        }));
+      } catch {
+        // Non-critical — threshold rules are supplementary
+      }
+    }
+
     // Run the local rules engine (<1ms)
     const preliminary = evaluateEscrow(escrowData);
 
@@ -725,16 +760,16 @@ RESPONSE FORMAT (valid JSON only, no other text):
       preliminary.risk === 'low_risk'
         ? 15
         : preliminary.risk === 'medium_risk'
-          ? 45
-          : preliminary.risk === 'high_risk'
-            ? 75
-            : 95;
+        ? 45
+        : preliminary.risk === 'high_risk'
+        ? 75
+        : 95;
     const recommendation =
       preliminary.risk === 'low_risk'
         ? 'APPROVE'
         : preliminary.risk === 'blocked'
-          ? 'REJECT'
-          : 'REVIEW';
+        ? 'REJECT'
+        : 'REVIEW';
 
     return {
       risk: preliminary.risk,
@@ -745,6 +780,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
       details: preliminary.summary,
       summary: preliminary.summary,
       sections: preliminary.sections,
+      triggeredRules: preliminary.triggeredRules,
       tier: 'preliminary',
       aiAnalysisAvailable: false,
     };
@@ -774,10 +810,10 @@ RESPONSE FORMAT (valid JSON only, no other text):
         a.riskScore <= 25
           ? 'low_risk'
           : a.riskScore <= 60
-            ? 'medium_risk'
-            : a.riskScore <= 80
-              ? 'high_risk'
-              : 'blocked';
+          ? 'medium_risk'
+          : a.riskScore <= 80
+          ? 'high_risk'
+          : 'blocked';
       return {
         risk,
         riskScore: a.riskScore,

@@ -1322,10 +1322,36 @@ model InstitutionCorridor {
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
 
+  thresholdRules CorridorThresholdRule[]
+
   @@index([code])
   @@index([status])
   @@index([sourceCountry, destCountry], name: "idx_corridor_countries")
   @@map("institution_corridors")
+}
+
+// Per-corridor compliance threshold rules for amount-based risk evaluation
+model CorridorThresholdRule {
+  id              String   @id @default(uuid())
+  corridorCode    String   @map("corridor_code")
+  ruleId          String   @map("rule_id") // travel_rule, edd, reporting, round_number, structuring, large_transaction
+  label           String // Display label
+  riskLevel       String   @map("risk_level") // low, medium, high
+  thresholdAmount Decimal? @map("threshold_amount") @db.Decimal(18, 2)
+  thresholdType   String   @map("threshold_type") // gte, range, pattern
+  thresholdMax    Decimal? @map("threshold_max") @db.Decimal(18, 2)
+  currency        String   @default("USD")
+  detailTemplate  String   @map("detail_template") @db.Text
+  regulationRef   String   @map("regulation_ref")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  corridor InstitutionCorridor @relation(fields: [corridorCode], references: [code])
+
+  @@unique([corridorCode, ruleId], name: "idx_corridor_rule_unique")
+  @@index([corridorCode, isActive])
+  @@map("corridor_threshold_rules")
 }
 
 // ============================================
