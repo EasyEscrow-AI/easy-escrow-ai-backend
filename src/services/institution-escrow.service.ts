@@ -896,8 +896,8 @@ export class InstitutionEscrowService {
       throw new Error('Program service not available');
     }
 
-    const payerWallet = new PublicKey(escrow.payerWallet);
-    const usdcMint = new PublicKey(escrow.usdcMint);
+    const payerWallet = toPublicKey(escrow.payerWallet, 'payerWallet');
+    const usdcMint = toPublicKey(escrow.usdcMint, 'usdcMint');
 
     const tx = await programService.buildDepositTransaction({
       escrowId,
@@ -948,12 +948,15 @@ export class InstitutionEscrowService {
     const releaseProgramService = this.getProgramService();
     if (releaseProgramService && escrow.escrowPda) {
       try {
-        const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
+        if (!config.platform.feeCollectorAddress) {
+          throw new Error('Platform feeCollectorAddress is not configured');
+        }
+        const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
-          recipientWallet: new PublicKey(escrow.recipientWallet!),
+          recipientWallet: toPublicKey(escrow.recipientWallet!, 'recipientWallet'),
           feeCollector,
-          usdcMint: new PublicKey(escrow.usdcMint),
+          usdcMint: toPublicKey(escrow.usdcMint, 'usdcMint'),
           escrowCode: escrow.escrowCode,
         });
         console.log(
@@ -1101,8 +1104,8 @@ export class InstitutionEscrowService {
         try {
           cancelTxSignature = await cancelProgramService.cancelEscrowOnChain({
             escrowId,
-            payerWallet: new PublicKey(escrow.payerWallet),
-            usdcMint: new PublicKey(escrow.usdcMint),
+            payerWallet: toPublicKey(escrow.payerWallet, 'payerWallet'),
+            usdcMint: toPublicKey(escrow.usdcMint, 'usdcMint'),
             escrowCode: escrow.escrowCode,
           });
           console.log(
@@ -1187,8 +1190,8 @@ export class InstitutionEscrowService {
     try {
       const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
       const connection = new Connection(rpcUrl, 'confirmed');
-      const usdcMint = new PublicKey(escrow.usdcMint);
-      const payerWallet = new PublicKey(escrow.payerWallet);
+      const usdcMint = toPublicKey(escrow.usdcMint, 'usdcMint');
+      const payerWallet = toPublicKey(escrow.payerWallet, 'payerWallet');
       const payerAta = await getAssociatedTokenAddress(usdcMint, payerWallet);
 
       try {
