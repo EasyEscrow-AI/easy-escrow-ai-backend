@@ -16,6 +16,7 @@ import { AllowlistService, getAllowlistService } from './allowlist.service';
 import { ComplianceService, getComplianceService } from './compliance.service';
 import { getTokenWhitelistService } from './institution-token-whitelist.service';
 import { getInstitutionNotificationService } from './institution-notification.service';
+import { getAiAnalysisService, AiAnalysisResult } from './ai-analysis.service';
 import {
   getInstitutionEscrowProgramService,
   InstitutionEscrowProgramService,
@@ -32,6 +33,32 @@ import {
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
 const ESCROW_CACHE_TTL = 300; // 5 minutes
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  DRAFT_SAVED: 'Draft Saved',
+  DRAFT_UPDATED: 'Draft Updated',
+  DRAFT_SUBMITTED: 'Draft Submitted',
+  ESCROW_CREATED: 'Escrow Created',
+  COMPLIANCE_SCREENING: 'Compliance Screening',
+  COMPLIANCE_HOLD: 'Compliance Hold',
+  DEPOSIT_CONFIRMED: 'Escrow Funded',
+  AI_RELEASE_CHECK: 'AI Analysis',
+  FUNDS_RELEASED: 'Funds Released',
+  ESCROW_COMPLETED: 'Settlement Complete',
+  ESCROW_CANCELLED: 'Cancelled',
+  ESCROW_EXPIRED: 'Expired',
+  INSUFFICIENT_FUNDS: 'Insufficient Funds',
+  ON_CHAIN_INIT_FAILED: 'On-Chain Init Failed',
+  ON_CHAIN_RELEASE_FAILED: 'On-Chain Release Failed',
+  ON_CHAIN_CANCEL_FAILED: 'On-Chain Cancel Failed',
+};
+
+const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
+  legal_compliance: 'All legal compliance checks pass',
+  invoice_amount_match: 'Invoice amount matches exactly',
+  client_info_match: 'Client information matches exactly',
+  document_signature_verified: 'Document signature is verified (via DocuSign)',
+};
 
 /** Safely create a PublicKey from a string, with a field-specific error message. */
 function toPublicKey(value: string, fieldName: string): PublicKey {
@@ -381,20 +408,40 @@ export class InstitutionEscrowService {
       },
     });
 
-    // 12. Create audit log
-    await this.createAuditLog(escrowId, clientId, 'ESCROW_CREATED', payerWallet, {
-      amount,
-      corridor,
-      conditionType,
-      escrowPda,
-      vaultPda,
+    // 12. Create KYT-enriched audit logs
+    await this.createKytAuditLog(escrow, 'ESCROW_CREATED', payerWallet, {
       initTxSignature,
-      complianceResult: {
-        passed: complianceResult.passed,
-        riskScore: complianceResult.riskScore,
-        flags: complianceResult.flags,
-      },
+      conditionType,
+      releaseMode,
+      releaseConditions: releaseConditions || [],
+      message: `Payment initiated for ${amount} USDC on corridor ${corridor}`,
     });
+
+    // Separate compliance screening audit entry
+    const failedChecks = complianceResult.checks?.filter((c: any) => c.status === 'FAIL') || [];
+    const warnChecks = complianceResult.checks?.filter((c: any) => c.status === 'WARNING') || [];
+    await this.createKytAuditLog(escrow, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
+      passed: complianceResult.passed,
+      riskScore: complianceResult.riskScore,
+      riskLevel: complianceResult.riskLevel,
+      checksCount: complianceResult.checks?.length || 0,
+      failedCount: failedChecks.length,
+      warningCount: warnChecks.length,
+      checks: complianceResult.checks,
+      flags: complianceResult.flags,
+      message: complianceResult.passed
+        ? `All 12 checks passed — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`
+        : `${failedChecks.length} failed, ${warnChecks.length} warnings — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
+    });
+
+    // If held for compliance, log the hold separately
+    if (initialStatus === 'COMPLIANCE_HOLD') {
+      await this.createKytAuditLog(escrow, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
+        riskScore: complianceResult.riskScore,
+        riskLevel: complianceResult.riskLevel,
+        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
+      });
+    }
 
     // 11. Send notifications
     try {
@@ -432,6 +479,8 @@ export class InstitutionEscrowService {
         passed: complianceResult.passed,
         riskScore: complianceResult.riskScore,
         flags: complianceResult.flags,
+        checks: complianceResult.checks,
+        riskLevel: complianceResult.riskLevel,
       },
     };
   }
@@ -723,16 +772,35 @@ export class InstitutionEscrowService {
       },
     });
 
-    await this.createAuditLog(escrowId, clientId, 'DRAFT_SUBMITTED', escrow.payerWallet, {
-      amount: Number(escrow.amount),
-      corridor: escrow.corridor,
+    await this.createKytAuditLog(updated, 'DRAFT_SUBMITTED', escrow.payerWallet, {
       conditionType: escrow.conditionType,
-      complianceResult: {
-        passed: complianceResult.passed,
-        riskScore: complianceResult.riskScore,
-        flags: complianceResult.flags,
-      },
+      message: `Draft submitted for ${Number(escrow.amount)} USDC on corridor ${escrow.corridor}`,
     });
+
+    // Separate compliance screening audit entry
+    const failedChecks2 = complianceResult.checks?.filter((c: any) => c.status === 'FAIL') || [];
+    const warnChecks2 = complianceResult.checks?.filter((c: any) => c.status === 'WARNING') || [];
+    await this.createKytAuditLog(updated, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
+      passed: complianceResult.passed,
+      riskScore: complianceResult.riskScore,
+      riskLevel: complianceResult.riskLevel,
+      checksCount: complianceResult.checks?.length || 0,
+      failedCount: failedChecks2.length,
+      warningCount: warnChecks2.length,
+      checks: complianceResult.checks,
+      flags: complianceResult.flags,
+      message: complianceResult.passed
+        ? `All 12 checks passed — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`
+        : `${failedChecks2.length} failed, ${warnChecks2.length} warnings — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
+    });
+
+    if (newStatus === 'COMPLIANCE_HOLD') {
+      await this.createKytAuditLog(updated, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
+        riskScore: complianceResult.riskScore,
+        riskLevel: complianceResult.riskLevel,
+        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
+      });
+    }
 
     await this.cacheEscrow(updated);
 
@@ -781,6 +849,8 @@ export class InstitutionEscrowService {
         passed: complianceResult.passed,
         riskScore: complianceResult.riskScore,
         flags: complianceResult.flags,
+        checks: complianceResult.checks,
+        riskLevel: complianceResult.riskLevel,
       },
     };
   }
@@ -869,9 +939,9 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createAuditLog(escrowId, clientId, 'DEPOSIT_CONFIRMED', escrow.payerWallet, {
+    await this.createKytAuditLog(escrow, 'DEPOSIT_CONFIRMED', escrow.payerWallet, {
       txSignature,
-      amount: Number(escrow.amount),
+      message: `${Number(escrow.amount)} USDC deposited to PDA`,
     });
 
     try {
@@ -936,6 +1006,99 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Perform AI release condition checks.
+   * Runs the AI analysis service and evaluates each selected condition.
+   * Returns a structured result with pass/fail per condition.
+   */
+  private async performAiReleaseCheck(
+    escrow: any,
+    clientId: string
+  ): Promise<{
+    passed: boolean;
+    conditions: Array<{
+      condition: string;
+      label: string;
+      passed: boolean;
+      detail: string;
+    }>;
+    aiAnalysis: AiAnalysisResult & { summary: string };
+  }> {
+    const aiService = getAiAnalysisService();
+    const analysis = await aiService.analyzeEscrow(escrow.escrowId, clientId);
+
+    const selectedConditions: string[] = escrow.releaseConditions || [];
+    const results: Array<{ condition: string; label: string; passed: boolean; detail: string }> = [];
+
+    // 1. Legal compliance (always required for AI mode)
+    const compliancePassed = analysis.recommendation !== 'REJECT' && analysis.riskScore < 70;
+    results.push({
+      condition: 'legal_compliance',
+      label: 'All legal compliance checks pass',
+      passed: compliancePassed,
+      detail: compliancePassed
+        ? `Risk score ${analysis.riskScore}/100, recommendation: ${analysis.recommendation}`
+        : `Failed: risk score ${analysis.riskScore}/100, recommendation: ${analysis.recommendation}`,
+    });
+
+    // 2. Invoice amount match (if selected)
+    if (selectedConditions.includes('invoice_amount_match')) {
+      const extractedAmount = analysis.extractedFields?.invoiceAmount
+        ?? analysis.extractedFields?.amount;
+      const escrowAmount = Number(escrow.amount);
+      const amountMatches = extractedAmount !== undefined
+        && Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
+      results.push({
+        condition: 'invoice_amount_match',
+        label: 'Invoice amount matches exactly',
+        passed: !!amountMatches,
+        detail: amountMatches
+          ? `Invoice amount ${extractedAmount} matches escrow amount ${escrowAmount}`
+          : `Invoice amount ${extractedAmount ?? 'not found'} does not match escrow amount ${escrowAmount}`,
+      });
+    }
+
+    // 3. Client information match (if selected)
+    if (selectedConditions.includes('client_info_match')) {
+      const client = await this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { companyName: true, legalName: true, country: true },
+      });
+      const extractedCompany = analysis.extractedFields?.companyName
+        ?? analysis.extractedFields?.clientName;
+      const clientMatch = extractedCompany !== undefined
+        && client
+        && (String(extractedCompany).toLowerCase().includes(client.companyName?.toLowerCase() || '')
+          || String(extractedCompany).toLowerCase().includes(client.legalName?.toLowerCase() || ''));
+      results.push({
+        condition: 'client_info_match',
+        label: 'Client information matches exactly',
+        passed: !!clientMatch,
+        detail: clientMatch
+          ? `Extracted company "${extractedCompany}" matches client record`
+          : `Extracted company "${extractedCompany ?? 'not found'}" does not match client "${client?.companyName}"`,
+      });
+    }
+
+    // 4. Document signature verified (if selected)
+    if (selectedConditions.includes('document_signature_verified')) {
+      const signatureVerified = analysis.extractedFields?.signatureVerified === true
+        || analysis.extractedFields?.docusignStatus === 'completed';
+      results.push({
+        condition: 'document_signature_verified',
+        label: 'Document signature is verified (via DocuSign)',
+        passed: !!signatureVerified,
+        detail: signatureVerified
+          ? 'Document signature has been verified'
+          : 'Document signature could not be verified',
+      });
+    }
+
+    const allPassed = results.every((r) => r.passed);
+
+    return { passed: allPassed, conditions: results, aiAnalysis: analysis };
+  }
+
+  /**
    * Release funds from escrow to recipient
    */
   async releaseFunds(
@@ -952,6 +1115,43 @@ export class InstitutionEscrowService {
       throw new Error(
         `Cannot release: escrow status is ${escrow.status}, expected FUNDED or INSUFFICIENT_FUNDS`
       );
+    }
+
+    // Gate by releaseMode: if AI, run AI compliance checks before proceeding
+    if (escrow.releaseMode === 'ai') {
+      const aiResult = await this.performAiReleaseCheck(escrow, clientId);
+
+      await this.createKytAuditLog(escrow, 'AI_RELEASE_CHECK', 'AI Orchestrator', {
+        passed: aiResult.passed,
+        releaseMode: 'ai',
+        conditions: aiResult.conditions,
+        riskScore: aiResult.aiAnalysis.riskScore,
+        recommendation: aiResult.aiAnalysis.recommendation,
+        summary: aiResult.aiAnalysis.summary,
+        message: aiResult.passed
+          ? `Risk score ${aiResult.aiAnalysis.riskScore / 100} — recommended release`
+          : `AI release blocked — ${aiResult.conditions.filter((c) => !c.passed).map((c) => c.label).join(', ')}`,
+      });
+
+      if (!aiResult.passed) {
+        const failedConditions = aiResult.conditions.filter((c) => !c.passed);
+        await getInstitutionNotificationService().notify({
+          clientId,
+          escrowId,
+          type: 'ESCROW_COMPLIANCE_HOLD',
+          priority: 'HIGH',
+          title: 'AI Release Check Failed',
+          message: `Escrow ${escrow.escrowCode || escrowId} failed AI release conditions: ${failedConditions.map((c) => c.label).join(', ')}`,
+          metadata: {
+            failedConditions: failedConditions.map((c) => ({ condition: c.condition, detail: c.detail })),
+            riskScore: aiResult.aiAnalysis.riskScore,
+          },
+        });
+
+        throw new Error(
+          `AI release check failed: ${failedConditions.map((c) => c.label).join('; ')}`
+        );
+      }
     }
 
     // Update status to RELEASING
@@ -1039,11 +1239,15 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createAuditLog(escrowId, clientId, 'FUNDS_RELEASED', escrow.settlementAuthority, {
-      amount: Number(escrow.amount),
-      recipient: escrow.recipientWallet,
+    const releaseActor = escrow.releaseMode === 'ai' ? 'AI Orchestrator' : escrow.settlementAuthority;
+    await this.createKytAuditLog(escrow, 'FUNDS_RELEASED', releaseActor, {
       releaseTxSignature: releaseTxSig,
+      releaseMode: escrow.releaseMode || 'manual',
+      releaseConditions: escrow.releaseConditions || [],
       notes,
+      message: escrow.releaseMode === 'ai'
+        ? 'AI auto-released — conditions met'
+        : `${Number(escrow.amount)} USDC released to recipient`,
     });
 
     // Transition to COMPLETE: send notification and finalize
@@ -1069,15 +1273,10 @@ export class InstitutionEscrowService {
         data: { status: 'COMPLETE' },
       });
 
-      await this.createAuditLog(
-        escrowId,
-        clientId,
-        'ESCROW_COMPLETED',
-        escrow.settlementAuthority,
-        {
-          previousStatus: 'RELEASED',
-        }
-      );
+      await this.createKytAuditLog(escrow, 'ESCROW_COMPLETED', escrow.settlementAuthority, {
+        previousStatus: 'RELEASED',
+        message: `Settlement complete — ${Number(escrow.amount)} USDC delivered`,
+      });
 
       await this.cacheEscrow(completed);
       return this.formatEscrow(completed);
@@ -1174,10 +1373,12 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createAuditLog(escrowId, clientId, 'ESCROW_CANCELLED', escrow.payerWallet, {
+    await this.createKytAuditLog(escrow, 'ESCROW_CANCELLED', escrow.payerWallet, {
       reason,
       previousStatus: escrow.status,
+      cancelTxSignature,
       wasFunded: escrow.status === 'FUNDED',
+      message: reason ? `Cancelled — ${reason}` : 'Cancelled by client',
     });
 
     try {
@@ -1230,9 +1431,10 @@ export class InstitutionEscrowService {
             where: { escrowId },
             data: { status: 'INSUFFICIENT_FUNDS' },
           });
-          await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
+          await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
             available: tokenAccount.amount.toString(),
             required: requiredMicroUsdc.toString(),
+            message: `Insufficient balance: has ${tokenAccount.amount}, needs ${requiredMicroUsdc} micro-USDC`,
           });
           try {
             await getInstitutionNotificationService().notify({
@@ -1267,8 +1469,9 @@ export class InstitutionEscrowService {
           where: { escrowId },
           data: { status: 'INSUFFICIENT_FUNDS' },
         });
-        await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
+        await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
           reason: 'Token account does not exist',
+          message: 'Payer token account does not exist',
         });
         try {
           await getInstitutionNotificationService().notify({
@@ -1406,6 +1609,59 @@ export class InstitutionEscrowService {
   /**
    * Create an audit log entry
    */
+  /**
+   * Build KYT (Know Your Transaction) context for audit log enrichment.
+   * Resolves originator/beneficiary names from client records so each
+   * audit entry is self-contained for compliance / Travel Rule purposes.
+   */
+  private async buildKytContext(escrow: any): Promise<Record<string, unknown>> {
+    const [originatorClient, beneficiaryClient] = await Promise.all([
+      this.prisma.institutionClient.findUnique({
+        where: { id: escrow.clientId },
+        select: { companyName: true, legalName: true, country: true, registrationCountry: true, lei: true },
+      }),
+      escrow.recipientWallet
+        ? this.prisma.institutionClient.findFirst({
+            where: {
+              OR: [
+                { primaryWallet: escrow.recipientWallet },
+                { settledWallets: { has: escrow.recipientWallet } },
+              ],
+            },
+            select: { companyName: true, legalName: true, country: true, registrationCountry: true, lei: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    return {
+      kyt: {
+        escrowCode: escrow.escrowCode,
+        escrowId: escrow.escrowId,
+        amount: Number(escrow.amount),
+        currency: 'USDC',
+        cryptoChain: 'solana',
+        corridor: escrow.corridor,
+        escrowPda: escrow.escrowPda || null,
+        originator: {
+          name: originatorClient?.companyName || null,
+          legalName: originatorClient?.legalName || null,
+          wallet: escrow.payerWallet,
+          country: originatorClient?.country || null,
+          registrationCountry: originatorClient?.registrationCountry || null,
+          lei: originatorClient?.lei || null,
+        },
+        beneficiary: {
+          name: beneficiaryClient?.companyName || null,
+          legalName: beneficiaryClient?.legalName || null,
+          wallet: escrow.recipientWallet || null,
+          country: beneficiaryClient?.country || null,
+          registrationCountry: beneficiaryClient?.registrationCountry || null,
+          lei: beneficiaryClient?.lei || null,
+        },
+      },
+    };
+  }
+
   private async createAuditLog(
     escrowId: string,
     clientId: string,
@@ -1428,6 +1684,28 @@ export class InstitutionEscrowService {
     } catch (error) {
       console.error('[InstitutionEscrowService] Failed to create audit log:', error);
     }
+  }
+
+  /**
+   * Create an audit log entry enriched with KYT context.
+   * Use this for all transactional events (create, fund, release, cancel).
+   */
+  private async createKytAuditLog(
+    escrow: any,
+    action: string,
+    actor: string,
+    details: Record<string, unknown>,
+    ipAddress?: string
+  ): Promise<void> {
+    const kytContext = await this.buildKytContext(escrow);
+    await this.createAuditLog(
+      escrow.escrowId,
+      escrow.clientId,
+      action,
+      actor,
+      { ...details, ...kytContext },
+      ipAddress
+    );
   }
 
   /**
@@ -1486,6 +1764,9 @@ export class InstitutionEscrowService {
       releaseMode: e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual'),
       approvalParties: e.approvalParties || [],
       releaseConditions: e.releaseConditions || [],
+      releaseConditionLabels: (e.releaseConditions || []).map((c: string) =>
+        AI_RELEASE_CONDITION_LABELS[c] || c
+      ),
       approvalInstructions: e.approvalInstructions || null,
       escrowPda: e.escrowPda,
       vaultPda: e.vaultPda,
@@ -1582,13 +1863,27 @@ export class InstitutionEscrowService {
       createdAt: a.createdAt,
     }));
 
-    base.activityLog = auditLogs.map((l) => ({
-      id: l.id,
-      action: l.action,
-      actor: l.actor,
-      details: l.details,
-      createdAt: l.createdAt,
-    }));
+    base.activityLog = auditLogs.map((l) => {
+      const d = (l.details || {}) as Record<string, unknown>;
+      const kyt = d.kyt as Record<string, unknown> | undefined;
+      return {
+        id: l.id,
+        action: l.action,
+        title: AUDIT_ACTION_LABELS[l.action] || l.action,
+        actor: l.actor,
+        message: d.message || null,
+        txSignature: d.initTxSignature || d.txSignature || d.releaseTxSignature || d.cancelTxSignature || null,
+        amount: kyt?.amount || d.amount || null,
+        currency: kyt?.currency || 'USDC',
+        corridor: kyt?.corridor || null,
+        originator: kyt?.originator || null,
+        beneficiary: kyt?.beneficiary || null,
+        riskScore: d.riskScore || null,
+        conditions: d.conditions || null,
+        details: d,
+        createdAt: l.createdAt,
+      };
+    });
 
     return base;
   }

@@ -6058,6 +6058,36 @@ components:
             Optional SPL token mint address. Must be on the AMINA-approved whitelist.
             Defaults to USDC if omitted. Use `GET /api/v1/institution/tokens` to list available tokens.
           example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        settlementMode:
+          type: string
+          enum: [escrow, direct]
+          description: "Settlement mode: 'escrow' for PDA vault, 'direct' for direct transfer"
+          example: "escrow"
+        releaseMode:
+          type: string
+          enum: [manual, ai]
+          description: "Release mode: 'manual' for human approval, 'ai' for AI-driven condition checks"
+          example: "manual"
+        releaseConditions:
+          type: array
+          items:
+            type: string
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+          description: |
+            AI release conditions to evaluate when releaseMode is 'ai'.
+            - **legal_compliance**: All legal compliance checks pass (always required for AI mode)
+            - **invoice_amount_match**: Invoice amount matches escrow amount exactly
+            - **client_info_match**: Client information matches exactly
+            - **document_signature_verified**: Document signature is verified (via DocuSign)
+          example: ["legal_compliance", "invoice_amount_match"]
+        approvalParties:
+          type: array
+          items:
+            type: string
+          description: Party identifiers who must approve release (for manual mode)
+        approvalInstructions:
+          type: string
+          description: Free-text instructions for manual reviewers (max 2000 chars)
 
     InstitutionEscrowDetail:
       type: object
@@ -6124,6 +6154,30 @@ components:
         settlementAuthority:
           type: string
           nullable: true
+        releaseMode:
+          type: string
+          enum: [manual, ai]
+          description: "Release mode: 'manual' for human approval, 'ai' for AI-driven condition checks"
+        releaseConditions:
+          type: array
+          items:
+            type: string
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+          description: AI release conditions to evaluate (only used when releaseMode is 'ai')
+        releaseConditionLabels:
+          type: array
+          items:
+            type: string
+          description: Human-readable labels for the selected release conditions
+        approvalParties:
+          type: array
+          items:
+            type: string
+          description: Party identifiers who must approve (for manual release mode)
+        approvalInstructions:
+          type: string
+          nullable: true
+          description: Free-text instructions for manual reviewers
         expiresAt:
           type: string
           format: date-time
@@ -6135,6 +6189,135 @@ components:
         updatedAt:
           type: string
           format: date-time
+        activityLog:
+          type: array
+          description: |
+            KYT-enriched audit trail of escrow lifecycle events.
+            Returned on single-escrow GET for owners only.
+            Each entry includes originator/beneficiary data for Travel Rule compliance.
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              action:
+                type: string
+                enum:
+                  - DRAFT_SAVED
+                  - DRAFT_UPDATED
+                  - DRAFT_SUBMITTED
+                  - ESCROW_CREATED
+                  - COMPLIANCE_SCREENING
+                  - COMPLIANCE_HOLD
+                  - DEPOSIT_CONFIRMED
+                  - AI_RELEASE_CHECK
+                  - FUNDS_RELEASED
+                  - ESCROW_COMPLETED
+                  - ESCROW_CANCELLED
+                  - ESCROW_EXPIRED
+                  - INSUFFICIENT_FUNDS
+                  - ON_CHAIN_INIT_FAILED
+                  - ON_CHAIN_RELEASE_FAILED
+                  - ON_CHAIN_CANCEL_FAILED
+              title:
+                type: string
+                description: Human-readable label for the action
+                example: "Escrow Created"
+              actor:
+                type: string
+                description: Wallet address, email, or system identifier (e.g. "AI Orchestrator")
+              message:
+                type: string
+                nullable: true
+                description: Human-readable summary of the event
+                example: "Payment initiated for 50000 USDC on corridor SG-CH"
+              txSignature:
+                type: string
+                nullable: true
+                description: On-chain transaction signature (if applicable)
+              amount:
+                type: number
+                nullable: true
+                description: Transaction amount in USDC
+              currency:
+                type: string
+                description: Token currency (always "USDC")
+              corridor:
+                type: string
+                nullable: true
+                description: Payment corridor (e.g. "SG-CH")
+              originator:
+                type: object
+                nullable: true
+                description: KYT originator (payer) data resolved from client records
+                properties:
+                  name:
+                    type: string
+                    nullable: true
+                  legalName:
+                    type: string
+                    nullable: true
+                  wallet:
+                    type: string
+                  country:
+                    type: string
+                    nullable: true
+                  registrationCountry:
+                    type: string
+                    nullable: true
+                  lei:
+                    type: string
+                    nullable: true
+                    description: Legal Entity Identifier
+              beneficiary:
+                type: object
+                nullable: true
+                description: KYT beneficiary (recipient) data resolved from client records
+                properties:
+                  name:
+                    type: string
+                    nullable: true
+                  legalName:
+                    type: string
+                    nullable: true
+                  wallet:
+                    type: string
+                    nullable: true
+                  country:
+                    type: string
+                    nullable: true
+                  registrationCountry:
+                    type: string
+                    nullable: true
+                  lei:
+                    type: string
+                    nullable: true
+              riskScore:
+                type: number
+                nullable: true
+                description: AI risk score (0-100) if applicable
+              conditions:
+                type: array
+                nullable: true
+                description: AI release condition results (for AI_RELEASE_CHECK action)
+                items:
+                  type: object
+                  properties:
+                    condition:
+                      type: string
+                    label:
+                      type: string
+                    passed:
+                      type: boolean
+                    detail:
+                      type: string
+              details:
+                type: object
+                description: Full event details including KYT context
+              createdAt:
+                type: string
+                format: date-time
 
     InstitutionEscrowDraftRequest:
       type: object
