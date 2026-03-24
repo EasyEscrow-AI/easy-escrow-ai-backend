@@ -13,7 +13,7 @@
 import * as cron from 'node-cron';
 import { PrismaClient } from '../generated/prisma';
 import { PublicKey } from '@solana/web3.js';
-import { alertingService } from './alerting.service';
+import { alertingService, AlertSeverity } from './alerting.service';
 import { redisClient } from '../config/redis';
 import { getInstitutionEscrowProgramService } from './institution-escrow-program.service';
 // Lazy-loaded to avoid import chain to 'resend' which is only installed in production
@@ -198,6 +198,13 @@ export class InstitutionEscrowExpiryMonitor {
         const onChain: typeof expiredEscrows = [];
 
         for (const escrow of expiredEscrows) {
+          // Data anomaly: FUNDED escrow should always have an escrowPda
+          if (escrow.status === 'FUNDED' && !escrow.escrowPda) {
+            console.warn(
+              `${LOG_PREFIX}   FUNDED escrow ${escrow.escrowId} missing escrowPda — falling back to DB-only expiry`
+            );
+          }
+
           const needsOnChainCancel =
             escrow.status === 'FUNDED' || (escrow.status === 'COMPLIANCE_HOLD' && escrow.escrowPda);
           if (needsOnChainCancel && escrow.escrowPda) {
@@ -213,8 +220,8 @@ export class InstitutionEscrowExpiryMonitor {
           const updateResult = await this.prisma.institutionEscrow.updateMany({
             where: {
               escrowId: { in: dbOnlyIds },
-              // Re-check status to prevent race condition
-              status: { in: ['CREATED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS'] },
+              // Re-check status to prevent race condition (includes FUNDED for anomalous missing-PDA case)
+              status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS'] },
             },
             data: {
               status: 'EXPIRED',
@@ -250,19 +257,29 @@ export class InstitutionEscrowExpiryMonitor {
               }, tx: ${cancelTxSignature}`
             );
 
-            // Update DB
-            await this.prisma.institutionEscrow.update({
-              where: {
-                escrowId: escrow.escrowId,
-                // Race-condition guard: only update if still in expected status
-                status: { in: ['FUNDED', 'COMPLIANCE_HOLD'] },
-              },
-              data: {
-                status: 'EXPIRED',
-                cancelTxSignature,
-                resolvedAt: new Date(),
-              },
-            });
+            // Update DB — compound where may throw P2025 if status changed between query and here
+            try {
+              await this.prisma.institutionEscrow.update({
+                where: {
+                  escrowId: escrow.escrowId,
+                  // Race-condition guard: only update if still in expected status
+                  status: { in: ['FUNDED', 'COMPLIANCE_HOLD'] },
+                },
+                data: {
+                  status: 'EXPIRED',
+                  cancelTxSignature,
+                  resolvedAt: new Date(),
+                },
+              });
+            } catch (dbErr: any) {
+              if (dbErr?.code === 'P2025') {
+                console.warn(
+                  `${LOG_PREFIX}   Race condition: escrow ${escrow.escrowId} status changed (expected FUNDED/COMPLIANCE_HOLD) — skipping DB update`
+                );
+                continue;
+              }
+              throw dbErr;
+            }
 
             totalOnChain++;
 
@@ -341,7 +358,7 @@ export class InstitutionEscrowExpiryMonitor {
         console.error(`${LOG_PREFIX} ALERT: ${this.consecutiveErrors} consecutive failures!`);
         await alertingService.sendAlert(
           'institution_escrow_expiry_monitor_failed',
-          'HIGH' as any,
+          AlertSeverity.HIGH,
           'Institution Escrow Expiry Monitor Failing',
           `Institution escrow expiry monitor has failed ${this.consecutiveErrors} times consecutively. Last error: ${error.message}`,
           {
@@ -544,16 +561,11 @@ export class InstitutionEscrowExpiryMonitor {
 }
 
 /**
- * Export singleton getter
+ * Export singleton getter — delegates to the class's internal static instance.
  */
-let monitorInstance: InstitutionEscrowExpiryMonitor | null = null;
-
 export function getInstitutionEscrowExpiryMonitor(
   prisma: PrismaClient,
   config?: Partial<InstitutionEscrowExpiryConfig>
 ): InstitutionEscrowExpiryMonitor {
-  if (!monitorInstance) {
-    monitorInstance = InstitutionEscrowExpiryMonitor.getInstance(prisma, config);
-  }
-  return monitorInstance;
+  return InstitutionEscrowExpiryMonitor.getInstance(prisma, config);
 }

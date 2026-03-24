@@ -895,7 +895,7 @@ const startServer = async () => {
           // Start institution escrow expiry monitor (if enabled)
           if (institutionEscrowExpiryMonitor) {
             institutionEscrowExpiryMonitor.start();
-            console.log('  Institution escrow expiry monitor started (runs every 10 minutes)');
+            console.log('✅ Institution escrow expiry monitor started (runs every 10 minutes)');
           }
 
           // DISABLED for BETA launch - Backup scheduler

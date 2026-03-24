@@ -275,6 +275,19 @@ describe('InstitutionEscrowExpiryMonitor', function () {
       expect(programServiceStub.cancelEscrowOnChain.called).to.be.false;
     });
 
+    it('should treat FUNDED escrow without escrowPda as DB-only (data anomaly)', async () => {
+      const escrow = makeEscrow({ status: 'FUNDED', escrowPda: null });
+      prismaStub.institutionEscrow.findMany.resolves([escrow]);
+      prismaStub.institutionEscrow.updateMany.resolves({ count: 1 });
+
+      const result = await monitor.executeExpiryCheck();
+
+      expect(result.success).to.be.true;
+      expect(result.dbOnlyExpired).to.equal(1);
+      expect(result.onChainExpired).to.equal(0);
+      expect(programServiceStub.cancelEscrowOnChain.called).to.be.false;
+    });
+
     it('should expire INSUFFICIENT_FUNDS as DB-only', async () => {
       const escrow = makeEscrow({
         status: 'INSUFFICIENT_FUNDS',
