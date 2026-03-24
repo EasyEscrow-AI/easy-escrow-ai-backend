@@ -158,6 +158,8 @@ describe('InstitutionEscrowService', () => {
       amount: 1000,
       corridor: 'US-MX',
       conditionType: 'ADMIN_RELEASE',
+      settlementMode: 'escrow',
+      releaseMode: 'manual',
     };
 
     it('should create escrow with valid params', async () => {
