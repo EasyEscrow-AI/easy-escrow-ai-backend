@@ -14,27 +14,15 @@
 
 import { PrismaClient } from '../src/generated/prisma';
 import { createHash } from 'crypto';
+import { Keypair } from '@solana/web3.js';
 
 const prisma = new PrismaClient();
 
-/** Deterministic fake Solana address — produces a valid 32-byte base58 public key */
+/** Deterministic fake Solana address — derives a valid Ed25519 keypair from a seed string */
 function fakeWallet(seed: string): string {
-  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  // SHA-256 produces exactly 32 bytes
-  const bytes = createHash('sha256').update(seed).digest();
-  // Base58 encode the 32-byte buffer
-  let num = BigInt('0x' + bytes.toString('hex'));
-  let out = '';
-  while (num > 0n) {
-    out = chars[Number(num % 58n)] + out;
-    num = num / 58n;
-  }
-  // Pad leading zeros (bytes that are 0x00 become '1' in base58)
-  for (const b of bytes) {
-    if (b === 0) out = '1' + out;
-    else break;
-  }
-  return out;
+  const hash = createHash('sha256').update(seed).digest();
+  const keypair = Keypair.fromSeed(hash);
+  return keypair.publicKey.toBase58();
 }
 
 // Well-known Solana mainnet wallets (real addresses, will return actual balances)
