@@ -362,8 +362,9 @@ export class InstitutionEscrowProgramService {
     transaction.sign(this.adminKeypair);
 
     const rawTx = transaction.serialize();
+    const isDevnet = process.env.NODE_ENV !== 'production';
     const txSignature = await this.connection.sendRawTransaction(rawTx, {
-      skipPreflight: false,
+      skipPreflight: isDevnet,
       maxRetries: 3,
     });
 
