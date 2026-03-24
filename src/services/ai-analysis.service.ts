@@ -23,7 +23,7 @@ import {
   CLIENT_SENSITIVE_FIELDS,
 } from '../utils/data-anonymizer';
 import { escrowWhere } from '../utils/uuid-conversion';
-import { evaluateEscrow, EscrowData, RulesEngineResult } from './escrow-rules-engine';
+import { evaluateEscrow, EscrowData, RulesEngineResult, RiskLevel } from './escrow-rules-engine';
 
 const AI_RATE_LIMIT_KEY_PREFIX = 'institution:ai:ratelimit:';
 const AI_RATE_LIMIT_MAX = 5; // 5 requests per minute per client
@@ -41,7 +41,8 @@ export interface AiAnalysisResult {
 
 export interface EscrowAnalysisResult extends AiAnalysisResult {
   summary: string;
-  sections?: Record<string, unknown>;
+  risk: RiskLevel;
+  sections?: Record<string, { risk: RiskLevel; title: string; finding: string }>;
   tier?: 'preliminary' | 'full';
   aiAnalysisAvailable?: boolean;
   model?: string;
@@ -395,7 +396,16 @@ export class AiAnalysisService {
     const statusChanged =
       existing && (existing.extractedFields as any)?.escrow_status !== escrow.status;
     if (existing && !statusChanged) {
+      const existingRisk: RiskLevel =
+        existing.riskScore <= 25
+          ? 'low_risk'
+          : existing.riskScore <= 60
+            ? 'medium_risk'
+            : existing.riskScore <= 80
+              ? 'high_risk'
+              : 'blocked';
       const result: EscrowAnalysisResult = {
+        risk: existingRisk,
         riskScore: existing.riskScore,
         extractedFields: existing.extractedFields as Record<string, unknown>,
         factors: existing.factors as Array<{ name: string; weight: number; value: number }>,
@@ -411,7 +421,7 @@ export class AiAnalysisService {
       escrow.status === 'DRAFT'
         ? process.env.AI_ANALYSIS_MODEL_DRAFT || 'claude-haiku-4-5-20251001'
         : process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
-    const maxTokens = escrow.status === 'DRAFT' ? 2048 : 4096;
+    const maxTokens = escrow.status === 'DRAFT' ? 1024 : 1536;
 
     const client = this.getAnthropicClient();
     const anonymizer = anonymize ? new DataAnonymizer() : null;
@@ -427,51 +437,42 @@ export class AiAnalysisService {
         : ''
     }
 
-Analyze the escrow JSON and return a step-by-step compliance assessment. The escrow may be DRAFT (partial data) or any later state. Use "pending" for sections where required data is null/missing.
+IMPORTANT: This escrow may not be created yet — it could be a DRAFT or pre-submission review. Analyze the data AS-IS without assuming on-chain state exists. Focus on whether the escrow SHOULD proceed.
 
-STATUS RULES per section:
-- "pass": No issues found, data looks compliant
-- "warning": Minor concerns or unusual patterns, but not blocking
-- "fail": Compliance risk identified, requires attention
-- "pending": Required data for this section is null/not yet provided
+Evaluate exactly 5 sections. Each section gets ONE risk level and ONE sentence.
 
-SECTION ANALYSIS RULES:
-1. from_account: Check payerWallet exists, client.kycStatus=VERIFIED (fail if not), client.kybStatus (warn if not VERIFIED), client.riskRating (fail if HIGH/CRITICAL), client.country jurisdiction risk. Pending if payerWallet is null.
-2. to_account: Check recipientWallet is set (pending if null), different from payerWallet (fail if same). Note if wallet appears to be an exchange or contract address.
-3. corridor: The data includes "availableCorridors" — an array of active corridors from the payer's country with riskLevel and amount limits (queried from the database), or null if none exist. If corridor is null (DRAFT): check availableCorridors and recommend the best one (lowest riskLevel that fits the amount). If no corridors are available, status=fail with "No active corridors available for this country." If corridor IS set: verify it exists in availableCorridors (fail if not found), check riskLevel (HIGH=warning), check amount is within min/max limits. Include the recommended or validated corridor code in findings.
-4. amount: Check amount > 0 (fail if 0 or null), flag amounts > 100000 as warning, flag > 1000000 as high scrutiny. Check platformFee is reasonable. Pending if amount is null/0.
-5. settlement: Check tokenMint is a known stablecoin (USDC/USDT/EURC/PYUSD). Report deposit status (hasDeposit, depositTxSignature). Note escrowPda and on-chain readiness. Pending if no tokenMint.
-6. release: Check conditionType is set (pending if null). ADMIN_RELEASE=pass, TIME_LOCK=pass with note, COMPLIANCE_CHECK=pass. Verify settlementAuthority is set (warn if missing for non-DRAFT). Note if settlementAuthority differs from payerWallet.
-7. advanced: Check expiresAt is set and reasonable (warn if <24h or >90 days from now). Note fileCount (warn if 0 supporting docs for amounts >50000). Note nonceAccount (pass if assigned). Pending if expiresAt is null on non-DRAFT.
-8. overview: Aggregate all sections. Count pass/warning/fail/pending. Give a 1-sentence compliance verdict. Status = "fail" if ANY section is "fail", "warning" if any "warning", "pass" if all pass/pending.
+RISK LEVELS (per section):
+- "low_risk": No issues, compliant
+- "medium_risk": Minor concerns, review recommended
+- "high_risk": Significant concerns, manual review required
+- "blocked": Cannot proceed — must be resolved first
+
+SECTIONS:
+1. overall: Aggregate. If ANY section is "blocked", overall is "blocked". If any "high_risk", overall is "high_risk". One sentence verdict.
+2. account_verifications: Payer KYC must be VERIFIED (blocked if not). Payer risk rating HIGH/CRITICAL = blocked. Check recipient wallet is different from payer. Recipient KYC if available.
+3. transaction_amount: ≤$50K = AI auto-approval eligible (low_risk). $50K-$100K = standard review (medium_risk). ≥$100K = manual approval required (high_risk). ≥$1M = high scrutiny (high_risk). Unknown/unwhitelisted token = blocked. Check if receiver accepts this token.
+4. payment_corridor: Validate corridor exists in availableCorridors. Corridor not found = blocked. Amount outside corridor min/max = blocked. HIGH risk corridor = high_risk. No corridor selected yet = medium_risk.
+5. release_conditions: ≥$100K with non-ADMIN_RELEASE = blocked. Expiry <24h = medium_risk. No expiry on non-DRAFT = medium_risk.
 
 RESPONSE FORMAT (valid JSON only, no other text):
 {
-  "risk_score": <0-100>,
-  "recommendation": "<APPROVE|REVIEW|REJECT>",
-  "summary": "<1 sentence: e.g. 'Compliant SG-CH corridor escrow with verified KYC — no issues found.'>",
+  "risk": "<low_risk|medium_risk|high_risk|blocked>",
+  "summary": "<1 sentence overall verdict>",
   "sections": {
-    "<section_key>": {
-      "status": "<pass|warning|fail|pending>",
-      "title": "<display title>",
-      "findings": "<1-2 concise sentences>",
-      "checked_fields": ["<field names this section evaluated>"],
-      "recommended_corridor": "<only for corridor section: best corridor code from availableCorridors, or null>"
-    }
+    "overall": { "risk": "<level>", "title": "Overall Compliance", "finding": "<1 sentence>" },
+    "account_verifications": { "risk": "<level>", "title": "Account Verifications", "finding": "<1 sentence>" },
+    "transaction_amount": { "risk": "<level>", "title": "Transaction Amount", "finding": "<1 sentence>" },
+    "payment_corridor": { "risk": "<level>", "title": "Payment Corridor", "finding": "<1 sentence>" },
+    "release_conditions": { "risk": "<level>", "title": "Release Conditions", "finding": "<1 sentence>" }
   },
   "extracted_fields": {
     "escrow_status": "<string>",
     "amount_usd": <number|null>,
     "corridor": "<string|null>",
     "condition_type": "<string|null>",
-    "client_tier": "<string>",
     "kyc_status": "<string>",
-    "days_until_expiry": <number|null>,
-    "has_supporting_documents": <boolean>,
-    "deposit_confirmed": <boolean>
-  },
-  "factors": [{"name": "<string>", "weight": <0-1>, "value": <0-100>}],
-  "details": "<brief risk explanation>"
+    "approval_mode": "<ai|manual|blocked>"
+  }
 }`;
 
     // Step 2: Anthropic prompt caching — cache the large system prompt
@@ -495,27 +496,34 @@ RESPONSE FORMAT (valid JSON only, no other text):
     let result: EscrowAnalysisResult;
     try {
       const parsed = this.extractJson(responseText);
+      const validRisks: RiskLevel[] = ['low_risk', 'medium_risk', 'high_risk', 'blocked'];
+      const risk: RiskLevel = validRisks.includes(parsed.risk as RiskLevel)
+        ? (parsed.risk as RiskLevel)
+        : 'medium_risk';
+
+      // Map risk to legacy fields for backward compatibility
+      const riskScore =
+        risk === 'low_risk' ? 15 : risk === 'medium_risk' ? 45 : risk === 'high_risk' ? 75 : 95;
+      const recommendation =
+        risk === 'low_risk' ? 'APPROVE' : risk === 'blocked' ? 'REJECT' : 'REVIEW';
+
       result = {
-        riskScore: Math.min(100, Math.max(0, (parsed.risk_score as number) || 50)),
+        risk,
+        riskScore,
         extractedFields: (parsed.extracted_fields as Record<string, unknown>) || {},
-        factors: ((parsed.factors as any[]) || []).map((f: any) => ({
-          name: f.name,
-          weight: Math.min(1, Math.max(0, f.weight || 0)),
-          value: Math.min(100, Math.max(0, f.value || 0)),
-        })),
-        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation as string)
-          ? (parsed.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT')
-          : 'REVIEW',
-        details: (parsed.details as string) || 'Analysis complete',
+        factors: [],
+        recommendation: recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
+        details: (parsed.summary as string) || 'Analysis complete',
         summary: (parsed.summary as string) || '',
-        sections: (parsed.sections as Record<string, unknown>) || undefined,
+        sections: parsed.sections as any,
         model,
       };
     } catch {
       result = {
+        risk: 'medium_risk',
         riskScore: 50,
         extractedFields: {},
-        factors: [{ name: 'parse_error', weight: 1, value: 50 }],
+        factors: [],
         recommendation: 'REVIEW',
         details: 'AI response could not be parsed. Manual review recommended.',
         summary: 'Analysis could not be completed automatically.',
@@ -712,12 +720,29 @@ RESPONSE FORMAT (valid JSON only, no other text):
       // Background AI call failed — result won't be cached, but that's OK
     });
 
+    // Map risk to legacy fields
+    const riskScore =
+      preliminary.risk === 'low_risk'
+        ? 15
+        : preliminary.risk === 'medium_risk'
+          ? 45
+          : preliminary.risk === 'high_risk'
+            ? 75
+            : 95;
+    const recommendation =
+      preliminary.risk === 'low_risk'
+        ? 'APPROVE'
+        : preliminary.risk === 'blocked'
+          ? 'REJECT'
+          : 'REVIEW';
+
     return {
-      riskScore: preliminary.riskScore,
+      risk: preliminary.risk,
+      riskScore,
       extractedFields: preliminary.extractedFields,
-      factors: preliminary.factors,
-      recommendation: preliminary.recommendation,
-      details: preliminary.details,
+      factors: [],
+      recommendation: recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
+      details: preliminary.summary,
       summary: preliminary.summary,
       sections: preliminary.sections,
       tier: 'preliminary',
@@ -744,14 +769,25 @@ RESPONSE FORMAT (valid JSON only, no other text):
       orderBy: { createdAt: 'desc' },
     });
 
-    return analyses.map((a) => ({
-      riskScore: a.riskScore,
-      extractedFields: a.extractedFields as Record<string, unknown>,
-      factors: a.factors as Array<{ name: string; weight: number; value: number }>,
-      recommendation: a.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
-      details: `Analyzed at ${a.createdAt.toISOString()} using ${a.model}`,
-      summary: (a as any).summary || '',
-    }));
+    return analyses.map((a) => {
+      const risk: RiskLevel =
+        a.riskScore <= 25
+          ? 'low_risk'
+          : a.riskScore <= 60
+            ? 'medium_risk'
+            : a.riskScore <= 80
+              ? 'high_risk'
+              : 'blocked';
+      return {
+        risk,
+        riskScore: a.riskScore,
+        extractedFields: a.extractedFields as Record<string, unknown>,
+        factors: a.factors as Array<{ name: string; weight: number; value: number }>,
+        recommendation: a.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
+        details: `Analyzed at ${a.createdAt.toISOString()} using ${a.model}`,
+        summary: (a as any).summary || '',
+      };
+    });
   }
 
   // ─── Client Analysis ─────────────────────────────────────────

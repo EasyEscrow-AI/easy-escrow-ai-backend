@@ -16,7 +16,11 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
 process.env.USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-import { AiAnalysisService, AnalyzeDocumentParams, EscrowAnalysisResult } from '../../../src/services/ai-analysis.service';
+import {
+  AiAnalysisService,
+  AnalyzeDocumentParams,
+  EscrowAnalysisResult,
+} from '../../../src/services/ai-analysis.service';
 import { evaluateEscrow, EscrowData } from '../../../src/services/escrow-rules-engine';
 
 describe('AiAnalysisService', () => {
@@ -139,8 +143,20 @@ describe('AiAnalysisService', () => {
             { id: 'w2', chain: 'SOLANA', isPrimary: false, isSettlement: true },
           ],
           escrows: [
-            { escrowId: 'e1', status: 'RELEASED', amount: 500, corridor: 'SG-CH', createdAt: new Date() },
-            { escrowId: 'e2', status: 'CREATED', amount: 1000, corridor: 'US-MX', createdAt: new Date() },
+            {
+              escrowId: 'e1',
+              status: 'RELEASED',
+              amount: 500,
+              corridor: 'SG-CH',
+              createdAt: new Date(),
+            },
+            {
+              escrowId: 'e2',
+              status: 'CREATED',
+              amount: 1000,
+              corridor: 'US-MX',
+              createdAt: new Date(),
+            },
           ],
         }),
       },
@@ -455,13 +471,15 @@ describe('AiAnalysisService', () => {
       });
 
       // Return cached to short-circuit the rest of the pipeline
-      redisStub.get.resolves(JSON.stringify({
-        riskScore: 25,
-        extractedFields: {},
-        factors: [],
-        recommendation: 'APPROVE',
-        details: 'test',
-      }));
+      redisStub.get.resolves(
+        JSON.stringify({
+          riskScore: 25,
+          extractedFields: {},
+          factors: [],
+          recommendation: 'APPROVE',
+          details: 'test',
+        })
+      );
 
       const result = await service.analyzeDocument({
         escrowId: ESCROW_ID,
@@ -476,13 +494,15 @@ describe('AiAnalysisService', () => {
       redisStub.incr.resolves(1);
 
       // Return cached to short-circuit
-      redisStub.get.resolves(JSON.stringify({
-        riskScore: 25,
-        extractedFields: {},
-        factors: [],
-        recommendation: 'APPROVE',
-        details: 'test',
-      }));
+      redisStub.get.resolves(
+        JSON.stringify({
+          riskScore: 25,
+          extractedFields: {},
+          factors: [],
+          recommendation: 'APPROVE',
+          details: 'test',
+        })
+      );
 
       prismaStub.institutionEscrow.findFirst.resolves({
         escrowId: ESCROW_ID,
@@ -504,13 +524,15 @@ describe('AiAnalysisService', () => {
       redisStub.incr.rejects(new Error('Redis connection lost'));
 
       // Return cached to short-circuit
-      redisStub.get.resolves(JSON.stringify({
-        riskScore: 25,
-        extractedFields: {},
-        factors: [],
-        recommendation: 'APPROVE',
-        details: 'test',
-      }));
+      redisStub.get.resolves(
+        JSON.stringify({
+          riskScore: 25,
+          extractedFields: {},
+          factors: [],
+          recommendation: 'APPROVE',
+          details: 'test',
+        })
+      );
 
       prismaStub.institutionEscrow.findFirst.resolves({
         escrowId: ESCROW_ID,
@@ -639,19 +661,45 @@ describe('AiAnalysisService', () => {
       // No existing analysis
       prismaStub.institutionAiAnalysis.findFirst.resolves(null);
 
-      // Stub the Anthropic client
+      // Stub the Anthropic client (new risk-level format)
       const mockResponse = {
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            risk_score: 15,
-            recommendation: 'APPROVE',
-            summary: 'Low risk standard escrow transaction.',
-            extracted_fields: { escrow_status: 'CREATED', amount_usd: 1000 },
-            factors: [{ name: 'corridor_risk', weight: 0.3, value: 10 }],
-            details: 'SG-CH corridor is low risk',
-          }),
-        }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              risk: 'low_risk',
+              summary: 'Low risk standard escrow transaction.',
+              sections: {
+                overall: {
+                  risk: 'low_risk',
+                  title: 'Overall Compliance',
+                  finding: 'All checks passed.',
+                },
+                account_verifications: {
+                  risk: 'low_risk',
+                  title: 'Account Verifications',
+                  finding: 'Both parties verified.',
+                },
+                transaction_amount: {
+                  risk: 'low_risk',
+                  title: 'Transaction Amount',
+                  finding: '$1,000 within auto-approval range.',
+                },
+                payment_corridor: {
+                  risk: 'low_risk',
+                  title: 'Payment Corridor',
+                  finding: 'SG-CH validated.',
+                },
+                release_conditions: {
+                  risk: 'low_risk',
+                  title: 'Release Conditions',
+                  finding: 'ADMIN_RELEASE configured.',
+                },
+              },
+              extracted_fields: { escrow_status: 'CREATED', amount_usd: 1000, approval_mode: 'ai' },
+            }),
+          },
+        ],
       };
 
       const anthropicStub = {
@@ -760,28 +808,30 @@ describe('AiAnalysisService', () => {
 
     it('should call Claude API and store with CLIENT type', async () => {
       const mockResponse = {
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            risk_score: 12,
-            recommendation: 'APPROVE',
-            summary: 'Well-established institution with verified KYC.',
-            extracted_fields: {
-              company_name: 'Test Corp',
-              entity_type: 'CORPORATION',
-              country: 'SG',
-              kyc_verified: true,
-              kyb_verified: true,
-              sanctions_clear: true,
-              account_age_days: 90,
-            },
-            factors: [
-              { name: 'kyc_verified', weight: 0.3, value: 5 },
-              { name: 'jurisdiction_risk', weight: 0.2, value: 15 },
-            ],
-            details: 'Singapore-based corporation with clean compliance record',
-          }),
-        }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              risk_score: 12,
+              recommendation: 'APPROVE',
+              summary: 'Well-established institution with verified KYC.',
+              extracted_fields: {
+                company_name: 'Test Corp',
+                entity_type: 'CORPORATION',
+                country: 'SG',
+                kyc_verified: true,
+                kyb_verified: true,
+                sanctions_clear: true,
+                account_age_days: 90,
+              },
+              factors: [
+                { name: 'kyc_verified', weight: 0.3, value: 5 },
+                { name: 'jurisdiction_risk', weight: 0.2, value: 15 },
+              ],
+              details: 'Singapore-based corporation with clean compliance record',
+            }),
+          },
+        ],
       };
 
       const anthropicStub = {
@@ -860,17 +910,19 @@ describe('AiAnalysisService', () => {
     it('should return content-hash cached result when escrow data unchanged', async () => {
       // First call: no hash cache, no id cache, no existing analysis → hits AI
       const mockResponse = {
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            risk_score: 15,
-            recommendation: 'APPROVE',
-            summary: 'Low risk escrow.',
-            extracted_fields: { escrow_status: 'CREATED' },
-            factors: [{ name: 'corridor_risk', weight: 0.3, value: 10 }],
-            details: 'All good',
-          }),
-        }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              risk_score: 15,
+              recommendation: 'APPROVE',
+              summary: 'Low risk escrow.',
+              extracted_fields: { escrow_status: 'CREATED' },
+              factors: [{ name: 'corridor_risk', weight: 0.3, value: 10 }],
+              details: 'All good',
+            }),
+          },
+        ],
       };
 
       const anthropicStub = {
@@ -958,17 +1010,19 @@ describe('AiAnalysisService', () => {
       prismaStub.institutionAiAnalysis.findFirst.resolves(null);
 
       const mockResponse = {
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            risk_score: 25,
-            recommendation: 'REVIEW',
-            summary: 'DRAFT escrow with partial data.',
-            extracted_fields: { escrow_status: 'DRAFT' },
-            factors: [{ name: 'incomplete_data', weight: 0.5, value: 25 }],
-            details: 'Partial data',
-          }),
-        }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              risk_score: 25,
+              recommendation: 'REVIEW',
+              summary: 'DRAFT escrow with partial data.',
+              extracted_fields: { escrow_status: 'DRAFT' },
+              factors: [{ name: 'incomplete_data', weight: 0.5, value: 25 }],
+              details: 'Partial data',
+            }),
+          },
+        ],
       };
 
       const anthropicStub = {
@@ -981,7 +1035,7 @@ describe('AiAnalysisService', () => {
 
       const createArgs = anthropicStub.messages.create.firstCall.args[0];
       expect(createArgs.model).to.equal('claude-haiku-4-5-20251001');
-      expect(createArgs.max_tokens).to.equal(2048);
+      expect(createArgs.max_tokens).to.equal(1024);
 
       // Verify stored model
       const dbArgs = prismaStub.institutionAiAnalysis.create.firstCall.args[0];
@@ -994,17 +1048,19 @@ describe('AiAnalysisService', () => {
       prismaStub.institutionAiAnalysis.findFirst.resolves(null);
 
       const mockResponse = {
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            risk_score: 15,
-            recommendation: 'APPROVE',
-            summary: 'Low risk.',
-            extracted_fields: { escrow_status: 'CREATED' },
-            factors: [{ name: 'test', weight: 0.3, value: 10 }],
-            details: 'All good',
-          }),
-        }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              risk_score: 15,
+              recommendation: 'APPROVE',
+              summary: 'Low risk.',
+              extracted_fields: { escrow_status: 'CREATED' },
+              factors: [{ name: 'test', weight: 0.3, value: 10 }],
+              details: 'All good',
+            }),
+          },
+        ],
       };
 
       const anthropicStub = {
@@ -1017,7 +1073,7 @@ describe('AiAnalysisService', () => {
 
       const createArgs = anthropicStub.messages.create.firstCall.args[0];
       expect(createArgs.model).to.equal('claude-sonnet-4-20250514');
-      expect(createArgs.max_tokens).to.equal(4096);
+      expect(createArgs.max_tokens).to.equal(1536);
 
       delete process.env.ANTHROPIC_API_KEY;
     });
@@ -1030,17 +1086,19 @@ describe('AiAnalysisService', () => {
       prismaStub.institutionAiAnalysis.findFirst.resolves(null);
 
       const mockResponse = {
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            risk_score: 15,
-            recommendation: 'APPROVE',
-            summary: 'OK',
-            extracted_fields: { escrow_status: 'CREATED' },
-            factors: [],
-            details: 'OK',
-          }),
-        }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              risk_score: 15,
+              recommendation: 'APPROVE',
+              summary: 'OK',
+              extracted_fields: { escrow_status: 'CREATED' },
+              factors: [],
+              details: 'OK',
+            }),
+          },
+        ],
       };
 
       const anthropicStub = {
@@ -1155,82 +1213,94 @@ describe('AiAnalysisService', () => {
       ...overrides,
     });
 
-    it('should pass all sections for a complete, valid escrow', () => {
+    it('should return low_risk for a complete, valid escrow', () => {
       const result = evaluateEscrow(makeEscrowData());
 
-      expect(result.riskScore).to.be.lessThan(25);
-      expect(result.recommendation).to.equal('APPROVE');
-      expect(result.sections.from_account.status).to.equal('pass');
-      expect(result.sections.to_account.status).to.equal('pass');
-      expect(result.sections.corridor.status).to.equal('pass');
-      expect(result.sections.amount.status).to.equal('pass');
-      expect(result.sections.settlement.status).to.equal('pass');
-      expect(result.sections.release.status).to.equal('pass');
-      expect(result.sections.advanced.status).to.equal('pass');
-      expect(result.sections.overview.status).to.equal('pass');
+      expect(result.risk).to.equal('low_risk');
+      expect(result.sections.overall.risk).to.equal('low_risk');
+      expect(result.sections.account_verifications.risk).to.equal('low_risk');
+      expect(result.sections.transaction_amount.risk).to.equal('low_risk');
+      expect(result.sections.payment_corridor.risk).to.equal('low_risk');
+      expect(result.sections.release_conditions.risk).to.equal('low_risk');
     });
 
-    it('should return pending for missing payer wallet', () => {
-      const result = evaluateEscrow(makeEscrowData({ payerWallet: null }));
-      expect(result.sections.from_account.status).to.equal('pending');
+    it('should block for unverified KYC', () => {
+      const result = evaluateEscrow(
+        makeEscrowData({
+          client: { ...makeEscrowData().client, kycStatus: 'PENDING' },
+        })
+      );
+      expect(result.sections.account_verifications.risk).to.equal('blocked');
+      expect(result.risk).to.equal('blocked');
     });
 
-    it('should fail for unverified KYC', () => {
-      const result = evaluateEscrow(makeEscrowData({
-        client: { ...makeEscrowData().client, kycStatus: 'PENDING' },
-      }));
-      expect(result.sections.from_account.status).to.equal('fail');
+    it('should block for HIGH risk rating', () => {
+      const result = evaluateEscrow(
+        makeEscrowData({
+          client: { ...makeEscrowData().client, riskRating: 'HIGH' },
+        })
+      );
+      expect(result.sections.account_verifications.risk).to.equal('blocked');
     });
 
-    it('should fail for HIGH risk rating', () => {
-      const result = evaluateEscrow(makeEscrowData({
-        client: { ...makeEscrowData().client, riskRating: 'HIGH' },
-      }));
-      expect(result.sections.from_account.status).to.equal('fail');
+    it('should block when recipient equals payer', () => {
+      const result = evaluateEscrow(
+        makeEscrowData({
+          payerWallet: 'same-wallet',
+          recipientWallet: 'same-wallet',
+        })
+      );
+      expect(result.sections.account_verifications.risk).to.equal('blocked');
     });
 
-    it('should return pending for missing recipient wallet', () => {
+    it('should return medium_risk for missing recipient wallet', () => {
       const result = evaluateEscrow(makeEscrowData({ recipientWallet: null }));
-      expect(result.sections.to_account.status).to.equal('pending');
+      expect(result.sections.account_verifications.risk).to.equal('medium_risk');
     });
 
-    it('should fail when recipient equals payer', () => {
-      const result = evaluateEscrow(makeEscrowData({
-        payerWallet: 'same-wallet',
-        recipientWallet: 'same-wallet',
-      }));
-      expect(result.sections.to_account.status).to.equal('fail');
-    });
-
-    it('should return pending for missing corridor with recommendation', () => {
+    it('should return medium_risk for missing corridor', () => {
       const result = evaluateEscrow(makeEscrowData({ corridor: null }));
-      expect(result.sections.corridor.status).to.equal('pending');
-      expect(result.sections.corridor.recommended_corridor).to.equal('SG-CH');
+      expect(result.sections.payment_corridor.risk).to.equal('medium_risk');
     });
 
-    it('should warn for amount > $100K', () => {
-      const result = evaluateEscrow(makeEscrowData({ amount: 150000 }));
-      expect(result.sections.amount.status).to.equal('warning');
+    it('should block for corridor not in available list', () => {
+      const result = evaluateEscrow(makeEscrowData({ corridor: 'XX-YY' }));
+      expect(result.sections.payment_corridor.risk).to.equal('blocked');
     });
 
-    it('should return pending for missing amount', () => {
-      const result = evaluateEscrow(makeEscrowData({ amount: 0 }));
-      expect(result.sections.amount.status).to.equal('pending');
+    it('should return low_risk for amount <= $50K (AI auto-approval)', () => {
+      const result = evaluateEscrow(makeEscrowData({ amount: 30000 }));
+      expect(result.sections.transaction_amount.risk).to.equal('low_risk');
     });
 
-    it('should return pending for missing tokenMint', () => {
-      const result = evaluateEscrow(makeEscrowData({ tokenMint: null }));
-      expect(result.sections.settlement.status).to.equal('pending');
+    it('should return medium_risk for amount $100K (manual approval)', () => {
+      const result = evaluateEscrow(makeEscrowData({ amount: 100000 }));
+      expect(result.sections.transaction_amount.risk).to.equal('medium_risk');
     });
 
-    it('should return pending for missing conditionType', () => {
+    it('should return high_risk for amount >= $1M', () => {
+      const result = evaluateEscrow(makeEscrowData({ amount: 1500000 }));
+      expect(result.sections.transaction_amount.risk).to.equal('high_risk');
+    });
+
+    it('should block for unwhitelisted token', () => {
+      const result = evaluateEscrow(makeEscrowData({ tokenMint: 'UnknownToken123' }));
+      expect(result.sections.transaction_amount.risk).to.equal('blocked');
+    });
+
+    it('should return medium_risk for missing conditionType', () => {
       const result = evaluateEscrow(makeEscrowData({ conditionType: null }));
-      expect(result.sections.release.status).to.equal('pending');
+      expect(result.sections.release_conditions.risk).to.equal('medium_risk');
     });
 
-    it('should warn for no docs on large amounts', () => {
-      const result = evaluateEscrow(makeEscrowData({ amount: 60000, fileCount: 0 }));
-      expect(result.sections.advanced.status).to.equal('warning');
+    it('should block for >=100K with non-ADMIN_RELEASE', () => {
+      const result = evaluateEscrow(
+        makeEscrowData({
+          amount: 150000,
+          conditionType: 'TIME_LOCK',
+        })
+      );
+      expect(result.sections.release_conditions.risk).to.equal('blocked');
     });
 
     it('should compute extracted fields correctly', () => {
@@ -1242,11 +1312,27 @@ describe('AiAnalysisService', () => {
       expect(result.extractedFields.deposit_confirmed).to.be.true;
     });
 
-    it('should set overview to fail when any section fails', () => {
-      const result = evaluateEscrow(makeEscrowData({
-        client: { ...makeEscrowData().client, kycStatus: 'REJECTED' },
-      }));
-      expect(result.sections.overview.status).to.equal('fail');
+    it('should set overall to blocked when any section is blocked', () => {
+      const result = evaluateEscrow(
+        makeEscrowData({
+          client: { ...makeEscrowData().client, kycStatus: 'REJECTED' },
+        })
+      );
+      expect(result.sections.overall.risk).to.equal('blocked');
+      expect(result.risk).to.equal('blocked');
+    });
+
+    it('should return 5 sections', () => {
+      const result = evaluateEscrow(makeEscrowData());
+      const sectionKeys = Object.keys(result.sections);
+      expect(sectionKeys).to.have.length(5);
+      expect(sectionKeys).to.include.members([
+        'overall',
+        'account_verifications',
+        'transaction_amount',
+        'payment_corridor',
+        'release_conditions',
+      ]);
     });
   });
 });
