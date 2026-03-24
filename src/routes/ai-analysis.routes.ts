@@ -2,7 +2,8 @@
  * AI Analysis Routes — "EasyEscrow AI"
  *
  * Escrow Analysis:
- * POST   /api/v1/ai/analyze-escrow/:escrow_id          → analyzeEscrow
+ * POST   /api/v1/ai/analyze-escrow/:escrow_id          → analyzeEscrow (param-based, UUID only)
+ * POST   /api/v1/institution/ai/analyze-escrow          → analyzeEscrow (body-based, UUID or escrow code)
  * GET    /api/v1/ai/escrow-analysis/:escrow_id          → getEscrowAnalysis
  *
  * Corridor Analysis:
@@ -23,7 +24,7 @@
 
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { param, query, validationResult } from 'express-validator';
+import { body, param, query, validationResult } from 'express-validator';
 import {
   requireInstitutionAuth,
   InstitutionAuthenticatedRequest,
@@ -199,6 +200,53 @@ router.get(
       const status = error.message.includes('not found') ? 404 : 500;
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+);
+
+// POST /api/v1/institution/ai/analyze-escrow — body-based escrow analysis (accepts UUID or escrow code)
+const validateEscrowIdBody = [
+  body('escrowId')
+    .isString()
+    .matches(/^(EE-[A-Z]{3}-[A-Z]{3}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i)
+    .withMessage('escrowId must be a valid UUID or escrow code (EE-XXX-XXX)'),
+];
+
+router.post(
+  '/api/v1/institution/ai/analyze-escrow',
+  strictRateLimiter,
+  requireInstitutionAuth,
+  validateEscrowIdBody,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ error: 'Validation Error', details: errors.array(), timestamp: new Date().toISOString() });
+      return;
+    }
+
+    try {
+      const service = getAiAnalysisService();
+      const result = await service.analyzeEscrow(
+        req.body.escrowId,
+        req.institutionClient!.clientId,
+        { anonymize: true },
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('rate limit') ? 429
+        : error.message.includes('not found') ? 404
+        : error.message.includes('not configured') ? 503
+        : 500;
+      res.status(status).json({
+        error: 'Escrow Analysis Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
