@@ -303,10 +303,17 @@ export class InstitutionEscrowService {
       if (!config.platform.feeCollectorAddress) {
         throw new Error('Platform feeCollectorAddress is not configured');
       }
+      // Use the env-configured USDC mint for on-chain operations — the whitelist may
+      // contain mainnet addresses that don't exist on devnet/staging.
+      const onChainMint = programService.getUsdcMintAddress();
+      if (resolvedMint !== onChainMint.toBase58()) {
+        console.warn(
+          `[InstitutionEscrow] Mint mismatch: whitelist resolved "${resolvedMint}" but env USDC_MINT_ADDRESS is "${onChainMint.toBase58()}". Using env mint for on-chain tx.`
+        );
+      }
       const feeCollectorPk = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
       const payerPk = toPublicKey(payerWallet, 'payerWallet');
       const recipientPk = toPublicKey(recipientWallet, 'recipientWallet');
-      const mintPk = toPublicKey(resolvedMint, 'usdcMint');
       const settlementPk = toPublicKey(resolvedSettlementAuthority, 'settlementAuthority');
 
       try {
@@ -314,7 +321,7 @@ export class InstitutionEscrowService {
           escrowId,
           payerWallet: payerPk,
           recipientWallet: recipientPk,
-          usdcMint: mintPk,
+          usdcMint: onChainMint,
           feeCollector: feeCollectorPk,
           settlementAuthority: settlementPk,
           amount,
@@ -656,10 +663,15 @@ export class InstitutionEscrowService {
         throw new Error('Platform feeCollectorAddress is not configured');
       }
       const resolvedSettlementAuthority = escrow.settlementAuthority || escrow.payerWallet;
+      const onChainMint = programService.getUsdcMintAddress();
+      if (escrow.usdcMint !== onChainMint.toBase58()) {
+        console.warn(
+          `[InstitutionEscrow] Draft mint mismatch: DB has "${escrow.usdcMint}" but env USDC_MINT_ADDRESS is "${onChainMint.toBase58()}". Using env mint for on-chain tx.`
+        );
+      }
       const feeCollectorPk = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
       const payerPk = toPublicKey(escrow.payerWallet, 'payerWallet');
       const recipientPk = toPublicKey(escrow.recipientWallet!, 'recipientWallet');
-      const mintPk = toPublicKey(escrow.usdcMint, 'usdcMint');
       const settlementPk = toPublicKey(resolvedSettlementAuthority, 'settlementAuthority');
 
       try {
@@ -667,7 +679,7 @@ export class InstitutionEscrowService {
           escrowId,
           payerWallet: payerPk,
           recipientWallet: recipientPk,
-          usdcMint: mintPk,
+          usdcMint: onChainMint,
           feeCollector: feeCollectorPk,
           settlementAuthority: settlementPk,
           amount: Number(escrow.amount),
@@ -905,7 +917,7 @@ export class InstitutionEscrowService {
     }
 
     const payerWallet = toPublicKey(escrow.payerWallet, 'payerWallet');
-    const usdcMint = toPublicKey(escrow.usdcMint, 'usdcMint');
+    const usdcMint = programService.getUsdcMintAddress();
 
     const tx = await programService.buildDepositTransaction({
       escrowId,
@@ -960,11 +972,12 @@ export class InstitutionEscrowService {
           throw new Error('Platform feeCollectorAddress is not configured');
         }
         const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
+        const usdcMint = releaseProgramService.getUsdcMintAddress();
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
           recipientWallet: toPublicKey(escrow.recipientWallet!, 'recipientWallet'),
           feeCollector,
-          usdcMint: toPublicKey(escrow.usdcMint, 'usdcMint'),
+          usdcMint,
           escrowCode: escrow.escrowCode,
         });
         console.log(
@@ -1110,10 +1123,11 @@ export class InstitutionEscrowService {
       const cancelProgramService = this.getProgramService();
       if (cancelProgramService) {
         try {
+          const usdcMint = cancelProgramService.getUsdcMintAddress();
           cancelTxSignature = await cancelProgramService.cancelEscrowOnChain({
             escrowId,
             payerWallet: toPublicKey(escrow.payerWallet, 'payerWallet'),
-            usdcMint: toPublicKey(escrow.usdcMint, 'usdcMint'),
+            usdcMint,
             escrowCode: escrow.escrowCode,
           });
           console.log(
@@ -1198,7 +1212,10 @@ export class InstitutionEscrowService {
     try {
       const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
       const connection = new Connection(rpcUrl, 'confirmed');
-      const usdcMint = toPublicKey(escrow.usdcMint, 'usdcMint');
+      const programService = this.getProgramService();
+      const usdcMint = programService
+        ? programService.getUsdcMintAddress()
+        : toPublicKey(escrow.usdcMint, 'usdcMint');
       const payerWallet = toPublicKey(escrow.payerWallet, 'payerWallet');
       const payerAta = await getAssociatedTokenAddress(usdcMint, payerWallet);
 
