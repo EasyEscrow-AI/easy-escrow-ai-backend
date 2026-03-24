@@ -459,21 +459,21 @@ RESPONSE FORMAT (valid JSON only, no other text):
 
     let result: AiAnalysisResult & { summary: string; sections?: Record<string, unknown> };
     try {
-      const parsed = JSON.parse(responseText);
+      const parsed = this.extractJson(responseText);
       result = {
-        riskScore: Math.min(100, Math.max(0, parsed.risk_score || 50)),
-        extractedFields: parsed.extracted_fields || {},
-        factors: (parsed.factors || []).map((f: any) => ({
+        riskScore: Math.min(100, Math.max(0, (parsed.risk_score as number) || 50)),
+        extractedFields: (parsed.extracted_fields as Record<string, unknown>) || {},
+        factors: ((parsed.factors as any[]) || []).map((f: any) => ({
           name: f.name,
           weight: Math.min(1, Math.max(0, f.weight || 0)),
           value: Math.min(100, Math.max(0, f.value || 0)),
         })),
-        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation)
-          ? parsed.recommendation
+        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation as string)
+          ? (parsed.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT')
           : 'REVIEW',
-        details: parsed.details || 'Analysis complete',
-        summary: parsed.summary || '',
-        sections: parsed.sections || undefined,
+        details: (parsed.details as string) || 'Analysis complete',
+        summary: (parsed.summary as string) || '',
+        sections: (parsed.sections as Record<string, unknown>) || undefined,
       };
     } catch {
       result = {
@@ -672,20 +672,20 @@ Respond with ONLY the JSON object, no additional text.`;
 
     let result: AiAnalysisResult & { summary: string };
     try {
-      const parsed = JSON.parse(responseText);
+      const parsed = this.extractJson(responseText);
       result = {
-        riskScore: Math.min(100, Math.max(0, parsed.risk_score || 50)),
-        extractedFields: parsed.extracted_fields || {},
-        factors: (parsed.factors || []).map((f: any) => ({
+        riskScore: Math.min(100, Math.max(0, (parsed.risk_score as number) || 50)),
+        extractedFields: (parsed.extracted_fields as Record<string, unknown>) || {},
+        factors: ((parsed.factors as any[]) || []).map((f: any) => ({
           name: f.name,
           weight: Math.min(1, Math.max(0, f.weight || 0)),
           value: Math.min(100, Math.max(0, f.value || 0)),
         })),
-        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation)
-          ? parsed.recommendation
+        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation as string)
+          ? (parsed.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT')
           : 'REVIEW',
-        details: parsed.details || 'Analysis complete',
-        summary: parsed.summary || '',
+        details: (parsed.details as string) || 'Analysis complete',
+        summary: (parsed.summary as string) || '',
       };
     } catch {
       result = {
@@ -743,6 +743,41 @@ Respond with ONLY the JSON object, no additional text.`;
       details: `Analyzed at ${a.createdAt.toISOString()} using ${a.model}`,
       summary: (a as any).summary || '',
     }));
+  }
+
+  /**
+   * Extract JSON from an AI response that may contain markdown fences or surrounding text
+   */
+  private extractJson(responseText: string): Record<string, unknown> {
+    // 1. Try raw parse first
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      // continue to extraction
+    }
+
+    // 2. Strip markdown code fences: ```json ... ``` or ``` ... ```
+    const fenceMatch = responseText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+    if (fenceMatch) {
+      try {
+        return JSON.parse(fenceMatch[1].trim());
+      } catch {
+        // continue
+      }
+    }
+
+    // 3. Find the outermost { ... } in the response
+    const firstBrace = responseText.indexOf('{');
+    const lastBrace = responseText.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        return JSON.parse(responseText.slice(firstBrace, lastBrace + 1));
+      } catch {
+        // continue
+      }
+    }
+
+    throw new Error('No valid JSON found in AI response');
   }
 
   /**
@@ -846,19 +881,19 @@ Respond with ONLY the JSON object, no additional text.`;
 
     // Parse JSON response
     try {
-      const parsed = JSON.parse(responseText);
+      const parsed = this.extractJson(responseText);
       return {
-        riskScore: Math.min(100, Math.max(0, parsed.risk_score || 50)),
-        extractedFields: parsed.extracted_fields || {},
-        factors: (parsed.factors || []).map((f: { name: string; weight: number; value: number }) => ({
+        riskScore: Math.min(100, Math.max(0, (parsed.risk_score as number) || 50)),
+        extractedFields: (parsed.extracted_fields as Record<string, unknown>) || {},
+        factors: ((parsed.factors as any[]) || []).map((f: { name: string; weight: number; value: number }) => ({
           name: f.name,
           weight: Math.min(1, Math.max(0, f.weight || 0)),
           value: Math.min(100, Math.max(0, f.value || 0)),
         })),
-        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation)
-          ? parsed.recommendation
+        recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation as string)
+          ? (parsed.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT')
           : 'REVIEW',
-        details: parsed.details || 'Analysis complete',
+        details: (parsed.details as string) || 'Analysis complete',
       };
     } catch {
       // If JSON parsing fails, return a safe default
