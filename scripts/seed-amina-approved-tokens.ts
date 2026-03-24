@@ -13,12 +13,16 @@ import { PrismaClient } from '../src/generated/prisma';
 
 const prisma = new PrismaClient();
 
+// Mainnet USDC mint — used on production; overridden by USDC_MINT_ADDRESS on devnet/staging
+const MAINNET_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
 // AMINA-approved stablecoins (Solana SPL token mints)
 const AMINA_TOKENS = [
   {
     symbol: 'USDC',
     name: 'USD Coin',
-    mintAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    // Use env-configured mint so devnet/staging gets the correct address
+    mintAddress: process.env.USDC_MINT_ADDRESS || MAINNET_USDC_MINT,
     decimals: 6,
     issuer: 'Circle',
     jurisdiction: 'US',
