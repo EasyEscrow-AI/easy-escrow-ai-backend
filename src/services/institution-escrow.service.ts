@@ -408,20 +408,17 @@ export class InstitutionEscrowService {
       },
     });
 
-    // 12. Create audit logs
-    await this.createAuditLog(escrowId, clientId, 'ESCROW_CREATED', payerWallet, {
-      amount,
-      corridor,
-      conditionType,
-      escrowPda,
-      vaultPda,
+    // 12. Create KYT-enriched audit logs
+    await this.createKytAuditLog(escrow, 'ESCROW_CREATED', payerWallet, {
       initTxSignature,
-      escrowCode,
+      conditionType,
+      releaseMode,
+      releaseConditions: releaseConditions || [],
       message: `Payment initiated for ${amount} USDC on corridor ${corridor}`,
     });
 
     // Separate compliance screening audit entry
-    await this.createAuditLog(escrowId, clientId, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
+    await this.createKytAuditLog(escrow, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
       passed: complianceResult.passed,
       riskScore: complianceResult.riskScore,
       checksCount: complianceResult.flags?.length || 0,
@@ -433,7 +430,7 @@ export class InstitutionEscrowService {
 
     // If held for compliance, log the hold separately
     if (initialStatus === 'COMPLIANCE_HOLD') {
-      await this.createAuditLog(escrowId, clientId, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
+      await this.createKytAuditLog(escrow, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
         riskScore: complianceResult.riskScore,
         message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}`,
       });
@@ -766,15 +763,13 @@ export class InstitutionEscrowService {
       },
     });
 
-    await this.createAuditLog(escrowId, clientId, 'DRAFT_SUBMITTED', escrow.payerWallet, {
-      amount: Number(escrow.amount),
-      corridor: escrow.corridor,
+    await this.createKytAuditLog(updated, 'DRAFT_SUBMITTED', escrow.payerWallet, {
       conditionType: escrow.conditionType,
       message: `Draft submitted for ${Number(escrow.amount)} USDC on corridor ${escrow.corridor}`,
     });
 
     // Separate compliance screening audit entry
-    await this.createAuditLog(escrowId, clientId, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
+    await this.createKytAuditLog(updated, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
       passed: complianceResult.passed,
       riskScore: complianceResult.riskScore,
       checksCount: complianceResult.flags?.length || 0,
@@ -785,7 +780,7 @@ export class InstitutionEscrowService {
     });
 
     if (newStatus === 'COMPLIANCE_HOLD') {
-      await this.createAuditLog(escrowId, clientId, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
+      await this.createKytAuditLog(updated, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
         riskScore: complianceResult.riskScore,
         message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}`,
       });
@@ -926,9 +921,8 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createAuditLog(escrowId, clientId, 'DEPOSIT_CONFIRMED', escrow.payerWallet, {
+    await this.createKytAuditLog(escrow, 'DEPOSIT_CONFIRMED', escrow.payerWallet, {
       txSignature,
-      amount: Number(escrow.amount),
       message: `${Number(escrow.amount)} USDC deposited to PDA`,
     });
 
@@ -1109,7 +1103,7 @@ export class InstitutionEscrowService {
     if (escrow.releaseMode === 'ai') {
       const aiResult = await this.performAiReleaseCheck(escrow, clientId);
 
-      await this.createAuditLog(escrowId, clientId, 'AI_RELEASE_CHECK', 'AI Orchestrator', {
+      await this.createKytAuditLog(escrow, 'AI_RELEASE_CHECK', 'AI Orchestrator', {
         passed: aiResult.passed,
         releaseMode: 'ai',
         conditions: aiResult.conditions,
@@ -1228,9 +1222,7 @@ export class InstitutionEscrowService {
     }
 
     const releaseActor = escrow.releaseMode === 'ai' ? 'AI Orchestrator' : escrow.settlementAuthority;
-    await this.createAuditLog(escrowId, clientId, 'FUNDS_RELEASED', releaseActor, {
-      amount: Number(escrow.amount),
-      recipient: escrow.recipientWallet,
+    await this.createKytAuditLog(escrow, 'FUNDS_RELEASED', releaseActor, {
       releaseTxSignature: releaseTxSig,
       releaseMode: escrow.releaseMode || 'manual',
       releaseConditions: escrow.releaseConditions || [],
@@ -1263,15 +1255,10 @@ export class InstitutionEscrowService {
         data: { status: 'COMPLETE' },
       });
 
-      await this.createAuditLog(
-        escrowId,
-        clientId,
-        'ESCROW_COMPLETED',
-        escrow.settlementAuthority,
-        {
-          previousStatus: 'RELEASED',
-        }
-      );
+      await this.createKytAuditLog(escrow, 'ESCROW_COMPLETED', escrow.settlementAuthority, {
+        previousStatus: 'RELEASED',
+        message: `Settlement complete — ${Number(escrow.amount)} USDC delivered`,
+      });
 
       await this.cacheEscrow(completed);
       return this.formatEscrow(completed);
@@ -1368,10 +1355,10 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createAuditLog(escrowId, clientId, 'ESCROW_CANCELLED', escrow.payerWallet, {
+    await this.createKytAuditLog(escrow, 'ESCROW_CANCELLED', escrow.payerWallet, {
       reason,
       previousStatus: escrow.status,
-      cancelTxSignature: cancelTxSignature,
+      cancelTxSignature,
       wasFunded: escrow.status === 'FUNDED',
       message: reason ? `Cancelled — ${reason}` : 'Cancelled by client',
     });
@@ -1426,9 +1413,10 @@ export class InstitutionEscrowService {
             where: { escrowId },
             data: { status: 'INSUFFICIENT_FUNDS' },
           });
-          await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
+          await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
             available: tokenAccount.amount.toString(),
             required: requiredMicroUsdc.toString(),
+            message: `Insufficient balance: has ${tokenAccount.amount}, needs ${requiredMicroUsdc} micro-USDC`,
           });
           try {
             await getInstitutionNotificationService().notify({
@@ -1463,8 +1451,9 @@ export class InstitutionEscrowService {
           where: { escrowId },
           data: { status: 'INSUFFICIENT_FUNDS' },
         });
-        await this.createAuditLog(escrowId, clientId, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
+        await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', escrow.payerWallet, {
           reason: 'Token account does not exist',
+          message: 'Payer token account does not exist',
         });
         try {
           await getInstitutionNotificationService().notify({
@@ -1602,6 +1591,59 @@ export class InstitutionEscrowService {
   /**
    * Create an audit log entry
    */
+  /**
+   * Build KYT (Know Your Transaction) context for audit log enrichment.
+   * Resolves originator/beneficiary names from client records so each
+   * audit entry is self-contained for compliance / Travel Rule purposes.
+   */
+  private async buildKytContext(escrow: any): Promise<Record<string, unknown>> {
+    const [originatorClient, beneficiaryClient] = await Promise.all([
+      this.prisma.institutionClient.findUnique({
+        where: { id: escrow.clientId },
+        select: { companyName: true, legalName: true, country: true, registrationCountry: true, lei: true },
+      }),
+      escrow.recipientWallet
+        ? this.prisma.institutionClient.findFirst({
+            where: {
+              OR: [
+                { primaryWallet: escrow.recipientWallet },
+                { settledWallets: { has: escrow.recipientWallet } },
+              ],
+            },
+            select: { companyName: true, legalName: true, country: true, registrationCountry: true, lei: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    return {
+      kyt: {
+        escrowCode: escrow.escrowCode,
+        escrowId: escrow.escrowId,
+        amount: Number(escrow.amount),
+        currency: 'USDC',
+        cryptoChain: 'solana',
+        corridor: escrow.corridor,
+        escrowPda: escrow.escrowPda || null,
+        originator: {
+          name: originatorClient?.companyName || null,
+          legalName: originatorClient?.legalName || null,
+          wallet: escrow.payerWallet,
+          country: originatorClient?.country || null,
+          registrationCountry: originatorClient?.registrationCountry || null,
+          lei: originatorClient?.lei || null,
+        },
+        beneficiary: {
+          name: beneficiaryClient?.companyName || null,
+          legalName: beneficiaryClient?.legalName || null,
+          wallet: escrow.recipientWallet || null,
+          country: beneficiaryClient?.country || null,
+          registrationCountry: beneficiaryClient?.registrationCountry || null,
+          lei: beneficiaryClient?.lei || null,
+        },
+      },
+    };
+  }
+
   private async createAuditLog(
     escrowId: string,
     clientId: string,
@@ -1624,6 +1666,28 @@ export class InstitutionEscrowService {
     } catch (error) {
       console.error('[InstitutionEscrowService] Failed to create audit log:', error);
     }
+  }
+
+  /**
+   * Create an audit log entry enriched with KYT context.
+   * Use this for all transactional events (create, fund, release, cancel).
+   */
+  private async createKytAuditLog(
+    escrow: any,
+    action: string,
+    actor: string,
+    details: Record<string, unknown>,
+    ipAddress?: string
+  ): Promise<void> {
+    const kytContext = await this.buildKytContext(escrow);
+    await this.createAuditLog(
+      escrow.escrowId,
+      escrow.clientId,
+      action,
+      actor,
+      { ...details, ...kytContext },
+      ipAddress
+    );
   }
 
   /**
@@ -1783,6 +1847,7 @@ export class InstitutionEscrowService {
 
     base.activityLog = auditLogs.map((l) => {
       const d = (l.details || {}) as Record<string, unknown>;
+      const kyt = d.kyt as Record<string, unknown> | undefined;
       return {
         id: l.id,
         action: l.action,
@@ -1790,6 +1855,13 @@ export class InstitutionEscrowService {
         actor: l.actor,
         message: d.message || null,
         txSignature: d.initTxSignature || d.txSignature || d.releaseTxSignature || d.cancelTxSignature || null,
+        amount: kyt?.amount || d.amount || null,
+        currency: kyt?.currency || 'USDC',
+        corridor: kyt?.corridor || null,
+        originator: kyt?.originator || null,
+        beneficiary: kyt?.beneficiary || null,
+        riskScore: d.riskScore || null,
+        conditions: d.conditions || null,
         details: d,
         createdAt: l.createdAt,
       };

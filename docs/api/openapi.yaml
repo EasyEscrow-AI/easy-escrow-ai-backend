@@ -6191,7 +6191,10 @@ components:
           format: date-time
         activityLog:
           type: array
-          description: Audit trail of escrow lifecycle events (returned on single-escrow GET for owners only)
+          description: |
+            KYT-enriched audit trail of escrow lifecycle events.
+            Returned on single-escrow GET for owners only.
+            Each entry includes originator/beneficiary data for Travel Rule compliance.
           items:
             type: object
             properties:
@@ -6233,9 +6236,85 @@ components:
                 type: string
                 nullable: true
                 description: On-chain transaction signature (if applicable)
+              amount:
+                type: number
+                nullable: true
+                description: Transaction amount in USDC
+              currency:
+                type: string
+                description: Token currency (always "USDC")
+              corridor:
+                type: string
+                nullable: true
+                description: Payment corridor (e.g. "SG-CH")
+              originator:
+                type: object
+                nullable: true
+                description: KYT originator (payer) data resolved from client records
+                properties:
+                  name:
+                    type: string
+                    nullable: true
+                  legalName:
+                    type: string
+                    nullable: true
+                  wallet:
+                    type: string
+                  country:
+                    type: string
+                    nullable: true
+                  registrationCountry:
+                    type: string
+                    nullable: true
+                  lei:
+                    type: string
+                    nullable: true
+                    description: Legal Entity Identifier
+              beneficiary:
+                type: object
+                nullable: true
+                description: KYT beneficiary (recipient) data resolved from client records
+                properties:
+                  name:
+                    type: string
+                    nullable: true
+                  legalName:
+                    type: string
+                    nullable: true
+                  wallet:
+                    type: string
+                    nullable: true
+                  country:
+                    type: string
+                    nullable: true
+                  registrationCountry:
+                    type: string
+                    nullable: true
+                  lei:
+                    type: string
+                    nullable: true
+              riskScore:
+                type: number
+                nullable: true
+                description: AI risk score (0-100) if applicable
+              conditions:
+                type: array
+                nullable: true
+                description: AI release condition results (for AI_RELEASE_CHECK action)
+                items:
+                  type: object
+                  properties:
+                    condition:
+                      type: string
+                    label:
+                      type: string
+                    passed:
+                      type: boolean
+                    detail:
+                      type: string
               details:
                 type: object
-                description: Full event details (action-specific fields)
+                description: Full event details including KYT context
               createdAt:
                 type: string
                 format: date-time
