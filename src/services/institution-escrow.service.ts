@@ -34,6 +34,25 @@ import {
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
 const ESCROW_CACHE_TTL = 300; // 5 minutes
 
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  DRAFT_SAVED: 'Draft Saved',
+  DRAFT_UPDATED: 'Draft Updated',
+  DRAFT_SUBMITTED: 'Draft Submitted',
+  ESCROW_CREATED: 'Escrow Created',
+  COMPLIANCE_SCREENING: 'Compliance Screening',
+  COMPLIANCE_HOLD: 'Compliance Hold',
+  DEPOSIT_CONFIRMED: 'Escrow Funded',
+  AI_RELEASE_CHECK: 'AI Analysis',
+  FUNDS_RELEASED: 'Funds Released',
+  ESCROW_COMPLETED: 'Settlement Complete',
+  ESCROW_CANCELLED: 'Cancelled',
+  ESCROW_EXPIRED: 'Expired',
+  INSUFFICIENT_FUNDS: 'Insufficient Funds',
+  ON_CHAIN_INIT_FAILED: 'On-Chain Init Failed',
+  ON_CHAIN_RELEASE_FAILED: 'On-Chain Release Failed',
+  ON_CHAIN_CANCEL_FAILED: 'On-Chain Cancel Failed',
+};
+
 const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
   legal_compliance: 'All legal compliance checks pass',
   invoice_amount_match: 'Invoice amount matches exactly',
@@ -389,7 +408,7 @@ export class InstitutionEscrowService {
       },
     });
 
-    // 12. Create audit log
+    // 12. Create audit logs
     await this.createAuditLog(escrowId, clientId, 'ESCROW_CREATED', payerWallet, {
       amount,
       corridor,
@@ -397,12 +416,28 @@ export class InstitutionEscrowService {
       escrowPda,
       vaultPda,
       initTxSignature,
-      complianceResult: {
-        passed: complianceResult.passed,
-        riskScore: complianceResult.riskScore,
-        flags: complianceResult.flags,
-      },
+      escrowCode,
+      message: `Payment initiated for ${amount} USDC on corridor ${corridor}`,
     });
+
+    // Separate compliance screening audit entry
+    await this.createAuditLog(escrowId, clientId, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
+      passed: complianceResult.passed,
+      riskScore: complianceResult.riskScore,
+      checksCount: complianceResult.flags?.length || 0,
+      flags: complianceResult.flags,
+      message: complianceResult.passed
+        ? `All ${complianceResult.flags?.length || 0} checks passed`
+        : `${complianceResult.flags?.filter((f: any) => f.severity === 'HIGH').length || 0} issue(s) flagged — risk score ${complianceResult.riskScore}`,
+    });
+
+    // If held for compliance, log the hold separately
+    if (initialStatus === 'COMPLIANCE_HOLD') {
+      await this.createAuditLog(escrowId, clientId, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
+        riskScore: complianceResult.riskScore,
+        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}`,
+      });
+    }
 
     // 11. Send notifications
     try {
@@ -735,12 +770,26 @@ export class InstitutionEscrowService {
       amount: Number(escrow.amount),
       corridor: escrow.corridor,
       conditionType: escrow.conditionType,
-      complianceResult: {
-        passed: complianceResult.passed,
-        riskScore: complianceResult.riskScore,
-        flags: complianceResult.flags,
-      },
+      message: `Draft submitted for ${Number(escrow.amount)} USDC on corridor ${escrow.corridor}`,
     });
+
+    // Separate compliance screening audit entry
+    await this.createAuditLog(escrowId, clientId, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
+      passed: complianceResult.passed,
+      riskScore: complianceResult.riskScore,
+      checksCount: complianceResult.flags?.length || 0,
+      flags: complianceResult.flags,
+      message: complianceResult.passed
+        ? `All ${complianceResult.flags?.length || 0} checks passed`
+        : `${complianceResult.flags?.filter((f: any) => f.severity === 'HIGH').length || 0} issue(s) flagged — risk score ${complianceResult.riskScore}`,
+    });
+
+    if (newStatus === 'COMPLIANCE_HOLD') {
+      await this.createAuditLog(escrowId, clientId, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
+        riskScore: complianceResult.riskScore,
+        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}`,
+      });
+    }
 
     await this.cacheEscrow(updated);
 
@@ -880,6 +929,7 @@ export class InstitutionEscrowService {
     await this.createAuditLog(escrowId, clientId, 'DEPOSIT_CONFIRMED', escrow.payerWallet, {
       txSignature,
       amount: Number(escrow.amount),
+      message: `${Number(escrow.amount)} USDC deposited to PDA`,
     });
 
     try {
@@ -1059,13 +1109,16 @@ export class InstitutionEscrowService {
     if (escrow.releaseMode === 'ai') {
       const aiResult = await this.performAiReleaseCheck(escrow, clientId);
 
-      await this.createAuditLog(escrowId, clientId, 'AI_RELEASE_CHECK', escrow.settlementAuthority, {
+      await this.createAuditLog(escrowId, clientId, 'AI_RELEASE_CHECK', 'AI Orchestrator', {
         passed: aiResult.passed,
         releaseMode: 'ai',
         conditions: aiResult.conditions,
         riskScore: aiResult.aiAnalysis.riskScore,
         recommendation: aiResult.aiAnalysis.recommendation,
         summary: aiResult.aiAnalysis.summary,
+        message: aiResult.passed
+          ? `Risk score ${aiResult.aiAnalysis.riskScore / 100} — recommended release`
+          : `AI release blocked — ${aiResult.conditions.filter((c) => !c.passed).map((c) => c.label).join(', ')}`,
       });
 
       if (!aiResult.passed) {
@@ -1174,13 +1227,17 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createAuditLog(escrowId, clientId, 'FUNDS_RELEASED', escrow.settlementAuthority, {
+    const releaseActor = escrow.releaseMode === 'ai' ? 'AI Orchestrator' : escrow.settlementAuthority;
+    await this.createAuditLog(escrowId, clientId, 'FUNDS_RELEASED', releaseActor, {
       amount: Number(escrow.amount),
       recipient: escrow.recipientWallet,
       releaseTxSignature: releaseTxSig,
       releaseMode: escrow.releaseMode || 'manual',
       releaseConditions: escrow.releaseConditions || [],
       notes,
+      message: escrow.releaseMode === 'ai'
+        ? 'AI auto-released — conditions met'
+        : `${Number(escrow.amount)} USDC released to recipient`,
     });
 
     // Transition to COMPLETE: send notification and finalize
@@ -1314,7 +1371,9 @@ export class InstitutionEscrowService {
     await this.createAuditLog(escrowId, clientId, 'ESCROW_CANCELLED', escrow.payerWallet, {
       reason,
       previousStatus: escrow.status,
+      cancelTxSignature: cancelTxSignature,
       wasFunded: escrow.status === 'FUNDED',
+      message: reason ? `Cancelled — ${reason}` : 'Cancelled by client',
     });
 
     try {
@@ -1722,13 +1781,19 @@ export class InstitutionEscrowService {
       createdAt: a.createdAt,
     }));
 
-    base.activityLog = auditLogs.map((l) => ({
-      id: l.id,
-      action: l.action,
-      actor: l.actor,
-      details: l.details,
-      createdAt: l.createdAt,
-    }));
+    base.activityLog = auditLogs.map((l) => {
+      const d = (l.details || {}) as Record<string, unknown>;
+      return {
+        id: l.id,
+        action: l.action,
+        title: AUDIT_ACTION_LABELS[l.action] || l.action,
+        actor: l.actor,
+        message: d.message || null,
+        txSignature: d.initTxSignature || d.txSignature || d.releaseTxSignature || d.cancelTxSignature || null,
+        details: d,
+        createdAt: l.createdAt,
+      };
+    });
 
     return base;
   }
