@@ -16,6 +16,7 @@ import { AllowlistService, getAllowlistService } from './allowlist.service';
 import { ComplianceService, getComplianceService } from './compliance.service';
 import { getTokenWhitelistService } from './institution-token-whitelist.service';
 import { getInstitutionNotificationService } from './institution-notification.service';
+import { getAiAnalysisService, AiAnalysisResult } from './ai-analysis.service';
 import {
   getInstitutionEscrowProgramService,
   InstitutionEscrowProgramService,
@@ -32,6 +33,13 @@ import {
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
 const ESCROW_CACHE_TTL = 300; // 5 minutes
+
+const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
+  legal_compliance: 'All legal compliance checks pass',
+  invoice_amount_match: 'Invoice amount matches exactly',
+  client_info_match: 'Client information matches exactly',
+  document_signature_verified: 'Document signature is verified (via DocuSign)',
+};
 
 /** Safely create a PublicKey from a string, with a field-specific error message. */
 function toPublicKey(value: string, fieldName: string): PublicKey {
@@ -936,6 +944,99 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Perform AI release condition checks.
+   * Runs the AI analysis service and evaluates each selected condition.
+   * Returns a structured result with pass/fail per condition.
+   */
+  private async performAiReleaseCheck(
+    escrow: any,
+    clientId: string
+  ): Promise<{
+    passed: boolean;
+    conditions: Array<{
+      condition: string;
+      label: string;
+      passed: boolean;
+      detail: string;
+    }>;
+    aiAnalysis: AiAnalysisResult & { summary: string };
+  }> {
+    const aiService = getAiAnalysisService();
+    const analysis = await aiService.analyzeEscrow(escrow.escrowId, clientId);
+
+    const selectedConditions: string[] = escrow.releaseConditions || [];
+    const results: Array<{ condition: string; label: string; passed: boolean; detail: string }> = [];
+
+    // 1. Legal compliance (always required for AI mode)
+    const compliancePassed = analysis.recommendation !== 'REJECT' && analysis.riskScore < 70;
+    results.push({
+      condition: 'legal_compliance',
+      label: 'All legal compliance checks pass',
+      passed: compliancePassed,
+      detail: compliancePassed
+        ? `Risk score ${analysis.riskScore}/100, recommendation: ${analysis.recommendation}`
+        : `Failed: risk score ${analysis.riskScore}/100, recommendation: ${analysis.recommendation}`,
+    });
+
+    // 2. Invoice amount match (if selected)
+    if (selectedConditions.includes('invoice_amount_match')) {
+      const extractedAmount = analysis.extractedFields?.invoiceAmount
+        ?? analysis.extractedFields?.amount;
+      const escrowAmount = Number(escrow.amount);
+      const amountMatches = extractedAmount !== undefined
+        && Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
+      results.push({
+        condition: 'invoice_amount_match',
+        label: 'Invoice amount matches exactly',
+        passed: !!amountMatches,
+        detail: amountMatches
+          ? `Invoice amount ${extractedAmount} matches escrow amount ${escrowAmount}`
+          : `Invoice amount ${extractedAmount ?? 'not found'} does not match escrow amount ${escrowAmount}`,
+      });
+    }
+
+    // 3. Client information match (if selected)
+    if (selectedConditions.includes('client_info_match')) {
+      const client = await this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { companyName: true, legalName: true, country: true },
+      });
+      const extractedCompany = analysis.extractedFields?.companyName
+        ?? analysis.extractedFields?.clientName;
+      const clientMatch = extractedCompany !== undefined
+        && client
+        && (String(extractedCompany).toLowerCase().includes(client.companyName?.toLowerCase() || '')
+          || String(extractedCompany).toLowerCase().includes(client.legalName?.toLowerCase() || ''));
+      results.push({
+        condition: 'client_info_match',
+        label: 'Client information matches exactly',
+        passed: !!clientMatch,
+        detail: clientMatch
+          ? `Extracted company "${extractedCompany}" matches client record`
+          : `Extracted company "${extractedCompany ?? 'not found'}" does not match client "${client?.companyName}"`,
+      });
+    }
+
+    // 4. Document signature verified (if selected)
+    if (selectedConditions.includes('document_signature_verified')) {
+      const signatureVerified = analysis.extractedFields?.signatureVerified === true
+        || analysis.extractedFields?.docusignStatus === 'completed';
+      results.push({
+        condition: 'document_signature_verified',
+        label: 'Document signature is verified (via DocuSign)',
+        passed: !!signatureVerified,
+        detail: signatureVerified
+          ? 'Document signature has been verified'
+          : 'Document signature could not be verified',
+      });
+    }
+
+    const allPassed = results.every((r) => r.passed);
+
+    return { passed: allPassed, conditions: results, aiAnalysis: analysis };
+  }
+
+  /**
    * Release funds from escrow to recipient
    */
   async releaseFunds(
@@ -952,6 +1053,40 @@ export class InstitutionEscrowService {
       throw new Error(
         `Cannot release: escrow status is ${escrow.status}, expected FUNDED or INSUFFICIENT_FUNDS`
       );
+    }
+
+    // Gate by releaseMode: if AI, run AI compliance checks before proceeding
+    if (escrow.releaseMode === 'ai') {
+      const aiResult = await this.performAiReleaseCheck(escrow, clientId);
+
+      await this.createAuditLog(escrowId, clientId, 'AI_RELEASE_CHECK', escrow.settlementAuthority, {
+        passed: aiResult.passed,
+        releaseMode: 'ai',
+        conditions: aiResult.conditions,
+        riskScore: aiResult.aiAnalysis.riskScore,
+        recommendation: aiResult.aiAnalysis.recommendation,
+        summary: aiResult.aiAnalysis.summary,
+      });
+
+      if (!aiResult.passed) {
+        const failedConditions = aiResult.conditions.filter((c) => !c.passed);
+        await getInstitutionNotificationService().notify({
+          clientId,
+          escrowId,
+          type: 'ESCROW_COMPLIANCE_HOLD',
+          priority: 'HIGH',
+          title: 'AI Release Check Failed',
+          message: `Escrow ${escrow.escrowCode || escrowId} failed AI release conditions: ${failedConditions.map((c) => c.label).join(', ')}`,
+          metadata: {
+            failedConditions: failedConditions.map((c) => ({ condition: c.condition, detail: c.detail })),
+            riskScore: aiResult.aiAnalysis.riskScore,
+          },
+        });
+
+        throw new Error(
+          `AI release check failed: ${failedConditions.map((c) => c.label).join('; ')}`
+        );
+      }
     }
 
     // Update status to RELEASING
@@ -1043,6 +1178,8 @@ export class InstitutionEscrowService {
       amount: Number(escrow.amount),
       recipient: escrow.recipientWallet,
       releaseTxSignature: releaseTxSig,
+      releaseMode: escrow.releaseMode || 'manual',
+      releaseConditions: escrow.releaseConditions || [],
       notes,
     });
 
@@ -1486,6 +1623,9 @@ export class InstitutionEscrowService {
       releaseMode: e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual'),
       approvalParties: e.approvalParties || [],
       releaseConditions: e.releaseConditions || [],
+      releaseConditionLabels: (e.releaseConditions || []).map((c: string) =>
+        AI_RELEASE_CONDITION_LABELS[c] || c
+      ),
       approvalInstructions: e.approvalInstructions || null,
       escrowPda: e.escrowPda,
       vaultPda: e.vaultPda,

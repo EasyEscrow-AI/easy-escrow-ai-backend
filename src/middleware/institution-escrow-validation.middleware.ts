@@ -11,6 +11,12 @@ const CORRIDOR_REGEX = /^[A-Z]{2}-[A-Z]{2}$/;
 const CONDITION_TYPES = ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'];
 const SETTLEMENT_MODES = ['escrow', 'direct'];
 const RELEASE_MODES = ['manual', 'ai'];
+const VALID_RELEASE_CONDITIONS = [
+  'legal_compliance',
+  'invoice_amount_match',
+  'client_info_match',
+  'document_signature_verified',
+];
 
 /**
  * Validate create institution escrow request body
@@ -79,8 +85,8 @@ export const validateCreateInstitutionEscrow = [
   body('releaseConditions.*')
     .optional()
     .isString()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Each releaseConditions entry must be a non-empty string (max 100 chars)'),
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(`Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`),
   body('approvalInstructions')
     .optional()
     .isString()
@@ -157,8 +163,8 @@ export const validateSaveDraft = [
   body('releaseConditions.*')
     .optional()
     .isString()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Each releaseConditions entry must be a non-empty string (max 100 chars)'),
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(`Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`),
   body('approvalInstructions')
     .optional()
     .isString()
@@ -237,8 +243,8 @@ export const validateUpdateDraft = [
   body('releaseConditions.*')
     .optional()
     .isString()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Each releaseConditions entry must be a non-empty string (max 100 chars)'),
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(`Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`),
   body('approvalInstructions')
     .optional()
     .isString()
