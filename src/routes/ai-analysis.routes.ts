@@ -146,11 +146,10 @@ router.post(
 
     try {
       const service = getAiAnalysisService();
-      const result = await service.analyzeEscrow(
-        req.params.escrow_id,
-        req.institutionClient!.clientId,
-        { anonymize: true },
-      );
+      const tier = req.body?.tier;
+      const result = tier === 'fast'
+        ? await service.analyzeEscrowFast(req.params.escrow_id, req.institutionClient!.clientId, { anonymize: true })
+        : await service.analyzeEscrow(req.params.escrow_id, req.institutionClient!.clientId, { anonymize: true });
 
       res.status(200).json({
         success: true,
@@ -213,6 +212,10 @@ const validateEscrowIdBody = [
     .isString()
     .matches(/^(EE-[A-Z0-9]{3}-[A-Z0-9]{3}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i)
     .withMessage('escrowId must be a valid UUID or escrow code (EE-XXX-XXX)'),
+  body('tier')
+    .optional()
+    .isIn(['fast', 'full'])
+    .withMessage('tier must be "fast" or "full"'),
 ];
 
 router.post(
@@ -229,11 +232,10 @@ router.post(
 
     try {
       const service = getAiAnalysisService();
-      const result = await service.analyzeEscrow(
-        req.body.escrowId,
-        req.institutionClient!.clientId,
-        { anonymize: true },
-      );
+      const tier = req.body.tier;
+      const result = tier === 'fast'
+        ? await service.analyzeEscrowFast(req.body.escrowId, req.institutionClient!.clientId, { anonymize: true })
+        : await service.analyzeEscrow(req.body.escrowId, req.institutionClient!.clientId, { anonymize: true });
 
       res.status(200).json({
         success: true,
