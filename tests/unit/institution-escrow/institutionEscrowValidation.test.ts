@@ -66,6 +66,8 @@ describe('Institution Escrow Validation Middleware', () => {
       amount: 5000,
       corridor: 'US-MX',
       conditionType: 'ADMIN_RELEASE',
+      settlementMode: 'escrow',
+      releaseMode: 'manual',
     };
 
     it('should pass with all valid fields', async () => {

@@ -86,6 +86,7 @@ router.post(
         conditionType: req.body.conditionType,
         expiryHours: req.body.expiryHours,
         settlementAuthority: req.body.settlementAuthority,
+        tokenMint: req.body.tokenMint,
         settlementMode: req.body.settlementMode,
         releaseMode: req.body.releaseMode,
         approvalParties: req.body.approvalParties,

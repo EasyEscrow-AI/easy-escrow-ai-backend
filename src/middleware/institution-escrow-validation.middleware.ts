@@ -50,6 +50,11 @@ export const validateCreateInstitutionEscrow = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
+  body('tokenMint')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('tokenMint must be a valid Solana address (base58, 32-44 chars)'),
   body('settlementMode')
     .isString()
     .isIn(SETTLEMENT_MODES)
@@ -121,6 +126,11 @@ export const validateSaveDraft = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
+  body('tokenMint')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('tokenMint must be a valid Solana address (base58, 32-44 chars)'),
   body('settlementMode')
     .optional()
     .isString()
@@ -196,6 +206,11 @@ export const validateUpdateDraft = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
+  body('tokenMint')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('tokenMint must be a valid Solana address (base58, 32-44 chars)'),
   body('settlementMode')
     .optional()
     .isString()
