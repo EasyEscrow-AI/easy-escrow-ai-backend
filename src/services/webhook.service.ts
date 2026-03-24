@@ -1,4 +1,5 @@
 import { PrismaClient, WebhookEventType, WebhookDeliveryStatus } from '../generated/prisma';
+import { prisma as sharedPrisma } from '../config/database';
 import crypto from 'crypto';
 import https from 'https';
 import http from 'http';
@@ -75,11 +76,11 @@ export class WebhookService {
   private isProcessing: boolean;
 
   constructor(prismaClient?: PrismaClient) {
-    this.prisma = prismaClient || new PrismaClient();
+    this.prisma = prismaClient || sharedPrisma;
     this.webhookConfigs = new Map();
     this.deliveryQueue = [];
     this.isProcessing = false;
-    
+
     // Load webhook configurations from environment or database
     this.loadWebhookConfigs();
   }
@@ -93,14 +94,14 @@ export class WebhookService {
     // WEBHOOK_URL_1=https://example.com/webhook
     // WEBHOOK_SECRET_1=your-secret-key
     // WEBHOOK_EVENTS_1=ESCROW_FUNDED,ESCROW_SETTLED
-    
+
     const webhookUrl = process.env.WEBHOOK_URL;
     const webhookSecret = process.env.WEBHOOK_SECRET;
     const webhookEvents = process.env.WEBHOOK_EVENTS;
 
     if (webhookUrl && webhookSecret) {
       const events = webhookEvents
-        ? webhookEvents.split(',').map(e => e.trim() as WebhookEventType)
+        ? webhookEvents.split(',').map((e) => e.trim() as WebhookEventType)
         : Object.values(WebhookEventType);
 
       this.webhookConfigs.set('default', {
@@ -154,10 +155,7 @@ export class WebhookService {
    * Generate HMAC-SHA256 signature for webhook payload
    */
   private generateSignature(payload: string, secret: string): string {
-    return crypto
-      .createHmac('sha256', secret)
-      .update(payload)
-      .digest('hex');
+    return crypto.createHmac('sha256', secret).update(payload).digest('hex');
   }
 
   /**
@@ -165,10 +163,7 @@ export class WebhookService {
    */
   public verifySignature(payload: string, signature: string, secret: string): boolean {
     const expectedSignature = this.generateSignature(payload, secret);
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   }
 
   /**
@@ -176,7 +171,9 @@ export class WebhookService {
    * This creates webhook delivery records and queues them for delivery
    */
   public async publishEvent(payload: WebhookPayload): Promise<void> {
-    console.log(`Publishing webhook event: ${payload.eventType} for agreement ${payload.agreementId}`);
+    console.log(
+      `Publishing webhook event: ${payload.eventType} for agreement ${payload.agreementId}`
+    );
 
     // Find all webhook configs that listen to this event type
     const relevantConfigs = Array.from(this.webhookConfigs.values()).filter(
@@ -281,18 +278,16 @@ export class WebhookService {
       return;
     }
 
-    console.log(`Attempting delivery ${webhook.attempts + 1}/${webhook.maxAttempts} for webhook ${webhookId}`);
+    console.log(
+      `Attempting delivery ${webhook.attempts + 1}/${webhook.maxAttempts} for webhook ${webhookId}`
+    );
 
     try {
       const payloadString = JSON.stringify(webhook.payload);
       const url = new URL(webhook.targetUrl);
 
       // Make HTTP request with timeout
-      const response = await this.makeHttpRequest(
-        url,
-        payloadString,
-        webhook.signature || ''
-      );
+      const response = await this.makeHttpRequest(url, payloadString, webhook.signature || '');
 
       // Success (2xx response)
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -341,7 +336,9 @@ export class WebhookService {
           },
         });
 
-        console.log(`Scheduled retry for webhook ${webhookId} at ${nextScheduledFor.toISOString()}`);
+        console.log(
+          `Scheduled retry for webhook ${webhookId} at ${nextScheduledFor.toISOString()}`
+        );
       } else {
         // Max attempts reached - mark as failed
         await this.prisma.webhook.update({
@@ -479,4 +476,3 @@ export class WebhookService {
 
 // Export singleton instance
 export const webhookService = new WebhookService();
-

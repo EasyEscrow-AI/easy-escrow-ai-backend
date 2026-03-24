@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PrismaClient, DocumentType } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 import { escrowWhere } from '../utils/uuid-conversion';
 import multer from 'multer';
@@ -69,7 +70,7 @@ export class InstitutionFileService {
   private bucket: string;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
     const spacesConfig = getInstitutionEscrowConfig().doSpaces;
     const endpoint = spacesConfig.endpoint;
     const region = spacesConfig.region || 'nyc3';
@@ -93,20 +94,18 @@ export class InstitutionFileService {
     clientId: string,
     file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
     documentType: string,
-    escrowId?: string,
+    escrowId?: string
   ) {
     // Validate mime type
     if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       throw new Error(
-        `Invalid file type: ${file.mimetype}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`,
+        `Invalid file type: ${file.mimetype}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`
       );
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      throw new Error(
-        `File too large: ${file.size} bytes. Maximum: ${MAX_FILE_SIZE} bytes (25MB)`,
-      );
+      throw new Error(`File too large: ${file.size} bytes. Maximum: ${MAX_FILE_SIZE} bytes (25MB)`);
     }
 
     // Resolve escrow code to UUID if needed
@@ -125,9 +124,15 @@ export class InstitutionFileService {
 
     // Generate structured S3 key: institution/{clientId}/{YYYY-MM-DD}/{escrowId|general}/{timestamp}_{filename}
     const date = new Date();
-    const dateFolder = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+    const dateFolder = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(
+      2,
+      '0'
+    )}-${String(date.getUTCDate()).padStart(2, '0')}`;
     const folder = resolvedEscrowId || 'general';
-    const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${randomUUID().slice(0, 8)}_${sanitizedFileName}`;
+    const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${randomUUID().slice(
+      0,
+      8
+    )}_${sanitizedFileName}`;
 
     // Upload to S3
     await this.s3Client.send(
@@ -140,7 +145,7 @@ export class InstitutionFileService {
           clientId,
           documentType,
         },
-      }),
+      })
     );
 
     // Create database record
@@ -181,7 +186,7 @@ export class InstitutionFileService {
         Bucket: this.bucket,
         Key: file.fileKey,
       }),
-      { expiresIn: 3600 },
+      { expiresIn: 3600 }
     );
 
     return { url, expiresIn: 3600 };
@@ -233,7 +238,7 @@ export class InstitutionFileService {
       new DeleteObjectCommand({
         Bucket: this.bucket,
         Key: file.fileKey,
-      }),
+      })
     );
 
     // Delete from database
@@ -264,7 +269,7 @@ export class InstitutionFileService {
       new GetObjectCommand({
         Bucket: this.bucket,
         Key: file.fileKey,
-      }),
+      })
     );
 
     // Stream body to buffer
@@ -292,9 +297,7 @@ export const institutionFileUpload = multer({
       cb(null, true);
     } else {
       cb(
-        new Error(
-          `Invalid file type: ${file.mimetype}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`,
-        ),
+        new Error(`Invalid file type: ${file.mimetype}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`)
       );
     }
   },

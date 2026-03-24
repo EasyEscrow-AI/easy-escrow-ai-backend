@@ -6,6 +6,7 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
+import { prisma as sharedPrisma } from '../config/database';
 import { escrowWhere } from '../utils/uuid-conversion';
 import fs from 'fs';
 import path from 'path';
@@ -91,7 +92,7 @@ export class InstitutionReceiptService {
   private prisma: PrismaClient;
 
   constructor(prisma?: PrismaClient) {
-    this.prisma = prisma || new PrismaClient();
+    this.prisma = prisma || sharedPrisma;
   }
 
   /**
@@ -136,7 +137,10 @@ export class InstitutionReceiptService {
       transactions.push({
         type: 'Deposit',
         signature: dep.txSignature,
-        amount: Number(dep.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
+        amount: Number(dep.amount).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        }),
         confirmedAt: dep.confirmedAt ? formatDate(dep.confirmedAt) : null,
         blockHeight: dep.blockHeight ? dep.blockHeight.toString() : null,
       });
@@ -146,7 +150,10 @@ export class InstitutionReceiptService {
       transactions.push({
         type: 'Release',
         signature: escrow.releaseTxSignature,
-        amount: (amount - fee).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
+        amount: (amount - fee).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        }),
         confirmedAt: escrow.resolvedAt ? formatDate(escrow.resolvedAt) : null,
         blockHeight: null,
       });
@@ -156,7 +163,10 @@ export class InstitutionReceiptService {
       transactions.push({
         type: 'Cancellation',
         signature: escrow.cancelTxSignature,
-        amount: amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
+        amount: amount.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        }),
         confirmedAt: escrow.resolvedAt ? formatDate(escrow.resolvedAt) : null,
         blockHeight: null,
       });
@@ -217,9 +227,18 @@ export class InstitutionReceiptService {
         status: escrow.status,
         corridor: escrow.corridor ?? 'N/A',
         conditionType: escrow.conditionType ?? 'N/A',
-        amount: amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
-        platformFee: fee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
-        netAmount: (amount - fee).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
+        amount: amount.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        }),
+        platformFee: fee.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        }),
+        netAmount: (amount - fee).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        }),
         currency: 'USDC',
         payerWallet: escrow.payerWallet,
         recipientWallet: escrow.recipientWallet ?? 'N/A',
@@ -278,7 +297,10 @@ export class InstitutionReceiptService {
   /**
    * Generate a PDF receipt for an escrow and return the buffer
    */
-  async generatePDF(escrowId: string, clientId: string): Promise<{ buffer: Buffer; filename: string }> {
+  async generatePDF(
+    escrowId: string,
+    clientId: string
+  ): Promise<{ buffer: Buffer; filename: string }> {
     const data = await this.getReceiptData(escrowId, clientId);
     const buffer = await this.renderReceiptPDF(data);
     const filename = `${data.receiptNumber}.pdf`;
@@ -289,7 +311,10 @@ export class InstitutionReceiptService {
 // ─── Helpers ──────────────────────────────────────────────────
 
 function formatDate(d: Date): string {
-  return d.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+  return d
+    .toISOString()
+    .replace('T', ' ')
+    .replace(/\.\d+Z$/, ' UTC');
 }
 
 function formatAction(action: string): string {
@@ -301,7 +326,11 @@ function formatAction(action: string): string {
 
 function esc(s: string | null | undefined): string {
   if (!s) return '';
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function truncateWallet(addr: string): string {
@@ -333,11 +362,20 @@ function riskColor(score: number): string {
 // ─── HTML Template ────────────────────────────────────────────
 
 function buildReceiptHTML(d: ReceiptData): string {
-  const clientAddress = [d.client.addressLine1, d.client.addressLine2, d.client.city, d.client.state, d.client.postalCode, d.client.country]
+  const clientAddress = [
+    d.client.addressLine1,
+    d.client.addressLine2,
+    d.client.city,
+    d.client.state,
+    d.client.postalCode,
+    d.client.country,
+  ]
     .filter(Boolean)
     .join(', ');
 
-  const contactName = [d.client.contactFirstName, d.client.contactLastName].filter(Boolean).join(' ');
+  const contactName = [d.client.contactFirstName, d.client.contactLastName]
+    .filter(Boolean)
+    .join(' ');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -565,7 +603,11 @@ function buildReceiptHTML(d: ReceiptData): string {
   <!-- Header -->
   <div class="header">
     <div class="header-logo">
-      ${d.logoBase64 ? `<img src="${d.logoBase64}" alt="EasyEscrow.ai">` : '<strong style="font-size:20px;color:#0f172a;">EasyEscrow.ai</strong>'}
+      ${
+        d.logoBase64
+          ? `<img src="${d.logoBase64}" alt="EasyEscrow.ai">`
+          : '<strong style="font-size:20px;color:#0f172a;">EasyEscrow.ai</strong>'
+      }
     </div>
     <div class="header-meta">
       <div class="doc-title">Escrow Receipt</div>
@@ -576,7 +618,9 @@ function buildReceiptHTML(d: ReceiptData): string {
 
   <!-- Status -->
   <div>
-    <span class="status-banner" style="background:${statusBadgeColor(d.escrow.status)}">${esc(d.escrow.status)}</span>
+    <span class="status-banner" style="background:${statusBadgeColor(d.escrow.status)}">${esc(
+    d.escrow.status
+  )}</span>
   </div>
 
   <!-- Client Details -->
@@ -621,15 +665,21 @@ function buildReceiptHTML(d: ReceiptData): string {
       </div>
       <div class="field">
         <div class="field-label">Regulatory Body / License</div>
-        <div class="field-value">${esc(d.client.regulatoryBody) || '—'}${d.client.licenseNumber ? ` (${esc(d.client.licenseNumber)})` : ''}</div>
+        <div class="field-value">${esc(d.client.regulatoryBody) || '—'}${
+    d.client.licenseNumber ? ` (${esc(d.client.licenseNumber)})` : ''
+  }</div>
       </div>
       <div class="field">
         <div class="field-label">Primary Contact</div>
-        <div class="field-value">${esc(contactName) || '—'}${d.client.contactTitle ? `, ${esc(d.client.contactTitle)}` : ''}</div>
+        <div class="field-value">${esc(contactName) || '—'}${
+    d.client.contactTitle ? `, ${esc(d.client.contactTitle)}` : ''
+  }</div>
       </div>
       <div class="field">
         <div class="field-label">Contact Email / Phone</div>
-        <div class="field-value">${esc(d.client.contactEmail) || '—'} / ${esc(d.client.contactPhone) || '—'}</div>
+        <div class="field-value">${esc(d.client.contactEmail) || '—'} / ${
+    esc(d.client.contactPhone) || '—'
+  }</div>
       </div>
     </div>
   </div>
@@ -652,23 +702,33 @@ function buildReceiptHTML(d: ReceiptData): string {
       </div>
       <div class="field">
         <div class="field-label">Risk Score</div>
-        <div class="field-value">${d.escrow.riskScore !== null ? `${d.escrow.riskScore} / 100` : '—'}</div>
+        <div class="field-value">${
+          d.escrow.riskScore !== null ? `${d.escrow.riskScore} / 100` : '—'
+        }</div>
       </div>
       <div class="field">
         <div class="field-label">Payer Wallet</div>
-        <div class="field-value mono" title="${esc(d.escrow.payerWallet)}">${esc(d.escrow.payerWallet)}</div>
+        <div class="field-value mono" title="${esc(d.escrow.payerWallet)}">${esc(
+    d.escrow.payerWallet
+  )}</div>
       </div>
       <div class="field">
         <div class="field-label">Recipient Wallet</div>
-        <div class="field-value mono" title="${esc(d.escrow.recipientWallet)}">${esc(d.escrow.recipientWallet)}</div>
+        <div class="field-value mono" title="${esc(d.escrow.recipientWallet)}">${esc(
+    d.escrow.recipientWallet
+  )}</div>
       </div>
       <div class="field">
         <div class="field-label">Settlement Authority</div>
-        <div class="field-value mono" title="${esc(d.escrow.settlementAuthority)}">${esc(truncateWallet(d.escrow.settlementAuthority))}</div>
+        <div class="field-value mono" title="${esc(d.escrow.settlementAuthority)}">${esc(
+    truncateWallet(d.escrow.settlementAuthority)
+  )}</div>
       </div>
       <div class="field">
         <div class="field-label">Escrow PDA</div>
-        <div class="field-value mono">${d.escrow.escrowPda ? esc(truncateWallet(d.escrow.escrowPda)) : '—'}</div>
+        <div class="field-value mono">${
+          d.escrow.escrowPda ? esc(truncateWallet(d.escrow.escrowPda)) : '—'
+        }</div>
       </div>
       <div class="field">
         <div class="field-label">Created</div>
@@ -706,7 +766,9 @@ function buildReceiptHTML(d: ReceiptData): string {
   </div>
 
   <!-- Transactions -->
-  ${d.transactions.length > 0 ? `
+  ${
+    d.transactions.length > 0
+      ? `
   <div class="section">
     <div class="section-title">Transactions</div>
     <table>
@@ -720,34 +782,58 @@ function buildReceiptHTML(d: ReceiptData): string {
         </tr>
       </thead>
       <tbody>
-        ${d.transactions.map((tx) => `
+        ${d.transactions
+          .map(
+            (tx) => `
         <tr>
           <td><strong>${esc(tx.type)}</strong></td>
-          <td class="mono-cell" title="${esc(tx.signature)}">${esc(truncateWallet(tx.signature))}</td>
+          <td class="mono-cell" title="${esc(tx.signature)}">${esc(
+              truncateWallet(tx.signature)
+            )}</td>
           <td>${esc(tx.amount)} USDC</td>
           <td>${esc(tx.confirmedAt) || '—'}</td>
           <td>${esc(tx.blockHeight) || '—'}</td>
-        </tr>`).join('')}
+        </tr>`
+          )
+          .join('')}
       </tbody>
     </table>
   </div>
-  ` : ''}
+  `
+      : ''
+  }
 
   <!-- Compliance -->
-  ${d.compliance ? `
+  ${
+    d.compliance
+      ? `
   <div class="section">
     <div class="section-title">Compliance Analysis</div>
     <div class="risk-meter">
       <div class="risk-bar">
-        <div class="risk-fill" style="width:${d.compliance.riskScore}%;background:${riskColor(d.compliance.riskScore)}"></div>
+        <div class="risk-fill" style="width:${d.compliance.riskScore}%;background:${riskColor(
+          d.compliance.riskScore
+        )}"></div>
       </div>
-      <div class="risk-label" style="color:${riskColor(d.compliance.riskScore)}">${d.compliance.riskScore}</div>
+      <div class="risk-label" style="color:${riskColor(d.compliance.riskScore)}">${
+          d.compliance.riskScore
+        }</div>
     </div>
     <div style="margin-bottom:12px;">
-      <span class="recommendation-badge ${d.compliance.recommendation === 'APPROVE' ? 'rec-approve' : d.compliance.recommendation === 'REVIEW' ? 'rec-review' : 'rec-reject'}">${esc(d.compliance.recommendation)}</span>
-      <span style="font-size:11px;color:#94a3b8;margin-left:8px;">Analyzed: ${esc(d.compliance.analyzedAt)} &middot; Model: ${esc(d.compliance.model)}</span>
+      <span class="recommendation-badge ${
+        d.compliance.recommendation === 'APPROVE'
+          ? 'rec-approve'
+          : d.compliance.recommendation === 'REVIEW'
+          ? 'rec-review'
+          : 'rec-reject'
+      }">${esc(d.compliance.recommendation)}</span>
+      <span style="font-size:11px;color:#94a3b8;margin-left:8px;">Analyzed: ${esc(
+        d.compliance.analyzedAt
+      )} &middot; Model: ${esc(d.compliance.model)}</span>
     </div>
-    ${d.compliance.factors.length > 0 ? `
+    ${
+      d.compliance.factors.length > 0
+        ? `
     <table>
       <thead>
         <tr>
@@ -757,20 +843,30 @@ function buildReceiptHTML(d: ReceiptData): string {
         </tr>
       </thead>
       <tbody>
-        ${d.compliance.factors.map((f) => `
+        ${d.compliance.factors
+          .map(
+            (f) => `
         <tr>
           <td>${esc(formatAction(f.name))}</td>
           <td>${(f.weight * 100).toFixed(0)}%</td>
           <td>${esc(String(f.value))}</td>
-        </tr>`).join('')}
+        </tr>`
+          )
+          .join('')}
       </tbody>
     </table>
-    ` : ''}
+    `
+        : ''
+    }
   </div>
-  ` : ''}
+  `
+      : ''
+  }
 
   <!-- Audit Trail -->
-  ${d.auditLogs.length > 0 ? `
+  ${
+    d.auditLogs.length > 0
+      ? `
   <div class="section">
     <div class="section-title">Audit Trail</div>
     <table>
@@ -783,17 +879,25 @@ function buildReceiptHTML(d: ReceiptData): string {
         </tr>
       </thead>
       <tbody>
-        ${d.auditLogs.map((log) => `
+        ${d.auditLogs
+          .map(
+            (log) => `
         <tr>
           <td style="white-space:nowrap">${esc(log.timestamp)}</td>
           <td><strong>${esc(log.action)}</strong></td>
           <td class="mono-cell">${esc(truncateWallet(log.actor))}</td>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${esc(log.details)}</td>
-        </tr>`).join('')}
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${esc(
+            log.details
+          )}</td>
+        </tr>`
+          )
+          .join('')}
       </tbody>
     </table>
   </div>
-  ` : ''}
+  `
+      : ''
+  }
 
   <!-- Footer -->
   <div class="footer">

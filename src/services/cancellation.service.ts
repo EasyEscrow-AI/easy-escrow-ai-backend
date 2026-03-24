@@ -1,16 +1,15 @@
 /**
  * Cancellation Service
- * 
+ *
  * Handles admin-initiated cancellations with multisig approval workflow.
  * Provides secure cancellation of agreements with proper authorization and audit logging.
  */
 
-import { PrismaClient, AgreementStatus } from '../generated/prisma';
+import { AgreementStatus } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { PublicKey } from '@solana/web3.js';
 import { EscrowProgramService } from './escrow-program.service';
 import { config } from '../config';
-
-const prisma = new PrismaClient();
 
 /**
  * Cancellation proposal status
@@ -82,7 +81,7 @@ interface MultisigConfig {
 
 /**
  * Cancellation Service Class
- * 
+ *
  * Manages admin-initiated cancellations with multisig approval workflow
  */
 export class CancellationService {
@@ -110,7 +109,9 @@ export class CancellationService {
     try {
       // Validate proposer is authorized
       if (!this.isAuthorizedSigner(request.proposer)) {
-        throw new Error(`Proposer ${request.proposer} is not authorized to create cancellation proposals`);
+        throw new Error(
+          `Proposer ${request.proposer} is not authorized to create cancellation proposals`
+        );
       }
 
       // Check if agreement exists and is cancellable
@@ -131,11 +132,14 @@ export class CancellationService {
 
       // Check if there's already a pending proposal
       const existingProposal = Array.from(this.proposals.values()).find(
-        p => p.agreementId === request.agreementId && p.status === CancellationProposalStatus.PENDING
+        (p) =>
+          p.agreementId === request.agreementId && p.status === CancellationProposalStatus.PENDING
       );
 
       if (existingProposal) {
-        throw new Error(`A pending cancellation proposal already exists for agreement ${request.agreementId}`);
+        throw new Error(
+          `A pending cancellation proposal already exists for agreement ${request.agreementId}`
+        );
       }
 
       // Create proposal
@@ -169,7 +173,9 @@ export class CancellationService {
         reason: request.reason,
       });
 
-      console.log(`[CancellationService] Created cancellation proposal ${proposalId} for ${request.agreementId}`);
+      console.log(
+        `[CancellationService] Created cancellation proposal ${proposalId} for ${request.agreementId}`
+      );
 
       return proposal;
     } catch (error) {
@@ -181,7 +187,11 @@ export class CancellationService {
   /**
    * Sign a cancellation proposal
    */
-  public async signProposal(proposalId: string, signer: string, signature: string): Promise<CancellationProposal> {
+  public async signProposal(
+    proposalId: string,
+    signer: string,
+    signature: string
+  ): Promise<CancellationProposal> {
     console.log(`[CancellationService] Signing proposal ${proposalId} by ${signer}`);
 
     try {
@@ -209,7 +219,7 @@ export class CancellationService {
       }
 
       // Check if signer already signed
-      if (proposal.signatures.some(s => s.signer === signer)) {
+      if (proposal.signatures.some((s) => s.signer === signer)) {
         throw new Error(`Signer ${signer} has already signed this proposal`);
       }
 
@@ -223,7 +233,9 @@ export class CancellationService {
       // Check if we have enough signatures
       if (proposal.signatures.length >= proposal.requiredSignatures) {
         proposal.status = CancellationProposalStatus.APPROVED;
-        console.log(`[CancellationService] Proposal ${proposalId} approved with ${proposal.signatures.length} signatures`);
+        console.log(
+          `[CancellationService] Proposal ${proposalId} approved with ${proposal.signatures.length} signatures`
+        );
       }
 
       this.proposals.set(proposalId, proposal);
@@ -304,7 +316,10 @@ export class CancellationService {
   /**
    * Execute cancellation (internal)
    */
-  private async executeCancellation(agreementId: string, reason: string): Promise<CancellationResult> {
+  private async executeCancellation(
+    agreementId: string,
+    reason: string
+  ): Promise<CancellationResult> {
     console.log(`[CancellationService] Executing cancellation for agreement: ${agreementId}`);
 
     try {
@@ -326,22 +341,20 @@ export class CancellationService {
       let cancelTxId: string | undefined;
       try {
         console.log('[CancellationService] Executing on-chain cancellation...');
-        
+
         const escrowService = new EscrowProgramService();
         const escrowPda = new PublicKey(agreement.escrowPda);
         const seller = new PublicKey(agreement.seller);
         const nftMint = new PublicKey(agreement.nftMint);
-        
+
         // Get buyer (use seller if buyer not set)
-        const buyer = agreement.buyer 
-          ? new PublicKey(agreement.buyer)
-          : seller;
-        
+        const buyer = agreement.buyer ? new PublicKey(agreement.buyer) : seller;
+
         // Choose appropriate cancellation method based on actual expiry time
         // Check if the agreement has actually expired (time-based, not status-based)
         const now = new Date();
         const isExpired = now > agreement.expiry;
-        
+
         if (isExpired) {
           console.log('[CancellationService] Using cancelIfExpired for time-expired agreement');
           cancelTxId = await escrowService.cancelIfExpired({
@@ -349,7 +362,11 @@ export class CancellationService {
             buyer,
             seller,
             nftMint,
-            swapType: (agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
+            swapType:
+              (agreement.swapType as
+                | 'NFT_FOR_SOL'
+                | 'NFT_FOR_NFT_WITH_FEE'
+                | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
           });
         } else {
           console.log('[CancellationService] Using adminCancel for non-expired cancellation');
@@ -358,12 +375,16 @@ export class CancellationService {
             buyer,
             seller,
             nftMint,
-            swapType: (agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
+            swapType:
+              (agreement.swapType as
+                | 'NFT_FOR_SOL'
+                | 'NFT_FOR_NFT_WITH_FEE'
+                | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
           });
         }
-        
+
         console.log('[CancellationService] On-chain cancellation successful:', cancelTxId);
-        
+
         // Log the cancellation event
         await this.logCancellationEvent('on_chain_cancellation', {
           agreementId,
@@ -373,14 +394,14 @@ export class CancellationService {
         });
       } catch (error) {
         console.error('[CancellationService] On-chain cancellation failed:', error);
-        
+
         // Log the failure
         await this.logCancellationEvent('on_chain_cancellation_failed', {
           agreementId,
           reason,
           error: error instanceof Error ? error.message : 'Unknown error',
         });
-        
+
         // Continue with database update even if on-chain fails
         // This allows graceful degradation
       }
@@ -416,13 +437,13 @@ export class CancellationService {
       };
     } catch (error) {
       console.error(`[CancellationService] Error executing cancellation:`, error);
-      
+
       // Log the error
       await this.logCancellationEvent('cancellation_error', {
         agreementId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
-      
+
       return {
         agreementId,
         success: false,
@@ -443,7 +464,7 @@ export class CancellationService {
    * Get proposals for an agreement
    */
   public getProposalsForAgreement(agreementId: string): CancellationProposal[] {
-    return Array.from(this.proposals.values()).filter(p => p.agreementId === agreementId);
+    return Array.from(this.proposals.values()).filter((p) => p.agreementId === agreementId);
   }
 
   /**
@@ -451,7 +472,7 @@ export class CancellationService {
    */
   public getPendingProposals(): CancellationProposal[] {
     return Array.from(this.proposals.values()).filter(
-      p => p.status === CancellationProposalStatus.PENDING
+      (p) => p.status === CancellationProposalStatus.PENDING
     );
   }
 
@@ -517,25 +538,30 @@ export class CancellationService {
   private async logCancellationEvent(eventType: string, data: any): Promise<void> {
     try {
       console.log(`[CancellationService] Event: ${eventType}`, data);
-      
+
       // Log to database for audit trail
       // Create a transaction log entry for cancellation events
       if (data.transactionId && data.agreementId) {
-        await prisma.transactionLog.create({
-          data: {
-            agreementId: data.agreementId,
-            txId: data.transactionId,
-            operationType: eventType,
-            status: data.status || 'info',
-            errorMessage: data.error,
-            timestamp: new Date(),
-          },
-        }).catch(err => {
-          // If transaction log already exists, that's okay
-          console.warn('[CancellationService] Transaction log entry already exists or failed:', err.message);
-        });
+        await prisma.transactionLog
+          .create({
+            data: {
+              agreementId: data.agreementId,
+              txId: data.transactionId,
+              operationType: eventType,
+              status: data.status || 'info',
+              errorMessage: data.error,
+              timestamp: new Date(),
+            },
+          })
+          .catch((err) => {
+            // If transaction log already exists, that's okay
+            console.warn(
+              '[CancellationService] Transaction log entry already exists or failed:',
+              err.message
+            );
+          });
       }
-      
+
       // Additional audit logging could be added here
       // For example, writing to a separate audit log file or external service
       // This provides a comprehensive audit trail for compliance and security
@@ -585,4 +611,3 @@ export function resetCancellationService(): void {
 }
 
 export default CancellationService;
-
