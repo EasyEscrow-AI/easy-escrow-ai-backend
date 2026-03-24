@@ -29,6 +29,14 @@ export interface RulesSection {
   finding: string;
 }
 
+export interface TriggeredRule {
+  ruleId: string;
+  label: string;
+  riskLevel: string;
+  detail: string;
+  regulationRef: string;
+}
+
 export interface RulesEngineResult {
   risk: RiskLevel;
   summary: string;
@@ -40,6 +48,7 @@ export interface RulesEngineResult {
     release_conditions: RulesSection;
   };
   extractedFields: Record<string, unknown>;
+  triggeredRules: TriggeredRule[];
 }
 
 interface CorridorInfo {
@@ -82,6 +91,19 @@ export interface EscrowData {
     country: string | null;
   } | null;
   availableCorridors: CorridorInfo[] | null;
+  thresholdRules?: ThresholdRule[] | null;
+}
+
+export interface ThresholdRule {
+  ruleId: string;
+  label: string;
+  riskLevel: string; // low, medium, high
+  thresholdType: string; // gte, range, pattern
+  thresholdAmount: number | null;
+  thresholdMax: number | null;
+  currency: string;
+  detailTemplate: string;
+  regulationRef: string;
 }
 
 // Amount thresholds
@@ -115,6 +137,9 @@ export function evaluateEscrow(data: EscrowData): RulesEngineResult {
     deposit_confirmed: data.hasDeposit,
   };
 
+  // Evaluate threshold rules if provided
+  const triggeredRules = evaluateThresholdRules(data);
+
   return {
     risk: overall.risk,
     summary: overall.finding,
@@ -126,6 +151,7 @@ export function evaluateEscrow(data: EscrowData): RulesEngineResult {
       release_conditions: releaseConditions,
     },
     extractedFields,
+    triggeredRules,
   };
 }
 
@@ -137,7 +163,9 @@ function evaluateAccountVerifications(data: EscrowData): RulesSection {
     return {
       risk: 'blocked',
       title,
-      finding: `Payer KYC is ${data.client.kycStatus || 'not started'} — must be VERIFIED before proceeding.`,
+      finding: `Payer KYC is ${
+        data.client.kycStatus || 'not started'
+      } — must be VERIFIED before proceeding.`,
     };
   }
 
@@ -164,7 +192,9 @@ function evaluateAccountVerifications(data: EscrowData): RulesSection {
     return {
       risk: 'high_risk',
       title,
-      finding: `Recipient KYC is ${data.recipientClient.kycStatus || 'unknown'} — recommend verifying before release.`,
+      finding: `Recipient KYC is ${
+        data.recipientClient.kycStatus || 'unknown'
+      } — recommend verifying before release.`,
     };
   }
 
@@ -361,4 +391,72 @@ function evaluateOverall(
   }
 
   return { risk: 'low_risk', title, finding: 'All checks passed — eligible for AI auto-approval.' };
+}
+
+/**
+ * Evaluate corridor threshold rules against the escrow amount.
+ * Returns triggered rules with resolved detail text.
+ */
+function evaluateThresholdRules(data: EscrowData): TriggeredRule[] {
+  if (
+    !data.thresholdRules ||
+    data.thresholdRules.length === 0 ||
+    !data.amount ||
+    data.amount <= 0
+  ) {
+    return [];
+  }
+
+  const triggered: TriggeredRule[] = [];
+
+  for (const rule of data.thresholdRules) {
+    let matches = false;
+
+    switch (rule.thresholdType) {
+      case 'gte':
+        if (rule.thresholdAmount !== null && data.amount >= rule.thresholdAmount) {
+          matches = true;
+        }
+        break;
+      case 'range':
+        if (
+          rule.thresholdAmount !== null &&
+          rule.thresholdMax !== null &&
+          data.amount >= rule.thresholdAmount &&
+          data.amount < rule.thresholdMax
+        ) {
+          matches = true;
+        }
+        break;
+      case 'pattern':
+        // round_number: amount is a multiple of thresholdAmount and >= thresholdAmount
+        if (
+          rule.ruleId === 'round_number' &&
+          rule.thresholdAmount !== null &&
+          data.amount >= rule.thresholdAmount &&
+          data.amount % rule.thresholdAmount === 0
+        ) {
+          matches = true;
+        }
+        break;
+    }
+
+    if (matches) {
+      const detail = rule.detailTemplate
+        .replace(/\{amount\}/g, `$${data.amount.toLocaleString()}`)
+        .replace(/\$\{threshold\}/g, `$${(rule.thresholdAmount || 0).toLocaleString()}`)
+        .replace(/\{threshold\}/g, `$${(rule.thresholdAmount || 0).toLocaleString()}`)
+        .replace(/\{corridor\}/g, data.corridor || 'unknown');
+
+      triggered.push({
+        ruleId: rule.ruleId,
+        label: rule.label,
+        riskLevel: rule.riskLevel,
+        detail,
+        regulationRef: rule.regulationRef,
+      });
+    }
+  }
+
+  return triggered;
 }
