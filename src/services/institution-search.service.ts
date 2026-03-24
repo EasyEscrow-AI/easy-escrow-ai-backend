@@ -138,16 +138,15 @@ class InstitutionSearchService {
   private async searchClients(clientId: string, q: string, limit: number): Promise<SearchResult[]> {
     const clients = await prisma.institutionClient.findMany({
       where: {
+        id: { not: clientId },
         isArchived: false,
         isTestAccount: false,
         OR: [
           { companyName: { contains: q, mode: 'insensitive' } },
           { legalName: { contains: q, mode: 'insensitive' } },
           { tradingName: { contains: q, mode: 'insensitive' } },
-          { contactEmail: { contains: q, mode: 'insensitive' } },
           { contactFirstName: { contains: q, mode: 'insensitive' } },
           { contactLastName: { contains: q, mode: 'insensitive' } },
-          { email: { contains: q, mode: 'insensitive' } },
           { industry: { contains: q, mode: 'insensitive' } },
           { country: { contains: q, mode: 'insensitive' } },
           { jurisdiction: { contains: q, mode: 'insensitive' } },
@@ -285,6 +284,7 @@ class InstitutionSearchService {
       );
     } else {
       or.push(
+        { paymentCode: { startsWith: q, mode: 'insensitive' } },
         { sender: { contains: q, mode: 'insensitive' } },
         { recipient: { contains: q, mode: 'insensitive' } },
         { corridor: { contains: q, mode: 'insensitive' } },
@@ -304,6 +304,7 @@ class InstitutionSearchService {
       where: { clientId, OR: or },
       select: {
         id: true,
+        paymentCode: true,
         sender: true,
         recipient: true,
         senderWallet: true,
@@ -321,10 +322,11 @@ class InstitutionSearchService {
     return payments.map((p) => ({
       category: 'payment' as const,
       id: p.id,
-      title: `${Number(p.amount)} ${p.currency}`,
+      title: p.paymentCode ? `${p.paymentCode} · ${Number(p.amount)} ${p.currency}` : `${Number(p.amount)} ${p.currency}`,
       subtitle: `${p.sender} → ${p.recipient}${p.corridor ? ` · ${p.corridor}` : ''}`,
       status: p.status,
       metadata: {
+        paymentCode: p.paymentCode,
         amount: Number(p.amount),
         currency: p.currency,
         corridor: p.corridor,

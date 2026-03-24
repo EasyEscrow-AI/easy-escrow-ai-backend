@@ -691,9 +691,9 @@ export class AiChatService {
         // Legacy: HTML comment tag
         const tagMatch = content.match(/<!-- faq:([a-z0-9-]+) -->/);
         if (tagMatch) return tagMatch[1];
-        // New: match against FAQ short answers
+        // Fallback: exact match against FAQ short answers (require full content match)
         for (const entry of FAQ_ENTRIES) {
-          if (content.includes(entry.shortAnswer)) return entry.id;
+          if (entry.shortAnswer.length > 20 && content.includes(entry.shortAnswer)) return entry.id;
         }
         return null;
       }

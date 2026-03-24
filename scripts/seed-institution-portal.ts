@@ -38,7 +38,7 @@ async function main() {
   // 1. Primary Client: Helvetica Digital
   // ============================================================================
   console.log('Seeding primary client: Helvetica Digital...');
-  const passwordHash = await bcrypt.hash('HelveticaDemo2026!', 12);
+  const passwordHash = await bcrypt.hash(process.env.SEED_PASSWORD || 'HelveticaDemo2026!', 12);
 
   const helvetica = await prisma.institutionClient.upsert({
     where: { email: 'ops@helvetica-digital.ch' },

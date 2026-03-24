@@ -7,6 +7,7 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
+import { prisma as sharedPrisma } from '../config/database';
 
 const TRAVEL_RULE_THRESHOLD = parseInt(process.env.CORRIDOR_TRAVEL_RULE_THRESHOLD || '1000', 10);
 const EDD_THRESHOLD = parseInt(process.env.CORRIDOR_EDD_THRESHOLD || '10000', 10);
@@ -74,7 +75,7 @@ export class CorridorAnalysisService {
   private prisma: PrismaClient;
 
   constructor(prisma?: PrismaClient) {
-    this.prisma = prisma ?? new PrismaClient();
+    this.prisma = prisma ?? sharedPrisma;
   }
 
   async analyzeCorridor(params: CorridorAnalysisParams): Promise<CorridorAnalysisResult> {
@@ -160,7 +161,8 @@ export class CorridorAnalysisService {
     });
 
     // Documentation requirements
-    const requiredDocs = (corridor.requiredDocuments as string[]) || [];
+    const rawDocs = corridor.requiredDocuments;
+    const requiredDocs = Array.isArray(rawDocs) ? rawDocs.filter((d): d is string => typeof d === 'string') : [];
     if (requiredDocs.length > 0) {
       factors.push({
         label: 'Documentation requirements',

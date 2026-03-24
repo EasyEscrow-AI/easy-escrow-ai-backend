@@ -10,11 +10,12 @@ export async function requireNotPaused(
 ): Promise<void> {
   try {
     const pauseService = getInstitutionEscrowPauseService();
+    let timer: ReturnType<typeof setTimeout>;
     const state = await Promise.race([
-      pauseService.isPaused(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Pause check timed out')), PAUSE_CHECK_TIMEOUT_MS)
-      ),
+      pauseService.isPaused().finally(() => clearTimeout(timer)),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Pause check timed out')), PAUSE_CHECK_TIMEOUT_MS);
+      }),
     ]);
 
     if (state.paused) {

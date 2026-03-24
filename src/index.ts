@@ -180,9 +180,6 @@ try {
   const openApiFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
   openApiDocument = YAML.load(openApiFilePath);
 
-  // Remove servers to hide the server dropdown in Redoc endpoint details
-  delete openApiDocument.servers;
-
   console.log(`✅ API documentation loaded successfully from ${openApiFilePath}`);
 } catch (error: any) {
   console.warn('⚠️  Warning: Failed to load API documentation');
@@ -238,6 +235,12 @@ if (openApiDocument) {
   // Serve the OpenAPI spec as JSON for Redoc to consume
   app.get('/openapi.json', (_req: Request, res: Response) => {
     res.json(openApiDocument);
+  });
+
+  // Serve a servers-stripped copy for Redoc to hide the server dropdown
+  app.get('/openapi-redoc.json', (_req: Request, res: Response) => {
+    const { servers, ...rest } = openApiDocument;
+    res.json(rest);
   });
 
   // Serve Redoc documentation with custom dark theme
@@ -454,7 +457,7 @@ if (openApiDocument) {
   <div id="redoc-container"></div>
   <script src="https://unpkg.com/redoc@2.1.3/bundles/redoc.standalone.js"></script>
   <script>
-    Redoc.init('/openapi.json', {
+    Redoc.init('/openapi-redoc.json', {
       theme: {
         colors: {
           primary: { main: '#818cf8' },
@@ -514,7 +517,7 @@ if (openApiDocument) {
       }
 
       // Build search index from the OpenAPI spec
-      fetch('/openapi.json').then(function(r) { return r.json(); }).then(function(spec) {
+      fetch('/openapi-redoc.json').then(function(r) { return r.json(); }).then(function(spec) {
         // Add tags (sections)
         (spec.tags || []).forEach(function(tag) {
           searchIndex.push({ type: 'tag', method: 'tag', title: tag.name, path: '', tag: tag.name });

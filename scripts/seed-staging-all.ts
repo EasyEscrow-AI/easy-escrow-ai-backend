@@ -1101,7 +1101,7 @@ const escrowDefs: EscrowDef[] = [
     conditionType: 'ADMIN_RELEASE',
     riskScore: 12,
     createdAt: hoursAgo(2),
-    code: 'esc-a1b2c3d4',
+    code: escrowCode('helv-funded-ch-sg'),
   },
   {
     payerEmail: 'ops@helvetica-digital.ch',
@@ -1112,7 +1112,7 @@ const escrowDefs: EscrowDef[] = [
     conditionType: 'COMPLIANCE_CHECK',
     riskScore: 42,
     createdAt: hoursAgo(5),
-    code: 'esc-e5f6a7b8',
+    code: escrowCode('helv-compliance-sg-jp'),
   },
   {
     payerEmail: 'ops@helvetica-digital.ch',
@@ -1123,7 +1123,7 @@ const escrowDefs: EscrowDef[] = [
     conditionType: 'ADMIN_RELEASE',
     riskScore: 8,
     createdAt: hoursAgo(9),
-    code: 'esc-a3b4c5d6',
+    code: escrowCode('helv-created-gb-ch'),
   },
   {
     payerEmail: 'ops@helvetica-digital.ch',
@@ -1134,7 +1134,7 @@ const escrowDefs: EscrowDef[] = [
     conditionType: 'ADMIN_RELEASE',
     riskScore: 18,
     createdAt: daysAgo(1),
-    code: 'esc-c1d2e3f4',
+    code: escrowCode('helv-releasing-ae-ae'),
   },
   // Historical released
   {
@@ -2115,6 +2115,13 @@ async function main() {
         defaultCorridor: s.corridor,
         timezone: s.timezone,
         autoApproveThreshold: s.autoApprove ?? null,
+        manualReviewThreshold: s.manualReview ?? null,
+        notificationEmail: email,
+        emailNotifications: true,
+        defaultToken: s.defaultToken ?? 'usdc',
+        autoTravelRule: true,
+        activeSanctionsLists: ['OFAC SDN', 'EU Consolidated', 'UN Sanctions'],
+        riskTolerance: s.riskTolerance ?? 'low',
       },
     });
   }

@@ -46,7 +46,10 @@ export class InstitutionDirectPaymentService {
       where: {
         clientId,
         action: { in: ['DIRECT_PAYMENT_CREATED', 'DIRECT_PAYMENT_COMPLETED', 'DIRECT_PAYMENT_FAILED'] },
-        details: { path: ['paymentId'], equals: paymentId },
+        OR: [
+          { details: { path: ['paymentId'], equals: payment.id } },
+          ...(payment.paymentCode ? [{ details: { path: ['paymentId'], equals: payment.paymentCode } }] : []),
+        ],
       },
       orderBy: { createdAt: 'desc' }, take: 10,
     });

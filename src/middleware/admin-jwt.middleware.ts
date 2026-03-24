@@ -100,8 +100,7 @@ function checkApiKey(req: AdminAuthenticatedRequest): boolean {
 
   const matched = adminKeys.some((key) => constantTimeCompare(apiKey, key));
   if (matched) {
-    const { createHash } = require('crypto');
-    req.apiKeyFingerprint = createHash('sha256').update(apiKey).digest('hex').slice(0, 16);
+    req.apiKeyFingerprint = crypto.createHash('sha256').update(apiKey).digest('hex').slice(0, 16);
   }
 
   return matched;
