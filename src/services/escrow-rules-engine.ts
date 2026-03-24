@@ -1,11 +1,17 @@
 /**
  * Escrow Rules Engine — Deterministic local analysis
  *
- * Evaluates the same 8 sections as the AI system prompt using simple rules.
- * Returns a "preliminary" result in <1ms, no API calls needed.
+ * Evaluates 5 compliance sections using simple rules:
+ * 1. Account Verifications — KYC/KYB, wallet checks
+ * 2. Transaction Amount — thresholds, AI vs manual approval
+ * 3. Payment Corridor — country regulations, enabled corridors
+ * 4. Release Conditions — approval mode, expiry
+ * 5. Overall Compliance — aggregate verdict
  *
- * Used by `analyzeEscrowFast()` to give instant feedback while the full
- * AI analysis runs in the background.
+ * Each section returns a risk level: low_risk | medium_risk | high_risk | blocked
+ * "blocked" means the escrow cannot proceed without resolution.
+ *
+ * Returns a result in <1ms, no API calls needed.
  */
 
 const KNOWN_STABLECOINS = [
@@ -15,24 +21,25 @@ const KNOWN_STABLECOINS = [
   'CXk2AMBfi3TwaEL2468s6zP8xq9NxTXjp9gjMgzeUynM', // PYUSD (Solana)
 ];
 
-type SectionStatus = 'pass' | 'warning' | 'fail' | 'pending';
+export type RiskLevel = 'low_risk' | 'medium_risk' | 'high_risk' | 'blocked';
 
 export interface RulesSection {
-  status: SectionStatus;
+  risk: RiskLevel;
   title: string;
-  findings: string;
-  checked_fields: string[];
-  recommended_corridor?: string | null;
+  finding: string;
 }
 
 export interface RulesEngineResult {
-  riskScore: number;
-  recommendation: 'APPROVE' | 'REVIEW' | 'REJECT';
+  risk: RiskLevel;
   summary: string;
-  sections: Record<string, RulesSection>;
+  sections: {
+    overall: RulesSection;
+    account_verifications: RulesSection;
+    transaction_amount: RulesSection;
+    payment_corridor: RulesSection;
+    release_conditions: RulesSection;
+  };
   extractedFields: Record<string, unknown>;
-  factors: Array<{ name: string; weight: number; value: number }>;
-  details: string;
 }
 
 interface CorridorInfo {
@@ -68,77 +75,31 @@ export interface EscrowData {
     entityType: string | null;
     tier: string | null;
   };
+  recipientClient?: {
+    kycStatus: string | null;
+    kybStatus: string | null;
+    riskRating: string | null;
+    country: string | null;
+  } | null;
   availableCorridors: CorridorInfo[] | null;
 }
 
-// Section weights for risk score computation
-const SECTION_WEIGHTS: Record<string, number> = {
-  from_account: 0.25,
-  to_account: 0.10,
-  corridor: 0.20,
-  amount: 0.15,
-  settlement: 0.10,
-  release: 0.08,
-  advanced: 0.07,
-  overview: 0.05,
-};
-
-const STATUS_SCORES: Record<SectionStatus, number> = {
-  pass: 5,
-  pending: 25,
-  warning: 45,
-  fail: 80,
-};
+// Amount thresholds
+const AI_APPROVAL_MAX = 50000; // Up to $50K: AI can auto-approve
+const MANUAL_REVIEW_THRESHOLD = 100000; // $100K+: requires manual approval
+const HIGH_SCRUTINY_THRESHOLD = 1000000; // $1M+: high scrutiny, manual only
 
 export function evaluateEscrow(data: EscrowData): RulesEngineResult {
-  const sections: Record<string, RulesSection> = {};
-
-  // 1. from_account
-  sections.from_account = evaluateFromAccount(data);
-  // 2. to_account
-  sections.to_account = evaluateToAccount(data);
-  // 3. corridor
-  sections.corridor = evaluateCorridor(data);
-  // 4. amount
-  sections.amount = evaluateAmount(data);
-  // 5. settlement
-  sections.settlement = evaluateSettlement(data);
-  // 6. release
-  sections.release = evaluateRelease(data);
-  // 7. advanced
-  sections.advanced = evaluateAdvanced(data);
-  // 8. overview
-  sections.overview = evaluateOverview(sections);
-
-  // Compute weighted risk score
-  const factors: Array<{ name: string; weight: number; value: number }> = [];
-  let weightedSum = 0;
-  let totalWeight = 0;
-
-  for (const [key, section] of Object.entries(sections)) {
-    if (key === 'overview') continue;
-    const weight = SECTION_WEIGHTS[key] || 0.1;
-    const value = STATUS_SCORES[section.status];
-    factors.push({ name: key, weight, value });
-    weightedSum += weight * value;
-    totalWeight += weight;
-  }
-
-  const riskScore = totalWeight > 0
-    ? Math.round(Math.min(100, Math.max(0, weightedSum / totalWeight)))
-    : 25;
-
-  const recommendation: 'APPROVE' | 'REVIEW' | 'REJECT' =
-    riskScore <= 25 ? 'APPROVE'
-    : riskScore <= 60 ? 'REVIEW'
-    : 'REJECT';
-
-  const statusCounts = Object.values(sections).reduce(
-    (acc, s) => { acc[s.status] = (acc[s.status] || 0) + 1; return acc; },
-    {} as Record<string, number>,
+  const accountVerifications = evaluateAccountVerifications(data);
+  const transactionAmount = evaluateTransactionAmount(data);
+  const paymentCorridor = evaluatePaymentCorridor(data);
+  const releaseConditions = evaluateReleaseConditions(data);
+  const overall = evaluateOverall(
+    accountVerifications,
+    transactionAmount,
+    paymentCorridor,
+    releaseConditions
   );
-
-  const summary = `Preliminary analysis: ${statusCounts.pass || 0} pass, ${statusCounts.warning || 0} warning, ${statusCounts.fail || 0} fail, ${statusCounts.pending || 0} pending.`;
 
   const extractedFields: Record<string, unknown> = {
     escrow_status: data.status,
@@ -155,231 +116,249 @@ export function evaluateEscrow(data: EscrowData): RulesEngineResult {
   };
 
   return {
-    riskScore,
-    recommendation,
-    summary,
-    sections,
+    risk: overall.risk,
+    summary: overall.finding,
+    sections: {
+      overall,
+      account_verifications: accountVerifications,
+      transaction_amount: transactionAmount,
+      payment_corridor: paymentCorridor,
+      release_conditions: releaseConditions,
+    },
     extractedFields,
-    factors,
-    details: `Rule-based preliminary assessment (${Object.keys(sections).length} sections evaluated).`,
   };
 }
 
-function evaluateFromAccount(data: EscrowData): RulesSection {
-  const checked = ['payerWallet', 'client.kycStatus', 'client.kybStatus', 'client.riskRating', 'client.country'];
+function evaluateAccountVerifications(data: EscrowData): RulesSection {
+  const title = 'Account Verifications';
 
-  if (!data.payerWallet) {
-    return { status: 'pending', title: 'Payer Account', findings: 'Payer wallet not yet provided.', checked_fields: checked };
-  }
-
+  // KYC not verified = blocked
   if (data.client.kycStatus !== 'VERIFIED') {
-    return { status: 'fail', title: 'Payer Account', findings: `KYC status is ${data.client.kycStatus || 'unknown'} — must be VERIFIED.`, checked_fields: checked };
-  }
-
-  if (data.client.riskRating === 'HIGH' || data.client.riskRating === 'CRITICAL') {
-    return { status: 'fail', title: 'Payer Account', findings: `Client risk rating is ${data.client.riskRating}.`, checked_fields: checked };
-  }
-
-  const warnings: string[] = [];
-  if (data.client.kybStatus && data.client.kybStatus !== 'VERIFIED') {
-    warnings.push(`KYB status is ${data.client.kybStatus}`);
-  }
-
-  if (warnings.length > 0) {
-    return { status: 'warning', title: 'Payer Account', findings: `KYC verified. ${warnings.join('. ')}.`, checked_fields: checked };
-  }
-
-  return { status: 'pass', title: 'Payer Account', findings: 'KYC verified, risk rating acceptable.', checked_fields: checked };
-}
-
-function evaluateToAccount(data: EscrowData): RulesSection {
-  const checked = ['recipientWallet', 'payerWallet'];
-
-  if (!data.recipientWallet) {
-    return { status: 'pending', title: 'Recipient Account', findings: 'Recipient wallet not yet provided.', checked_fields: checked };
-  }
-
-  if (data.payerWallet && data.recipientWallet === data.payerWallet) {
-    return { status: 'fail', title: 'Recipient Account', findings: 'Recipient wallet is the same as payer wallet.', checked_fields: checked };
-  }
-
-  return { status: 'pass', title: 'Recipient Account', findings: 'Recipient wallet set and different from payer.', checked_fields: checked };
-}
-
-function evaluateCorridor(data: EscrowData): RulesSection {
-  const checked = ['corridor', 'availableCorridors', 'amount'];
-
-  if (!data.corridor) {
-    if (!data.availableCorridors || data.availableCorridors.length === 0) {
-      return { status: 'fail', title: 'Payment Corridor', findings: 'No active corridors available for this country.', checked_fields: checked };
-    }
-    // Recommend the lowest-risk corridor that fits the amount
-    const suitable = data.amount > 0
-      ? data.availableCorridors.filter(c => data.amount >= c.minAmount && data.amount <= c.maxAmount)
-      : data.availableCorridors;
-    const riskOrder = ['LOW', 'MEDIUM', 'HIGH'];
-    const sorted = (suitable.length > 0 ? suitable : data.availableCorridors)
-      .sort((a, b) => riskOrder.indexOf(a.riskLevel) - riskOrder.indexOf(b.riskLevel));
-    const best = sorted[0];
     return {
-      status: 'pending',
-      title: 'Payment Corridor',
-      findings: `Corridor not yet selected. Recommended: ${best.code} (${best.riskLevel} risk).`,
-      checked_fields: checked,
-      recommended_corridor: best.code,
+      risk: 'blocked',
+      title,
+      finding: `Payer KYC is ${data.client.kycStatus || 'not started'} — must be VERIFIED before proceeding.`,
     };
   }
 
-  // Corridor is set — validate
-  if (data.availableCorridors && data.availableCorridors.length > 0) {
-    const match = data.availableCorridors.find(c => c.code === data.corridor);
-    if (!match) {
-      return { status: 'fail', title: 'Payment Corridor', findings: `Corridor ${data.corridor} not found in available corridors.`, checked_fields: checked };
-    }
-    const warnings: string[] = [];
-    if (match.riskLevel === 'HIGH') {
-      warnings.push('High-risk corridor');
-    }
-    if (data.amount > 0 && data.amount > match.maxAmount) {
-      warnings.push(`Amount exceeds corridor max ($${match.maxAmount.toLocaleString()})`);
-    }
-    if (data.amount > 0 && data.amount < match.minAmount) {
-      warnings.push(`Amount below corridor min ($${match.minAmount.toLocaleString()})`);
-    }
-    if (warnings.length > 0) {
-      return { status: 'warning', title: 'Payment Corridor', findings: warnings.join('. ') + '.', checked_fields: checked, recommended_corridor: data.corridor };
-    }
-    return { status: 'pass', title: 'Payment Corridor', findings: `Corridor ${data.corridor} validated (${match.riskLevel} risk).`, checked_fields: checked, recommended_corridor: data.corridor };
+  // High/critical risk client = blocked
+  if (data.client.riskRating === 'HIGH' || data.client.riskRating === 'CRITICAL') {
+    return {
+      risk: 'blocked',
+      title,
+      finding: `Payer risk rating is ${data.client.riskRating} — cannot proceed without manual review.`,
+    };
   }
 
-  return { status: 'pass', title: 'Payment Corridor', findings: `Corridor ${data.corridor} set.`, checked_fields: checked, recommended_corridor: data.corridor };
+  // Recipient checks
+  if (data.recipientWallet && data.payerWallet && data.recipientWallet === data.payerWallet) {
+    return {
+      risk: 'blocked',
+      title,
+      finding: 'Recipient wallet is the same as payer wallet — self-transfers are not allowed.',
+    };
+  }
+
+  // Recipient KYC check (if available)
+  if (data.recipientClient && data.recipientClient.kycStatus !== 'VERIFIED') {
+    return {
+      risk: 'high_risk',
+      title,
+      finding: `Recipient KYC is ${data.recipientClient.kycStatus || 'unknown'} — recommend verifying before release.`,
+    };
+  }
+
+  // Warnings
+  const issues: string[] = [];
+  if (data.client.kybStatus && data.client.kybStatus !== 'VERIFIED') {
+    issues.push(`KYB is ${data.client.kybStatus}`);
+  }
+  if (!data.recipientWallet) {
+    issues.push('recipient wallet not yet provided');
+  }
+
+  if (issues.length > 0) {
+    return { risk: 'medium_risk', title, finding: `Payer KYC verified. ${issues.join('; ')}.` };
+  }
+
+  return { risk: 'low_risk', title, finding: 'Both parties verified, wallets valid.' };
 }
 
-function evaluateAmount(data: EscrowData): RulesSection {
-  const checked = ['amount', 'platformFee'];
+function evaluateTransactionAmount(data: EscrowData): RulesSection {
+  const title = 'Transaction Amount';
 
   if (!data.amount || data.amount <= 0) {
-    return { status: 'pending', title: 'Transaction Amount', findings: 'Amount not yet provided.', checked_fields: checked };
+    return { risk: 'medium_risk', title, finding: 'Amount not yet provided.' };
   }
 
-  const warnings: string[] = [];
-  if (data.amount > 1000000) {
-    warnings.push('Amount exceeds $1M — high scrutiny required');
-  } else if (data.amount > 100000) {
-    warnings.push('Amount exceeds $100K — enhanced review');
+  // Token check
+  if (data.tokenMint && !KNOWN_STABLECOINS.includes(data.tokenMint)) {
+    return {
+      risk: 'blocked',
+      title,
+      finding: `Token ${data.tokenMint.substring(0, 8)}... is not a whitelisted stablecoin.`,
+    };
   }
 
-  if (warnings.length > 0) {
-    return { status: 'warning', title: 'Transaction Amount', findings: warnings.join('. ') + '.', checked_fields: checked };
+  if (data.amount >= HIGH_SCRUTINY_THRESHOLD) {
+    return {
+      risk: 'high_risk',
+      title,
+      finding: `$${data.amount.toLocaleString()} exceeds $1M — manual approval only, high scrutiny required.`,
+    };
   }
 
-  return { status: 'pass', title: 'Transaction Amount', findings: `Amount $${data.amount.toLocaleString()} within normal range.`, checked_fields: checked };
+  if (data.amount >= MANUAL_REVIEW_THRESHOLD) {
+    return {
+      risk: 'medium_risk',
+      title,
+      finding: `$${data.amount.toLocaleString()} exceeds $100K — requires manual approval.`,
+    };
+  }
+
+  if (data.amount <= AI_APPROVAL_MAX) {
+    return {
+      risk: 'low_risk',
+      title,
+      finding: `$${data.amount.toLocaleString()} is within AI auto-approval range.`,
+    };
+  }
+
+  // Between $50K-$100K
+  return {
+    risk: 'medium_risk',
+    title,
+    finding: `$${data.amount.toLocaleString()} — standard review applies.`,
+  };
 }
 
-function evaluateSettlement(data: EscrowData): RulesSection {
-  const checked = ['tokenMint', 'hasDeposit', 'depositTxSignature', 'escrowPda'];
+function evaluatePaymentCorridor(data: EscrowData): RulesSection {
+  const title = 'Payment Corridor';
 
-  if (!data.tokenMint) {
-    return { status: 'pending', title: 'Settlement Details', findings: 'Token mint not yet configured.', checked_fields: checked };
+  if (!data.corridor) {
+    if (!data.availableCorridors || data.availableCorridors.length === 0) {
+      return {
+        risk: 'blocked',
+        title,
+        finding: 'No active corridors available for this country.',
+      };
+    }
+    return {
+      risk: 'medium_risk',
+      title,
+      finding: `Corridor not yet selected — ${data.availableCorridors.length} available.`,
+    };
   }
 
-  const isKnown = KNOWN_STABLECOINS.includes(data.tokenMint);
-  const findings: string[] = [];
+  // Validate corridor exists
+  if (data.availableCorridors && data.availableCorridors.length > 0) {
+    const match = data.availableCorridors.find((c) => c.code === data.corridor);
+    if (!match) {
+      return {
+        risk: 'blocked',
+        title,
+        finding: `Corridor ${data.corridor} is not enabled on this platform.`,
+      };
+    }
 
-  if (!isKnown) {
-    findings.push(`Token mint ${data.tokenMint.substring(0, 8)}... is not a recognized stablecoin`);
+    const issues: string[] = [];
+    if (match.riskLevel === 'HIGH') {
+      issues.push('high-risk corridor');
+    }
+    if (data.amount > 0 && data.amount > match.maxAmount) {
+      issues.push(`amount exceeds corridor max ($${match.maxAmount.toLocaleString()})`);
+    }
+    if (data.amount > 0 && data.amount < match.minAmount) {
+      issues.push(`amount below corridor min ($${match.minAmount.toLocaleString()})`);
+    }
+
+    if (issues.some((i) => i.includes('exceeds') || i.includes('below'))) {
+      return {
+        risk: 'blocked',
+        title,
+        finding: `Corridor ${data.corridor}: ${issues.join('; ')}.`,
+      };
+    }
+    if (issues.length > 0) {
+      return {
+        risk: 'high_risk',
+        title,
+        finding: `Corridor ${data.corridor}: ${issues.join('; ')}.`,
+      };
+    }
+    return {
+      risk: 'low_risk',
+      title,
+      finding: `${data.corridor} corridor validated (${match.riskLevel} risk).`,
+    };
   }
 
-  if (data.hasDeposit) {
-    findings.push('Deposit confirmed');
-    if (data.depositTxSignature) findings.push('on-chain signature recorded');
-  } else {
-    findings.push('No deposit yet');
-  }
-
-  if (data.escrowPda) findings.push('escrow PDA assigned');
-
-  const status: SectionStatus = !isKnown ? 'warning' : 'pass';
-  return { status, title: 'Settlement Details', findings: findings.join('; ') + '.', checked_fields: checked };
+  return { risk: 'low_risk', title, finding: `Corridor ${data.corridor} set.` };
 }
 
-function evaluateRelease(data: EscrowData): RulesSection {
-  const checked = ['conditionType', 'settlementAuthority'];
+function evaluateReleaseConditions(data: EscrowData): RulesSection {
+  const title = 'Release Conditions';
 
   if (!data.conditionType) {
-    return { status: 'pending', title: 'Release Conditions', findings: 'Release condition type not yet set.', checked_fields: checked };
+    return { risk: 'medium_risk', title, finding: 'Release condition not yet configured.' };
   }
 
-  const warnings: string[] = [];
-  if (!data.settlementAuthority && data.status !== 'DRAFT') {
-    warnings.push('Settlement authority not set for non-DRAFT escrow');
+  const issues: string[] = [];
+
+  // High-amount escrows must be manual
+  if (data.amount >= MANUAL_REVIEW_THRESHOLD && data.conditionType !== 'ADMIN_RELEASE') {
+    issues.push('amount ≥$100K requires ADMIN_RELEASE for manual approval');
   }
 
-  if (warnings.length > 0) {
-    return { status: 'warning', title: 'Release Conditions', findings: `Condition: ${data.conditionType}. ${warnings.join('. ')}.`, checked_fields: checked };
-  }
-
-  return { status: 'pass', title: 'Release Conditions', findings: `Condition: ${data.conditionType}. Settlement authority configured.`, checked_fields: checked };
-}
-
-function evaluateAdvanced(data: EscrowData): RulesSection {
-  const checked = ['expiresAt', 'fileCount', 'nonceAccount'];
-
-  if (!data.expiresAt && data.status !== 'DRAFT') {
-    return { status: 'pending', title: 'Advanced Settings', findings: 'Expiry date not set on non-DRAFT escrow.', checked_fields: checked };
-  }
-
-  const warnings: string[] = [];
-
+  // Expiry check
   if (data.expiresAt) {
     const hoursUntilExpiry = (new Date(data.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
-    const daysUntilExpiry = hoursUntilExpiry / 24;
     if (hoursUntilExpiry < 24) {
-      warnings.push('Expires in less than 24 hours');
-    } else if (daysUntilExpiry > 90) {
-      warnings.push('Expiry is more than 90 days away');
+      issues.push('expires in less than 24 hours');
     }
+  } else if (data.status !== 'DRAFT') {
+    issues.push('no expiry set');
   }
 
-  if (data.fileCount === 0 && data.amount > 50000) {
-    warnings.push('No supporting documents for amount > $50K');
+  if (issues.some((i) => i.includes('requires ADMIN_RELEASE'))) {
+    return { risk: 'blocked', title, finding: `${data.conditionType}: ${issues.join('; ')}.` };
   }
-
-  if (warnings.length > 0) {
-    return { status: 'warning', title: 'Advanced Settings', findings: warnings.join('. ') + '.', checked_fields: checked };
-  }
-
-  const findings = [];
-  if (data.expiresAt) findings.push('Expiry set');
-  if (data.nonceAccount) findings.push('nonce account assigned');
-  if (data.fileCount > 0) findings.push(`${data.fileCount} document(s) attached`);
-  if (findings.length === 0) findings.push('No advanced settings configured yet');
-
-  return { status: data.expiresAt ? 'pass' : 'pending', title: 'Advanced Settings', findings: findings.join('; ') + '.', checked_fields: checked };
-}
-
-function evaluateOverview(sections: Record<string, RulesSection>): RulesSection {
-  const checked = Object.keys(sections);
-  const statuses = Object.values(sections).map(s => s.status);
-
-  const counts = statuses.reduce(
-    (acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; },
-    {} as Record<string, number>,
-  );
-
-  let status: SectionStatus;
-  if (statuses.includes('fail')) {
-    status = 'fail';
-  } else if (statuses.includes('warning')) {
-    status = 'warning';
-  } else {
-    status = 'pass';
+  if (issues.length > 0) {
+    return { risk: 'medium_risk', title, finding: `${data.conditionType}: ${issues.join('; ')}.` };
   }
 
   return {
-    status,
-    title: 'Overall Assessment',
-    findings: `${counts.pass || 0} pass, ${counts.warning || 0} warning, ${counts.fail || 0} fail, ${counts.pending || 0} pending.`,
-    checked_fields: checked,
+    risk: 'low_risk',
+    title,
+    finding: `${data.conditionType} configured, expiry acceptable.`,
   };
+}
+
+function evaluateOverall(
+  accountVerifications: RulesSection,
+  transactionAmount: RulesSection,
+  paymentCorridor: RulesSection,
+  releaseConditions: RulesSection
+): RulesSection {
+  const title = 'Overall Compliance';
+  const all = [accountVerifications, transactionAmount, paymentCorridor, releaseConditions];
+
+  if (all.some((s) => s.risk === 'blocked')) {
+    const blocked = all.filter((s) => s.risk === 'blocked').map((s) => s.title);
+    return {
+      risk: 'blocked',
+      title,
+      finding: `Cannot proceed — blocked by: ${blocked.join(', ')}.`,
+    };
+  }
+
+  if (all.some((s) => s.risk === 'high_risk')) {
+    return { risk: 'high_risk', title, finding: 'Manual review required before proceeding.' };
+  }
+
+  if (all.some((s) => s.risk === 'medium_risk')) {
+    return { risk: 'medium_risk', title, finding: 'Some items need attention before approval.' };
+  }
+
+  return { risk: 'low_risk', title, finding: 'All checks passed — eligible for AI auto-approval.' };
 }
