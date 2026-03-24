@@ -26,9 +26,19 @@ const MAX_ACCOUNTS_PER_CLIENT = 10;
 const BALANCE_CACHE_TTL = 300; // 5 minutes — frontend fetches live per-account
 const BALANCE_CACHE_PREFIX = 'institution:account:balance:';
 
+const VALID_ACCOUNT_TYPES: InstitutionAccountType[] = [
+  'TREASURY',
+  'OPERATIONS',
+  'SETTLEMENT',
+  'COLLATERAL',
+  'GENERAL',
+];
+
 // Fields allowed to be updated
 const ALLOWED_UPDATE_FIELDS = [
   'label',
+  'accountType',
+  'walletAddress',
   'description',
   'walletProvider',
   'custodyType',
@@ -225,6 +235,25 @@ export class InstitutionAccountService {
 
     if (Object.keys(filteredUpdates).length === 0) {
       throw new Error('No valid fields to update');
+    }
+
+    // Validate accountType if provided
+    if (filteredUpdates.accountType) {
+      if (!VALID_ACCOUNT_TYPES.includes(filteredUpdates.accountType)) {
+        throw new Error(
+          `Invalid accountType. Must be one of: ${VALID_ACCOUNT_TYPES.join(', ')}`
+        );
+      }
+    }
+
+    // Validate walletAddress if provided; reset verification when changed
+    if (filteredUpdates.walletAddress !== undefined) {
+      if (!isValidSolanaAddress(filteredUpdates.walletAddress)) {
+        throw new Error('Invalid Solana wallet address');
+      }
+      if (filteredUpdates.walletAddress !== account.walletAddress) {
+        filteredUpdates.verificationStatus = 'PENDING';
+      }
     }
 
     // Validate whitelistedAddresses if provided
