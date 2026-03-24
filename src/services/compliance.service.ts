@@ -76,7 +76,8 @@ export class ComplianceService {
       } else {
         this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
       }
-    } catch {
+    } catch (err) {
+      console.warn('[ComplianceService] Failed to load thresholds from DB, using defaults:', err instanceof Error ? err.message : err);
       this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
     }
 

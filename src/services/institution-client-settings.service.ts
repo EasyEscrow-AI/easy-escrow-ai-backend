@@ -230,6 +230,13 @@ export class InstitutionClientSettingsService {
         throw new Error(`maxFeeUsdc must be at most ${PROTOCOL_FEE_LIMITS.MAX_FEE_USDC}`);
       }
     }
+    if ('minFeeUsdc' in filteredUpdates && 'maxFeeUsdc' in filteredUpdates) {
+      if (filteredUpdates.minFeeUsdc > filteredUpdates.maxFeeUsdc) {
+        throw new Error(
+          `minFeeUsdc (${filteredUpdates.minFeeUsdc}) must not exceed maxFeeUsdc (${filteredUpdates.maxFeeUsdc})`
+        );
+      }
+    }
 
     const settings = await this.prisma.institutionClientSettings.upsert({
       where: { clientId },

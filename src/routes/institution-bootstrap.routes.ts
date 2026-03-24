@@ -38,7 +38,7 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message === 'Client not found' ? 404 : 500;
+      const status = /client not found/i.test(error.message) ? 404 : 500;
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Internal Error',
         message: error.message,

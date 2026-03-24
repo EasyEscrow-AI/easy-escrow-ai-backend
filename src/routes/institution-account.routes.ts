@@ -366,7 +366,6 @@ router.patch(
       logger.error('Account settings update failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Update Failed',
-        message,
         timestamp: new Date().toISOString(),
       });
     }

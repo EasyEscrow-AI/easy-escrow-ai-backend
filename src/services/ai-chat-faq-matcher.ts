@@ -18,6 +18,7 @@
  * - Cache key: institution:ai:faq:{hash}
  */
 
+import crypto from 'crypto';
 import { redisClient } from '../config/redis';
 import { FAQ_ENTRIES, FaqEntry } from '../data/ai-chat-faq';
 
@@ -264,12 +265,7 @@ function scoreEntry(inputNormalized: string, inputTokens: string[], entry: FaqEn
  */
 function hashQuestion(text: string): string {
   const normalized = normalize(text);
-  let hash = 0;
-  for (let i = 0; i < normalized.length; i++) {
-    const char = normalized.charCodeAt(i);
-    hash = ((hash << 5) - hash + char) | 0;
-  }
-  return Math.abs(hash).toString(36);
+  return crypto.createHash('sha256').update(normalized).digest('hex').slice(0, 16);
 }
 
 /**

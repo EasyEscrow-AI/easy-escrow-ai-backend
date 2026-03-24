@@ -526,6 +526,13 @@ export class InstitutionEscrowService {
     if (params.approvalInstructions !== undefined)
       updateData.approvalInstructions = params.approvalInstructions;
 
+    // Post-merge check: ensure payer !== recipient after partial update
+    const mergedPayerWallet = (updateData.payerWallet as string) || escrow.payerWallet;
+    const mergedRecipientWallet = (updateData.recipientWallet as string) || escrow.recipientWallet;
+    if (mergedPayerWallet && mergedRecipientWallet && mergedPayerWallet === mergedRecipientWallet) {
+      throw new Error('recipientWallet must not equal payerWallet');
+    }
+
     const updated = await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: updateData as any,

@@ -48,7 +48,6 @@ const ALLOWED_UPDATE_FIELDS = [
   'notifyOnEscrowFunded',
   'notifyOnEscrowReleased',
   'notifyOnComplianceAlert',
-  'defaultCurrency',
 ] as const;
 
 // Fields exposed in the per-account settings view
@@ -566,7 +565,7 @@ export class InstitutionAccountService {
       throw new Error('Account not found');
     }
 
-    // Bust the cache
+    // Bust cache first, then fetch fresh from RPC
     const cacheKey = `${BALANCE_CACHE_PREFIX}${account.walletAddress}`;
     try {
       await redisClient.del(cacheKey);
@@ -574,7 +573,9 @@ export class InstitutionAccountService {
       // Redis unavailable — fetch will still work without cache
     }
 
-    // Re-fetch fresh from RPC
+    // Fetch fresh — getAccountBalance will re-cache the result on success
+    // If RPC fails, it returns zeros which also get cached; this is acceptable
+    // since the user explicitly requested a refresh
     const balance = await this.getAccountBalance(account.walletAddress);
     return { ...account, balance };
   }

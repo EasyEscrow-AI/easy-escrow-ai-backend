@@ -229,7 +229,7 @@ router.post(
 
     try {
       const pauseService = getInstitutionEscrowPauseService();
-      const adminIdentifier = req.adminUser?.email || req.apiKeyFingerprint;
+      const adminIdentifier = req.adminUser?.adminId || req.apiKeyFingerprint;
       if (!adminIdentifier) {
         res.status(403).json({
           error: 'Forbidden',
@@ -271,7 +271,7 @@ router.post(
   async (req: AdminAuthenticatedRequest, res: Response) => {
     try {
       const pauseService = getInstitutionEscrowPauseService();
-      const adminIdentifier = req.adminUser?.email || req.apiKeyFingerprint;
+      const adminIdentifier = req.adminUser?.adminId || req.apiKeyFingerprint;
       if (!adminIdentifier) {
         res.status(403).json({
           error: 'Forbidden',
