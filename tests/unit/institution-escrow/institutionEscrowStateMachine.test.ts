@@ -6,7 +6,7 @@
  * - FUNDED -> RELEASED, CANCELLED
  * - RELEASED -> (terminal, no valid transitions)
  * - CANCELLED -> (terminal, no valid transitions)
- * - COMPLIANCE_HOLD -> CREATED, CANCELLED
+ * - COMPLIANCE_HOLD -> RELEASING, CANCELLED (post-funding hold)
  *
  * These tests validate the state transition rules enforced by
  * InstitutionEscrowService methods (recordDeposit, releaseFunds, cancelEscrow).
@@ -26,10 +26,10 @@ import { InstitutionEscrowService } from '../../../src/services/institution-escr
  * Encodes the business rules tested below.
  */
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  DRAFT: ['CREATED', 'COMPLIANCE_HOLD', 'CANCELLED'],
+  DRAFT: ['CREATED', 'CANCELLED'],
   CREATED: ['FUNDED', 'CANCELLED', 'EXPIRED'],
-  FUNDED: ['RELEASING', 'CANCELLED'],
-  COMPLIANCE_HOLD: ['CREATED', 'CANCELLED'],
+  FUNDED: ['RELEASING', 'COMPLIANCE_HOLD', 'CANCELLED'],
+  COMPLIANCE_HOLD: ['RELEASING', 'CANCELLED'],
   RELEASING: ['RELEASED', 'INSUFFICIENT_FUNDS'],
   INSUFFICIENT_FUNDS: ['RELEASING', 'CANCELLED'],
   RELEASED: ['COMPLETE'],
@@ -442,16 +442,16 @@ describe('InstitutionEscrowStateMachine', () => {
       }
     });
 
-    it('should have DRAFT leading to CREATED, COMPLIANCE_HOLD, CANCELLED', () => {
-      expect(VALID_TRANSITIONS['DRAFT']).to.include.members(['CREATED', 'COMPLIANCE_HOLD', 'CANCELLED']);
+    it('should have DRAFT leading to CREATED, CANCELLED', () => {
+      expect(VALID_TRANSITIONS['DRAFT']).to.include.members(['CREATED', 'CANCELLED']);
     });
 
     it('should have CREATED leading to FUNDED, CANCELLED, EXPIRED', () => {
       expect(VALID_TRANSITIONS['CREATED']).to.include.members(['FUNDED', 'CANCELLED', 'EXPIRED']);
     });
 
-    it('should have FUNDED leading to RELEASING, CANCELLED', () => {
-      expect(VALID_TRANSITIONS['FUNDED']).to.include.members(['RELEASING', 'CANCELLED']);
+    it('should have FUNDED leading to RELEASING, COMPLIANCE_HOLD, CANCELLED', () => {
+      expect(VALID_TRANSITIONS['FUNDED']).to.include.members(['RELEASING', 'COMPLIANCE_HOLD', 'CANCELLED']);
     });
 
     it('should have RELEASING leading to RELEASED, INSUFFICIENT_FUNDS', () => {
@@ -466,8 +466,8 @@ describe('InstitutionEscrowStateMachine', () => {
       expect(VALID_TRANSITIONS['INSUFFICIENT_FUNDS']).to.include.members(['RELEASING', 'CANCELLED']);
     });
 
-    it('should have COMPLIANCE_HOLD leading to CREATED, CANCELLED', () => {
-      expect(VALID_TRANSITIONS['COMPLIANCE_HOLD']).to.include.members(['CREATED', 'CANCELLED']);
+    it('should have COMPLIANCE_HOLD leading to RELEASING, CANCELLED', () => {
+      expect(VALID_TRANSITIONS['COMPLIANCE_HOLD']).to.include.members(['RELEASING', 'CANCELLED']);
     });
 
     it('should only allow cancel from DRAFT, CREATED, FUNDED, COMPLIANCE_HOLD, INSUFFICIENT_FUNDS', () => {
