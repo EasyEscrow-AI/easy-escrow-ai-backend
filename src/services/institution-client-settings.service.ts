@@ -27,7 +27,19 @@ const ALLOWED_SETTINGS_FIELDS = [
   'feeBps',
   'minFeeUsdc',
   'maxFeeUsdc',
+  'notificationPreferences',
 ] as const;
+
+const DEFAULT_NOTIFICATION_PREFERENCES = [
+  { event: 'payment_created', inApp: true, email: true, sms: false },
+  { event: 'payment_requires_approval', inApp: true, email: true, sms: false },
+  { event: 'payment_compliance_hold', inApp: true, email: true, sms: false },
+  { event: 'payment_gate_hold', inApp: true, email: true, sms: false },
+  { event: 'payment_settled', inApp: true, email: true, sms: false },
+  { event: 'payment_expired', inApp: true, email: true, sms: false },
+  { event: 'payment_cancelled', inApp: true, email: true, sms: false },
+  { event: 'payment_failed', inApp: true, email: true, sms: false },
+];
 
 export class InstitutionClientSettingsService {
   private prisma: PrismaClient;
@@ -54,26 +66,46 @@ export class InstitutionClientSettingsService {
       }),
     ]);
 
+    const notificationPrefs = (settings.notificationPreferences as any[]) || DEFAULT_NOTIFICATION_PREFERENCES;
+
     return {
-      webhookUrl: settings.webhookUrl,
-      tier: client?.tier ?? null,
-      jurisdiction: client?.jurisdiction ?? null,
-      language: settings.language,
-      timezone: settings.timezone,
-      theme: settings.theme,
-      twoFactorEnabled: settings.twoFactorEnabled,
-      autoTravelRule: settings.autoTravelRule,
-      sanctionsLists: settings.activeSanctionsLists,
-      manualReviewThreshold: settings.manualReviewThreshold,
-      aiRecommendations: settings.aiRecommendations,
-      aiAutoRelease: settings.aiAutoRelease,
-      aiRiskTolerance: settings.riskTolerance,
-      defaultToken: settings.defaultToken,
-      emailNotifications: settings.emailNotifications,
-      kycStatus: client?.kycStatus ?? null,
-      feeBps: settings.feeBps,
-      minFeeUsdc: settings.minFeeUsdc ? Number(settings.minFeeUsdc) : 0.2,
-      maxFeeUsdc: settings.maxFeeUsdc ? Number(settings.maxFeeUsdc) : 20.0,
+      institution: {
+        tier: client?.tier ?? null,
+        jurisdiction: client?.jurisdiction ?? null,
+        kycStatus: client?.kycStatus ?? null,
+      },
+      preferences: {
+        language: settings.language ?? 'en',
+        timezone: settings.timezone,
+        theme: settings.theme ?? 'light',
+        defaultCurrency: settings.defaultCurrency,
+      },
+      security: {
+        twoFactorEnabled: settings.twoFactorEnabled,
+      },
+      compliance: {
+        autoTravelRule: settings.autoTravelRule,
+        sanctionsLists: settings.activeSanctionsLists,
+        manualReviewThreshold: settings.manualReviewThreshold ? String(settings.manualReviewThreshold) : null,
+      },
+      ai: {
+        recommendations: settings.aiRecommendations,
+        autoRelease: settings.aiAutoRelease,
+        riskTolerance: settings.riskTolerance,
+      },
+      wallet: {
+        defaultToken: settings.defaultToken,
+        feeBps: settings.feeBps,
+        minFeeUsdc: settings.minFeeUsdc ? Number(settings.minFeeUsdc) : 0.2,
+        maxFeeUsdc: settings.maxFeeUsdc ? Number(settings.maxFeeUsdc) : 20.0,
+      },
+      notifications: {
+        emailEnabled: settings.emailNotifications,
+        preferences: notificationPrefs,
+      },
+      integration: {
+        webhookUrl: settings.webhookUrl,
+      },
     };
   }
 
@@ -153,6 +185,25 @@ export class InstitutionClientSettingsService {
       typeof filteredUpdates.aiRecommendations !== 'boolean'
     ) {
       throw new Error('aiRecommendations must be a boolean');
+    }
+    if ('notificationPreferences' in filteredUpdates) {
+      const v = filteredUpdates.notificationPreferences;
+      if (!Array.isArray(v) || v.length === 0) {
+        throw new Error('notificationPreferences must be a non-empty array');
+      }
+      const validEvents = [
+        'payment_created', 'payment_requires_approval', 'payment_compliance_hold',
+        'payment_gate_hold', 'payment_settled', 'payment_expired',
+        'payment_cancelled', 'payment_failed',
+      ];
+      for (const pref of v) {
+        if (!pref.event || !validEvents.includes(pref.event)) {
+          throw new Error(`Invalid notification event: ${pref.event}`);
+        }
+        if (typeof pref.inApp !== 'boolean' || typeof pref.email !== 'boolean' || typeof pref.sms !== 'boolean') {
+          throw new Error('Each notification preference must have boolean inApp, email, and sms fields');
+        }
+      }
     }
     if ('feeBps' in filteredUpdates) {
       const v = filteredUpdates.feeBps;

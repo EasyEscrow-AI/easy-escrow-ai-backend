@@ -5,7 +5,7 @@
  * Each client can have up to 10 accounts (Treasury, Operations, Settlement, etc.)
  * with per-account wallet, verification, limits, and settings.
  *
- * Balance is fetched live from Solana RPC (SOL + USDC), cached in Redis (30s TTL).
+ * Balance is fetched live from Solana RPC (SOL + USDC), cached in Redis (5-min TTL).
  */
 
 import { prisma } from '../config/database';
@@ -23,7 +23,7 @@ import type {
 } from '../generated/prisma';
 
 const MAX_ACCOUNTS_PER_CLIENT = 10;
-const BALANCE_CACHE_TTL = 30; // seconds
+const BALANCE_CACHE_TTL = 300; // 5 minutes — frontend fetches live per-account
 const BALANCE_CACHE_PREFIX = 'institution:account:balance:';
 
 // Fields allowed to be updated
@@ -192,7 +192,19 @@ export class InstitutionAccountService {
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
     });
 
-    return accounts;
+    // Fetch balances for all accounts in parallel
+    const accountsWithBalances = await Promise.all(
+      accounts.map(async (account) => {
+        try {
+          const balance = await this.getAccountBalance(account.walletAddress);
+          return { ...account, balance };
+        } catch {
+          return { ...account, balance: { sol: 0, usdc: 0, tokens: [], lastUpdated: new Date().toISOString() } };
+        }
+      })
+    );
+
+    return accountsWithBalances;
   }
 
   async updateAccount(clientId: string, accountId: string, data: Record<string, any>) {
@@ -543,6 +555,28 @@ export class InstitutionAccountService {
     }
 
     return balance;
+  }
+
+  async refreshAccountBalance(clientId: string, accountId: string) {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { id: accountId, clientId },
+    });
+
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    // Bust the cache
+    const cacheKey = `${BALANCE_CACHE_PREFIX}${account.walletAddress}`;
+    try {
+      await redisClient.del(cacheKey);
+    } catch {
+      // Redis unavailable — fetch will still work without cache
+    }
+
+    // Re-fetch fresh from RPC
+    const balance = await this.getAccountBalance(account.walletAddress);
+    return { ...account, balance };
   }
 }
 

@@ -48,35 +48,134 @@ describe('InstitutionClientSettingsService', () => {
   // getSettings
   // ---------------------------------------------------------------------------
   describe('getSettings', () => {
-    it('should return existing settings', async () => {
+    it('should return grouped settings with all sections', async () => {
       const existingSettings = {
         id: 'settings-1',
         clientId: 'test-client-id',
         defaultCurrency: 'USDC',
         defaultCorridor: 'US-MX',
-        timezone: 'UTC',
+        timezone: 'Europe/Zurich',
         notificationEmail: null,
-        webhookUrl: null,
+        webhookUrl: 'https://example.com/hook',
         webhookSecret: null,
         autoApproveThreshold: null,
         settlementAuthorityWallet: null,
+        language: 'de',
+        theme: 'dark',
+        twoFactorEnabled: true,
+        autoTravelRule: true,
+        activeSanctionsLists: ['OFAC SDN', 'EU Consolidated'],
+        manualReviewThreshold: '100000',
+        aiRecommendations: true,
+        aiAutoRelease: false,
+        riskTolerance: 'low',
+        defaultToken: 'usdc',
+        emailNotifications: true,
+        feeBps: 20,
+        minFeeUsdc: 0.2,
+        maxFeeUsdc: 20.0,
+        notificationPreferences: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
+      const clientData = { tier: 'ENTERPRISE', jurisdiction: 'CH', kycStatus: 'VERIFIED' };
+
       mockPrisma.institutionClientSettings.upsert.resolves(existingSettings);
+      mockPrisma.institutionClient.findUnique.resolves(clientData);
 
       const result = await settingsService.getSettings('test-client-id');
 
-      expect(result).to.deep.equal(existingSettings);
-      expect(
-        mockPrisma.institutionClientSettings.upsert.calledOnce
-      ).to.be.true;
+      // Verify grouped structure
+      expect(result).to.have.all.keys(
+        'institution', 'preferences', 'security', 'compliance', 'ai', 'wallet', 'notifications', 'integration'
+      );
 
-      const upsertArg =
-        mockPrisma.institutionClientSettings.upsert.firstCall.args[0];
-      expect(upsertArg.where.clientId).to.equal('test-client-id');
-      expect(upsertArg.update).to.deep.equal({});
+      // Institution (read-only from profile)
+      expect(result.institution).to.deep.equal({
+        tier: 'ENTERPRISE',
+        jurisdiction: 'CH',
+        kycStatus: 'VERIFIED',
+      });
+
+      // Preferences
+      expect(result.preferences).to.deep.equal({
+        language: 'de',
+        timezone: 'Europe/Zurich',
+        theme: 'dark',
+        defaultCurrency: 'USDC',
+      });
+
+      // Security
+      expect(result.security).to.deep.equal({ twoFactorEnabled: true });
+
+      // Compliance
+      expect(result.compliance).to.deep.equal({
+        autoTravelRule: true,
+        sanctionsLists: ['OFAC SDN', 'EU Consolidated'],
+        manualReviewThreshold: '100000',
+      });
+
+      // AI
+      expect(result.ai).to.deep.equal({
+        recommendations: true,
+        autoRelease: false,
+        riskTolerance: 'low',
+      });
+
+      // Wallet
+      expect(result.wallet).to.deep.equal({
+        defaultToken: 'usdc',
+        feeBps: 20,
+        minFeeUsdc: 0.2,
+        maxFeeUsdc: 20.0,
+      });
+
+      // Notifications (defaults when none stored)
+      expect(result.notifications.emailEnabled).to.equal(true);
+      expect(result.notifications.preferences).to.be.an('array').with.length(8);
+      expect(result.notifications.preferences[0]).to.have.all.keys('event', 'inApp', 'email', 'sms');
+
+      // Integration
+      expect(result.integration).to.deep.equal({
+        webhookUrl: 'https://example.com/hook',
+      });
+    });
+
+    it('should return stored notification preferences when present', async () => {
+      const customPrefs = [
+        { event: 'payment_created', inApp: true, email: false, sms: true },
+        { event: 'payment_settled', inApp: false, email: true, sms: false },
+      ];
+      const existingSettings = {
+        id: 'settings-1',
+        clientId: 'test-client-id',
+        defaultCurrency: 'USDC',
+        timezone: 'UTC',
+        language: null,
+        theme: null,
+        twoFactorEnabled: false,
+        autoTravelRule: true,
+        activeSanctionsLists: ['OFAC SDN'],
+        manualReviewThreshold: null,
+        aiRecommendations: true,
+        aiAutoRelease: false,
+        riskTolerance: 'low',
+        defaultToken: 'usdc',
+        emailNotifications: true,
+        webhookUrl: null,
+        feeBps: 20,
+        minFeeUsdc: 0.2,
+        maxFeeUsdc: 20.0,
+        notificationPreferences: customPrefs,
+      };
+
+      mockPrisma.institutionClientSettings.upsert.resolves(existingSettings);
+      mockPrisma.institutionClient.findUnique.resolves(null);
+
+      const result = await settingsService.getSettings('test-client-id');
+
+      expect(result.notifications.preferences).to.deep.equal(customPrefs);
     });
 
     it('should create default settings when none exist', async () => {
@@ -91,18 +190,34 @@ describe('InstitutionClientSettingsService', () => {
         webhookSecret: null,
         autoApproveThreshold: null,
         settlementAuthorityWallet: null,
+        language: null,
+        theme: null,
+        twoFactorEnabled: false,
+        autoTravelRule: true,
+        activeSanctionsLists: ['OFAC SDN', 'EU Consolidated', 'UN Sanctions'],
+        manualReviewThreshold: null,
+        aiRecommendations: true,
+        aiAutoRelease: false,
+        riskTolerance: 'low',
+        defaultToken: 'usdc',
+        emailNotifications: true,
+        feeBps: 20,
+        minFeeUsdc: 0.2,
+        maxFeeUsdc: 20.0,
+        notificationPreferences: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       mockPrisma.institutionClientSettings.upsert.resolves(newSettings);
+      mockPrisma.institutionClient.findUnique.resolves(null);
 
       const result = await settingsService.getSettings('new-client-id');
 
-      expect(result).to.deep.equal(newSettings);
-      expect(
-        mockPrisma.institutionClientSettings.upsert.calledOnce
-      ).to.be.true;
+      // Verify defaults are applied
+      expect(result.preferences.language).to.equal('en');
+      expect(result.preferences.theme).to.equal('light');
+      expect(result.institution.tier).to.be.null;
 
       const upsertArg =
         mockPrisma.institutionClientSettings.upsert.firstCall.args[0];
