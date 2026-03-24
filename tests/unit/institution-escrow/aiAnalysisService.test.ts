@@ -16,7 +16,8 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
 process.env.USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-import { AiAnalysisService, AnalyzeDocumentParams } from '../../../src/services/ai-analysis.service';
+import { AiAnalysisService, AnalyzeDocumentParams, EscrowAnalysisResult } from '../../../src/services/ai-analysis.service';
+import { evaluateEscrow, EscrowData } from '../../../src/services/escrow-rules-engine';
 
 describe('AiAnalysisService', () => {
   let sandbox: sinon.SinonSandbox;
@@ -71,13 +72,21 @@ describe('AiAnalysisService', () => {
       institutionEscrow: {
         findFirst: sandbox.stub().resolves({
           escrowId: ESCROW_ID,
+          escrowCode: 'EE-TST-001',
           clientId: CLIENT_ID,
           amount: 1000,
           platformFee: 5,
+          usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
           corridor: 'SG-CH',
           conditionType: 'ADMIN_RELEASE',
+          settlementAuthority: 'settlement-auth',
           status: 'CREATED',
           riskScore: 25,
+          payerWallet: 'payer-wallet-123',
+          recipientWallet: 'recipient-wallet-456',
+          depositTxSignature: null,
+          escrowPda: null,
+          nonceAccount: null,
           expiresAt: new Date(Date.now() + 86400000),
           createdAt: new Date(),
           fundedAt: null,
@@ -96,6 +105,9 @@ describe('AiAnalysisService', () => {
             entityType: 'CORPORATION',
           },
         }),
+      },
+      institutionCorridor: {
+        findMany: sandbox.stub().resolves([]),
       },
       institutionClient: {
         findUnique: sandbox.stub().resolves({
@@ -839,6 +851,402 @@ describe('AiAnalysisService', () => {
       const results = await service.getClientAnalysis(CLIENT_ID);
 
       expect(results).to.be.an('array').that.is.empty;
+    });
+  });
+
+  // ─── Content-Hash Caching ──────────────────────────────────
+
+  describe('analyzeEscrow - content-hash caching', () => {
+    it('should return content-hash cached result when escrow data unchanged', async () => {
+      // First call: no hash cache, no id cache, no existing analysis → hits AI
+      const mockResponse = {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            risk_score: 15,
+            recommendation: 'APPROVE',
+            summary: 'Low risk escrow.',
+            extracted_fields: { escrow_status: 'CREATED' },
+            factors: [{ name: 'corridor_risk', weight: 0.3, value: 10 }],
+            details: 'All good',
+          }),
+        }],
+      };
+
+      const anthropicStub = {
+        messages: { create: sandbox.stub().resolves(mockResponse) },
+      };
+      (service as any).anthropic = anthropicStub;
+      process.env.ANTHROPIC_API_KEY = 'test-key';
+      prismaStub.institutionAiAnalysis.findFirst.resolves(null);
+
+      // Let the first call through with cache misses
+      let setCalls = 0;
+      redisStub.set.callsFake((...args: any[]) => {
+        setCalls++;
+        return Promise.resolve('OK');
+      });
+
+      await service.analyzeEscrow(ESCROW_ID, CLIENT_ID);
+
+      // Redis.set should have been called for both hash and id keys
+      expect(setCalls).to.be.greaterThanOrEqual(2);
+
+      // Now simulate hash cache hit on second call
+      const cachedResult = {
+        riskScore: 15,
+        recommendation: 'APPROVE',
+        summary: 'Low risk escrow.',
+        extractedFields: { escrow_status: 'CREATED' },
+        factors: [{ name: 'corridor_risk', weight: 0.3, value: 10 }],
+        details: 'All good',
+        model: 'claude-sonnet-4-20250514',
+      };
+
+      // Reset redis.get to return hash cache on next call
+      redisStub.get.resolves(JSON.stringify(cachedResult));
+
+      const result = await service.analyzeEscrow(ESCROW_ID, CLIENT_ID);
+
+      expect(result.riskScore).to.equal(15);
+      // AI should only have been called once (first call)
+      expect(anthropicStub.messages.create.calledOnce).to.be.true;
+
+      delete process.env.ANTHROPIC_API_KEY;
+    });
+  });
+
+  // ─── Model Selection ──────────────────────────────────────
+
+  describe('analyzeEscrow - model selection', () => {
+    it('should use Haiku for DRAFT escrows', async () => {
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        clientId: CLIENT_ID,
+        amount: 1000,
+        platformFee: 5,
+        corridor: null,
+        conditionType: null,
+        status: 'DRAFT',
+        riskScore: null,
+        expiresAt: null,
+        createdAt: new Date(),
+        fundedAt: null,
+        resolvedAt: null,
+        deposits: [],
+        files: [],
+        usdcMint: null,
+        settlementAuthority: null,
+        payerWallet: null,
+        recipientWallet: null,
+        depositTxSignature: null,
+        escrowPda: null,
+        nonceAccount: null,
+        escrowCode: 'EE-TST-001',
+        client: {
+          companyName: 'Test Corp',
+          legalName: 'Test Corporation Ltd',
+          country: 'SG',
+          industry: 'Technology',
+          tier: 'STANDARD',
+          kycStatus: 'VERIFIED',
+          kybStatus: 'VERIFIED',
+          riskRating: 'LOW',
+          entityType: 'CORPORATION',
+        },
+      });
+      prismaStub.institutionAiAnalysis.findFirst.resolves(null);
+
+      const mockResponse = {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            risk_score: 25,
+            recommendation: 'REVIEW',
+            summary: 'DRAFT escrow with partial data.',
+            extracted_fields: { escrow_status: 'DRAFT' },
+            factors: [{ name: 'incomplete_data', weight: 0.5, value: 25 }],
+            details: 'Partial data',
+          }),
+        }],
+      };
+
+      const anthropicStub = {
+        messages: { create: sandbox.stub().resolves(mockResponse) },
+      };
+      (service as any).anthropic = anthropicStub;
+      process.env.ANTHROPIC_API_KEY = 'test-key';
+
+      await service.analyzeEscrow(ESCROW_ID, CLIENT_ID);
+
+      const createArgs = anthropicStub.messages.create.firstCall.args[0];
+      expect(createArgs.model).to.equal('claude-haiku-4-5-20251001');
+      expect(createArgs.max_tokens).to.equal(2048);
+
+      // Verify stored model
+      const dbArgs = prismaStub.institutionAiAnalysis.create.firstCall.args[0];
+      expect(dbArgs.data.model).to.equal('claude-haiku-4-5-20251001');
+
+      delete process.env.ANTHROPIC_API_KEY;
+    });
+
+    it('should use Sonnet for non-DRAFT escrows', async () => {
+      prismaStub.institutionAiAnalysis.findFirst.resolves(null);
+
+      const mockResponse = {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            risk_score: 15,
+            recommendation: 'APPROVE',
+            summary: 'Low risk.',
+            extracted_fields: { escrow_status: 'CREATED' },
+            factors: [{ name: 'test', weight: 0.3, value: 10 }],
+            details: 'All good',
+          }),
+        }],
+      };
+
+      const anthropicStub = {
+        messages: { create: sandbox.stub().resolves(mockResponse) },
+      };
+      (service as any).anthropic = anthropicStub;
+      process.env.ANTHROPIC_API_KEY = 'test-key';
+
+      await service.analyzeEscrow(ESCROW_ID, CLIENT_ID);
+
+      const createArgs = anthropicStub.messages.create.firstCall.args[0];
+      expect(createArgs.model).to.equal('claude-sonnet-4-20250514');
+      expect(createArgs.max_tokens).to.equal(4096);
+
+      delete process.env.ANTHROPIC_API_KEY;
+    });
+  });
+
+  // ─── Prompt Caching ──────────────────────────────────────
+
+  describe('analyzeEscrow - prompt caching', () => {
+    it('should send system prompt with cache_control', async () => {
+      prismaStub.institutionAiAnalysis.findFirst.resolves(null);
+
+      const mockResponse = {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            risk_score: 15,
+            recommendation: 'APPROVE',
+            summary: 'OK',
+            extracted_fields: { escrow_status: 'CREATED' },
+            factors: [],
+            details: 'OK',
+          }),
+        }],
+      };
+
+      const anthropicStub = {
+        messages: { create: sandbox.stub().resolves(mockResponse) },
+      };
+      (service as any).anthropic = anthropicStub;
+      process.env.ANTHROPIC_API_KEY = 'test-key';
+
+      await service.analyzeEscrow(ESCROW_ID, CLIENT_ID);
+
+      const createArgs = anthropicStub.messages.create.firstCall.args[0];
+      // system should be an array with cache_control
+      expect(createArgs.system).to.be.an('array');
+      expect(createArgs.system[0]).to.have.property('type', 'text');
+      expect(createArgs.system[0]).to.have.property('cache_control');
+      expect(createArgs.system[0].cache_control).to.deep.equal({ type: 'ephemeral' });
+
+      delete process.env.ANTHROPIC_API_KEY;
+    });
+  });
+
+  // ─── analyzeEscrowFast ──────────────────────────────────
+
+  describe('analyzeEscrowFast', () => {
+    it('should return preliminary result without calling AI', async () => {
+      const result = await service.analyzeEscrowFast(ESCROW_ID, CLIENT_ID);
+
+      expect(result).to.have.property('tier', 'preliminary');
+      expect(result).to.have.property('aiAnalysisAvailable', false);
+      expect(result).to.have.property('riskScore');
+      expect(result).to.have.property('recommendation');
+      expect(result).to.have.property('sections');
+      expect(result).to.have.property('summary');
+    });
+
+    it('should return full tier when hash cache hit exists', async () => {
+      const cachedAiResult = {
+        riskScore: 12,
+        recommendation: 'APPROVE',
+        summary: 'AI analysis completed.',
+        extractedFields: { escrow_status: 'CREATED' },
+        factors: [{ name: 'corridor_risk', weight: 0.3, value: 10 }],
+        details: 'AI-powered result',
+      };
+
+      // Make redis.get return the cached result for the hash key
+      redisStub.get.resolves(JSON.stringify(cachedAiResult));
+
+      const result = await service.analyzeEscrowFast(ESCROW_ID, CLIENT_ID);
+
+      expect(result).to.have.property('tier', 'full');
+      expect(result).to.have.property('aiAnalysisAvailable', true);
+      expect(result.riskScore).to.equal(12);
+    });
+
+    it('should reject when escrow not found', async () => {
+      prismaStub.institutionEscrow.findFirst.resolves(null);
+
+      try {
+        await service.analyzeEscrowFast(ESCROW_ID, CLIENT_ID);
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('Escrow not found');
+      }
+    });
+
+    it('should enforce rate limit', async () => {
+      redisStub.incr.resolves(6);
+
+      try {
+        await service.analyzeEscrowFast(ESCROW_ID, CLIENT_ID);
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('rate limit exceeded');
+      }
+    });
+  });
+
+  // ─── Rules Engine ──────────────────────────────────────
+
+  describe('escrow-rules-engine', () => {
+    const makeEscrowData = (overrides: Partial<EscrowData> = {}): EscrowData => ({
+      status: 'CREATED',
+      amount: 5000,
+      platformFee: 25,
+      tokenMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      corridor: 'SG-CH',
+      conditionType: 'ADMIN_RELEASE',
+      settlementAuthority: 'settlement-auth-key',
+      riskScore: 10,
+      payerWallet: 'payer-wallet-123',
+      recipientWallet: 'recipient-wallet-456',
+      hasDeposit: true,
+      depositCount: 1,
+      fileCount: 1,
+      expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+      depositTxSignature: 'tx-sig-abc',
+      escrowPda: 'pda-123',
+      nonceAccount: 'nonce-123',
+      client: {
+        kycStatus: 'VERIFIED',
+        kybStatus: 'VERIFIED',
+        riskRating: 'LOW',
+        country: 'SG',
+        entityType: 'CORPORATION',
+        tier: 'STANDARD',
+      },
+      availableCorridors: [
+        { code: 'SG-CH', riskLevel: 'LOW', minAmount: 100, maxAmount: 1000000 },
+        { code: 'SG-US', riskLevel: 'MEDIUM', minAmount: 100, maxAmount: 500000 },
+      ],
+      ...overrides,
+    });
+
+    it('should pass all sections for a complete, valid escrow', () => {
+      const result = evaluateEscrow(makeEscrowData());
+
+      expect(result.riskScore).to.be.lessThan(25);
+      expect(result.recommendation).to.equal('APPROVE');
+      expect(result.sections.from_account.status).to.equal('pass');
+      expect(result.sections.to_account.status).to.equal('pass');
+      expect(result.sections.corridor.status).to.equal('pass');
+      expect(result.sections.amount.status).to.equal('pass');
+      expect(result.sections.settlement.status).to.equal('pass');
+      expect(result.sections.release.status).to.equal('pass');
+      expect(result.sections.advanced.status).to.equal('pass');
+      expect(result.sections.overview.status).to.equal('pass');
+    });
+
+    it('should return pending for missing payer wallet', () => {
+      const result = evaluateEscrow(makeEscrowData({ payerWallet: null }));
+      expect(result.sections.from_account.status).to.equal('pending');
+    });
+
+    it('should fail for unverified KYC', () => {
+      const result = evaluateEscrow(makeEscrowData({
+        client: { ...makeEscrowData().client, kycStatus: 'PENDING' },
+      }));
+      expect(result.sections.from_account.status).to.equal('fail');
+    });
+
+    it('should fail for HIGH risk rating', () => {
+      const result = evaluateEscrow(makeEscrowData({
+        client: { ...makeEscrowData().client, riskRating: 'HIGH' },
+      }));
+      expect(result.sections.from_account.status).to.equal('fail');
+    });
+
+    it('should return pending for missing recipient wallet', () => {
+      const result = evaluateEscrow(makeEscrowData({ recipientWallet: null }));
+      expect(result.sections.to_account.status).to.equal('pending');
+    });
+
+    it('should fail when recipient equals payer', () => {
+      const result = evaluateEscrow(makeEscrowData({
+        payerWallet: 'same-wallet',
+        recipientWallet: 'same-wallet',
+      }));
+      expect(result.sections.to_account.status).to.equal('fail');
+    });
+
+    it('should return pending for missing corridor with recommendation', () => {
+      const result = evaluateEscrow(makeEscrowData({ corridor: null }));
+      expect(result.sections.corridor.status).to.equal('pending');
+      expect(result.sections.corridor.recommended_corridor).to.equal('SG-CH');
+    });
+
+    it('should warn for amount > $100K', () => {
+      const result = evaluateEscrow(makeEscrowData({ amount: 150000 }));
+      expect(result.sections.amount.status).to.equal('warning');
+    });
+
+    it('should return pending for missing amount', () => {
+      const result = evaluateEscrow(makeEscrowData({ amount: 0 }));
+      expect(result.sections.amount.status).to.equal('pending');
+    });
+
+    it('should return pending for missing tokenMint', () => {
+      const result = evaluateEscrow(makeEscrowData({ tokenMint: null }));
+      expect(result.sections.settlement.status).to.equal('pending');
+    });
+
+    it('should return pending for missing conditionType', () => {
+      const result = evaluateEscrow(makeEscrowData({ conditionType: null }));
+      expect(result.sections.release.status).to.equal('pending');
+    });
+
+    it('should warn for no docs on large amounts', () => {
+      const result = evaluateEscrow(makeEscrowData({ amount: 60000, fileCount: 0 }));
+      expect(result.sections.advanced.status).to.equal('warning');
+    });
+
+    it('should compute extracted fields correctly', () => {
+      const result = evaluateEscrow(makeEscrowData());
+      expect(result.extractedFields.escrow_status).to.equal('CREATED');
+      expect(result.extractedFields.amount_usd).to.equal(5000);
+      expect(result.extractedFields.corridor).to.equal('SG-CH');
+      expect(result.extractedFields.kyc_status).to.equal('VERIFIED');
+      expect(result.extractedFields.deposit_confirmed).to.be.true;
+    });
+
+    it('should set overview to fail when any section fails', () => {
+      const result = evaluateEscrow(makeEscrowData({
+        client: { ...makeEscrowData().client, kycStatus: 'REJECTED' },
+      }));
+      expect(result.sections.overview.status).to.equal('fail');
     });
   });
 });
