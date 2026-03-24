@@ -22,6 +22,7 @@ import {
   CLIENT_SENSITIVE_FIELDS,
 } from '../utils/data-anonymizer';
 import { escrowWhere } from '../utils/uuid-conversion';
+import { evaluateEscrow, EscrowData, RulesEngineResult } from './escrow-rules-engine';
 
 const AI_RATE_LIMIT_KEY_PREFIX = 'institution:ai:ratelimit:';
 const AI_RATE_LIMIT_MAX = 5; // 5 requests per minute per client
@@ -35,6 +36,14 @@ export interface AiAnalysisResult {
   factors: Array<{ name: string; weight: number; value: number }>;
   recommendation: 'APPROVE' | 'REVIEW' | 'REJECT';
   details: string;
+}
+
+export interface EscrowAnalysisResult extends AiAnalysisResult {
+  summary: string;
+  sections?: Record<string, unknown>;
+  tier?: 'preliminary' | 'full';
+  aiAnalysisAvailable?: boolean;
+  model?: string;
 }
 
 export interface AnalyzeDocumentParams {
@@ -253,7 +262,7 @@ export class AiAnalysisService {
     escrowId: string,
     clientId: string,
     options: { anonymize?: boolean } = {},
-  ): Promise<AiAnalysisResult & { summary: string }> {
+  ): Promise<EscrowAnalysisResult> {
     const { anonymize = true } = options;
     await this.checkRateLimit(clientId);
 
@@ -318,36 +327,6 @@ export class AiAnalysisService {
       // Non-critical — continue without corridor data
     }
 
-    // Check cache
-    const cacheKey = `${AI_CACHE_PREFIX}escrow:${resolvedEscrowId}`;
-    try {
-      const cached = await redisClient.get(cacheKey);
-      if (cached) return JSON.parse(cached);
-    } catch { /* cache miss */ }
-
-    // Check for existing analysis of same escrow (dedup by type)
-    const existing = await this.prisma.institutionAiAnalysis.findFirst({
-      where: { escrowId: resolvedEscrowId, analysisType: 'ESCROW' },
-      orderBy: { createdAt: 'desc' },
-    });
-    // Re-analyze if escrow status changed since last analysis
-    const statusChanged = existing && (existing.extractedFields as any)?.escrow_status !== escrow.status;
-    if (existing && !statusChanged) {
-      const result = {
-        riskScore: existing.riskScore,
-        extractedFields: existing.extractedFields as Record<string, unknown>,
-        factors: existing.factors as Array<{ name: string; weight: number; value: number }>,
-        recommendation: existing.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
-        details: `Previously analyzed (${existing.createdAt.toISOString()})`,
-        summary: (existing as any).summary || '',
-      };
-      return result;
-    }
-
-    const model = process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
-    const client = this.getAnthropicClient();
-    const anonymizer = anonymize ? new DataAnonymizer() : null;
-
     // Build escrow summary for AI — include all fields for step-by-step analysis
     const escrowSummary: Record<string, unknown> = {
       escrowId: escrow.escrowId,
@@ -387,6 +366,51 @@ export class AiAnalysisService {
       },
       availableCorridors: availableCorridors.length > 0 ? availableCorridors : null,
     };
+
+    // Step 1: Content-hash caching — hash escrow data for dedup regardless of escrowId
+    const summaryHash = crypto.createHash('sha256')
+      .update(JSON.stringify(escrowSummary, Object.keys(escrowSummary).sort()))
+      .digest('hex');
+    const hashCacheKey = `${AI_CACHE_PREFIX}escrow:hash:${summaryHash}`;
+    try {
+      const hashCached = await redisClient.get(hashCacheKey);
+      if (hashCached) return JSON.parse(hashCached);
+    } catch { /* miss */ }
+
+    // Check escrowId-based cache
+    const cacheKey = `${AI_CACHE_PREFIX}escrow:${resolvedEscrowId}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch { /* cache miss */ }
+
+    // Check for existing analysis of same escrow (dedup by type)
+    const existing = await this.prisma.institutionAiAnalysis.findFirst({
+      where: { escrowId: resolvedEscrowId, analysisType: 'ESCROW' },
+      orderBy: { createdAt: 'desc' },
+    });
+    // Re-analyze if escrow status changed since last analysis
+    const statusChanged = existing && (existing.extractedFields as any)?.escrow_status !== escrow.status;
+    if (existing && !statusChanged) {
+      const result: EscrowAnalysisResult = {
+        riskScore: existing.riskScore,
+        extractedFields: existing.extractedFields as Record<string, unknown>,
+        factors: existing.factors as Array<{ name: string; weight: number; value: number }>,
+        recommendation: existing.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT',
+        details: `Previously analyzed (${existing.createdAt.toISOString()})`,
+        summary: (existing as any).summary || '',
+      };
+      return result;
+    }
+
+    // Step 3: Model selection — use Haiku for DRAFT, Sonnet for everything else
+    const model = escrow.status === 'DRAFT'
+      ? (process.env.AI_ANALYSIS_MODEL_DRAFT || 'claude-haiku-4-5-20251001')
+      : (process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514');
+    const maxTokens = escrow.status === 'DRAFT' ? 2048 : 4096;
+
+    const client = this.getAnthropicClient();
+    const anonymizer = anonymize ? new DataAnonymizer() : null;
 
     // Anonymize sensitive fields before sending to AI
     const dataForAi = anonymizer
@@ -442,10 +466,11 @@ RESPONSE FORMAT (valid JSON only, no other text):
   "details": "<brief risk explanation>"
 }`;
 
+    // Step 2: Anthropic prompt caching — cache the large system prompt
     const response = await client.messages.create({
       model,
-      max_tokens: 4096,
-      system: systemPrompt,
+      max_tokens: maxTokens,
+      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       messages: [{
         role: 'user',
         content: `Analyze this escrow transaction:\n\n${JSON.stringify(dataForAi, null, 2)}`,
@@ -457,7 +482,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
       .map(block => block.text)
       .join('');
 
-    let result: AiAnalysisResult & { summary: string; sections?: Record<string, unknown> };
+    let result: EscrowAnalysisResult;
     try {
       const parsed = this.extractJson(responseText);
       result = {
@@ -474,6 +499,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
         details: (parsed.details as string) || 'Analysis complete',
         summary: (parsed.summary as string) || '',
         sections: (parsed.sections as Record<string, unknown>) || undefined,
+        model,
       };
     } catch {
       result = {
@@ -483,12 +509,13 @@ RESPONSE FORMAT (valid JSON only, no other text):
         recommendation: 'REVIEW',
         details: 'AI response could not be parsed. Manual review recommended.',
         summary: 'Analysis could not be completed automatically.',
+        model,
       };
     }
 
     // De-anonymize: restore real values in AI response
     if (anonymizer) {
-      result = anonymizer.deanonymizeResult(result);
+      result = anonymizer.deanonymizeResult(result) as EscrowAnalysisResult;
     }
 
     // Store
@@ -506,11 +533,174 @@ RESPONSE FORMAT (valid JSON only, no other text):
       },
     });
 
+    // Cache under both escrowId key and content-hash key
     try {
-      await redisClient.set(cacheKey, JSON.stringify(result), 'EX', AI_CACHE_TTL);
+      const resultJson = JSON.stringify(result);
+      await redisClient.set(cacheKey, resultJson, 'EX', AI_CACHE_TTL);
+      await redisClient.set(hashCacheKey, resultJson, 'EX', AI_CACHE_TTL);
     } catch { /* non-critical */ }
 
     return result;
+  }
+
+  /**
+   * Fast escrow analysis using the local rules engine.
+   * Returns a preliminary result in <1ms. If a cached AI result exists,
+   * merges it and returns tier: 'full'. Otherwise fires a background AI
+   * call and returns tier: 'preliminary'.
+   */
+  async analyzeEscrowFast(
+    escrowId: string,
+    clientId: string,
+    options: { anonymize?: boolean } = {},
+  ): Promise<EscrowAnalysisResult> {
+    await this.checkRateLimit(clientId);
+
+    const escrow = await this.prisma.institutionEscrow.findFirst({
+      where: { ...escrowWhere(escrowId), clientId },
+      include: {
+        client: {
+          select: {
+            companyName: true,
+            legalName: true,
+            country: true,
+            industry: true,
+            tier: true,
+            kycStatus: true,
+            kybStatus: true,
+            riskRating: true,
+            entityType: true,
+          },
+        },
+        deposits: true,
+        files: { select: { id: true, fileName: true, documentType: true, sizeBytes: true } },
+      },
+    });
+    if (!escrow) {
+      throw new Error('Escrow not found or access denied');
+    }
+
+    // Fetch available corridors
+    let availableCorridors: Array<{ code: string; riskLevel: string; minAmount: number; maxAmount: number }> = [];
+    try {
+      const clientCountry = escrow.client?.country;
+      if (clientCountry) {
+        const corridors = await this.prisma.institutionCorridor.findMany({
+          where: { sourceCountry: clientCountry, status: 'ACTIVE' },
+          select: { code: true, riskLevel: true, minAmount: true, maxAmount: true },
+          orderBy: { riskLevel: 'asc' },
+        });
+        availableCorridors = corridors.map(c => ({
+          code: c.code,
+          riskLevel: c.riskLevel,
+          minAmount: Number(c.minAmount),
+          maxAmount: Number(c.maxAmount),
+        }));
+      }
+    } catch { /* non-critical */ }
+
+    // Build EscrowData for the rules engine
+    const escrowData: EscrowData = {
+      status: escrow.status,
+      amount: Number(escrow.amount),
+      platformFee: Number(escrow.platformFee),
+      tokenMint: escrow.usdcMint,
+      corridor: escrow.corridor,
+      conditionType: escrow.conditionType,
+      settlementAuthority: escrow.settlementAuthority,
+      riskScore: escrow.riskScore,
+      payerWallet: escrow.payerWallet,
+      recipientWallet: escrow.recipientWallet,
+      hasDeposit: escrow.deposits.length > 0,
+      depositCount: escrow.deposits.length,
+      fileCount: escrow.files.length,
+      expiresAt: escrow.expiresAt?.toISOString() ?? null,
+      depositTxSignature: escrow.depositTxSignature,
+      escrowPda: escrow.escrowPda,
+      nonceAccount: escrow.nonceAccount,
+      client: {
+        kycStatus: escrow.client.kycStatus,
+        kybStatus: (escrow.client as any).kybStatus,
+        riskRating: (escrow.client as any).riskRating,
+        country: escrow.client.country,
+        entityType: (escrow.client as any).entityType,
+        tier: escrow.client.tier,
+      },
+      availableCorridors: availableCorridors.length > 0 ? availableCorridors : null,
+    };
+
+    // Run the local rules engine (<1ms)
+    const preliminary = evaluateEscrow(escrowData);
+
+    // Check content-hash cache for a prior AI result
+    const escrowSummary: Record<string, unknown> = {
+      escrowId: escrow.escrowId,
+      escrowCode: escrow.escrowCode,
+      status: escrow.status,
+      amount: Number(escrow.amount),
+      platformFee: Number(escrow.platformFee),
+      tokenMint: escrow.usdcMint,
+      corridor: escrow.corridor,
+      conditionType: escrow.conditionType,
+      settlementAuthority: escrow.settlementAuthority,
+      riskScore: escrow.riskScore,
+      payerWallet: escrow.payerWallet,
+      recipientWallet: escrow.recipientWallet,
+      hasDeposit: escrow.deposits.length > 0,
+      depositCount: escrow.deposits.length,
+      fileCount: escrow.files.length,
+      fileTypes: escrow.files.map(f => f.documentType),
+      expiresAt: escrow.expiresAt?.toISOString() ?? null,
+      createdAt: escrow.createdAt.toISOString(),
+      fundedAt: escrow.fundedAt?.toISOString() || null,
+      resolvedAt: escrow.resolvedAt?.toISOString() || null,
+      depositTxSignature: escrow.depositTxSignature,
+      escrowPda: escrow.escrowPda,
+      nonceAccount: escrow.nonceAccount,
+      client: {
+        companyName: escrow.client.companyName,
+        legalName: escrow.client.legalName,
+        tradingName: (escrow.client as any).tradingName,
+        country: escrow.client.country,
+        industry: escrow.client.industry,
+        tier: escrow.client.tier,
+        kycStatus: escrow.client.kycStatus,
+        kybStatus: (escrow.client as any).kybStatus,
+        riskRating: (escrow.client as any).riskRating,
+        entityType: (escrow.client as any).entityType,
+      },
+      availableCorridors: availableCorridors.length > 0 ? availableCorridors : null,
+    };
+
+    const summaryHash = crypto.createHash('sha256')
+      .update(JSON.stringify(escrowSummary, Object.keys(escrowSummary).sort()))
+      .digest('hex');
+    const hashCacheKey = `${AI_CACHE_PREFIX}escrow:hash:${summaryHash}`;
+
+    try {
+      const hashCached = await redisClient.get(hashCacheKey);
+      if (hashCached) {
+        const aiResult = JSON.parse(hashCached) as EscrowAnalysisResult;
+        return { ...aiResult, tier: 'full', aiAnalysisAvailable: true };
+      }
+    } catch { /* miss */ }
+
+    // No cached AI result — fire background AI call and return preliminary
+    this.analyzeEscrow(escrowId, clientId, options).catch(() => {
+      // Background AI call failed — result won't be cached, but that's OK
+    });
+
+    return {
+      riskScore: preliminary.riskScore,
+      extractedFields: preliminary.extractedFields,
+      factors: preliminary.factors,
+      recommendation: preliminary.recommendation,
+      details: preliminary.details,
+      summary: preliminary.summary,
+      sections: preliminary.sections,
+      tier: 'preliminary',
+      aiAnalysisAvailable: false,
+    };
   }
 
   /**
@@ -519,7 +709,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
   async getEscrowAnalysis(
     escrowId: string,
     clientId: string,
-  ): Promise<Array<AiAnalysisResult & { summary: string }>> {
+  ): Promise<Array<EscrowAnalysisResult>> {
     const escrow = await this.prisma.institutionEscrow.findFirst({
       where: { ...escrowWhere(escrowId), clientId },
     });
@@ -658,7 +848,7 @@ Respond with ONLY the JSON object, no additional text.`;
     const response = await client.messages.create({
       model,
       max_tokens: 2048,
-      system: systemPrompt,
+      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       messages: [{
         role: 'user',
         content: `Analyze this institution client profile:\n\n${JSON.stringify(dataForAi, null, 2)}`,
@@ -869,7 +1059,7 @@ Respond with ONLY the JSON object, no additional text.`;
     const response = await client.messages.create({
       model: model || 'claude-sonnet-4-20250514',
       max_tokens: 2048,
-      system: systemPrompt,
+      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: contentParts }],
     });
 
