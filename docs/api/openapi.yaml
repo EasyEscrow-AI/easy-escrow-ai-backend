@@ -2538,6 +2538,93 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/institution-escrow/corridors/{code}/threshold-rules:
+    get:
+      tags:
+        - Institution Escrow
+      summary: Get corridor threshold rules
+      description: |
+        Returns active compliance threshold rules for a corridor. Each rule defines an amount-based
+        trigger (e.g. Travel Rule at $1,000, EDD at $10,000) with a risk level and regulatory reference.
+        The frontend evaluates the payment amount against these rules to display real-time compliance insights.
+
+        **Risk levels:** low, medium, high. Overall amount risk = worst level among all triggered rules.
+
+        **Threshold types:**
+        - `gte` — amount >= threshold triggers the rule
+        - `range` — amount between threshold_amount and threshold_max
+        - `pattern` — special logic (e.g. round_number = multiples of $1,000)
+      operationId: getCorridorThresholdRules
+      security:
+        - InstitutionBearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Corridor code (e.g. "CH-SG", "US-MX")
+          schema:
+            type: string
+            example: CH-SG
+      responses:
+        '200':
+          description: Threshold rules for the corridor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  corridorCode:
+                    type: string
+                    example: CH-SG
+                  rules:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ruleId:
+                          type: string
+                          enum: [travel_rule, edd, reporting, round_number, structuring, large_transaction]
+                        label:
+                          type: string
+                          example: Travel Rule Active
+                        riskLevel:
+                          type: string
+                          enum: [low, medium, high]
+                        thresholdType:
+                          type: string
+                          enum: [gte, range, pattern]
+                        thresholdAmount:
+                          type: number
+                          nullable: true
+                          example: 1000
+                        thresholdMax:
+                          type: number
+                          nullable: true
+                          example: null
+                        currency:
+                          type: string
+                          example: USD
+                        detailTemplate:
+                          type: string
+                          example: "FATF Recommendation 16 — originator and beneficiary data must accompany transfers ≥${threshold} on the {corridor} corridor."
+                        regulationRef:
+                          type: string
+                          example: FATF R.16
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: Corridor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFound'
+        '401':
+          description: Not authenticated
+
   # ── AI Analysis ────────────────────────────────────────────────────────
 
   # ── Institution Clients ──────────────────────────────────────────────
