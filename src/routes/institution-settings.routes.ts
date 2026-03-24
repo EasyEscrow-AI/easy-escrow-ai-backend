@@ -70,9 +70,16 @@ async function handleUpdateSettings(req: InstitutionAuthenticatedRequest, res: R
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    res.status(400).json({
-      error: 'Update Failed',
-      message: error.message,
+    const isClientError = error.status >= 400 && error.status < 500
+      || error.statusCode >= 400 && error.statusCode < 500
+      || error.name === 'ValidationError';
+    const status = isClientError ? (error.status || error.statusCode || 400) : 500;
+    if (status === 500) {
+      console.error('[Settings] Unexpected error:', error);
+    }
+    res.status(status).json({
+      error: status < 500 ? 'Update Failed' : 'Internal Error',
+      message: status < 500 ? error.message : 'An unexpected error occurred',
       timestamp: new Date().toISOString(),
     });
   }

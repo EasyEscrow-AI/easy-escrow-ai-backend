@@ -21,6 +21,7 @@ const searchRateLimiter = rateLimit({
   message: { error: 'Rate limit exceeded', message: 'Too many search requests' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req: any) => req.institutionClient?.clientId || req.ip,
 });
 
 const VALID_CATEGORIES = ['escrow', 'client', 'account', 'notification', 'payment'];

@@ -32508,6 +32508,7 @@ export namespace Prisma {
     feeBps: number
     minFeeUsdc: number
     maxFeeUsdc: number
+    notificationPreferences: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -32611,6 +32612,7 @@ export namespace Prisma {
     feeBps?: true
     minFeeUsdc?: true
     maxFeeUsdc?: true
+    notificationPreferences?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -32727,6 +32729,7 @@ export namespace Prisma {
     feeBps: number
     minFeeUsdc: Decimal
     maxFeeUsdc: Decimal
+    notificationPreferences: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: InstitutionClientSettingsCountAggregateOutputType | null
@@ -32775,6 +32778,7 @@ export namespace Prisma {
     feeBps?: boolean
     minFeeUsdc?: boolean
     maxFeeUsdc?: boolean
+    notificationPreferences?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32805,6 +32809,7 @@ export namespace Prisma {
     feeBps?: boolean
     minFeeUsdc?: boolean
     maxFeeUsdc?: boolean
+    notificationPreferences?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32835,6 +32840,7 @@ export namespace Prisma {
     feeBps?: boolean
     minFeeUsdc?: boolean
     maxFeeUsdc?: boolean
+    notificationPreferences?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32865,11 +32871,12 @@ export namespace Prisma {
     feeBps?: boolean
     minFeeUsdc?: boolean
     maxFeeUsdc?: boolean
+    notificationPreferences?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "language" | "theme" | "twoFactorEnabled" | "aiRecommendations" | "feeBps" | "minFeeUsdc" | "maxFeeUsdc" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
+  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "language" | "theme" | "twoFactorEnabled" | "aiRecommendations" | "feeBps" | "minFeeUsdc" | "maxFeeUsdc" | "notificationPreferences" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
   export type InstitutionClientSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -32910,6 +32917,7 @@ export namespace Prisma {
       feeBps: number
       minFeeUsdc: Prisma.Decimal
       maxFeeUsdc: Prisma.Decimal
+      notificationPreferences: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["institutionClientSettings"]>
@@ -33360,6 +33368,7 @@ export namespace Prisma {
     readonly feeBps: FieldRef<"InstitutionClientSettings", 'Int'>
     readonly minFeeUsdc: FieldRef<"InstitutionClientSettings", 'Decimal'>
     readonly maxFeeUsdc: FieldRef<"InstitutionClientSettings", 'Decimal'>
+    readonly notificationPreferences: FieldRef<"InstitutionClientSettings", 'Json'>
     readonly createdAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
   }
@@ -48244,6 +48253,7 @@ export namespace Prisma {
     feeBps: 'feeBps',
     minFeeUsdc: 'minFeeUsdc',
     maxFeeUsdc: 'maxFeeUsdc',
+    notificationPreferences: 'notificationPreferences',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -51860,6 +51870,7 @@ export namespace Prisma {
     feeBps?: IntFilter<"InstitutionClientSettings"> | number
     minFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: JsonNullableFilter<"InstitutionClientSettings">
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -51890,6 +51901,7 @@ export namespace Prisma {
     feeBps?: SortOrder
     minFeeUsdc?: SortOrder
     maxFeeUsdc?: SortOrder
+    notificationPreferences?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     client?: InstitutionClientOrderByWithRelationInput
@@ -51923,6 +51935,7 @@ export namespace Prisma {
     feeBps?: IntFilter<"InstitutionClientSettings"> | number
     minFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: JsonNullableFilter<"InstitutionClientSettings">
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -51953,6 +51966,7 @@ export namespace Prisma {
     feeBps?: SortOrder
     minFeeUsdc?: SortOrder
     maxFeeUsdc?: SortOrder
+    notificationPreferences?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: InstitutionClientSettingsCountOrderByAggregateInput
@@ -51990,6 +52004,7 @@ export namespace Prisma {
     feeBps?: IntWithAggregatesFilter<"InstitutionClientSettings"> | number
     minFeeUsdc?: DecimalWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: JsonNullableWithAggregatesFilter<"InstitutionClientSettings">
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
   }
@@ -56374,6 +56389,7 @@ export namespace Prisma {
     feeBps?: number
     minFeeUsdc?: Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutSettingsInput
@@ -56404,6 +56420,7 @@ export namespace Prisma {
     feeBps?: number
     minFeeUsdc?: Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -56432,6 +56449,7 @@ export namespace Prisma {
     feeBps?: IntFieldUpdateOperationsInput | number
     minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutSettingsNestedInput
@@ -56462,6 +56480,7 @@ export namespace Prisma {
     feeBps?: IntFieldUpdateOperationsInput | number
     minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -56491,6 +56510,7 @@ export namespace Prisma {
     feeBps?: number
     minFeeUsdc?: Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -56519,6 +56539,7 @@ export namespace Prisma {
     feeBps?: IntFieldUpdateOperationsInput | number
     minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -56548,6 +56569,7 @@ export namespace Prisma {
     feeBps?: IntFieldUpdateOperationsInput | number
     minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -60469,6 +60491,7 @@ export namespace Prisma {
     feeBps?: SortOrder
     minFeeUsdc?: SortOrder
     maxFeeUsdc?: SortOrder
+    notificationPreferences?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -67530,6 +67553,7 @@ export namespace Prisma {
     feeBps?: number
     minFeeUsdc?: Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -67558,6 +67582,7 @@ export namespace Prisma {
     feeBps?: number
     minFeeUsdc?: Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -68112,6 +68137,7 @@ export namespace Prisma {
     feeBps?: IntFieldUpdateOperationsInput | number
     minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -68140,6 +68166,7 @@ export namespace Prisma {
     feeBps?: IntFieldUpdateOperationsInput | number
     minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

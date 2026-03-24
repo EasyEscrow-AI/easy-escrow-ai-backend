@@ -17,6 +17,26 @@
 import { prisma } from '../config/database';
 import { getComplianceService } from './compliance.service';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
+import {
+  InstitutionEscrowStatus,
+  InstitutionConditionType,
+  ClientTier,
+  ClientStatus,
+  DocumentType,
+  EntityType,
+  KybStatus,
+  RiskRating,
+  RegulatoryStatus,
+  SanctionsStatus,
+  WalletCustodyType,
+  InstitutionAccountType,
+  AccountVerificationStatus,
+  ApprovalMode,
+  EmployeeCountRange,
+  AnnualRevenueRange,
+  NotificationType,
+  NotificationPriority,
+} from '../generated/prisma';
 
 export class InstitutionBootstrapService {
   async getBootstrapData(clientId: string) {
@@ -113,44 +133,25 @@ export class InstitutionBootstrapService {
         },
       },
       enums: {
-        escrowStatus: [
-          'DRAFT', 'CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING',
-          'RELEASED', 'INSUFFICIENT_FUNDS', 'COMPLETE', 'CANCELLING',
-          'CANCELLED', 'EXPIRED', 'FAILED',
-        ],
-        conditionType: ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'],
-        clientTier: ['STANDARD', 'PREMIUM', 'ENTERPRISE'],
-        clientStatus: ['ACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION'],
-        documentType: ['INVOICE', 'CONTRACT', 'SHIPPING_DOC', 'LETTER_OF_CREDIT', 'OTHER'],
-        entityType: [
-          'CORPORATION', 'LLC', 'PARTNERSHIP', 'SOLE_PROPRIETORSHIP',
-          'TRUST', 'FOUNDATION', 'COOPERATIVE', 'NON_PROFIT', 'GOVERNMENT', 'OTHER',
-        ],
-        kybStatus: ['NOT_STARTED', 'PENDING', 'IN_REVIEW', 'VERIFIED', 'REJECTED', 'EXPIRED'],
-        riskRating: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL', 'UNRATED'],
-        regulatoryStatus: ['REGULATED', 'UNREGULATED', 'EXEMPT', 'PENDING_LICENSE', 'SUSPENDED'],
-        sanctionsStatus: ['CLEAR', 'FLAGGED', 'BLOCKED', 'PENDING_REVIEW'],
-        walletCustodyType: ['SELF_CUSTODY', 'THIRD_PARTY', 'MPC', 'MULTISIG', 'EXCHANGE'],
-        accountType: ['TREASURY', 'OPERATIONS', 'SETTLEMENT', 'COLLATERAL', 'GENERAL'],
-        accountVerificationStatus: ['PENDING', 'VERIFIED', 'SUSPENDED', 'REJECTED'],
-        approvalMode: ['AUTO', 'SINGLE_APPROVAL', 'MULTI_APPROVAL'],
+        escrowStatus: Object.values(InstitutionEscrowStatus),
+        conditionType: Object.values(InstitutionConditionType),
+        clientTier: Object.values(ClientTier),
+        clientStatus: Object.values(ClientStatus),
+        documentType: Object.values(DocumentType),
+        entityType: Object.values(EntityType),
+        kybStatus: Object.values(KybStatus),
+        riskRating: Object.values(RiskRating),
+        regulatoryStatus: Object.values(RegulatoryStatus),
+        sanctionsStatus: Object.values(SanctionsStatus),
+        walletCustodyType: Object.values(WalletCustodyType),
+        accountType: Object.values(InstitutionAccountType),
+        accountVerificationStatus: Object.values(AccountVerificationStatus),
+        approvalMode: Object.values(ApprovalMode),
         corridorRiskLevel: ['LOW', 'MEDIUM', 'HIGH'],
-        notificationType: [
-          'ESCROW_CREATED', 'ESCROW_FUNDED', 'DEPOSIT_CONFIRMED', 'ESCROW_RELEASED',
-          'SETTLEMENT_COMPLETE', 'ESCROW_CANCELLED', 'ESCROW_EXPIRED',
-          'ESCROW_COMPLIANCE_HOLD', 'COMPLIANCE_CHECK_FAILED',
-          'COMPLIANCE_REVIEW_REQUIRED', 'SECURITY_ALERT', 'KYC_APPROVED',
-          'KYC_REJECTED', 'ACCOUNT_SUSPENDED', 'ACCOUNT_REACTIVATED',
-        ],
-        notificationPriority: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
-        employeeCountRange: [
-          'RANGE_1_10', 'RANGE_11_50', 'RANGE_51_200', 'RANGE_201_500',
-          'RANGE_501_1000', 'RANGE_1001_5000', 'RANGE_5001_PLUS',
-        ],
-        annualRevenueRange: [
-          'UNDER_1M', 'RANGE_1M_10M', 'RANGE_10M_50M', 'RANGE_50M_100M',
-          'RANGE_100M_500M', 'RANGE_500M_1B', 'OVER_1B',
-        ],
+        notificationType: Object.values(NotificationType),
+        notificationPriority: Object.values(NotificationPriority),
+        employeeCountRange: Object.values(EmployeeCountRange),
+        annualRevenueRange: Object.values(AnnualRevenueRange),
       },
     };
   }

@@ -605,6 +605,7 @@ exports.Prisma.InstitutionClientSettingsScalarFieldEnum = {
   feeBps: 'feeBps',
   minFeeUsdc: 'minFeeUsdc',
   maxFeeUsdc: 'maxFeeUsdc',
+  notificationPreferences: 'notificationPreferences',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

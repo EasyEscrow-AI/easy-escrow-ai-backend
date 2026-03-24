@@ -4,6 +4,8 @@ import { redisClient } from '../config/redis';
 const REDIS_KEY = 'institution:escrow:system:paused';
 const REDIS_TTL_SECONDS = 300; // 5 minutes
 const DB_KEY = 'institution_escrow_pause';
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 100;
 
 export interface PauseState {
   paused: boolean;
@@ -57,39 +59,51 @@ class InstitutionEscrowPauseService {
   async pause(reason: string, adminIdentifier: string): Promise<PauseState> {
     const pausedAt = new Date().toISOString();
 
-    // Atomic check-and-set inside a serializable transaction
-    const state = await prisma.$transaction(
-      async (tx) => {
-        const setting = await tx.systemSetting.findUnique({
-          where: { key: DB_KEY },
-        });
-        const value = setting?.value as any;
-        if (value?.paused === true) {
-          return null; // Already paused
+    // Atomic check-and-set with retry for serialization conflicts (P2034)
+    let state: PauseState | null = null;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        state = await prisma.$transaction(
+          async (tx) => {
+            const setting = await tx.systemSetting.findUnique({
+              where: { key: DB_KEY },
+            });
+            const value = setting?.value as any;
+            if (value?.paused === true) {
+              return null; // Already paused
+            }
+
+            await tx.systemSetting.upsert({
+              where: { key: DB_KEY },
+              create: {
+                key: DB_KEY,
+                value: { paused: true, reason, pausedAt } as any,
+                updatedBy: adminIdentifier,
+              },
+              update: {
+                value: { paused: true, reason, pausedAt } as any,
+                updatedBy: adminIdentifier,
+              },
+            });
+
+            return {
+              paused: true,
+              reason,
+              pausedBy: adminIdentifier,
+              pausedAt,
+            } as PauseState;
+          },
+          { isolationLevel: 'Serializable' }
+        );
+        break; // Success
+      } catch (err: any) {
+        if (err?.code === 'P2034' && attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+          continue;
         }
-
-        await tx.systemSetting.upsert({
-          where: { key: DB_KEY },
-          create: {
-            key: DB_KEY,
-            value: { paused: true, reason, pausedAt } as any,
-            updatedBy: adminIdentifier,
-          },
-          update: {
-            value: { paused: true, reason, pausedAt } as any,
-            updatedBy: adminIdentifier,
-          },
-        });
-
-        return {
-          paused: true,
-          reason,
-          pausedBy: adminIdentifier,
-          pausedAt,
-        } as PauseState;
-      },
-      { isolationLevel: 'Serializable' }
-    );
+        throw err;
+      }
+    }
 
     if (!state) {
       const error = new Error('Institution escrow operations are already paused');
@@ -121,29 +135,41 @@ class InstitutionEscrowPauseService {
   }
 
   async unpause(adminIdentifier: string): Promise<void> {
-    // Atomic check-and-set inside a serializable transaction
-    const wasPaused = await prisma.$transaction(
-      async (tx) => {
-        const setting = await tx.systemSetting.findUnique({
-          where: { key: DB_KEY },
-        });
-        const value = setting?.value as any;
-        if (!value?.paused) {
-          return false; // Not currently paused
-        }
+    // Atomic check-and-set with retry for serialization conflicts (P2034)
+    let wasPaused = false;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        wasPaused = await prisma.$transaction(
+          async (tx) => {
+            const setting = await tx.systemSetting.findUnique({
+              where: { key: DB_KEY },
+            });
+            const value = setting?.value as any;
+            if (!value?.paused) {
+              return false; // Not currently paused
+            }
 
-        await tx.systemSetting.update({
-          where: { key: DB_KEY },
-          data: {
-            value: { paused: false } as any,
-            updatedBy: adminIdentifier,
+            await tx.systemSetting.update({
+              where: { key: DB_KEY },
+              data: {
+                value: { paused: false } as any,
+                updatedBy: adminIdentifier,
+              },
+            });
+
+            return true;
           },
-        });
-
-        return true;
-      },
-      { isolationLevel: 'Serializable' }
-    );
+          { isolationLevel: 'Serializable' }
+        );
+        break;
+      } catch (err: any) {
+        if (err?.code === 'P2034' && attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+          continue;
+        }
+        throw err;
+      }
+    }
 
     if (!wasPaused) {
       const error = new Error('Institution escrow operations are not currently paused');

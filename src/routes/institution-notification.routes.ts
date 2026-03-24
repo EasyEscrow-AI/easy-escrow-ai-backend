@@ -136,7 +136,7 @@ router.post(
       const status = error.statusCode || (
         error.message?.includes('not found') ? 404
         : error.message?.includes('Access denied') ? 403
-        : 400
+        : 500
       );
       res.status(status).json({
         error: 'Error',

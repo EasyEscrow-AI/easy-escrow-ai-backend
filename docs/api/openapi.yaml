@@ -345,10 +345,10 @@ tags:
       | `ESCROW_CREATED` | Escrow created or draft submitted | MEDIUM |
       | `ESCROW_FUNDED` | Deposit confirmed on-chain | MEDIUM |
       | `ESCROW_COMPLIANCE_HOLD` | Held for compliance review | HIGH |
+      | `ESCROW_INSUFFICIENT_FUNDS` | Release blocked — insufficient balance | HIGH |
       | `SETTLEMENT_COMPLETE` | Funds released to recipient | HIGH |
       | `ESCROW_CANCELLED` | Escrow cancelled by client | MEDIUM |
       | `ESCROW_EXPIRED` | Escrow expired without deposit | MEDIUM |
-      | `ESCROW_FUNDED` (insufficient) | Release blocked — insufficient balance | HIGH |
 
       ### Preference Flags
       Each notification type maps to a preference flag on the institution account:
@@ -2602,7 +2602,7 @@ paths:
         Results are scoped to the authenticated client's data and returned as a flat array with a `category` field on each item. Category counts are provided separately.
 
         **Smart query detection:**
-        - `EE-XXXX` → searches escrow codes
+        - `EE-XXX-XXX` → searches escrow codes
         - Solana wallet address → searches wallet fields
         - Numeric value → searches escrow amounts
         - Status name (e.g., `funded`) → filters by escrow status
@@ -2618,7 +2618,7 @@ paths:
             minLength: 2
             maxLength: 200
           description: Search query (min 2 characters)
-          example: "EE-AB3D"
+          example: "EE-ABC-123"
         - in: query
           name: categories
           schema:
@@ -2649,7 +2649,7 @@ paths:
                     properties:
                       query:
                         type: string
-                        example: "EE-AB3D"
+                        example: "EE-ABC-123"
                       results:
                         type: array
                         items:
@@ -6430,6 +6430,7 @@ components:
           enum:
             - ESCROW_CREATED
             - ESCROW_FUNDED
+            - ESCROW_INSUFFICIENT_FUNDS
             - ESCROW_RELEASED
             - ESCROW_CANCELLED
             - ESCROW_EXPIRED
@@ -6449,7 +6450,7 @@ components:
           example: "Escrow Created"
         message:
           type: string
-          example: "Escrow EE-AB3D-7KMN created for 5000 USDC on corridor SG-CH."
+          example: "Escrow EE-ABC-123 created for 5000 USDC on corridor SG-CH."
         metadata:
           type: object
           description: Additional context (amount, corridor, txSignature, etc.)

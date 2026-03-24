@@ -14,6 +14,18 @@ const REDIS_LOGIN_PREFIX = 'admin:login:attempts:';
 const ACCESS_TOKEN_EXPIRY = process.env.ADMIN_ACCESS_TOKEN_EXPIRY || '1h';
 const REFRESH_TOKEN_EXPIRY = process.env.ADMIN_REFRESH_TOKEN_EXPIRY || '7d';
 
+function parseDurationOrThrow(value: string, envName: string): number {
+  const result = ms(value as ms.StringValue);
+  if (typeof result !== 'number' || !Number.isFinite(result) || result <= 0) {
+    throw new Error(`Invalid duration for ${envName}: "${value}". Must be a valid ms() string (e.g. "1h", "7d").`);
+  }
+  return result;
+}
+
+// Validate at module load so invalid values fail fast
+parseDurationOrThrow(ACCESS_TOKEN_EXPIRY, 'ADMIN_ACCESS_TOKEN_EXPIRY');
+parseDurationOrThrow(REFRESH_TOKEN_EXPIRY, 'ADMIN_REFRESH_TOKEN_EXPIRY');
+
 export class AdminAuthService {
   private prisma: PrismaClient;
 

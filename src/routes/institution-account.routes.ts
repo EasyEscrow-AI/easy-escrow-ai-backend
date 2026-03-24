@@ -8,7 +8,8 @@
  * PUT    /api/v1/institution/accounts/:id         -> Update account
  * DELETE /api/v1/institution/accounts/:id         -> Deactivate account
  * PUT    /api/v1/institution/accounts/:id/default -> Set as default
- * GET    /api/v1/institution/accounts/:id/balance -> Get live balance
+ * GET    /api/v1/institution/accounts/:id/balance  -> Get cached balance
+ * POST   /api/v1/institution/accounts/:id/refresh-balance -> Bust cache, re-fetch live
  * GET    /api/v1/institution/accounts/:id/settings -> Get account settings
  * PATCH  /api/v1/institution/accounts/:id/settings -> Update account settings
  */
@@ -280,6 +281,36 @@ router.get(
   }
 );
 
+// POST /api/v1/institution/accounts/:id/refresh-balance — Bust cache and re-fetch live
+router.post(
+  '/api/v1/institution/accounts/:id/refresh-balance',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getInstitutionAccountService();
+      const account = await service.refreshAccountBalance(
+        req.institutionClient!.clientId,
+        req.params.id
+      );
+
+      res.status(200).json({
+        success: true,
+        data: account,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message === 'Account not found' ? 404 : 500;
+      logger.error('Balance refresh failed', { error: message });
+      res.status(status).json({
+        error: status === 404 ? 'Not Found' : 'Balance Refresh Failed',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 // GET /api/v1/institution/accounts/:id/settings — Get account settings (toggles + currency)
 router.get(
   '/api/v1/institution/accounts/:id/settings',
@@ -335,7 +366,6 @@ router.patch(
       logger.error('Account settings update failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Update Failed',
-        message,
         timestamp: new Date().toISOString(),
       });
     }
