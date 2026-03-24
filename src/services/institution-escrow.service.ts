@@ -418,21 +418,28 @@ export class InstitutionEscrowService {
     });
 
     // Separate compliance screening audit entry
+    const failedChecks = complianceResult.checks?.filter((c: any) => c.status === 'FAIL') || [];
+    const warnChecks = complianceResult.checks?.filter((c: any) => c.status === 'WARNING') || [];
     await this.createKytAuditLog(escrow, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
       passed: complianceResult.passed,
       riskScore: complianceResult.riskScore,
-      checksCount: complianceResult.flags?.length || 0,
+      riskLevel: complianceResult.riskLevel,
+      checksCount: complianceResult.checks?.length || 0,
+      failedCount: failedChecks.length,
+      warningCount: warnChecks.length,
+      checks: complianceResult.checks,
       flags: complianceResult.flags,
       message: complianceResult.passed
-        ? `All ${complianceResult.flags?.length || 0} checks passed`
-        : `${complianceResult.flags?.filter((f: any) => f.severity === 'HIGH').length || 0} issue(s) flagged — risk score ${complianceResult.riskScore}`,
+        ? `All 12 checks passed — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`
+        : `${failedChecks.length} failed, ${warnChecks.length} warnings — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
     });
 
     // If held for compliance, log the hold separately
     if (initialStatus === 'COMPLIANCE_HOLD') {
       await this.createKytAuditLog(escrow, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
         riskScore: complianceResult.riskScore,
-        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}`,
+        riskLevel: complianceResult.riskLevel,
+        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
       });
     }
 
@@ -472,6 +479,8 @@ export class InstitutionEscrowService {
         passed: complianceResult.passed,
         riskScore: complianceResult.riskScore,
         flags: complianceResult.flags,
+        checks: complianceResult.checks,
+        riskLevel: complianceResult.riskLevel,
       },
     };
   }
@@ -769,20 +778,27 @@ export class InstitutionEscrowService {
     });
 
     // Separate compliance screening audit entry
+    const failedChecks2 = complianceResult.checks?.filter((c: any) => c.status === 'FAIL') || [];
+    const warnChecks2 = complianceResult.checks?.filter((c: any) => c.status === 'WARNING') || [];
     await this.createKytAuditLog(updated, 'COMPLIANCE_SCREENING', 'EasyEscrow AI Assistant', {
       passed: complianceResult.passed,
       riskScore: complianceResult.riskScore,
-      checksCount: complianceResult.flags?.length || 0,
+      riskLevel: complianceResult.riskLevel,
+      checksCount: complianceResult.checks?.length || 0,
+      failedCount: failedChecks2.length,
+      warningCount: warnChecks2.length,
+      checks: complianceResult.checks,
       flags: complianceResult.flags,
       message: complianceResult.passed
-        ? `All ${complianceResult.flags?.length || 0} checks passed`
-        : `${complianceResult.flags?.filter((f: any) => f.severity === 'HIGH').length || 0} issue(s) flagged — risk score ${complianceResult.riskScore}`,
+        ? `All 12 checks passed — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`
+        : `${failedChecks2.length} failed, ${warnChecks2.length} warnings — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
     });
 
     if (newStatus === 'COMPLIANCE_HOLD') {
       await this.createKytAuditLog(updated, 'COMPLIANCE_HOLD', 'EasyEscrow AI Assistant', {
         riskScore: complianceResult.riskScore,
-        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}`,
+        riskLevel: complianceResult.riskLevel,
+        message: `Escrow held for compliance review — risk score ${complianceResult.riskScore}/100 (${complianceResult.riskLevel})`,
       });
     }
 
@@ -833,6 +849,8 @@ export class InstitutionEscrowService {
         passed: complianceResult.passed,
         riskScore: complianceResult.riskScore,
         flags: complianceResult.flags,
+        checks: complianceResult.checks,
+        riskLevel: complianceResult.riskLevel,
       },
     };
   }
