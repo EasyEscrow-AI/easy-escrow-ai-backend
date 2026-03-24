@@ -1301,19 +1301,26 @@ enum AiAnalysisType {
 
 // Corridor configuration
 model InstitutionCorridor {
-  id                String          @id @default(uuid())
-  sourceCountry     String          @map("source_country")
-  destCountry       String          @map("dest_country")
-  code              String          @unique // e.g. 'SG-CH'
-  minAmount         Decimal         @map("min_amount") @db.Decimal(20, 6)
-  maxAmount         Decimal         @map("max_amount") @db.Decimal(20, 6)
-  dailyLimit        Decimal         @map("daily_limit") @db.Decimal(20, 6)
-  monthlyLimit      Decimal         @map("monthly_limit") @db.Decimal(20, 6)
-  requiredDocuments String[]        @default([]) @map("required_documents")
-  riskLevel         String          @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
-  status            CorridorStatus  @default(ACTIVE)
-  createdAt         DateTime        @default(now()) @map("created_at")
-  updatedAt         DateTime        @updatedAt @map("updated_at")
+  id                   String          @id @default(uuid())
+  sourceCountry        String          @map("source_country")
+  destCountry          String          @map("dest_country")
+  code                 String          @unique // e.g. 'SG-CH'
+  name                 String?         // Display name e.g. 'Switzerland → Singapore'
+  compliance           String?         // Regulatory bodies e.g. 'FINMA + MAS'
+  description          String?         // Human-readable description
+  riskReason           String?         @map("risk_reason") // Explanation of risk classification
+  travelRuleThreshold  Decimal         @default(1000) @map("travel_rule_threshold") @db.Decimal(18, 2)
+  eddThreshold         Decimal         @default(10000) @map("edd_threshold") @db.Decimal(18, 2)
+  reportingThreshold   Decimal         @default(15000) @map("reporting_threshold") @db.Decimal(18, 2)
+  minAmount            Decimal         @map("min_amount") @db.Decimal(20, 6)
+  maxAmount            Decimal         @map("max_amount") @db.Decimal(20, 6)
+  dailyLimit           Decimal         @map("daily_limit") @db.Decimal(20, 6)
+  monthlyLimit         Decimal         @map("monthly_limit") @db.Decimal(20, 6)
+  requiredDocuments    String[]        @default([]) @map("required_documents")
+  riskLevel            String          @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
+  status               CorridorStatus  @default(ACTIVE)
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
 
   thresholdRules CorridorThresholdRule[]
 
