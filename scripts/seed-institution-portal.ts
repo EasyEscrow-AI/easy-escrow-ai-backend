@@ -16,6 +16,13 @@
 import { PrismaClient } from '../src/generated/prisma';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import { Keypair } from '@solana/web3.js';
+
+/** Deterministic fake Solana address — derives a valid Ed25519 keypair from a seed string */
+function fakeWallet(seed: string): string {
+  const hash = crypto.createHash('sha256').update(seed).digest();
+  return Keypair.fromSeed(hash).publicKey.toBase58();
+}
 
 const prisma = new PrismaClient();
 
@@ -153,7 +160,7 @@ async function main() {
       name: 'Operating Account',
       label: 'Operating Account',
       accountType: 'OPERATIONS' as const,
-      walletAddress: 'HeLv3t1cAd1g1tALOp1rAddr355000000000001',
+      walletAddress: fakeWallet('helvetica-operations'),
       branchKey: 'CH',
       isDefault: true,
       verificationStatus: 'VERIFIED' as const,
@@ -163,7 +170,7 @@ async function main() {
       name: 'Escrow Reserve',
       label: 'Escrow Reserve',
       accountType: 'COLLATERAL' as const,
-      walletAddress: 'HeLv3t1cAd1g1tALEs1rAddr355000000000001',
+      walletAddress: fakeWallet('helvetica-escrow-reserve'),
       branchKey: 'CH',
       isDefault: false,
       verificationStatus: 'VERIFIED' as const,
@@ -173,7 +180,7 @@ async function main() {
       name: 'Settlement Float',
       label: 'Settlement Float',
       accountType: 'SETTLEMENT' as const,
-      walletAddress: 'HeLv3t1cAd1g1tALSe1rAddr355000000000001',
+      walletAddress: fakeWallet('helvetica-settlement'),
       branchKey: 'CH',
       isDefault: false,
       verificationStatus: 'VERIFIED' as const,

@@ -526,12 +526,19 @@ export class InstitutionAccountService {
         select: { symbol: true, name: true, mintAddress: true, decimals: true },
       });
 
+      // Override USDC mint from env so staging/devnet uses the correct address
+      const envUsdcMint = process.env.USDC_MINT_ADDRESS;
+
       for (const token of approvedTokens) {
+        // Use env-configured mint for USDC (DB may have mainnet mint on staging)
+        const mintAddress =
+          token.symbol === 'USDC' && envUsdcMint ? envUsdcMint : token.mintAddress;
+
         // Skip tokens with pending/placeholder mint addresses
-        if (!isValidSolanaAddress(token.mintAddress)) continue;
+        if (!isValidSolanaAddress(mintAddress)) continue;
 
         try {
-          const mint = new PublicKey(token.mintAddress);
+          const mint = new PublicKey(mintAddress);
           const tokenAccounts = await connection.getTokenAccountsByOwner(pubkey, { mint });
 
           let tokenBalance = 0;
@@ -548,7 +555,7 @@ export class InstitutionAccountService {
               symbol: token.symbol,
               name: token.name,
               balance: tokenBalance,
-              mintAddress: token.mintAddress,
+              mintAddress,
             });
           }
 

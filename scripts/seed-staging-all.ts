@@ -22,6 +22,7 @@
 import { PrismaClient } from '../src/generated/prisma';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { Keypair } from '@solana/web3.js';
 
 const prisma = new PrismaClient();
 
@@ -42,16 +43,10 @@ function hoursFromNow(n: number): Date {
   return new Date(Date.now() + n * 3600000);
 }
 
+/** Deterministic fake Solana address — derives a valid Ed25519 keypair from a seed string */
 function fakeWallet(seed: string): string {
-  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  let hash = 0;
-  for (const ch of seed) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
-  let out = '';
-  for (let i = 0; i < 44; i++) {
-    hash = ((hash << 5) - hash + i) | 0;
-    out += chars[Math.abs(hash) % chars.length];
-  }
-  return out;
+  const hash = crypto.createHash('sha256').update(seed).digest();
+  return Keypair.fromSeed(hash).publicKey.toBase58();
 }
 
 function fakeTxSig(seed: string): string {

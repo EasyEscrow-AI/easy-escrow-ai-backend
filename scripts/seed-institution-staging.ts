@@ -14,7 +14,8 @@
 
 import { PrismaClient, Prisma } from '../src/generated/prisma';
 import bcrypt from 'bcrypt';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
+import { Keypair } from '@solana/web3.js';
 
 const prisma = new PrismaClient();
 
@@ -22,17 +23,10 @@ const prisma = new PrismaClient();
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Deterministic fake Solana address (base58-ish, 44 chars) */
+/** Deterministic fake Solana address — derives a valid Ed25519 keypair from a seed string */
 function fakeWallet(seed: string): string {
-  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  let hash = 0;
-  for (const ch of seed) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
-  let out = '';
-  for (let i = 0; i < 44; i++) {
-    hash = ((hash << 5) - hash + i) | 0;
-    out += chars[Math.abs(hash) % chars.length];
-  }
-  return out;
+  const hash = createHash('sha256').update(seed).digest();
+  return Keypair.fromSeed(hash).publicKey.toBase58();
 }
 
 /** Deterministic fake tx signature (base58, 88 chars) */

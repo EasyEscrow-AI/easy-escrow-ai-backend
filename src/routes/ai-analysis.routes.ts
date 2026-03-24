@@ -211,7 +211,7 @@ router.get(
 const validateEscrowIdBody = [
   body('escrowId')
     .isString()
-    .matches(/^(EE-[A-Z]{3}-[A-Z]{3}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i)
+    .matches(/^(EE-[A-Z0-9]{3}-[A-Z0-9]{3}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i)
     .withMessage('escrowId must be a valid UUID or escrow code (EE-XXX-XXX)'),
 ];
 
