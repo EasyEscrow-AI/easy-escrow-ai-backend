@@ -134,6 +134,8 @@ export interface ComplianceResult {
   corridorValid: boolean;
   walletsAllowlisted: boolean;
   limitsWithinRange: boolean;
+  checks: import('../services/compliance.service').ComplianceCheckItem[];
+  riskLevel: import('../services/compliance.service').RiskLevel;
 }
 
 /**

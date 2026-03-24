@@ -148,6 +148,13 @@ export class InstitutionBootstrapService {
         accountVerificationStatus: Object.values(AccountVerificationStatus),
         approvalMode: Object.values(ApprovalMode),
         corridorRiskLevel: ['LOW', 'MEDIUM', 'HIGH'],
+        releaseMode: ['manual', 'ai'],
+        aiReleaseConditions: [
+          { value: 'legal_compliance', label: 'All legal compliance checks pass', required: true },
+          { value: 'invoice_amount_match', label: 'Invoice amount matches exactly', required: false },
+          { value: 'client_info_match', label: 'Client information matches exactly', required: false },
+          { value: 'document_signature_verified', label: 'Document signature is verified (via DocuSign)', required: false },
+        ],
         notificationType: Object.values(NotificationType),
         notificationPriority: Object.values(NotificationPriority),
         employeeCountRange: Object.values(EmployeeCountRange),
