@@ -214,6 +214,7 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.institutionEscrow = '/api/v1/institution-escrow';
     response.endpoints.institutionClients = '/api/v1/institution/clients';
     response.endpoints.aiAnalysis = '/api/v1/ai';
+    response.endpoints.aiAnalyzeEscrow = '/api/v1/institution/ai/analyze-escrow';
     response.endpoints.aiAnalyzeEscrowDoc = '/api/v1/ai/analyze-escrow-doc/:escrow_id';
     response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis/:escrow_id';
     response.endpoints.institutionReceipts = '/api/v1/institution-escrow/:escrowId/receipt';
