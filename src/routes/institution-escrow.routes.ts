@@ -11,6 +11,7 @@
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
  * GET    /api/v1/institution-escrow/:id          → getEscrow
  * GET    /api/v1/institution-escrow              → listEscrows
+ * GET    /api/v1/institution/corridors           → listCorridors
  */
 
 import { Router, Response } from 'express';
@@ -419,6 +420,59 @@ router.get(
         success: true,
         data: result,
         timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// ─── Corridor Configuration ────────────────────────────────────
+
+// GET /api/v1/institution/corridors
+router.get(
+  '/api/v1/institution/corridors',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (_req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const { prisma } = await import('../config/database');
+
+      const corridors = await prisma.institutionCorridor.findMany({
+        where: { status: 'ACTIVE' },
+        orderBy: { code: 'asc' },
+        select: {
+          code: true,
+          name: true,
+          compliance: true,
+          description: true,
+          riskLevel: true,
+          riskReason: true,
+          travelRuleThreshold: true,
+          eddThreshold: true,
+          reportingThreshold: true,
+        },
+      });
+
+      const formatted = corridors.map((c: any) => ({
+        id: c.code.toLowerCase(),
+        code: c.code,
+        name: c.name || c.code,
+        compliance: c.compliance || '',
+        description: c.description || '',
+        corridorRiskLevel: (c.riskLevel || 'MEDIUM').toLowerCase(),
+        riskReason: c.riskReason || '',
+        travelRuleThreshold: c.travelRuleThreshold ? Number(c.travelRuleThreshold) : 1000,
+        eddThreshold: c.eddThreshold ? Number(c.eddThreshold) : 10000,
+        reportingThreshold: c.reportingThreshold ? Number(c.reportingThreshold) : 15000,
+      }));
+
+      res.status(200).json({
+        corridors: formatted,
       });
     } catch (error: any) {
       res.status(500).json({

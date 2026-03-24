@@ -40079,6 +40079,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorAvgAggregateOutputType = {
+    travelRuleThreshold: Decimal | null
+    eddThreshold: Decimal | null
+    reportingThreshold: Decimal | null
     minAmount: Decimal | null
     maxAmount: Decimal | null
     dailyLimit: Decimal | null
@@ -40086,6 +40089,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorSumAggregateOutputType = {
+    travelRuleThreshold: Decimal | null
+    eddThreshold: Decimal | null
+    reportingThreshold: Decimal | null
     minAmount: Decimal | null
     maxAmount: Decimal | null
     dailyLimit: Decimal | null
@@ -40097,6 +40103,13 @@ export namespace Prisma {
     sourceCountry: string | null
     destCountry: string | null
     code: string | null
+    name: string | null
+    compliance: string | null
+    description: string | null
+    riskReason: string | null
+    travelRuleThreshold: Decimal | null
+    eddThreshold: Decimal | null
+    reportingThreshold: Decimal | null
     minAmount: Decimal | null
     maxAmount: Decimal | null
     dailyLimit: Decimal | null
@@ -40112,6 +40125,13 @@ export namespace Prisma {
     sourceCountry: string | null
     destCountry: string | null
     code: string | null
+    name: string | null
+    compliance: string | null
+    description: string | null
+    riskReason: string | null
+    travelRuleThreshold: Decimal | null
+    eddThreshold: Decimal | null
+    reportingThreshold: Decimal | null
     minAmount: Decimal | null
     maxAmount: Decimal | null
     dailyLimit: Decimal | null
@@ -40127,6 +40147,13 @@ export namespace Prisma {
     sourceCountry: number
     destCountry: number
     code: number
+    name: number
+    compliance: number
+    description: number
+    riskReason: number
+    travelRuleThreshold: number
+    eddThreshold: number
+    reportingThreshold: number
     minAmount: number
     maxAmount: number
     dailyLimit: number
@@ -40141,6 +40168,9 @@ export namespace Prisma {
 
 
   export type InstitutionCorridorAvgAggregateInputType = {
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40148,6 +40178,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorSumAggregateInputType = {
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40159,6 +40192,13 @@ export namespace Prisma {
     sourceCountry?: true
     destCountry?: true
     code?: true
+    name?: true
+    compliance?: true
+    description?: true
+    riskReason?: true
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40174,6 +40214,13 @@ export namespace Prisma {
     sourceCountry?: true
     destCountry?: true
     code?: true
+    name?: true
+    compliance?: true
+    description?: true
+    riskReason?: true
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40189,6 +40236,13 @@ export namespace Prisma {
     sourceCountry?: true
     destCountry?: true
     code?: true
+    name?: true
+    compliance?: true
+    description?: true
+    riskReason?: true
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40292,6 +40346,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name: string | null
+    compliance: string | null
+    description: string | null
+    riskReason: string | null
+    travelRuleThreshold: Decimal
+    eddThreshold: Decimal
+    reportingThreshold: Decimal
     minAmount: Decimal
     maxAmount: Decimal
     dailyLimit: Decimal
@@ -40327,6 +40388,13 @@ export namespace Prisma {
     sourceCountry?: boolean
     destCountry?: boolean
     code?: boolean
+    name?: boolean
+    compliance?: boolean
+    description?: boolean
+    riskReason?: boolean
+    travelRuleThreshold?: boolean
+    eddThreshold?: boolean
+    reportingThreshold?: boolean
     minAmount?: boolean
     maxAmount?: boolean
     dailyLimit?: boolean
@@ -40345,6 +40413,13 @@ export namespace Prisma {
     sourceCountry?: boolean
     destCountry?: boolean
     code?: boolean
+    name?: boolean
+    compliance?: boolean
+    description?: boolean
+    riskReason?: boolean
+    travelRuleThreshold?: boolean
+    eddThreshold?: boolean
+    reportingThreshold?: boolean
     minAmount?: boolean
     maxAmount?: boolean
     dailyLimit?: boolean
@@ -40361,6 +40436,13 @@ export namespace Prisma {
     sourceCountry?: boolean
     destCountry?: boolean
     code?: boolean
+    name?: boolean
+    compliance?: boolean
+    description?: boolean
+    riskReason?: boolean
+    travelRuleThreshold?: boolean
+    eddThreshold?: boolean
+    reportingThreshold?: boolean
     minAmount?: boolean
     maxAmount?: boolean
     dailyLimit?: boolean
@@ -40377,6 +40459,13 @@ export namespace Prisma {
     sourceCountry?: boolean
     destCountry?: boolean
     code?: boolean
+    name?: boolean
+    compliance?: boolean
+    description?: boolean
+    riskReason?: boolean
+    travelRuleThreshold?: boolean
+    eddThreshold?: boolean
+    reportingThreshold?: boolean
     minAmount?: boolean
     maxAmount?: boolean
     dailyLimit?: boolean
@@ -40388,7 +40477,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type InstitutionCorridorOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sourceCountry" | "destCountry" | "code" | "minAmount" | "maxAmount" | "dailyLimit" | "monthlyLimit" | "requiredDocuments" | "riskLevel" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionCorridor"]>
+  export type InstitutionCorridorOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sourceCountry" | "destCountry" | "code" | "name" | "compliance" | "description" | "riskReason" | "travelRuleThreshold" | "eddThreshold" | "reportingThreshold" | "minAmount" | "maxAmount" | "dailyLimit" | "monthlyLimit" | "requiredDocuments" | "riskLevel" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionCorridor"]>
   export type InstitutionCorridorInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     thresholdRules?: boolean | InstitutionCorridor$thresholdRulesArgs<ExtArgs>
     _count?: boolean | InstitutionCorridorCountOutputTypeDefaultArgs<ExtArgs>
@@ -40406,6 +40495,13 @@ export namespace Prisma {
       sourceCountry: string
       destCountry: string
       code: string
+      name: string | null
+      compliance: string | null
+      description: string | null
+      riskReason: string | null
+      travelRuleThreshold: Prisma.Decimal
+      eddThreshold: Prisma.Decimal
+      reportingThreshold: Prisma.Decimal
       minAmount: Prisma.Decimal
       maxAmount: Prisma.Decimal
       dailyLimit: Prisma.Decimal
@@ -40843,6 +40939,13 @@ export namespace Prisma {
     readonly sourceCountry: FieldRef<"InstitutionCorridor", 'String'>
     readonly destCountry: FieldRef<"InstitutionCorridor", 'String'>
     readonly code: FieldRef<"InstitutionCorridor", 'String'>
+    readonly name: FieldRef<"InstitutionCorridor", 'String'>
+    readonly compliance: FieldRef<"InstitutionCorridor", 'String'>
+    readonly description: FieldRef<"InstitutionCorridor", 'String'>
+    readonly riskReason: FieldRef<"InstitutionCorridor", 'String'>
+    readonly travelRuleThreshold: FieldRef<"InstitutionCorridor", 'Decimal'>
+    readonly eddThreshold: FieldRef<"InstitutionCorridor", 'Decimal'>
+    readonly reportingThreshold: FieldRef<"InstitutionCorridor", 'Decimal'>
     readonly minAmount: FieldRef<"InstitutionCorridor", 'Decimal'>
     readonly maxAmount: FieldRef<"InstitutionCorridor", 'Decimal'>
     readonly dailyLimit: FieldRef<"InstitutionCorridor", 'Decimal'>
@@ -49789,6 +49892,13 @@ export namespace Prisma {
     sourceCountry: 'sourceCountry',
     destCountry: 'destCountry',
     code: 'code',
+    name: 'name',
+    compliance: 'compliance',
+    description: 'description',
+    riskReason: 'riskReason',
+    travelRuleThreshold: 'travelRuleThreshold',
+    eddThreshold: 'eddThreshold',
+    reportingThreshold: 'reportingThreshold',
     minAmount: 'minAmount',
     maxAmount: 'maxAmount',
     dailyLimit: 'dailyLimit',
@@ -53981,6 +54091,13 @@ export namespace Prisma {
     sourceCountry?: StringFilter<"InstitutionCorridor"> | string
     destCountry?: StringFilter<"InstitutionCorridor"> | string
     code?: StringFilter<"InstitutionCorridor"> | string
+    name?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    compliance?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    description?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    riskReason?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    travelRuleThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
@@ -53998,6 +54115,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrderInput | SortOrder
+    compliance?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    riskReason?: SortOrderInput | SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -54018,6 +54142,13 @@ export namespace Prisma {
     NOT?: InstitutionCorridorWhereInput | InstitutionCorridorWhereInput[]
     sourceCountry?: StringFilter<"InstitutionCorridor"> | string
     destCountry?: StringFilter<"InstitutionCorridor"> | string
+    name?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    compliance?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    description?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    riskReason?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    travelRuleThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
@@ -54035,6 +54166,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrderInput | SortOrder
+    compliance?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    riskReason?: SortOrderInput | SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -54059,6 +54197,13 @@ export namespace Prisma {
     sourceCountry?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
     destCountry?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
     code?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
+    name?: StringNullableWithAggregatesFilter<"InstitutionCorridor"> | string | null
+    compliance?: StringNullableWithAggregatesFilter<"InstitutionCorridor"> | string | null
+    description?: StringNullableWithAggregatesFilter<"InstitutionCorridor"> | string | null
+    riskReason?: StringNullableWithAggregatesFilter<"InstitutionCorridor"> | string | null
+    travelRuleThreshold?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
@@ -58732,6 +58877,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
     minAmount: Decimal | DecimalJsLike | number | string
     maxAmount: Decimal | DecimalJsLike | number | string
     dailyLimit: Decimal | DecimalJsLike | number | string
@@ -58749,6 +58901,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
     minAmount: Decimal | DecimalJsLike | number | string
     maxAmount: Decimal | DecimalJsLike | number | string
     dailyLimit: Decimal | DecimalJsLike | number | string
@@ -58766,6 +58925,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -58783,6 +58949,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -58800,6 +58973,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
     minAmount: Decimal | DecimalJsLike | number | string
     maxAmount: Decimal | DecimalJsLike | number | string
     dailyLimit: Decimal | DecimalJsLike | number | string
@@ -58816,6 +58996,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -58832,6 +59019,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -62621,6 +62815,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrder
+    compliance?: SortOrder
+    description?: SortOrder
+    riskReason?: SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -62633,6 +62834,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorAvgOrderByAggregateInput = {
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -62644,6 +62848,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrder
+    compliance?: SortOrder
+    description?: SortOrder
+    riskReason?: SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -62659,6 +62870,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrder
+    compliance?: SortOrder
+    description?: SortOrder
+    riskReason?: SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -62670,6 +62888,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorSumOrderByAggregateInput = {
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -74562,6 +74783,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
     minAmount: Decimal | DecimalJsLike | number | string
     maxAmount: Decimal | DecimalJsLike | number | string
     dailyLimit: Decimal | DecimalJsLike | number | string
@@ -74578,6 +74806,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
     minAmount: Decimal | DecimalJsLike | number | string
     maxAmount: Decimal | DecimalJsLike | number | string
     dailyLimit: Decimal | DecimalJsLike | number | string
@@ -74610,6 +74845,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -74626,6 +74868,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
