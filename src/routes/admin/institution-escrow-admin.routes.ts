@@ -25,10 +25,9 @@ import {
   validatePauseEscrow,
 } from '../../middleware/institution-escrow-validation.middleware';
 import { getInstitutionEscrowPauseService } from '../../services/institution-escrow-pause.service';
-import { PrismaClient } from '../../generated/prisma';
+import { prisma } from '../../config/database';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const standardRateLimiter = rateLimit({
   windowMs: 60 * 1000,

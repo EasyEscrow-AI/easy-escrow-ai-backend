@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import ms from 'ms';
 import { PrismaClient } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { config } from '../config';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 import { redisClient } from '../config/redis';
@@ -23,7 +24,7 @@ export class InstitutionAuthService {
   private prisma: PrismaClient;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
   }
 
   /**

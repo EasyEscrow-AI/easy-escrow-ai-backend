@@ -1,10 +1,10 @@
 /**
  * TEST-ONLY Swap Execution Routes
- * 
+ *
  * ⚠️ SECURITY WARNING ⚠️
  * This file contains DANGEROUS functionality that signs transactions
  * using private keys stored in environment variables.
- * 
+ *
  * Protected by:
  * - Password protection on the test page
  * - X-Test-Execution header requirement
@@ -12,9 +12,17 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { Connection, Keypair, Transaction, VersionedTransaction, sendAndConfirmTransaction, SystemProgram, PublicKey } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  Transaction,
+  VersionedTransaction,
+  sendAndConfirmTransaction,
+  SystemProgram,
+  PublicKey,
+} from '@solana/web3.js';
 import bs58 from 'bs58';
-import { PrismaClient } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { offerManager } from './offers.routes';
 import { getEscrowProgramService } from '../services/escrow-program.service';
 import { createTwoPhaseSwapLockService } from '../services/twoPhaseSwapLockService';
@@ -59,14 +67,19 @@ const network = process.env.SOLANA_NETWORK || 'devnet';
 const rpcUrl = process.env.SOLANA_RPC_URL || '';
 // Explicit env vars take precedence; RPC URL heuristic is only a fallback
 // NODE_ENV=staging or SOLANA_NETWORK=devnet explicitly means NOT mainnet, even if RPC URL contains 'mainnet'
-const isMainnet = nodeEnv === 'production' || (network === 'mainnet-beta' && nodeEnv !== 'staging') ||
+const isMainnet =
+  nodeEnv === 'production' ||
+  (network === 'mainnet-beta' && nodeEnv !== 'staging') ||
   (nodeEnv !== 'staging' && network !== 'devnet' && rpcUrl.includes('mainnet'));
 const networkName = isMainnet ? 'mainnet-beta' : 'devnet';
 
-// Initialize Prisma and TwoPhaseSwapLockService for lock transaction rebuilding
-const prisma = new PrismaClient();
-const programId = new PublicKey(process.env.ESCROW_PROGRAM_ID || 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
-const feeCollector = new PublicKey(process.env.PLATFORM_FEE_COLLECTOR || 'Fyh6zX7qN5WoR3T22N8r9L3KSr6yB8J6wz2CQkhwGDWP');
+// Initialize TwoPhaseSwapLockService for lock transaction rebuilding
+const programId = new PublicKey(
+  process.env.ESCROW_PROGRAM_ID || 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei'
+);
+const feeCollector = new PublicKey(
+  process.env.PLATFORM_FEE_COLLECTOR || 'Fyh6zX7qN5WoR3T22N8r9L3KSr6yB8J6wz2CQkhwGDWP'
+);
 
 // Load platform admin keypair for delegate - required for cNFT settlement and JIT rebuilding
 // MUST use same env vars as offers.routes.ts: DEVNET_STAGING_ADMIN_PRIVATE_KEY / MAINNET_PROD_ADMIN_PRIVATE_KEY
@@ -80,12 +93,14 @@ if (adminPrivateKey) {
     platformAuthorityKeypair = Keypair.fromSecretKey(bs58.decode(adminPrivateKey));
     delegateAuthority = platformAuthorityKeypair.publicKey;
   } catch {
-    throw new Error('[TestExecuteRoutes] Invalid admin private key format - cannot initialize delegate authority');
+    throw new Error(
+      '[TestExecuteRoutes] Invalid admin private key format - cannot initialize delegate authority'
+    );
   }
 } else {
   throw new Error(
     '[TestExecuteRoutes] Admin private key required for cNFT settlement. ' +
-    'Use DEVNET_STAGING_ADMIN_PRIVATE_KEY for staging or MAINNET_PROD_ADMIN_PRIVATE_KEY for production.'
+      'Use DEVNET_STAGING_ADMIN_PRIVATE_KEY for staging or MAINNET_PROD_ADMIN_PRIVATE_KEY for production.'
   );
 }
 
@@ -96,7 +111,9 @@ const twoPhaseSwapLockService = createTwoPhaseSwapLockService(
   feeCollector,
   delegateAuthority // Backend signer's public key for cNFT settlement
 );
-console.log('[TestExecuteRoutes] TwoPhaseSwapLockService initialized for lock transaction rebuilding');
+console.log(
+  '[TestExecuteRoutes] TwoPhaseSwapLockService initialized for lock transaction rebuilding'
+);
 console.log('[TestExecuteRoutes] Delegate authority:', delegateAuthority.toBase58());
 
 // Initialize swap state machine for delegation cleanup
@@ -189,7 +206,12 @@ async function cleanupFailedSwapDelegations(
               delegatePDA
             );
             if (isDelegatedOnChain) {
-              console.log(`   🔍 Found on-chain delegation NOT in DB: ${asset.identifier.substring(0, 12)}... (Party A)`);
+              console.log(
+                `   🔍 Found on-chain delegation NOT in DB: ${asset.identifier.substring(
+                  0,
+                  12
+                )}... (Party A)`
+              );
               assetsToCheck.push({
                 assetId: asset.identifier,
                 owner: swap.partyA,
@@ -198,7 +220,11 @@ async function cleanupFailedSwapDelegations(
               });
             }
           } catch (checkError: any) {
-            console.warn(`   ⚠️ Could not check on-chain status for ${asset.identifier.substring(0, 12)}...: ${checkError.message}`);
+            console.warn(
+              `   ⚠️ Could not check on-chain status for ${asset.identifier.substring(0, 12)}...: ${
+                checkError.message
+              }`
+            );
           }
         }
       }
@@ -213,7 +239,12 @@ async function cleanupFailedSwapDelegations(
                 delegatePDA
               );
               if (isDelegatedOnChain) {
-                console.log(`   🔍 Found on-chain delegation NOT in DB: ${asset.identifier.substring(0, 12)}... (Party B)`);
+                console.log(
+                  `   🔍 Found on-chain delegation NOT in DB: ${asset.identifier.substring(
+                    0,
+                    12
+                  )}... (Party B)`
+                );
                 assetsToCheck.push({
                   assetId: asset.identifier,
                   owner: swap.partyB,
@@ -222,7 +253,12 @@ async function cleanupFailedSwapDelegations(
                 });
               }
             } catch (checkError: any) {
-              console.warn(`   ⚠️ Could not check on-chain status for ${asset.identifier.substring(0, 12)}...: ${checkError.message}`);
+              console.warn(
+                `   ⚠️ Could not check on-chain status for ${asset.identifier.substring(
+                  0,
+                  12
+                )}...: ${checkError.message}`
+              );
             }
           }
         }
@@ -236,11 +272,17 @@ async function cleanupFailedSwapDelegations(
 
     const dbCount = assetsToCheck.filter((a) => a.inDb).length;
     const onChainOnlyCount = assetsToCheck.filter((a) => !a.inDb).length;
-    console.log(`   📋 Total assets to revoke: ${assetsToCheck.length} (${dbCount} from DB, ${onChainOnlyCount} on-chain only)`);
+    console.log(
+      `   📋 Total assets to revoke: ${assetsToCheck.length} (${dbCount} from DB, ${onChainOnlyCount} on-chain only)`
+    );
 
     // Revoke all delegations
     for (const asset of assetsToCheck) {
-      console.log(`   🔄 Revoking delegation for ${asset.assetId.substring(0, 12)}... (Party ${asset.party}${asset.inDb ? '' : ', on-chain only'})`);
+      console.log(
+        `   🔄 Revoking delegation for ${asset.assetId.substring(0, 12)}... (Party ${asset.party}${
+          asset.inDb ? '' : ', on-chain only'
+        })`
+      );
 
       // Get the owner's keypair from test wallets
       const ownerKeypair = testWallets.get(asset.owner);
@@ -260,7 +302,9 @@ async function cleanupFailedSwapDelegations(
 
         // Build and send transaction
         const transaction = new Transaction();
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash(
+          'confirmed'
+        );
         transaction.recentBlockhash = blockhash;
         transaction.lastValidBlockHeight = lastValidBlockHeight;
         transaction.feePayer = ownerKeypair.publicKey;
@@ -272,18 +316,27 @@ async function cleanupFailedSwapDelegations(
           preflightCommitment: 'confirmed',
         });
 
-        await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+        await connection.confirmTransaction(
+          { signature, blockhash, lastValidBlockHeight },
+          'confirmed'
+        );
 
-        console.log(`   ✅ Revoked delegation for ${asset.assetId.substring(0, 12)}...: ${signature}`);
+        console.log(
+          `   ✅ Revoked delegation for ${asset.assetId.substring(0, 12)}...: ${signature}`
+        );
         revokedCount++;
       } catch (revokeError: any) {
-        const error = `Failed to revoke ${asset.assetId.substring(0, 12)}...: ${revokeError.message}`;
+        const error = `Failed to revoke ${asset.assetId.substring(0, 12)}...: ${
+          revokeError.message
+        }`;
         console.error(`   ❌ ${error}`);
         errors.push(error);
       }
     }
 
-    console.log(`\n🧹 CLEANUP COMPLETE: ${revokedCount}/${assetsToCheck.length} delegations revoked`);
+    console.log(
+      `\n🧹 CLEANUP COMPLETE: ${revokedCount}/${assetsToCheck.length} delegations revoked`
+    );
 
     return {
       success: errors.length === 0,
@@ -367,15 +420,15 @@ function isCnftProofStaleError(error: any): boolean {
     'Merkle proof verification failed',
     'AssetOwnerMismatch',
     'HashingMismatch',
-    'Custom(6000)',       // AssetOwnerMismatch
-    '{"Custom":6000}',    // JSON format
-    'Custom(6002)',       // HashingMismatch
-    '{"Custom":6002}',    // JSON format
+    'Custom(6000)', // AssetOwnerMismatch
+    '{"Custom":6000}', // JSON format
+    'Custom(6002)', // HashingMismatch
+    '{"Custom":6002}', // JSON format
   ];
 
-  return staleProofIndicators.some(indicator =>
-    message.includes(indicator) ||
-    logs.some((log: string) => log.includes(indicator))
+  return staleProofIndicators.some(
+    (indicator) =>
+      message.includes(indicator) || logs.some((log: string) => log.includes(indicator))
   );
 }
 
@@ -386,7 +439,7 @@ function isCnftProofStaleError(error: any): boolean {
 function requireTestEnvironment(req: Request, res: Response, next: any) {
   // Check: Must have test header (prevents accidental calls)
   const testHeader = req.headers['x-test-execution'];
-  
+
   if (testHeader !== 'true') {
     console.error('🚨 SECURITY: Missing X-Test-Execution header');
     return res.status(403).json({
@@ -395,172 +448,988 @@ function requireTestEnvironment(req: Request, res: Response, next: any) {
       timestamp: new Date().toISOString(),
     });
   }
-  
+
   console.log(`✅ Test environment check passed - executing on ${networkName}`);
   next();
 }
 
 /**
  * POST /api/test/execute-swap
- * 
+ *
  * ⚠️ TEST ONLY - Executes a real atomic swap using private keys from ENV
- * 
+ *
  * Security:
  * - Only works on devnet
  * - Requires X-Test-Execution: true header
  * - Private keys never exposed to frontend
  * - Extensive logging for audit trail
  */
-router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Request, res: Response) => {
-  console.log('\n🧪 TEST SWAP EXECUTION REQUEST');
-  console.log('⏰ Timestamp:', new Date().toISOString());
-  console.log('📍 Network:', process.env.SOLANA_RPC_URL);
-  
-  try {
-    let { serializedTransaction, requireSignatures, offerId, bulkSwapInfo } = req.body;
-    
-    // offerId is optional - used for cNFT proof retry logic
-    if (offerId) {
-      console.log('📋 Offer ID:', offerId, '(will rebuild transaction if proof is stale)');
-    }
-    
-    // ========== BULK SWAP HANDLING ==========
-    // Bulk swaps can use Jito bundles (mainnet) or sequential execution (devnet)
-    if (bulkSwapInfo && bulkSwapInfo.transactions && bulkSwapInfo.transactions.length > 1) {
-      console.log(`\n🚀 BULK SWAP DETECTED: ${bulkSwapInfo.transactions.length} transactions`);
-      console.log(`   Strategy: ${bulkSwapInfo.strategy}`);
-      console.log(`   Requires Jito Bundle: ${bulkSwapInfo.requiresJitoBundle || false}`);
-      
-      // Load keypairs first
-      let makerPrivateKey: string | undefined;
-      let takerPrivateKey: string | undefined;
-      
-      if (isMainnet) {
-        makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
-        takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
-      } else {
-        makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
-        takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+router.post(
+  '/api/test/execute-swap',
+  requireTestEnvironment,
+  async (req: Request, res: Response) => {
+    console.log('\n🧪 TEST SWAP EXECUTION REQUEST');
+    console.log('⏰ Timestamp:', new Date().toISOString());
+    console.log('📍 Network:', process.env.SOLANA_RPC_URL);
+
+    try {
+      let { serializedTransaction, requireSignatures, offerId, bulkSwapInfo } = req.body;
+
+      // offerId is optional - used for cNFT proof retry logic
+      if (offerId) {
+        console.log('📋 Offer ID:', offerId, '(will rebuild transaction if proof is stale)');
       }
-      
-      if (!makerPrivateKey || !takerPrivateKey) {
-        return res.status(500).json({
-          success: false,
-          error: `Test wallet private keys not configured for ${networkName}`,
-          timestamp: new Date().toISOString(),
-        });
-      }
-      
-      const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
-      const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
-      const makerAddress = makerKeypair.publicKey.toBase58();
-      const takerAddress = takerKeypair.publicKey.toBase58();
-      
-      console.log('✅ Keypairs loaded for bulk swap');
-      console.log('   Maker:', makerAddress);
-      console.log('   Taker:', takerAddress);
 
-      // Check if Jito bundle is required (mainnet with requiresJitoBundle flag)
-      // Note: cNFT-to-cNFT swaps are routed to two-phase delegation at accept time,
-      // so they won't have requiresJitoBundle=true. This path is for SPL/Core NFT bundles.
-      if (bulkSwapInfo.requiresJitoBundle && isMainnet) {
-        console.log('\n📦 Using Jito Bundle for atomic execution...');
+      // ========== BULK SWAP HANDLING ==========
+      // Bulk swaps can use Jito bundles (mainnet) or sequential execution (devnet)
+      if (bulkSwapInfo && bulkSwapInfo.transactions && bulkSwapInfo.transactions.length > 1) {
+        console.log(`\n🚀 BULK SWAP DETECTED: ${bulkSwapInfo.transactions.length} transactions`);
+        console.log(`   Strategy: ${bulkSwapInfo.strategy}`);
+        console.log(`   Requires Jito Bundle: ${bulkSwapInfo.requiresJitoBundle || false}`);
 
-        try {
-          // ========== PROACTIVE STALE PROOF VALIDATION ==========
-          // Validate all cNFT proofs BEFORE signing to prevent stale proof errors
-          // This is critical because proofs can become stale during the 5+ second signing window
-          const cnftTransactions = bulkSwapInfo.transactions.filter(
-            (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
-          );
+        // Load keypairs first
+        let makerPrivateKey: string | undefined;
+        let takerPrivateKey: string | undefined;
 
-          if (cnftTransactions.length > 0 && offerId) {
-            console.log(`\n🔍 Proactively validating ${cnftTransactions.length} cNFT proof(s) before submission...`);
+        if (isMainnet) {
+          makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+          takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
+        } else {
+          makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+          takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+        }
 
-            // Create CnftService to validate proofs
-            const cnftService = createCnftService(connection);
+        if (!makerPrivateKey || !takerPrivateKey) {
+          return res.status(500).json({
+            success: false,
+            error: `Test wallet private keys not configured for ${networkName}`,
+            timestamp: new Date().toISOString(),
+          });
+        }
 
-            // Extract asset IDs from cNFT transactions
-            // Note: We extract from tx.assets directly, not from purpose string regex
-            // This handles both single cNFT transfers and batch transfers correctly
-            const assetIds: string[] = [];
-            for (const tx of cnftTransactions) {
-              // Find cNFT assets in both maker and taker assets arrays
-              const makerCnfts = (tx.assets?.makerAssets || []).filter((a: any) =>
-                a.type === 'cnft' || a.type === 'CNFT'
-              );
-              const takerCnfts = (tx.assets?.takerAssets || []).filter((a: any) =>
-                a.type === 'cnft' || a.type === 'CNFT'
+        const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+        const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
+        const makerAddress = makerKeypair.publicKey.toBase58();
+        const takerAddress = takerKeypair.publicKey.toBase58();
+
+        console.log('✅ Keypairs loaded for bulk swap');
+        console.log('   Maker:', makerAddress);
+        console.log('   Taker:', takerAddress);
+
+        // Check if Jito bundle is required (mainnet with requiresJitoBundle flag)
+        // Note: cNFT-to-cNFT swaps are routed to two-phase delegation at accept time,
+        // so they won't have requiresJitoBundle=true. This path is for SPL/Core NFT bundles.
+        if (bulkSwapInfo.requiresJitoBundle && isMainnet) {
+          console.log('\n📦 Using Jito Bundle for atomic execution...');
+
+          try {
+            // ========== PROACTIVE STALE PROOF VALIDATION ==========
+            // Validate all cNFT proofs BEFORE signing to prevent stale proof errors
+            // This is critical because proofs can become stale during the 5+ second signing window
+            const cnftTransactions = bulkSwapInfo.transactions.filter(
+              (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
+            );
+
+            if (cnftTransactions.length > 0 && offerId) {
+              console.log(
+                `\n🔍 Proactively validating ${cnftTransactions.length} cNFT proof(s) before submission...`
               );
 
-              // Add all cNFT asset IDs (supports batch transfers with multiple cNFTs)
-              for (const asset of [...makerCnfts, ...takerCnfts]) {
-                if (asset?.identifier) {
-                  assetIds.push(asset.identifier);
-                }
-              }
-            }
+              // Create CnftService to validate proofs
+              const cnftService = createCnftService(connection);
 
-            // Fallback: If no assets in transaction data, load from offer
-            if (assetIds.length === 0 && offerId) {
-              console.log('   📋 No assets in transaction data, loading from offer...');
-              try {
-                const offer = await offerManager.getOffer(offerId);
-                if (offer) {
-                  // OfferSummary uses offeredAssets/requestedAssets (maker's offered = makerAssets)
-                  for (const asset of (offer.offeredAssets || [])) {
-                    if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
-                      assetIds.push(asset.identifier);
-                    }
-                  }
-                  for (const asset of (offer.requestedAssets || [])) {
-                    if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
-                      assetIds.push(asset.identifier);
-                    }
-                  }
-                  if (assetIds.length > 0) {
-                    console.log(`   ✅ Loaded ${assetIds.length} cNFT asset ID(s) from offer`);
+              // Extract asset IDs from cNFT transactions
+              // Note: We extract from tx.assets directly, not from purpose string regex
+              // This handles both single cNFT transfers and batch transfers correctly
+              const assetIds: string[] = [];
+              for (const tx of cnftTransactions) {
+                // Find cNFT assets in both maker and taker assets arrays
+                const makerCnfts = (tx.assets?.makerAssets || []).filter(
+                  (a: any) => a.type === 'cnft' || a.type === 'CNFT'
+                );
+                const takerCnfts = (tx.assets?.takerAssets || []).filter(
+                  (a: any) => a.type === 'cnft' || a.type === 'CNFT'
+                );
+
+                // Add all cNFT asset IDs (supports batch transfers with multiple cNFTs)
+                for (const asset of [...makerCnfts, ...takerCnfts]) {
+                  if (asset?.identifier) {
+                    assetIds.push(asset.identifier);
                   }
                 }
-              } catch (offerError: any) {
-                console.warn('   ⚠️  Could not load offer for asset IDs:', offerError.message);
               }
-            }
 
-            if (assetIds.length > 0) {
-              // Validate each proof against on-chain root
-              let hasStaleProof = false;
-
-              for (const assetId of assetIds) {
+              // Fallback: If no assets in transaction data, load from offer
+              if (assetIds.length === 0 && offerId) {
+                console.log('   📋 No assets in transaction data, loading from offer...');
                 try {
-                  // Get cached proof root
-                  const cachedProof = await cnftService.getCnftProof(assetId, false, 0);
-                  if (cachedProof) {
-                    const validation = await cnftService.validateProofRoot(assetId, cachedProof.root);
-
-                    if (!validation.isValid) {
-                      console.warn(`   ⚠️  Stale proof detected for asset ${assetId.substring(0, 12)}...`);
-                      hasStaleProof = true;
-                    } else {
-                      console.log(`   ✅ Proof valid for asset ${assetId.substring(0, 12)}...`);
+                  const offer = await offerManager.getOffer(offerId);
+                  if (offer) {
+                    // OfferSummary uses offeredAssets/requestedAssets (maker's offered = makerAssets)
+                    for (const asset of offer.offeredAssets || []) {
+                      if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                        assetIds.push(asset.identifier);
+                      }
+                    }
+                    for (const asset of offer.requestedAssets || []) {
+                      if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                        assetIds.push(asset.identifier);
+                      }
+                    }
+                    if (assetIds.length > 0) {
+                      console.log(`   ✅ Loaded ${assetIds.length} cNFT asset ID(s) from offer`);
                     }
                   }
-                } catch (validationError: any) {
-                  console.warn(`   ⚠️  Could not validate proof for ${assetId.substring(0, 12)}...:`, validationError.message);
+                } catch (offerError: any) {
+                  console.warn('   ⚠️  Could not load offer for asset IDs:', offerError.message);
                 }
               }
 
-              if (hasStaleProof) {
-                console.log('\n🔄 Stale proofs detected! Rebuilding transactions with fresh proofs...');
+              if (assetIds.length > 0) {
+                // Validate each proof against on-chain root
+                let hasStaleProof = false;
 
-                // Rebuild all transactions with fresh proofs
+                for (const assetId of assetIds) {
+                  try {
+                    // Get cached proof root
+                    const cachedProof = await cnftService.getCnftProof(assetId, false, 0);
+                    if (cachedProof) {
+                      const validation = await cnftService.validateProofRoot(
+                        assetId,
+                        cachedProof.root
+                      );
+
+                      if (!validation.isValid) {
+                        console.warn(
+                          `   ⚠️  Stale proof detected for asset ${assetId.substring(0, 12)}...`
+                        );
+                        hasStaleProof = true;
+                      } else {
+                        console.log(`   ✅ Proof valid for asset ${assetId.substring(0, 12)}...`);
+                      }
+                    }
+                  } catch (validationError: any) {
+                    console.warn(
+                      `   ⚠️  Could not validate proof for ${assetId.substring(0, 12)}...:`,
+                      validationError.message
+                    );
+                  }
+                }
+
+                if (hasStaleProof) {
+                  console.log(
+                    '\n🔄 Stale proofs detected! Rebuilding transactions with fresh proofs...'
+                  );
+
+                  // Rebuild all transactions with fresh proofs
+                  const rebuildResult = await offerManager.rebuildTransaction(offerId);
+
+                  if (rebuildResult.transactionGroup?.transactions) {
+                    console.log(
+                      `   ✅ Transactions rebuilt (${rebuildResult.transactionGroup.transactions.length} total)`
+                    );
+
+                    // Replace bulkSwapInfo.transactions with fresh transactions (include cNFT JIT metadata)
+                    bulkSwapInfo.transactions = rebuildResult.transactionGroup.transactions.map(
+                      (tx: any) => ({
+                        purpose: tx.purpose,
+                        assets: tx.assets,
+                        serialized: tx.transaction?.serializedTransaction,
+                        requiredSigners: tx.transaction?.requiredSigners,
+                        // cNFT JIT rebuild metadata
+                        cnftAssetId: tx.cnftAssetId,
+                        cnftFromWallet: tx.cnftFromWallet,
+                        cnftToWallet: tx.cnftToWallet,
+                      })
+                    );
+
+                    console.log('   ✅ Using fresh transactions for bundle submission');
+                  } else {
+                    console.error('   ❌ Rebuild did not return valid transactions');
+                    return res.status(500).json({
+                      success: false,
+                      error: 'Failed to rebuild transactions with fresh proofs',
+                      errorCode: 'STALE_PROOF_REBUILD_FAILED',
+                      timestamp: new Date().toISOString(),
+                    });
+                  }
+                } else {
+                  console.log('   ✅ All proofs are fresh, proceeding with original transactions');
+                }
+              }
+            }
+            // ========== END PROACTIVE VALIDATION ==========
+
+            // ========== INJECT JITO TIP IF MISSING ==========
+            // Transactions built on devnet won't have a JITO tip.
+            // When we force JITO mode for bulk swaps, we need to add the tip.
+            // JITO requires at least one transaction to write-lock an official tip account.
+            // Official JITO tip accounts - https://jito-labs.gitbook.io/mev/searcher-resources/tip-accounts
+            const JITO_TIP_ACCOUNTS = new Set([
+              'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+              'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+              'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe', // Corrected address
+              '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+              '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+              'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+              'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+              'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+            ]);
+            // JITO tip amount - configurable via env var for congestion periods
+            // Default: 1,000,000 lamports (0.001 SOL) - reasonable for normal conditions
+            const JITO_TIP_AMOUNT = parseInt(process.env.JITO_TIP_LAMPORTS || '1000000', 10);
+            const SOLANA_TX_SIZE_LIMIT = 1232; // Solana transaction size limit in bytes
+
+            // Check last transaction for JITO tip
+            const lastTxIndex = bulkSwapInfo.transactions.length - 1;
+            const lastTxInfo = bulkSwapInfo.transactions[lastTxIndex];
+
+            if (lastTxInfo?.serialized) {
+              const lastTxBuffer = Buffer.from(lastTxInfo.serialized, 'base64');
+              const isVersionedLastTx = (lastTxBuffer[0] & 0x80) !== 0;
+
+              if (!isVersionedLastTx) {
+                const lastTx = Transaction.from(lastTxBuffer);
+
+                // Check if any instruction writes to a JITO tip account
+                let hasTip = false;
+                for (const ix of lastTx.instructions) {
+                  if (ix.programId.equals(SystemProgram.programId)) {
+                    // Check writable accounts for JITO tip accounts
+                    for (const key of ix.keys) {
+                      if (key.isWritable && JITO_TIP_ACCOUNTS.has(key.pubkey.toBase58())) {
+                        hasTip = true;
+                        console.log(
+                          `   ✅ JITO tip already present (to ${key.pubkey
+                            .toBase58()
+                            .substring(0, 8)}...)`
+                        );
+                        break;
+                      }
+                    }
+                  }
+                  if (hasTip) break;
+                }
+
+                if (!hasTip) {
+                  console.log(
+                    '\n💰 Adding JITO tip to last transaction (not present in pre-built TX)...'
+                  );
+
+                  // Select a random tip account for load balancing
+                  const tipAccountsArray = Array.from(JITO_TIP_ACCOUNTS);
+                  const randomTipAccount = new PublicKey(
+                    tipAccountsArray[Math.floor(Math.random() * tipAccountsArray.length)]
+                  );
+
+                  // Add tip instruction
+                  lastTx.add(
+                    SystemProgram.transfer({
+                      fromPubkey: platformAuthorityKeypair.publicKey,
+                      toPubkey: randomTipAccount,
+                      lamports: JITO_TIP_AMOUNT,
+                    })
+                  );
+
+                  const tipSol = (JITO_TIP_AMOUNT / 1_000_000_000).toFixed(4);
+                  console.log(
+                    `   💸 Added ${JITO_TIP_AMOUNT} lamports (${tipSol} SOL) tip to ${randomTipAccount
+                      .toBase58()
+                      .substring(0, 12)}...`
+                  );
+
+                  // Re-sign with platform authority (transaction message changed)
+                  // IMPORTANT: Adding an instruction changes the transaction message hash,
+                  // which invalidates ALL existing signatures. We must clear them and re-sign.
+                  // This is different from partialSign() elsewhere which preserves existing sigs.
+                  lastTx.signatures = lastTx.signatures.map((sig) => ({
+                    publicKey: sig.publicKey,
+                    signature: null, // Intentionally clear - message changed, old sigs invalid
+                  }));
+                  lastTx.partialSign(platformAuthorityKeypair);
+
+                  // Update the serialized transaction
+                  const newSerializedTx = lastTx.serialize({ requireAllSignatures: false });
+
+                  // Validate transaction size after adding tip instruction
+                  if (newSerializedTx.length > SOLANA_TX_SIZE_LIMIT) {
+                    console.error(
+                      `   ❌ Transaction size ${newSerializedTx.length} exceeds limit ${SOLANA_TX_SIZE_LIMIT} after adding JITO tip`
+                    );
+                    return res.status(400).json({
+                      success: false,
+                      error:
+                        `Transaction exceeds size limit (${newSerializedTx.length}/${SOLANA_TX_SIZE_LIMIT} bytes) after adding JITO tip. ` +
+                        'The cNFT Merkle proof may be too large. Consider using two-phase delegation instead.',
+                      errorCode: 'TX_SIZE_EXCEEDED_AFTER_TIP',
+                      txSize: newSerializedTx.length,
+                      limit: SOLANA_TX_SIZE_LIMIT,
+                      timestamp: new Date().toISOString(),
+                    });
+                  }
+
+                  bulkSwapInfo.transactions[lastTxIndex].serialized =
+                    newSerializedTx.toString('base64');
+                  console.log(
+                    `   ✅ Last transaction updated with JITO tip (size: ${newSerializedTx.length}/${SOLANA_TX_SIZE_LIMIT} bytes)`
+                  );
+                }
+              } else {
+                // Versioned transaction - validate that it already contains a JITO tip
+                // We cannot easily inject tips into versioned transactions due to ALT complexity,
+                // so we verify the tip exists and fail if not.
+                console.log('   🔍 Checking versioned transaction for JITO tip...');
+
+                const versionedTx = VersionedTransaction.deserialize(lastTxBuffer);
+                const message = versionedTx.message;
+
+                // Collect all account keys (static + any from address lookup tables)
+                const allAccountKeys: string[] = [];
+
+                // Add static account keys
+                for (const key of message.staticAccountKeys) {
+                  allAccountKeys.push(key.toBase58());
+                }
+
+                // For V0 messages, also check address lookup table entries
+                // The loaded addresses would be resolved at runtime, but we can check
+                // if the transaction is configured to use ALTs that might contain tip accounts
+                if ('addressTableLookups' in message && message.addressTableLookups) {
+                  // Note: We can't resolve ALT addresses without fetching the ALT account data.
+                  // For now, we only check static keys. If using ALTs, the tip should be in static keys.
+                  console.log(
+                    `   📋 Transaction has ${message.addressTableLookups.length} address lookup table(s)`
+                  );
+                }
+
+                // Check if any static account key is a JITO tip account
+                let versionedHasTip = false;
+                for (const accountKey of allAccountKeys) {
+                  if (JITO_TIP_ACCOUNTS.has(accountKey)) {
+                    versionedHasTip = true;
+                    console.log(
+                      `   ✅ JITO tip account found in versioned TX: ${accountKey.substring(
+                        0,
+                        12
+                      )}...`
+                    );
+                    break;
+                  }
+                }
+
+                if (!versionedHasTip) {
+                  console.error('   ❌ Versioned transaction missing JITO tip account');
+                  return res.status(400).json({
+                    success: false,
+                    error:
+                      'JITO bundle requires a tip but versioned transaction has no tip account. ' +
+                      'The transaction was likely built on devnet. Please recreate the offer on mainnet.',
+                    errorCode: 'VERSIONED_TX_MISSING_JITO_TIP',
+                    suggestion:
+                      'Recreate the offer on mainnet to include JITO tips in transactions.',
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+              }
+            }
+            // ========== END INJECT JITO TIP ==========
+
+            // Collect and sign all transactions
+            const signedTransactions: string[] = [];
+
+            for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
+              const txInfo = bulkSwapInfo.transactions[i];
+              console.log(
+                `\n📝 Signing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`
+              );
+
+              if (!txInfo.serialized) {
+                return res.status(400).json({
+                  success: false,
+                  error: `Transaction ${i + 1} missing serialized data`,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+
+              const txBuffer = Buffer.from(txInfo.serialized, 'base64');
+              const isVersioned = (txBuffer[0] & 0x80) !== 0;
+
+              // Determine signers for THIS specific transaction
+              const txRequiredSigners = txInfo.requiredSigners || requireSignatures || [];
+              const signers: Keypair[] = [];
+
+              if (txRequiredSigners.includes(makerAddress)) {
+                signers.push(makerKeypair);
+                console.log('   🔐 Adding Maker signature');
+              }
+
+              if (txRequiredSigners.includes(takerAddress)) {
+                signers.push(takerKeypair);
+                console.log('   🔐 Adding Taker signature');
+              }
+
+              // Sign the transaction
+              let signedTxBuffer: Buffer;
+              if (isVersioned) {
+                const versionedTx = VersionedTransaction.deserialize(txBuffer);
+                if (signers.length > 0) {
+                  versionedTx.sign(signers);
+                }
+                signedTxBuffer = Buffer.from(versionedTx.serialize());
+              } else {
+                const tx = Transaction.from(txBuffer);
+
+                // Debug: Log transaction structure for troubleshooting
+                if (i === 0) {
+                  // Extract account keys from instructions to see if nonce account is included
+                  const accountKeys = new Set<string>();
+                  tx.instructions.forEach((ix) => {
+                    ix.keys.forEach((key) => {
+                      accountKeys.add(key.pubkey.toBase58());
+                    });
+                  });
+
+                  // Check if this is a durable nonce transaction by looking for nonce advance instruction
+                  // SystemProgram.nonceAdvance() creates an instruction with:
+                  // - programId = SystemProgram.programId
+                  // - data = [4, 0, 0, 0] (instruction discriminator for nonceAdvance)
+                  const hasNonceAdvance = tx.instructions.some((ix) => {
+                    if (!ix.programId.equals(SystemProgram.programId)) return false;
+                    if (ix.data.length !== 4) return false;
+                    // SystemProgram instruction 4 = nonceAdvance
+                    // Data format: [instruction_discriminator (4 bytes)]
+                    return (
+                      ix.data[0] === 4 && ix.data[1] === 0 && ix.data[2] === 0 && ix.data[3] === 0
+                    );
+                  });
+
+                  // Note: We can't reliably detect durable nonces by blockhash length alone
+                  // Both regular blockhashes and nonce values are 32-byte base58-encoded (43-44 chars)
+                  // The presence of a nonce advance instruction is the definitive indicator
+
+                  console.log(`   🔍 TX ${i + 1} structure:`, {
+                    instructionCount: tx.instructions.length,
+                    signatureCount: tx.signatures.length,
+                    feePayer: tx.feePayer?.toBase58(),
+                    recentBlockhash: tx.recentBlockhash?.substring(0, 16) + '...',
+                    recentBlockhashLength: tx.recentBlockhash?.length,
+                    isDurableNonce: hasNonceAdvance, // Use instruction check, not length
+                    hasNonceAdvance: hasNonceAdvance,
+                    firstInstructionProgram: tx.instructions[0]?.programId?.toBase58(),
+                    firstInstructionDataLength: tx.instructions[0]?.data.length,
+                    firstInstructionData: tx.instructions[0]?.data.slice(0, 4).toString('hex'),
+                    accountKeysCount: accountKeys.size,
+                    accountKeys: Array.from(accountKeys).slice(0, 5), // First 5 account keys
+                  });
+                }
+
+                if (signers.length > 0) {
+                  // CRITICAL: Use partialSign() to preserve platform authority signature
+                  // Transaction already has platform authority signature from TransactionGroupBuilder
+                  // partialSign() adds maker/taker signatures without overwriting existing signatures
+                  tx.partialSign(...signers);
+                }
+
+                // Verify all signatures are present before serializing
+                const validSignatures = tx.signatures.filter(
+                  (sig) =>
+                    sig &&
+                    sig.signature &&
+                    sig.signature.length === 64 &&
+                    !sig.signature.every((byte) => byte === 0)
+                );
+                if (validSignatures.length !== tx.signatures.length) {
+                  console.warn(
+                    `   ⚠️ TX ${i + 1} has ${tx.signatures.length} signature slots but only ${
+                      validSignatures.length
+                    } are valid`
+                  );
+                }
+
+                // For durable nonce transactions, we need to serialize carefully
+                // Jito requires fully signed transactions, but requireAllSignatures: true
+                // might cause issues with nonce account validation
+                // Try with requireAllSignatures: true first, fallback to false if it fails
+                try {
+                  // First try with requireAllSignatures: true (preferred for Jito)
+                  signedTxBuffer = tx.serialize({ requireAllSignatures: true });
+                  if (i === 0) {
+                    console.log(`   ✅ TX ${i + 1} serialized with requireAllSignatures: true`);
+                  }
+                } catch (serializeError: any) {
+                  // If that fails, try without the requirement (for durable nonce transactions)
+                  console.warn(
+                    `   ⚠️ TX ${
+                      i + 1
+                    } serialization with requireAllSignatures: true failed, trying without:`,
+                    serializeError.message
+                  );
+                  try {
+                    signedTxBuffer = tx.serialize({ requireAllSignatures: false });
+                    if (i === 0) {
+                      console.log(
+                        `   ✅ TX ${
+                          i + 1
+                        } serialized with requireAllSignatures: false (durable nonce transaction)`
+                      );
+                    }
+                  } catch (fallbackError: any) {
+                    console.error(
+                      `   ❌ TX ${i + 1} serialization failed completely:`,
+                      fallbackError.message
+                    );
+                    return res.status(400).json({
+                      success: false,
+                      error: `Transaction ${i + 1} cannot be serialized: ${
+                        fallbackError.message
+                      }. Ensure all required signers have signed.`,
+                      timestamp: new Date().toISOString(),
+                    });
+                  }
+                }
+              }
+
+              // Convert to base64 for Jito bundle submission
+              signedTransactions.push(signedTxBuffer.toString('base64'));
+              console.log(`   ✅ TX ${i + 1} signed`);
+            }
+
+            // ========== PRE-FLIGHT SIMULATION ==========
+            // Simulate each transaction before Jito submission to catch stale proofs early.
+            // This is more reliable than discovering errors after bundle submission.
+            //
+            // IMPORTANT: Errors 6000/6002 can be EITHER stale proofs OR structural bugs.
+            // - Stale proof: On-chain state changed since proof was generated (recoverable via rebuild)
+            // - Structural bug: Wrong data passed in the transaction (NOT recoverable)
+            //
+            // Detection: If the SAME error persists after rebuilding, it's structural (abort immediately).
+            console.log(
+              `\n🔍 Pre-flight simulation of ${signedTransactions.length} transactions...`
+            );
+
+            let hasStaleProofInBundle = false;
+            let hasNonRecoverableError = false;
+            const simulationErrors: string[] = [];
+            const MAX_SIMULATION_RETRIES = 3;
+            let simulationAttempt = 0;
+
+            // Track error codes per transaction to detect structural bugs (same error after rebuild)
+            // Key: transaction index, Value: Set of error codes seen in previous attempts
+            const previousErrorCodes: Map<number, Set<string>> = new Map();
+
+            while (simulationAttempt < MAX_SIMULATION_RETRIES && !hasNonRecoverableError) {
+              simulationAttempt++;
+              hasStaleProofInBundle = false;
+              let allSimulationsPassed = true;
+
+              for (let simIdx = 0; simIdx < signedTransactions.length; simIdx++) {
+                try {
+                  const txBuffer = Buffer.from(signedTransactions[simIdx], 'base64');
+                  const isVersionedSim = (txBuffer[0] & 0x80) !== 0;
+
+                  let simResult: any;
+                  if (isVersionedSim) {
+                    const vTx = VersionedTransaction.deserialize(txBuffer);
+                    simResult = await connection.simulateTransaction(vTx, {
+                      sigVerify: false,
+                      commitment: 'confirmed',
+                    });
+                  } else {
+                    const tx = Transaction.from(txBuffer);
+                    // Legacy transaction: use array-based overload
+                    simResult = await connection.simulateTransaction(tx);
+                  }
+
+                  if (simResult.value.err) {
+                    const errStr = JSON.stringify(simResult.value.err);
+                    console.log(`   ⚠️ TX ${simIdx + 1} simulation failed: ${errStr}`);
+                    // Log simulation logs for debugging
+                    if (simResult.value.logs && simResult.value.logs.length > 0) {
+                      console.log(`   📋 TX ${simIdx + 1} simulation logs:`);
+                      simResult.value.logs
+                        .slice(-10)
+                        .forEach((log: string) => console.log(`      ${log}`));
+                    }
+                    allSimulationsPassed = false;
+
+                    // Extract error codes from error string
+                    const has6000 = errStr.includes('6000') || errStr.includes('Custom(6000)');
+                    const has6002 = errStr.includes('6002') || errStr.includes('Custom(6002)');
+                    const has6001 = errStr.includes('6001') || errStr.includes('Custom(6001)');
+
+                    // Check logs to determine error source for 6001
+                    // IMPORTANT: Error 6001 has different meanings in different programs:
+                    // - spl-account-compression: 6001 = ConcurrentMerkleTreeError (stale proof, RECOVERABLE)
+                    // - mpl-bubblegum: 6001 = PublicKeyMismatch (wrong account, NOT recoverable)
+                    const logsStr = (simResult.value.logs || []).join(' ');
+                    const isAccountCompressionError =
+                      logsStr.includes('account-compression') ||
+                      logsStr.includes('ConcurrentMerkleTreeError') ||
+                      logsStr.includes('concurrent_tree_wrapper');
+                    const isBubblegumError =
+                      logsStr.includes('bubblegum') || logsStr.includes('PublicKeyMismatch');
+
+                    // Handle error 6001 based on which program emitted it
+                    if (has6001) {
+                      if (isAccountCompressionError && !isBubblegumError) {
+                        // spl-account-compression 6001 = ConcurrentMerkleTreeError (stale proof)
+                        // This IS recoverable via proof rebuild
+                        hasStaleProofInBundle = true;
+                        if (!previousErrorCodes.has(simIdx)) {
+                          previousErrorCodes.set(simIdx, new Set());
+                        }
+                        previousErrorCodes.get(simIdx)!.add('6001-compression');
+                        console.log(
+                          `   🔄 ConcurrentMerkleTreeError (6001) in TX ${
+                            simIdx + 1
+                          } - stale proof, will rebuild...`
+                        );
+                        continue;
+                      } else {
+                        // mpl-bubblegum 6001 = PublicKeyMismatch (structural bug)
+                        hasNonRecoverableError = true;
+                        simulationErrors.push(
+                          `TX ${
+                            simIdx + 1
+                          }: ${errStr} (PublicKeyMismatch - structural bug, wrong account passed)`
+                        );
+                        console.error(
+                          `   ❌ TX ${
+                            simIdx + 1
+                          } has PublicKeyMismatch (6001) - structural bug, aborting`
+                        );
+                        continue;
+                      }
+                    }
+
+                    // Check if this error code was seen in a previous attempt (after rebuild)
+                    // If so, it's a structural bug, not a stale proof
+                    const prevCodes = previousErrorCodes.get(simIdx) || new Set();
+                    const currentCodes: string[] = [];
+                    if (has6000) currentCodes.push('6000');
+                    if (has6002) currentCodes.push('6002');
+
+                    const isRepeatedError = currentCodes.some((code) => prevCodes.has(code));
+                    if (isRepeatedError && simulationAttempt > 1) {
+                      // Same error after rebuild = structural bug (wrong data passed)
+                      hasNonRecoverableError = true;
+                      const repeatedCodes = currentCodes.filter((c) => prevCodes.has(c)).join(', ');
+                      simulationErrors.push(
+                        `TX ${
+                          simIdx + 1
+                        }: ${errStr} (Error ${repeatedCodes} persisted after rebuild - structural bug, not stale proof)`
+                      );
+                      console.error(
+                        `   ❌ TX ${
+                          simIdx + 1
+                        } has error ${repeatedCodes} AGAIN after rebuild - structural bug (wrong data passed), aborting`
+                      );
+                      continue;
+                    }
+
+                    // First occurrence of 6000/6002 - could be stale proof, try rebuild
+                    if (has6000 || has6002) {
+                      hasStaleProofInBundle = true;
+                      // Track this error code for future attempts
+                      if (!previousErrorCodes.has(simIdx)) {
+                        previousErrorCodes.set(simIdx, new Set());
+                      }
+                      currentCodes.forEach((code) => previousErrorCodes.get(simIdx)!.add(code));
+                      console.log(
+                        `   🔄 Potential stale proof in TX ${simIdx + 1} (${currentCodes.join(
+                          ', '
+                        )}), will rebuild...`
+                      );
+                    } else {
+                      // Non-stale-proof error - not recoverable, abort
+                      hasNonRecoverableError = true;
+                      simulationErrors.push(`TX ${simIdx + 1}: ${errStr}`);
+                      console.error(
+                        `   ❌ TX ${simIdx + 1} has non-recoverable simulation error: ${errStr}`
+                      );
+                    }
+                  } else {
+                    console.log(`   ✅ TX ${simIdx + 1} simulation passed`);
+                  }
+                } catch (simErr: any) {
+                  console.error(`   ❌ TX ${simIdx + 1} simulation exception: ${simErr.message}`);
+                  allSimulationsPassed = false;
+                  hasNonRecoverableError = true;
+                  simulationErrors.push(`TX ${simIdx + 1}: ${simErr.message}`);
+                }
+              }
+
+              // If we have non-recoverable errors, abort immediately
+              if (hasNonRecoverableError) {
+                console.error(`❌ Pre-flight simulation failed with non-recoverable errors`);
+                break;
+              }
+
+              if (allSimulationsPassed) {
+                console.log(
+                  `✅ All ${signedTransactions.length} simulations passed on attempt ${simulationAttempt}`
+                );
+                break;
+              }
+
+              // Only rebuild if we have potential stale proofs and more attempts left
+              // NOTE: If rebuild doesn't fix it, next simulation will detect it as structural bug
+              if (hasStaleProofInBundle && simulationAttempt < MAX_SIMULATION_RETRIES && offerId) {
+                console.log(
+                  `\n🔄 Potential stale proofs detected, rebuilding bundle (attempt ${
+                    simulationAttempt + 1
+                  }/${MAX_SIMULATION_RETRIES})...`
+                );
+                console.log(
+                  `   ℹ️  If error persists after rebuild, it will be flagged as structural bug (wrong data passed)`
+                );
+
+                // Clear proof cache and rebuild
+                cnftService.clearAllCachedProofs();
                 const rebuildResult = await offerManager.rebuildTransaction(offerId);
 
                 if (rebuildResult.transactionGroup?.transactions) {
-                  console.log(`   ✅ Transactions rebuilt (${rebuildResult.transactionGroup.transactions.length} total)`);
+                  // Re-sign and serialize all transactions
+                  signedTransactions.length = 0; // Clear array
 
-                  // Replace bulkSwapInfo.transactions with fresh transactions (include cNFT JIT metadata)
-                  bulkSwapInfo.transactions = rebuildResult.transactionGroup.transactions.map((tx: any) => ({
+                  for (
+                    let rIdx = 0;
+                    rIdx < rebuildResult.transactionGroup.transactions.length;
+                    rIdx++
+                  ) {
+                    const rtxInfo = rebuildResult.transactionGroup.transactions[rIdx];
+                    if (!rtxInfo.transaction?.serializedTransaction) continue;
+
+                    const rtxBuffer = Buffer.from(
+                      rtxInfo.transaction.serializedTransaction,
+                      'base64'
+                    );
+                    const rtx = Transaction.from(rtxBuffer);
+
+                    // Re-sign with appropriate signers
+                    const rtxSigners = rtxInfo.transaction.requiredSigners || [];
+                    if (rtxSigners.includes(makerAddress)) rtx.partialSign(makerKeypair);
+                    if (rtxSigners.includes(takerAddress)) rtx.partialSign(takerKeypair);
+
+                    signedTransactions.push(
+                      rtx.serialize({ requireAllSignatures: false }).toString('base64')
+                    );
+                  }
+
+                  console.log(
+                    `   ✅ Rebuilt and re-signed ${signedTransactions.length} transactions`
+                  );
+                } else {
+                  console.error(`   ❌ Rebuild failed, aborting`);
+                  hasNonRecoverableError = true;
+                  simulationErrors.push('Transaction rebuild failed');
+                  break;
+                }
+              }
+            }
+
+            // Abort if simulation failed with non-recoverable errors
+            if (hasNonRecoverableError) {
+              return res.status(400).json({
+                success: false,
+                error: `Pre-flight simulation failed: ${simulationErrors.join('; ')}`,
+                errorCode: 'SIMULATION_FAILED',
+                simulationErrors,
+                timestamp: new Date().toISOString(),
+              });
+            }
+
+            // Also abort if we exhausted retries without all simulations passing
+            // This should rarely happen since structural bugs are detected on second attempt
+            if (hasStaleProofInBundle && simulationAttempt >= MAX_SIMULATION_RETRIES) {
+              console.error(
+                `❌ Exhausted ${MAX_SIMULATION_RETRIES} simulation retries, errors persist`
+              );
+              return res.status(400).json({
+                success: false,
+                error:
+                  `Pre-flight simulation failed after ${MAX_SIMULATION_RETRIES} attempts. ` +
+                  `This may indicate on-chain state is actively changing or a structural bug in transaction construction.`,
+                errorCode: 'STALE_PROOF_EXHAUSTED',
+                simulationErrors:
+                  simulationErrors.length > 0
+                    ? simulationErrors
+                    : ['Errors persisted after max retries'],
+                timestamp: new Date().toISOString(),
+              });
+            }
+            // ========== END PRE-FLIGHT SIMULATION ==========
+
+            // Submit bundle to Jito
+            console.log(
+              `\n🚀 Submitting ${signedTransactions.length} transactions as Jito bundle...`
+            );
+            const escrowProgramService = getEscrowProgramService();
+
+            const bundleResult = await escrowProgramService.sendBundleViaJito(signedTransactions, {
+              skipSimulation: true, // We already simulated above
+              description: `Bulk swap: ${bulkSwapInfo.strategy}`,
+            });
+
+            if (!bundleResult.success || !bundleResult.bundleId) {
+              return res.status(500).json({
+                success: false,
+                error: `Jito bundle submission failed: ${bundleResult.error || 'Unknown error'}`,
+                timestamp: new Date().toISOString(),
+              });
+            }
+
+            const bundleId = bundleResult.bundleId;
+            console.log(`✅ Bundle submitted to Jito: ${bundleId}`);
+
+            // Wait for bundle confirmation
+            console.log('⏳ Waiting for bundle confirmation...');
+            const confirmation = await escrowProgramService.waitForBundleConfirmation(
+              bundleId,
+              60, // 60s timeout for mainnet
+              bundleResult.signatures
+            );
+
+            if (!confirmation.confirmed) {
+              return res.status(500).json({
+                success: false,
+                error: `Jito bundle ${confirmation.status}: ${
+                  confirmation.error || 'Bundle did not land'
+                }`,
+                bundleId,
+                bundleStatus: confirmation.status,
+                timestamp: new Date().toISOString(),
+              });
+            }
+
+            console.log(`✅ Bundle landed in slot ${confirmation.slot}`);
+
+            // Get the first signature from the bundle for display
+            const primarySignature = bundleResult.signatures?.[0];
+
+            return res.json({
+              success: true,
+              data: {
+                bundleId,
+                bundleStatus: confirmation.status,
+                slot: confirmation.slot,
+                network: networkName,
+                isBulkSwap: true,
+                transactionCount: bulkSwapInfo.transactions.length,
+                signatures: bundleResult.signatures, // Include all transaction signatures
+                signature: primarySignature, // Primary signature for backwards compatibility
+              },
+              timestamp: new Date().toISOString(),
+            });
+          } catch (bundleError: any) {
+            console.error('❌ Jito bundle error:', bundleError);
+            return res.status(500).json({
+              success: false,
+              error: `Jito bundle execution failed: ${bundleError.message || 'Unknown error'}`,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+
+        // Fallback: Execute each transaction sequentially (for devnet or when Jito not required)
+        console.log('\n📦 Executing transactions sequentially...');
+
+        // ========== PROACTIVE STALE PROOF VALIDATION FOR SEQUENTIAL EXECUTION ==========
+        // Validate all cNFT proofs BEFORE execution to prevent stale proof errors
+        const cnftTransactionsSeq = bulkSwapInfo.transactions.filter(
+          (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
+        );
+
+        if (cnftTransactionsSeq.length > 0 && offerId) {
+          console.log(
+            `\n🔍 Proactively validating ${cnftTransactionsSeq.length} cNFT proof(s) before sequential execution...`
+          );
+
+          // Extract asset IDs from cNFT transactions
+          const assetIdsSeq: string[] = [];
+          for (const tx of cnftTransactionsSeq) {
+            const makerCnfts = (tx.assets?.makerAssets || []).filter(
+              (a: any) => a.type === 'cnft' || a.type === 'CNFT'
+            );
+            const takerCnfts = (tx.assets?.takerAssets || []).filter(
+              (a: any) => a.type === 'cnft' || a.type === 'CNFT'
+            );
+            for (const asset of [...makerCnfts, ...takerCnfts]) {
+              if (asset?.identifier) {
+                assetIdsSeq.push(asset.identifier);
+              }
+            }
+          }
+
+          // Fallback: If no assets in transaction data, load from offer
+          if (assetIdsSeq.length === 0 && offerId) {
+            console.log('   📋 No assets in transaction data, loading from offer...');
+            try {
+              const offer = await offerManager.getOffer(offerId);
+              if (offer) {
+                // OfferSummary uses offeredAssets/requestedAssets (maker's offered = makerAssets)
+                for (const asset of offer.offeredAssets || []) {
+                  if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                    assetIdsSeq.push(asset.identifier);
+                  }
+                }
+                for (const asset of offer.requestedAssets || []) {
+                  if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                    assetIdsSeq.push(asset.identifier);
+                  }
+                }
+                if (assetIdsSeq.length > 0) {
+                  console.log(`   ✅ Loaded ${assetIdsSeq.length} cNFT asset ID(s) from offer`);
+                }
+              }
+            } catch (offerError: any) {
+              console.warn('   ⚠️  Could not load offer for asset IDs:', offerError.message);
+            }
+          }
+
+          if (assetIdsSeq.length > 0) {
+            let hasStaleProofSeq = false;
+
+            for (const assetId of assetIdsSeq) {
+              try {
+                const cachedProof = await cnftService.getCnftProof(assetId, false, 0);
+                if (cachedProof) {
+                  const validation = await cnftService.validateProofRoot(assetId, cachedProof.root);
+
+                  if (!validation.isValid) {
+                    console.warn(
+                      `   ⚠️  Stale proof detected for asset ${assetId.substring(0, 12)}...`
+                    );
+                    hasStaleProofSeq = true;
+                  } else {
+                    console.log(`   ✅ Proof valid for asset ${assetId.substring(0, 12)}...`);
+                  }
+                }
+              } catch (validationError: any) {
+                console.warn(
+                  `   ⚠️  Could not validate proof for ${assetId.substring(0, 12)}...:`,
+                  validationError.message
+                );
+              }
+            }
+
+            if (hasStaleProofSeq) {
+              console.log(
+                '\n🔄 Stale proofs detected! Rebuilding transactions with fresh proofs...'
+              );
+
+              // Clear proof cache and rebuild
+              cnftService.clearAllCachedProofs();
+              const rebuildResult = await offerManager.rebuildTransaction(offerId);
+
+              if (rebuildResult.transactionGroup?.transactions) {
+                console.log(
+                  `   ✅ Transactions rebuilt (${rebuildResult.transactionGroup.transactions.length} total)`
+                );
+
+                // Replace bulkSwapInfo.transactions with fresh transactions (include cNFT JIT metadata)
+                bulkSwapInfo.transactions = rebuildResult.transactionGroup.transactions.map(
+                  (tx: any) => ({
                     purpose: tx.purpose,
                     assets: tx.assets,
                     serialized: tx.transaction?.serializedTransaction,
@@ -569,995 +1438,655 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                     cnftAssetId: tx.cnftAssetId,
                     cnftFromWallet: tx.cnftFromWallet,
                     cnftToWallet: tx.cnftToWallet,
-                  }));
-
-                  console.log('   ✅ Using fresh transactions for bundle submission');
-                } else {
-                  console.error('   ❌ Rebuild did not return valid transactions');
-                  return res.status(500).json({
-                    success: false,
-                    error: 'Failed to rebuild transactions with fresh proofs',
-                    errorCode: 'STALE_PROOF_REBUILD_FAILED',
-                    timestamp: new Date().toISOString(),
-                  });
-                }
-              } else {
-                console.log('   ✅ All proofs are fresh, proceeding with original transactions');
-              }
-            }
-          }
-          // ========== END PROACTIVE VALIDATION ==========
-
-          // ========== INJECT JITO TIP IF MISSING ==========
-          // Transactions built on devnet won't have a JITO tip.
-          // When we force JITO mode for bulk swaps, we need to add the tip.
-          // JITO requires at least one transaction to write-lock an official tip account.
-          // Official JITO tip accounts - https://jito-labs.gitbook.io/mev/searcher-resources/tip-accounts
-          const JITO_TIP_ACCOUNTS = new Set([
-            'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
-            'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
-            'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe', // Corrected address
-            '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
-            '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
-            'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
-            'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
-            'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
-          ]);
-          // JITO tip amount - configurable via env var for congestion periods
-          // Default: 1,000,000 lamports (0.001 SOL) - reasonable for normal conditions
-          const JITO_TIP_AMOUNT = parseInt(process.env.JITO_TIP_LAMPORTS || '1000000', 10);
-          const SOLANA_TX_SIZE_LIMIT = 1232; // Solana transaction size limit in bytes
-
-          // Check last transaction for JITO tip
-          const lastTxIndex = bulkSwapInfo.transactions.length - 1;
-          const lastTxInfo = bulkSwapInfo.transactions[lastTxIndex];
-
-          if (lastTxInfo?.serialized) {
-            const lastTxBuffer = Buffer.from(lastTxInfo.serialized, 'base64');
-            const isVersionedLastTx = (lastTxBuffer[0] & 0x80) !== 0;
-
-            if (!isVersionedLastTx) {
-              const lastTx = Transaction.from(lastTxBuffer);
-
-              // Check if any instruction writes to a JITO tip account
-              let hasTip = false;
-              for (const ix of lastTx.instructions) {
-                if (ix.programId.equals(SystemProgram.programId)) {
-                  // Check writable accounts for JITO tip accounts
-                  for (const key of ix.keys) {
-                    if (key.isWritable && JITO_TIP_ACCOUNTS.has(key.pubkey.toBase58())) {
-                      hasTip = true;
-                      console.log(`   ✅ JITO tip already present (to ${key.pubkey.toBase58().substring(0, 8)}...)`);
-                      break;
-                    }
-                  }
-                }
-                if (hasTip) break;
-              }
-
-              if (!hasTip) {
-                console.log('\n💰 Adding JITO tip to last transaction (not present in pre-built TX)...');
-
-                // Select a random tip account for load balancing
-                const tipAccountsArray = Array.from(JITO_TIP_ACCOUNTS);
-                const randomTipAccount = new PublicKey(
-                  tipAccountsArray[Math.floor(Math.random() * tipAccountsArray.length)]
-                );
-
-                // Add tip instruction
-                lastTx.add(
-                  SystemProgram.transfer({
-                    fromPubkey: platformAuthorityKeypair.publicKey,
-                    toPubkey: randomTipAccount,
-                    lamports: JITO_TIP_AMOUNT,
                   })
                 );
 
-                const tipSol = (JITO_TIP_AMOUNT / 1_000_000_000).toFixed(4);
-                console.log(`   💸 Added ${JITO_TIP_AMOUNT} lamports (${tipSol} SOL) tip to ${randomTipAccount.toBase58().substring(0, 12)}...`);
-
-                // Re-sign with platform authority (transaction message changed)
-                // IMPORTANT: Adding an instruction changes the transaction message hash,
-                // which invalidates ALL existing signatures. We must clear them and re-sign.
-                // This is different from partialSign() elsewhere which preserves existing sigs.
-                lastTx.signatures = lastTx.signatures.map(sig => ({
-                  publicKey: sig.publicKey,
-                  signature: null, // Intentionally clear - message changed, old sigs invalid
-                }));
-                lastTx.partialSign(platformAuthorityKeypair);
-
-                // Update the serialized transaction
-                const newSerializedTx = lastTx.serialize({ requireAllSignatures: false });
-
-                // Validate transaction size after adding tip instruction
-                if (newSerializedTx.length > SOLANA_TX_SIZE_LIMIT) {
-                  console.error(`   ❌ Transaction size ${newSerializedTx.length} exceeds limit ${SOLANA_TX_SIZE_LIMIT} after adding JITO tip`);
-                  return res.status(400).json({
-                    success: false,
-                    error: `Transaction exceeds size limit (${newSerializedTx.length}/${SOLANA_TX_SIZE_LIMIT} bytes) after adding JITO tip. ` +
-                           'The cNFT Merkle proof may be too large. Consider using two-phase delegation instead.',
-                    errorCode: 'TX_SIZE_EXCEEDED_AFTER_TIP',
-                    txSize: newSerializedTx.length,
-                    limit: SOLANA_TX_SIZE_LIMIT,
-                    timestamp: new Date().toISOString(),
-                  });
-                }
-
-                bulkSwapInfo.transactions[lastTxIndex].serialized = newSerializedTx.toString('base64');
-                console.log(`   ✅ Last transaction updated with JITO tip (size: ${newSerializedTx.length}/${SOLANA_TX_SIZE_LIMIT} bytes)`);
+                console.log('   ✅ Using fresh transactions for sequential execution');
+              } else {
+                console.error('   ❌ Rebuild did not return valid transactions');
+                return res.status(500).json({
+                  success: false,
+                  error: 'Failed to rebuild transactions with fresh proofs',
+                  errorCode: 'STALE_PROOF_REBUILD_FAILED',
+                  timestamp: new Date().toISOString(),
+                });
               }
             } else {
-              // Versioned transaction - validate that it already contains a JITO tip
-              // We cannot easily inject tips into versioned transactions due to ALT complexity,
-              // so we verify the tip exists and fail if not.
-              console.log('   🔍 Checking versioned transaction for JITO tip...');
+              console.log('   ✅ All proofs are fresh, proceeding with original transactions');
+            }
+          }
+        }
+        // ========== END PROACTIVE VALIDATION ==========
 
-              const versionedTx = VersionedTransaction.deserialize(lastTxBuffer);
-              const message = versionedTx.message;
+        // ========== POPULATE cNFT JIT METADATA ==========
+        // Ensure all cNFT transactions have metadata for JIT rebuild (even if not rebuilt)
+        // This extracts cnftAssetId/cnftFromWallet/cnftToWallet from the assets field
+        for (const tx of bulkSwapInfo.transactions) {
+          if (tx.purpose && tx.purpose.includes('cNFT transfer') && !tx.cnftAssetId) {
+            // Extract cNFT asset from maker or taker assets
+            const makerCnft = (tx.assets?.makerAssets || []).find(
+              (a: any) => a.type === 'cnft' || a.type === 'CNFT'
+            );
+            const takerCnft = (tx.assets?.takerAssets || []).find(
+              (a: any) => a.type === 'cnft' || a.type === 'CNFT'
+            );
 
-              // Collect all account keys (static + any from address lookup tables)
-              const allAccountKeys: string[] = [];
+            if (makerCnft) {
+              tx.cnftAssetId = makerCnft.identifier;
+              tx.cnftFromWallet = makerAddress; // Maker sends to taker
+              tx.cnftToWallet = takerAddress;
+            } else if (takerCnft) {
+              tx.cnftAssetId = takerCnft.identifier;
+              tx.cnftFromWallet = takerAddress; // Taker sends to maker
+              tx.cnftToWallet = makerAddress;
+            }
 
-              // Add static account keys
-              for (const key of message.staticAccountKeys) {
-                allAccountKeys.push(key.toBase58());
-              }
+            if (tx.cnftAssetId) {
+              console.log(`   📋 Populated JIT metadata for ${tx.cnftAssetId.substring(0, 8)}...`);
+            }
+          }
+        }
+        // ========== END POPULATE cNFT JIT METADATA ==========
 
-              // For V0 messages, also check address lookup table entries
-              // The loaded addresses would be resolved at runtime, but we can check
-              // if the transaction is configured to use ALTs that might contain tip accounts
-              if ('addressTableLookups' in message && message.addressTableLookups) {
-                // Note: We can't resolve ALT addresses without fetching the ALT account data.
-                // For now, we only check static keys. If using ALTs, the tip should be in static keys.
-                console.log(`   📋 Transaction has ${message.addressTableLookups.length} address lookup table(s)`);
-              }
+        const signatures: string[] = [];
 
-              // Check if any static account key is a JITO tip account
-              let versionedHasTip = false;
-              for (const accountKey of allAccountKeys) {
-                if (JITO_TIP_ACCOUNTS.has(accountKey)) {
-                  versionedHasTip = true;
-                  console.log(`   ✅ JITO tip account found in versioned TX: ${accountKey.substring(0, 12)}...`);
-                  break;
+        for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
+          const txInfo = bulkSwapInfo.transactions[i];
+          console.log(
+            `\n📝 Processing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`
+          );
+
+          if (!txInfo.serialized) {
+            console.error(`❌ TX ${i + 1} missing serialized data`);
+            return res.status(400).json({
+              success: false,
+              error: `Transaction ${i + 1} missing serialized data`,
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          // ========== cNFT RAPID JIT RETRY LOOP ==========
+          // For cNFT transactions (TX 2+), use rapid JIT retry with fresh proof on each attempt.
+          // Hyperactive Merkle trees can change multiple times per second, so we need to:
+          // 1. JIT rebuild with fresh proof
+          // 2. Sign and send immediately
+          // 3. If stale proof error, immediately retry (up to MAX_JIT_ATTEMPTS)
+          //
+          // This is more aggressive than single JIT + slow rebuild fallback.
+          // Increased to 5 attempts for hyperactive trees that can change multiple times/second.
+          if (txInfo.cnftAssetId && i > 0) {
+            const MAX_JIT_ATTEMPTS = 5;
+            let jitSuccess = false;
+            let lastSignature = '';
+
+            console.log(
+              `\n🔄 cNFT TX ${
+                i + 1
+              }: Starting rapid JIT retry loop (max ${MAX_JIT_ATTEMPTS} attempts)`
+            );
+            console.log(`   Asset: ${txInfo.cnftAssetId.substring(0, 12)}...`);
+            console.log(
+              `   From: ${txInfo.cnftFromWallet?.substring(
+                0,
+                8
+              )}... → To: ${txInfo.cnftToWallet?.substring(0, 8)}...`
+            );
+
+            for (let attempt = 1; attempt <= MAX_JIT_ATTEMPTS && !jitSuccess; attempt++) {
+              console.log(`\n   🔄 JIT attempt ${attempt}/${MAX_JIT_ATTEMPTS}...`);
+
+              try {
+                // 1. JIT rebuild with fresh proof
+                const freshTxItem = await transactionGroupBuilder.buildSingleCnftTransactionJIT(
+                  txInfo.cnftAssetId,
+                  new PublicKey(txInfo.cnftFromWallet),
+                  new PublicKey(txInfo.cnftToWallet),
+                  `${txInfo.purpose} (attempt ${attempt})`
+                );
+
+                if (!freshTxItem.transaction?.serializedTransaction) {
+                  throw new Error('JIT rebuild returned empty transaction');
                 }
-              }
 
-              if (!versionedHasTip) {
-                console.error('   ❌ Versioned transaction missing JITO tip account');
-                return res.status(400).json({
+                // 2. Determine signers and sign
+                const freshRequiredSigners = freshTxItem.transaction.requiredSigners || [];
+                const freshSigners: Keypair[] = [];
+
+                if (freshRequiredSigners.includes(makerAddress)) {
+                  freshSigners.push(makerKeypair);
+                }
+                if (freshRequiredSigners.includes(takerAddress)) {
+                  freshSigners.push(takerKeypair);
+                }
+
+                const txBuffer = Buffer.from(
+                  freshTxItem.transaction.serializedTransaction,
+                  'base64'
+                );
+                const tx = Transaction.from(txBuffer);
+                if (freshSigners.length > 0) {
+                  tx.partialSign(...freshSigners);
+                }
+
+                // 3. Send immediately
+                const signature = await connection.sendRawTransaction(tx.serialize(), {
+                  skipPreflight: false,
+                  preflightCommitment: 'confirmed',
+                });
+                lastSignature = signature;
+                console.log(`      📤 Sent: ${signature.substring(0, 16)}...`);
+
+                // 4. Wait for confirmation (shorter timeout for rapid retry)
+                const confirmation = (await Promise.race([
+                  connection.confirmTransaction(signature, 'confirmed'),
+                  new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('ConfirmationTimeout')), 15000)
+                  ),
+                ])) as any;
+
+                if (confirmation.value.err) {
+                  const errorStr = JSON.stringify(confirmation.value.err);
+                  // Check if recoverable stale proof error (6000 or 6002)
+                  // NOTE: 6001 (PublicKeyMismatch) is NOT recoverable
+                  if (errorStr.includes('6000') || errorStr.includes('6002')) {
+                    console.log(
+                      `      ⚠️ Stale proof (attempt ${attempt}), retrying immediately...`
+                    );
+                    continue; // Retry with fresh JIT
+                  }
+                  throw new Error(`TX failed on-chain: ${errorStr}`);
+                }
+
+                // Success!
+                jitSuccess = true;
+                signatures.push(signature);
+                console.log(`   ✅ TX ${i + 1} confirmed after ${attempt} attempt(s)`);
+              } catch (attemptError: any) {
+                const errorMsg = attemptError.message || '';
+
+                // Check if this is a recoverable stale proof error (6000 or 6002)
+                // NOTE: 6001 (PublicKeyMismatch) is NOT recoverable
+                const hasRecoverableError =
+                  errorMsg.includes('6000') ||
+                  errorMsg.includes('6002') ||
+                  isCnftProofStaleError(attemptError);
+                if (hasRecoverableError) {
+                  console.log(`      ⚠️ Stale proof error (attempt ${attempt}), retrying...`);
+                  continue; // Retry with fresh JIT
+                }
+
+                // Check if confirmation timeout (might still have landed)
+                if (errorMsg.includes('ConfirmationTimeout') && lastSignature) {
+                  console.log(`      ⏳ Confirmation timeout, checking if TX landed...`);
+                  await new Promise((r) => setTimeout(r, 2000));
+                  const txStatus = await connection.getTransaction(lastSignature, {
+                    commitment: 'confirmed',
+                    maxSupportedTransactionVersion: 0,
+                  });
+                  if (txStatus && !txStatus.meta?.err) {
+                    jitSuccess = true;
+                    signatures.push(lastSignature);
+                    console.log(
+                      `   ✅ TX ${i + 1} confirmed (via fallback check) after ${attempt} attempt(s)`
+                    );
+                    break;
+                  }
+                  // TX didn't land or failed, retry
+                  console.log(`      ⚠️ TX not found or failed, retrying...`);
+                  continue;
+                }
+
+                // Non-recoverable error - return immediately with partial signatures
+                console.error(
+                  `      ❌ Attempt ${attempt} failed with non-recoverable error: ${errorMsg}`
+                );
+                return res.status(500).json({
                   success: false,
-                  error: 'JITO bundle requires a tip but versioned transaction has no tip account. ' +
-                         'The transaction was likely built on devnet. Please recreate the offer on mainnet.',
-                  errorCode: 'VERSIONED_TX_MISSING_JITO_TIP',
-                  suggestion: 'Recreate the offer on mainnet to include JITO tips in transactions.',
+                  error: `TX ${
+                    i + 1
+                  } (cNFT transfer) failed with non-recoverable error: ${errorMsg}`,
+                  errorCode: 'CNFT_TX_FAILED',
+                  partialSuccess: signatures.length > 0,
+                  signatures,
+                  failedTransactionIndex: i,
                   timestamp: new Date().toISOString(),
                 });
               }
             }
-          }
-          // ========== END INJECT JITO TIP ==========
 
-          // Collect and sign all transactions
-          const signedTransactions: string[] = [];
-
-          for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
-            const txInfo = bulkSwapInfo.transactions[i];
-            console.log(`\n📝 Signing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`);
-            
-            if (!txInfo.serialized) {
-              return res.status(400).json({
+            if (!jitSuccess) {
+              const errorMsg =
+                `TX ${i + 1} failed after ${MAX_JIT_ATTEMPTS} rapid JIT attempts. ` +
+                `The Merkle tree for this cNFT is too active for sequential RPC execution. ` +
+                `Try using two-phase delegation for reliable cNFT swaps.`;
+              console.error(`   ❌ ${errorMsg}`);
+              return res.status(500).json({
                 success: false,
-                error: `Transaction ${i + 1} missing serialized data`,
+                error: errorMsg,
+                errorCode: 'TREE_TOO_ACTIVE',
+                suggestion: 'Use two-phase delegation for cNFT swaps (now the default)',
+                signatures,
                 timestamp: new Date().toISOString(),
               });
             }
-            
+
+            // Small delay before next transaction
+            if (i < bulkSwapInfo.transactions.length - 1) {
+              await new Promise((r) => setTimeout(r, 200));
+            }
+            continue; // Skip the non-cNFT flow below
+          }
+          // ========== END cNFT RAPID JIT RETRY LOOP ==========
+
+          // ========== NON-cNFT TRANSACTION FLOW (TX 1: SOL transfers) ==========
+          // Determine signers for THIS specific transaction
+          const txRequiredSigners = txInfo.requiredSigners || requireSignatures || [];
+          const signers: Keypair[] = [];
+
+          if (txRequiredSigners.includes(makerAddress)) {
+            signers.push(makerKeypair);
+            console.log('   🔐 Adding Maker signature');
+          }
+
+          if (txRequiredSigners.includes(takerAddress)) {
+            signers.push(takerKeypair);
+            console.log('   🔐 Adding Taker signature');
+          }
+
+          if (signers.length === 0) {
+            console.warn(`   ⚠️ No test wallet signatures needed for TX ${i + 1} (platform-only?)`);
+          }
+
+          try {
             const txBuffer = Buffer.from(txInfo.serialized, 'base64');
             const isVersioned = (txBuffer[0] & 0x80) !== 0;
-            
-            // Determine signers for THIS specific transaction
-            const txRequiredSigners = txInfo.requiredSigners || requireSignatures || [];
-            const signers: Keypair[] = [];
-            
-            if (txRequiredSigners.includes(makerAddress)) {
-              signers.push(makerKeypair);
-              console.log('   🔐 Adding Maker signature');
-            }
-            
-            if (txRequiredSigners.includes(takerAddress)) {
-              signers.push(takerKeypair);
-              console.log('   🔐 Adding Taker signature');
-            }
-            
-            // Sign the transaction
-            let signedTxBuffer: Buffer;
+
+            let signature: string;
+
             if (isVersioned) {
               const versionedTx = VersionedTransaction.deserialize(txBuffer);
               if (signers.length > 0) {
                 versionedTx.sign(signers);
               }
-              signedTxBuffer = Buffer.from(versionedTx.serialize());
-            } else {
-              const tx = Transaction.from(txBuffer);
-              
-              // Debug: Log transaction structure for troubleshooting
-              if (i === 0) {
-                // Extract account keys from instructions to see if nonce account is included
-                const accountKeys = new Set<string>();
-                tx.instructions.forEach(ix => {
-                  ix.keys.forEach(key => {
-                    accountKeys.add(key.pubkey.toBase58());
-                  });
-                });
-                
-                // Check if this is a durable nonce transaction by looking for nonce advance instruction
-                // SystemProgram.nonceAdvance() creates an instruction with:
-                // - programId = SystemProgram.programId
-                // - data = [4, 0, 0, 0] (instruction discriminator for nonceAdvance)
-                const hasNonceAdvance = tx.instructions.some(ix => {
-                  if (!ix.programId.equals(SystemProgram.programId)) return false;
-                  if (ix.data.length !== 4) return false;
-                  // SystemProgram instruction 4 = nonceAdvance
-                  // Data format: [instruction_discriminator (4 bytes)]
-                  return ix.data[0] === 4 && ix.data[1] === 0 && ix.data[2] === 0 && ix.data[3] === 0;
-                });
-                
-                // Note: We can't reliably detect durable nonces by blockhash length alone
-                // Both regular blockhashes and nonce values are 32-byte base58-encoded (43-44 chars)
-                // The presence of a nonce advance instruction is the definitive indicator
-                
-                console.log(`   🔍 TX ${i + 1} structure:`, {
-                  instructionCount: tx.instructions.length,
-                  signatureCount: tx.signatures.length,
-                  feePayer: tx.feePayer?.toBase58(),
-                  recentBlockhash: tx.recentBlockhash?.substring(0, 16) + '...',
-                  recentBlockhashLength: tx.recentBlockhash?.length,
-                  isDurableNonce: hasNonceAdvance, // Use instruction check, not length
-                  hasNonceAdvance: hasNonceAdvance,
-                  firstInstructionProgram: tx.instructions[0]?.programId?.toBase58(),
-                  firstInstructionDataLength: tx.instructions[0]?.data.length,
-                  firstInstructionData: tx.instructions[0]?.data.slice(0, 4).toString('hex'),
-                  accountKeysCount: accountKeys.size,
-                  accountKeys: Array.from(accountKeys).slice(0, 5), // First 5 account keys
-                });
-              }
-              
-              if (signers.length > 0) {
-                // CRITICAL: Use partialSign() to preserve platform authority signature
-                // Transaction already has platform authority signature from TransactionGroupBuilder
-                // partialSign() adds maker/taker signatures without overwriting existing signatures
-                tx.partialSign(...signers);
-              }
-              
-              // Verify all signatures are present before serializing
-              const validSignatures = tx.signatures.filter(sig => 
-                sig && sig.signature && sig.signature.length === 64 && !sig.signature.every(byte => byte === 0)
-              );
-              if (validSignatures.length !== tx.signatures.length) {
-                console.warn(`   ⚠️ TX ${i + 1} has ${tx.signatures.length} signature slots but only ${validSignatures.length} are valid`);
-              }
-              
-              // For durable nonce transactions, we need to serialize carefully
-              // Jito requires fully signed transactions, but requireAllSignatures: true
-              // might cause issues with nonce account validation
-              // Try with requireAllSignatures: true first, fallback to false if it fails
-              try {
-                // First try with requireAllSignatures: true (preferred for Jito)
-                signedTxBuffer = tx.serialize({ requireAllSignatures: true });
-                if (i === 0) {
-                  console.log(`   ✅ TX ${i + 1} serialized with requireAllSignatures: true`);
-                }
-              } catch (serializeError: any) {
-                // If that fails, try without the requirement (for durable nonce transactions)
-                console.warn(`   ⚠️ TX ${i + 1} serialization with requireAllSignatures: true failed, trying without:`, serializeError.message);
-                try {
-                  signedTxBuffer = tx.serialize({ requireAllSignatures: false });
-                  if (i === 0) {
-                    console.log(`   ✅ TX ${i + 1} serialized with requireAllSignatures: false (durable nonce transaction)`);
-                  }
-                } catch (fallbackError: any) {
-                  console.error(`   ❌ TX ${i + 1} serialization failed completely:`, fallbackError.message);
-                  return res.status(400).json({
-                    success: false,
-                    error: `Transaction ${i + 1} cannot be serialized: ${fallbackError.message}. Ensure all required signers have signed.`,
-                    timestamp: new Date().toISOString(),
-                  });
-                }
-              }
-            }
-            
-            // Convert to base64 for Jito bundle submission
-            signedTransactions.push(signedTxBuffer.toString('base64'));
-            console.log(`   ✅ TX ${i + 1} signed`);
-          }
-          
-          // ========== PRE-FLIGHT SIMULATION ==========
-          // Simulate each transaction before Jito submission to catch stale proofs early.
-          // This is more reliable than discovering errors after bundle submission.
-          //
-          // IMPORTANT: Errors 6000/6002 can be EITHER stale proofs OR structural bugs.
-          // - Stale proof: On-chain state changed since proof was generated (recoverable via rebuild)
-          // - Structural bug: Wrong data passed in the transaction (NOT recoverable)
-          //
-          // Detection: If the SAME error persists after rebuilding, it's structural (abort immediately).
-          console.log(`\n🔍 Pre-flight simulation of ${signedTransactions.length} transactions...`);
-
-          let hasStaleProofInBundle = false;
-          let hasNonRecoverableError = false;
-          const simulationErrors: string[] = [];
-          const MAX_SIMULATION_RETRIES = 3;
-          let simulationAttempt = 0;
-
-          // Track error codes per transaction to detect structural bugs (same error after rebuild)
-          // Key: transaction index, Value: Set of error codes seen in previous attempts
-          const previousErrorCodes: Map<number, Set<string>> = new Map();
-
-          while (simulationAttempt < MAX_SIMULATION_RETRIES && !hasNonRecoverableError) {
-            simulationAttempt++;
-            hasStaleProofInBundle = false;
-            let allSimulationsPassed = true;
-
-            for (let simIdx = 0; simIdx < signedTransactions.length; simIdx++) {
-              try {
-                const txBuffer = Buffer.from(signedTransactions[simIdx], 'base64');
-                const isVersionedSim = (txBuffer[0] & 0x80) !== 0;
-
-                let simResult: any;
-                if (isVersionedSim) {
-                  const vTx = VersionedTransaction.deserialize(txBuffer);
-                  simResult = await connection.simulateTransaction(vTx, { sigVerify: false, commitment: 'confirmed' });
-                } else {
-                  const tx = Transaction.from(txBuffer);
-                  // Legacy transaction: use array-based overload
-                  simResult = await connection.simulateTransaction(tx);
-                }
-
-                if (simResult.value.err) {
-                  const errStr = JSON.stringify(simResult.value.err);
-                  console.log(`   ⚠️ TX ${simIdx + 1} simulation failed: ${errStr}`);
-                  // Log simulation logs for debugging
-                  if (simResult.value.logs && simResult.value.logs.length > 0) {
-                    console.log(`   📋 TX ${simIdx + 1} simulation logs:`);
-                    simResult.value.logs.slice(-10).forEach((log: string) => console.log(`      ${log}`));
-                  }
-                  allSimulationsPassed = false;
-
-                  // Extract error codes from error string
-                  const has6000 = errStr.includes('6000') || errStr.includes('Custom(6000)');
-                  const has6002 = errStr.includes('6002') || errStr.includes('Custom(6002)');
-                  const has6001 = errStr.includes('6001') || errStr.includes('Custom(6001)');
-
-                  // Check logs to determine error source for 6001
-                  // IMPORTANT: Error 6001 has different meanings in different programs:
-                  // - spl-account-compression: 6001 = ConcurrentMerkleTreeError (stale proof, RECOVERABLE)
-                  // - mpl-bubblegum: 6001 = PublicKeyMismatch (wrong account, NOT recoverable)
-                  const logsStr = (simResult.value.logs || []).join(' ');
-                  const isAccountCompressionError = logsStr.includes('account-compression') ||
-                                                     logsStr.includes('ConcurrentMerkleTreeError') ||
-                                                     logsStr.includes('concurrent_tree_wrapper');
-                  const isBubblegumError = logsStr.includes('bubblegum') ||
-                                            logsStr.includes('PublicKeyMismatch');
-
-                  // Handle error 6001 based on which program emitted it
-                  if (has6001) {
-                    if (isAccountCompressionError && !isBubblegumError) {
-                      // spl-account-compression 6001 = ConcurrentMerkleTreeError (stale proof)
-                      // This IS recoverable via proof rebuild
-                      hasStaleProofInBundle = true;
-                      if (!previousErrorCodes.has(simIdx)) {
-                        previousErrorCodes.set(simIdx, new Set());
-                      }
-                      previousErrorCodes.get(simIdx)!.add('6001-compression');
-                      console.log(`   🔄 ConcurrentMerkleTreeError (6001) in TX ${simIdx + 1} - stale proof, will rebuild...`);
-                      continue;
-                    } else {
-                      // mpl-bubblegum 6001 = PublicKeyMismatch (structural bug)
-                      hasNonRecoverableError = true;
-                      simulationErrors.push(`TX ${simIdx + 1}: ${errStr} (PublicKeyMismatch - structural bug, wrong account passed)`);
-                      console.error(`   ❌ TX ${simIdx + 1} has PublicKeyMismatch (6001) - structural bug, aborting`);
-                      continue;
-                    }
-                  }
-
-                  // Check if this error code was seen in a previous attempt (after rebuild)
-                  // If so, it's a structural bug, not a stale proof
-                  const prevCodes = previousErrorCodes.get(simIdx) || new Set();
-                  const currentCodes: string[] = [];
-                  if (has6000) currentCodes.push('6000');
-                  if (has6002) currentCodes.push('6002');
-
-                  const isRepeatedError = currentCodes.some((code) => prevCodes.has(code));
-                  if (isRepeatedError && simulationAttempt > 1) {
-                    // Same error after rebuild = structural bug (wrong data passed)
-                    hasNonRecoverableError = true;
-                    const repeatedCodes = currentCodes.filter((c) => prevCodes.has(c)).join(', ');
-                    simulationErrors.push(
-                      `TX ${simIdx + 1}: ${errStr} (Error ${repeatedCodes} persisted after rebuild - structural bug, not stale proof)`
-                    );
-                    console.error(
-                      `   ❌ TX ${simIdx + 1} has error ${repeatedCodes} AGAIN after rebuild - structural bug (wrong data passed), aborting`
-                    );
-                    continue;
-                  }
-
-                  // First occurrence of 6000/6002 - could be stale proof, try rebuild
-                  if (has6000 || has6002) {
-                    hasStaleProofInBundle = true;
-                    // Track this error code for future attempts
-                    if (!previousErrorCodes.has(simIdx)) {
-                      previousErrorCodes.set(simIdx, new Set());
-                    }
-                    currentCodes.forEach((code) => previousErrorCodes.get(simIdx)!.add(code));
-                    console.log(`   🔄 Potential stale proof in TX ${simIdx + 1} (${currentCodes.join(', ')}), will rebuild...`);
-                  } else {
-                    // Non-stale-proof error - not recoverable, abort
-                    hasNonRecoverableError = true;
-                    simulationErrors.push(`TX ${simIdx + 1}: ${errStr}`);
-                    console.error(`   ❌ TX ${simIdx + 1} has non-recoverable simulation error: ${errStr}`);
-                  }
-                } else {
-                  console.log(`   ✅ TX ${simIdx + 1} simulation passed`);
-                }
-              } catch (simErr: any) {
-                console.error(`   ❌ TX ${simIdx + 1} simulation exception: ${simErr.message}`);
-                allSimulationsPassed = false;
-                hasNonRecoverableError = true;
-                simulationErrors.push(`TX ${simIdx + 1}: ${simErr.message}`);
-              }
-            }
-
-            // If we have non-recoverable errors, abort immediately
-            if (hasNonRecoverableError) {
-              console.error(`❌ Pre-flight simulation failed with non-recoverable errors`);
-              break;
-            }
-
-            if (allSimulationsPassed) {
-              console.log(`✅ All ${signedTransactions.length} simulations passed on attempt ${simulationAttempt}`);
-              break;
-            }
-
-            // Only rebuild if we have potential stale proofs and more attempts left
-            // NOTE: If rebuild doesn't fix it, next simulation will detect it as structural bug
-            if (hasStaleProofInBundle && simulationAttempt < MAX_SIMULATION_RETRIES && offerId) {
-              console.log(`\n🔄 Potential stale proofs detected, rebuilding bundle (attempt ${simulationAttempt + 1}/${MAX_SIMULATION_RETRIES})...`);
-              console.log(`   ℹ️  If error persists after rebuild, it will be flagged as structural bug (wrong data passed)`);
-
-              // Clear proof cache and rebuild
-              cnftService.clearAllCachedProofs();
-              const rebuildResult = await offerManager.rebuildTransaction(offerId);
-
-              if (rebuildResult.transactionGroup?.transactions) {
-                // Re-sign and serialize all transactions
-                signedTransactions.length = 0; // Clear array
-
-                for (let rIdx = 0; rIdx < rebuildResult.transactionGroup.transactions.length; rIdx++) {
-                  const rtxInfo = rebuildResult.transactionGroup.transactions[rIdx];
-                  if (!rtxInfo.transaction?.serializedTransaction) continue;
-
-                  const rtxBuffer = Buffer.from(rtxInfo.transaction.serializedTransaction, 'base64');
-                  const rtx = Transaction.from(rtxBuffer);
-
-                  // Re-sign with appropriate signers
-                  const rtxSigners = rtxInfo.transaction.requiredSigners || [];
-                  if (rtxSigners.includes(makerAddress)) rtx.partialSign(makerKeypair);
-                  if (rtxSigners.includes(takerAddress)) rtx.partialSign(takerKeypair);
-
-                  signedTransactions.push(rtx.serialize({ requireAllSignatures: false }).toString('base64'));
-                }
-
-                console.log(`   ✅ Rebuilt and re-signed ${signedTransactions.length} transactions`);
-              } else {
-                console.error(`   ❌ Rebuild failed, aborting`);
-                hasNonRecoverableError = true;
-                simulationErrors.push('Transaction rebuild failed');
-                break;
-              }
-            }
-          }
-
-          // Abort if simulation failed with non-recoverable errors
-          if (hasNonRecoverableError) {
-            return res.status(400).json({
-              success: false,
-              error: `Pre-flight simulation failed: ${simulationErrors.join('; ')}`,
-              errorCode: 'SIMULATION_FAILED',
-              simulationErrors,
-              timestamp: new Date().toISOString(),
-            });
-          }
-
-          // Also abort if we exhausted retries without all simulations passing
-          // This should rarely happen since structural bugs are detected on second attempt
-          if (hasStaleProofInBundle && simulationAttempt >= MAX_SIMULATION_RETRIES) {
-            console.error(`❌ Exhausted ${MAX_SIMULATION_RETRIES} simulation retries, errors persist`);
-            return res.status(400).json({
-              success: false,
-              error: `Pre-flight simulation failed after ${MAX_SIMULATION_RETRIES} attempts. ` +
-                     `This may indicate on-chain state is actively changing or a structural bug in transaction construction.`,
-              errorCode: 'STALE_PROOF_EXHAUSTED',
-              simulationErrors: simulationErrors.length > 0 ? simulationErrors : ['Errors persisted after max retries'],
-              timestamp: new Date().toISOString(),
-            });
-          }
-          // ========== END PRE-FLIGHT SIMULATION ==========
-
-          // Submit bundle to Jito
-          console.log(`\n🚀 Submitting ${signedTransactions.length} transactions as Jito bundle...`);
-          const escrowProgramService = getEscrowProgramService();
-
-          const bundleResult = await escrowProgramService.sendBundleViaJito(signedTransactions, {
-            skipSimulation: true, // We already simulated above
-            description: `Bulk swap: ${bulkSwapInfo.strategy}`,
-          });
-          
-          if (!bundleResult.success || !bundleResult.bundleId) {
-            return res.status(500).json({
-              success: false,
-              error: `Jito bundle submission failed: ${bundleResult.error || 'Unknown error'}`,
-              timestamp: new Date().toISOString(),
-            });
-          }
-          
-          const bundleId = bundleResult.bundleId;
-          console.log(`✅ Bundle submitted to Jito: ${bundleId}`);
-          
-          // Wait for bundle confirmation
-          console.log('⏳ Waiting for bundle confirmation...');
-          const confirmation = await escrowProgramService.waitForBundleConfirmation(
-            bundleId,
-            60, // 60s timeout for mainnet
-            bundleResult.signatures
-          );
-          
-          if (!confirmation.confirmed) {
-            return res.status(500).json({
-              success: false,
-              error: `Jito bundle ${confirmation.status}: ${confirmation.error || 'Bundle did not land'}`,
-              bundleId,
-              bundleStatus: confirmation.status,
-              timestamp: new Date().toISOString(),
-            });
-          }
-          
-          console.log(`✅ Bundle landed in slot ${confirmation.slot}`);
-
-          // Get the first signature from the bundle for display
-          const primarySignature = bundleResult.signatures?.[0];
-
-          return res.json({
-            success: true,
-            data: {
-              bundleId,
-              bundleStatus: confirmation.status,
-              slot: confirmation.slot,
-              network: networkName,
-              isBulkSwap: true,
-              transactionCount: bulkSwapInfo.transactions.length,
-              signatures: bundleResult.signatures, // Include all transaction signatures
-              signature: primarySignature, // Primary signature for backwards compatibility
-            },
-            timestamp: new Date().toISOString(),
-          });
-          
-        } catch (bundleError: any) {
-          console.error('❌ Jito bundle error:', bundleError);
-          return res.status(500).json({
-            success: false,
-            error: `Jito bundle execution failed: ${bundleError.message || 'Unknown error'}`,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
-      
-      // Fallback: Execute each transaction sequentially (for devnet or when Jito not required)
-      console.log('\n📦 Executing transactions sequentially...');
-
-      // ========== PROACTIVE STALE PROOF VALIDATION FOR SEQUENTIAL EXECUTION ==========
-      // Validate all cNFT proofs BEFORE execution to prevent stale proof errors
-      const cnftTransactionsSeq = bulkSwapInfo.transactions.filter(
-        (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
-      );
-
-      if (cnftTransactionsSeq.length > 0 && offerId) {
-        console.log(`\n🔍 Proactively validating ${cnftTransactionsSeq.length} cNFT proof(s) before sequential execution...`);
-
-        // Extract asset IDs from cNFT transactions
-        const assetIdsSeq: string[] = [];
-        for (const tx of cnftTransactionsSeq) {
-          const makerCnfts = (tx.assets?.makerAssets || []).filter((a: any) =>
-            a.type === 'cnft' || a.type === 'CNFT'
-          );
-          const takerCnfts = (tx.assets?.takerAssets || []).filter((a: any) =>
-            a.type === 'cnft' || a.type === 'CNFT'
-          );
-          for (const asset of [...makerCnfts, ...takerCnfts]) {
-            if (asset?.identifier) {
-              assetIdsSeq.push(asset.identifier);
-            }
-          }
-        }
-
-        // Fallback: If no assets in transaction data, load from offer
-        if (assetIdsSeq.length === 0 && offerId) {
-          console.log('   📋 No assets in transaction data, loading from offer...');
-          try {
-            const offer = await offerManager.getOffer(offerId);
-            if (offer) {
-              // OfferSummary uses offeredAssets/requestedAssets (maker's offered = makerAssets)
-              for (const asset of (offer.offeredAssets || [])) {
-                if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
-                  assetIdsSeq.push(asset.identifier);
-                }
-              }
-              for (const asset of (offer.requestedAssets || [])) {
-                if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
-                  assetIdsSeq.push(asset.identifier);
-                }
-              }
-              if (assetIdsSeq.length > 0) {
-                console.log(`   ✅ Loaded ${assetIdsSeq.length} cNFT asset ID(s) from offer`);
-              }
-            }
-          } catch (offerError: any) {
-            console.warn('   ⚠️  Could not load offer for asset IDs:', offerError.message);
-          }
-        }
-
-        if (assetIdsSeq.length > 0) {
-          let hasStaleProofSeq = false;
-
-          for (const assetId of assetIdsSeq) {
-            try {
-              const cachedProof = await cnftService.getCnftProof(assetId, false, 0);
-              if (cachedProof) {
-                const validation = await cnftService.validateProofRoot(assetId, cachedProof.root);
-
-                if (!validation.isValid) {
-                  console.warn(`   ⚠️  Stale proof detected for asset ${assetId.substring(0, 12)}...`);
-                  hasStaleProofSeq = true;
-                } else {
-                  console.log(`   ✅ Proof valid for asset ${assetId.substring(0, 12)}...`);
-                }
-              }
-            } catch (validationError: any) {
-              console.warn(`   ⚠️  Could not validate proof for ${assetId.substring(0, 12)}...:`, validationError.message);
-            }
-          }
-
-          if (hasStaleProofSeq) {
-            console.log('\n🔄 Stale proofs detected! Rebuilding transactions with fresh proofs...');
-
-            // Clear proof cache and rebuild
-            cnftService.clearAllCachedProofs();
-            const rebuildResult = await offerManager.rebuildTransaction(offerId);
-
-            if (rebuildResult.transactionGroup?.transactions) {
-              console.log(`   ✅ Transactions rebuilt (${rebuildResult.transactionGroup.transactions.length} total)`);
-
-              // Replace bulkSwapInfo.transactions with fresh transactions (include cNFT JIT metadata)
-              bulkSwapInfo.transactions = rebuildResult.transactionGroup.transactions.map((tx: any) => ({
-                purpose: tx.purpose,
-                assets: tx.assets,
-                serialized: tx.transaction?.serializedTransaction,
-                requiredSigners: tx.transaction?.requiredSigners,
-                // cNFT JIT rebuild metadata
-                cnftAssetId: tx.cnftAssetId,
-                cnftFromWallet: tx.cnftFromWallet,
-                cnftToWallet: tx.cnftToWallet,
-              }));
-
-              console.log('   ✅ Using fresh transactions for sequential execution');
-            } else {
-              console.error('   ❌ Rebuild did not return valid transactions');
-              return res.status(500).json({
-                success: false,
-                error: 'Failed to rebuild transactions with fresh proofs',
-                errorCode: 'STALE_PROOF_REBUILD_FAILED',
-                timestamp: new Date().toISOString(),
-              });
-            }
-          } else {
-            console.log('   ✅ All proofs are fresh, proceeding with original transactions');
-          }
-        }
-      }
-      // ========== END PROACTIVE VALIDATION ==========
-
-      // ========== POPULATE cNFT JIT METADATA ==========
-      // Ensure all cNFT transactions have metadata for JIT rebuild (even if not rebuilt)
-      // This extracts cnftAssetId/cnftFromWallet/cnftToWallet from the assets field
-      for (const tx of bulkSwapInfo.transactions) {
-        if (tx.purpose && tx.purpose.includes('cNFT transfer') && !tx.cnftAssetId) {
-          // Extract cNFT asset from maker or taker assets
-          const makerCnft = (tx.assets?.makerAssets || []).find((a: any) =>
-            a.type === 'cnft' || a.type === 'CNFT'
-          );
-          const takerCnft = (tx.assets?.takerAssets || []).find((a: any) =>
-            a.type === 'cnft' || a.type === 'CNFT'
-          );
-
-          if (makerCnft) {
-            tx.cnftAssetId = makerCnft.identifier;
-            tx.cnftFromWallet = makerAddress; // Maker sends to taker
-            tx.cnftToWallet = takerAddress;
-          } else if (takerCnft) {
-            tx.cnftAssetId = takerCnft.identifier;
-            tx.cnftFromWallet = takerAddress; // Taker sends to maker
-            tx.cnftToWallet = makerAddress;
-          }
-
-          if (tx.cnftAssetId) {
-            console.log(`   📋 Populated JIT metadata for ${tx.cnftAssetId.substring(0, 8)}...`);
-          }
-        }
-      }
-      // ========== END POPULATE cNFT JIT METADATA ==========
-
-      const signatures: string[] = [];
-
-      for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
-        const txInfo = bulkSwapInfo.transactions[i];
-        console.log(`\n📝 Processing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`);
-        
-        if (!txInfo.serialized) {
-          console.error(`❌ TX ${i + 1} missing serialized data`);
-          return res.status(400).json({
-            success: false,
-            error: `Transaction ${i + 1} missing serialized data`,
-            timestamp: new Date().toISOString(),
-          });
-        }
-
-        // ========== cNFT RAPID JIT RETRY LOOP ==========
-        // For cNFT transactions (TX 2+), use rapid JIT retry with fresh proof on each attempt.
-        // Hyperactive Merkle trees can change multiple times per second, so we need to:
-        // 1. JIT rebuild with fresh proof
-        // 2. Sign and send immediately
-        // 3. If stale proof error, immediately retry (up to MAX_JIT_ATTEMPTS)
-        //
-        // This is more aggressive than single JIT + slow rebuild fallback.
-        // Increased to 5 attempts for hyperactive trees that can change multiple times/second.
-        if (txInfo.cnftAssetId && i > 0) {
-          const MAX_JIT_ATTEMPTS = 5;
-          let jitSuccess = false;
-          let lastSignature = '';
-
-          console.log(`\n🔄 cNFT TX ${i + 1}: Starting rapid JIT retry loop (max ${MAX_JIT_ATTEMPTS} attempts)`);
-          console.log(`   Asset: ${txInfo.cnftAssetId.substring(0, 12)}...`);
-          console.log(`   From: ${txInfo.cnftFromWallet?.substring(0, 8)}... → To: ${txInfo.cnftToWallet?.substring(0, 8)}...`);
-
-          for (let attempt = 1; attempt <= MAX_JIT_ATTEMPTS && !jitSuccess; attempt++) {
-            console.log(`\n   🔄 JIT attempt ${attempt}/${MAX_JIT_ATTEMPTS}...`);
-
-            try {
-              // 1. JIT rebuild with fresh proof
-              const freshTxItem = await transactionGroupBuilder.buildSingleCnftTransactionJIT(
-                txInfo.cnftAssetId,
-                new PublicKey(txInfo.cnftFromWallet),
-                new PublicKey(txInfo.cnftToWallet),
-                `${txInfo.purpose} (attempt ${attempt})`
-              );
-
-              if (!freshTxItem.transaction?.serializedTransaction) {
-                throw new Error('JIT rebuild returned empty transaction');
-              }
-
-              // 2. Determine signers and sign
-              const freshRequiredSigners = freshTxItem.transaction.requiredSigners || [];
-              const freshSigners: Keypair[] = [];
-
-              if (freshRequiredSigners.includes(makerAddress)) {
-                freshSigners.push(makerKeypair);
-              }
-              if (freshRequiredSigners.includes(takerAddress)) {
-                freshSigners.push(takerKeypair);
-              }
-
-              const txBuffer = Buffer.from(freshTxItem.transaction.serializedTransaction, 'base64');
-              const tx = Transaction.from(txBuffer);
-              if (freshSigners.length > 0) {
-                tx.partialSign(...freshSigners);
-              }
-
-              // 3. Send immediately
-              const signature = await connection.sendRawTransaction(tx.serialize(), {
+              signature = await connection.sendRawTransaction(versionedTx.serialize(), {
                 skipPreflight: false,
                 preflightCommitment: 'confirmed',
               });
-              lastSignature = signature;
-              console.log(`      📤 Sent: ${signature.substring(0, 16)}...`);
+            } else {
+              const tx = Transaction.from(txBuffer);
+              if (signers.length > 0) {
+                tx.partialSign(...signers);
+              }
+              signature = await connection.sendRawTransaction(tx.serialize(), {
+                skipPreflight: false,
+                preflightCommitment: 'confirmed',
+              });
+            }
 
-              // 4. Wait for confirmation (shorter timeout for rapid retry)
-              const confirmation = await Promise.race([
+            console.log(`   ✅ TX ${i + 1} sent: ${signature.substring(0, 20)}...`);
+
+            // Wait for confirmation
+            // Production transactions should complete within 30s - if they don't, something is wrong
+            const confirmationTimeout = 30; // 30s for all networks - if it takes longer, investigate root cause
+            try {
+              // Use confirmTransaction with commitment level
+              // The default timeout is 30s, but we'll catch timeout errors and check status
+              const confirmation = (await Promise.race([
                 connection.confirmTransaction(signature, 'confirmed'),
                 new Promise((_, reject) =>
-                  setTimeout(() => reject(new Error('ConfirmationTimeout')), 15000)
+                  setTimeout(
+                    () => reject(new Error('TransactionExpiredTimeoutError')),
+                    confirmationTimeout * 1000
+                  )
                 ),
-              ]) as any;
+              ])) as any;
 
               if (confirmation.value.err) {
-                const errorStr = JSON.stringify(confirmation.value.err);
-                // Check if recoverable stale proof error (6000 or 6002)
-                // NOTE: 6001 (PublicKeyMismatch) is NOT recoverable
-                if (errorStr.includes('6000') || errorStr.includes('6002')) {
-                  console.log(`      ⚠️ Stale proof (attempt ${attempt}), retrying immediately...`);
-                  continue; // Retry with fresh JIT
-                }
-                throw new Error(`TX failed on-chain: ${errorStr}`);
+                throw new Error(
+                  `TX ${i + 1} failed on-chain: ${JSON.stringify(confirmation.value.err)}`
+                );
               }
+              console.log(`   ✅ TX ${i + 1} confirmed`);
+            } catch (confirmError: any) {
+              // If confirmation timed out, check if transaction actually succeeded
+              if (
+                confirmError.name === 'TransactionExpiredTimeoutError' ||
+                confirmError.message === 'TransactionExpiredTimeoutError' ||
+                confirmError.message?.includes('not confirmed in')
+              ) {
+                console.warn(
+                  `   ⚠️  TX ${
+                    i + 1
+                  } confirmation timeout after ${confirmationTimeout}s - checking transaction status...`
+                );
 
-              // Success!
-              jitSuccess = true;
-              signatures.push(signature);
-              console.log(`   ✅ TX ${i + 1} confirmed after ${attempt} attempt(s)`);
+                // Wait a bit more for transaction to potentially land
+                await new Promise((resolve) => setTimeout(resolve, 2000));
 
-            } catch (attemptError: any) {
-              const errorMsg = attemptError.message || '';
-
-              // Check if this is a recoverable stale proof error (6000 or 6002)
-              // NOTE: 6001 (PublicKeyMismatch) is NOT recoverable
-              const hasRecoverableError =
-                errorMsg.includes('6000') ||
-                errorMsg.includes('6002') ||
-                isCnftProofStaleError(attemptError);
-              if (hasRecoverableError) {
-                console.log(`      ⚠️ Stale proof error (attempt ${attempt}), retrying...`);
-                continue; // Retry with fresh JIT
-              }
-
-              // Check if confirmation timeout (might still have landed)
-              if (errorMsg.includes('ConfirmationTimeout') && lastSignature) {
-                console.log(`      ⏳ Confirmation timeout, checking if TX landed...`);
-                await new Promise(r => setTimeout(r, 2000));
-                const txStatus = await connection.getTransaction(lastSignature, {
+                // Fallback: Check if transaction actually succeeded
+                const txInfo = await connection.getTransaction(signature, {
                   commitment: 'confirmed',
                   maxSupportedTransactionVersion: 0,
                 });
-                if (txStatus && !txStatus.meta?.err) {
-                  jitSuccess = true;
-                  signatures.push(lastSignature);
-                  console.log(`   ✅ TX ${i + 1} confirmed (via fallback check) after ${attempt} attempt(s)`);
-                  break;
+
+                if (txInfo) {
+                  if (txInfo.meta?.err) {
+                    throw new Error(
+                      `TX ${i + 1} failed on-chain: ${JSON.stringify(txInfo.meta.err)}`
+                    );
+                  }
+                  // Transaction succeeded, just slow confirmation
+                  console.log(`   ✅ TX ${i + 1} succeeded (confirmed via fallback check)`);
+                } else {
+                  // Transaction not found - might still be processing or dropped
+                  // Provide helpful error with explorer link
+                  const explorerUrl = isMainnet
+                    ? `https://solscan.io/tx/${signature}`
+                    : `https://solscan.io/tx/${signature}?cluster=devnet`;
+                  throw new Error(
+                    `TX ${i + 1} not confirmed in ${confirmationTimeout}s. ` +
+                      `It is unknown if it succeeded or failed. Check signature ${signature} using the Solana Explorer or CLI tools. ` +
+                      `Explorer: ${explorerUrl}`
+                  );
                 }
-                // TX didn't land or failed, retry
-                console.log(`      ⚠️ TX not found or failed, retrying...`);
-                continue;
+              } else {
+                // Re-throw non-timeout errors
+                throw confirmError;
               }
-
-              // Non-recoverable error - return immediately with partial signatures
-              console.error(`      ❌ Attempt ${attempt} failed with non-recoverable error: ${errorMsg}`);
-              return res.status(500).json({
-                success: false,
-                error: `TX ${i + 1} (cNFT transfer) failed with non-recoverable error: ${errorMsg}`,
-                errorCode: 'CNFT_TX_FAILED',
-                partialSuccess: signatures.length > 0,
-                signatures,
-                failedTransactionIndex: i,
-                timestamp: new Date().toISOString(),
-              });
             }
-          }
+            signatures.push(signature);
 
-          if (!jitSuccess) {
-            const errorMsg = `TX ${i + 1} failed after ${MAX_JIT_ATTEMPTS} rapid JIT attempts. ` +
-              `The Merkle tree for this cNFT is too active for sequential RPC execution. ` +
-              `Try using two-phase delegation for reliable cNFT swaps.`;
-            console.error(`   ❌ ${errorMsg}`);
+            // Small delay between transactions to avoid rate limiting
+            if (i < bulkSwapInfo.transactions.length - 1) {
+              await new Promise((r) => setTimeout(r, 200));
+            }
+          } catch (txError: any) {
+            console.error(`   ❌ TX ${i + 1} failed:`, txError.message);
+            // For non-cNFT transactions (TX 1: SOL transfers), just fail - no stale proof retry needed
+            // cNFT transactions use the rapid JIT retry loop above and won't reach here
             return res.status(500).json({
               success: false,
-              error: errorMsg,
-              errorCode: 'TREE_TOO_ACTIVE',
-              suggestion: 'Use two-phase delegation for cNFT swaps (now the default)',
+              error: `Transaction ${i + 1} (${txInfo.purpose}) failed: ${txError.message}`,
               signatures,
               timestamp: new Date().toISOString(),
             });
           }
+          // ========== END NON-cNFT TRANSACTION FLOW ==========
+        }
 
-          // Small delay before next transaction
-          if (i < bulkSwapInfo.transactions.length - 1) {
-            await new Promise(r => setTimeout(r, 200));
-          }
-          continue; // Skip the non-cNFT flow below
-        }
-        // ========== END cNFT RAPID JIT RETRY LOOP ==========
+        // All transactions completed successfully
+        console.log(
+          `\n✅ All ${bulkSwapInfo.transactions.length} transactions completed successfully!`
+        );
+        console.log('📝 Signatures:', signatures);
 
-        // ========== NON-cNFT TRANSACTION FLOW (TX 1: SOL transfers) ==========
-        // Determine signers for THIS specific transaction
-        const txRequiredSigners = txInfo.requiredSigners || requireSignatures || [];
-        const signers: Keypair[] = [];
-        
-        if (txRequiredSigners.includes(makerAddress)) {
-          signers.push(makerKeypair);
-          console.log('   🔐 Adding Maker signature');
-        }
-        
-        if (txRequiredSigners.includes(takerAddress)) {
-          signers.push(takerKeypair);
-          console.log('   🔐 Adding Taker signature');
-        }
-        
-        if (signers.length === 0) {
-          console.warn(`   ⚠️ No test wallet signatures needed for TX ${i + 1} (platform-only?)`);
-        }
-        
+        return res.json({
+          success: true,
+          data: {
+            signatures,
+            signature: signatures[signatures.length - 1], // Last signature for backwards compatibility
+            transactionCount: bulkSwapInfo.transactions.length,
+            strategy: bulkSwapInfo.strategy || 'DIRECT_BUBBLEGUM_BUNDLE',
+            network: networkName,
+            isBulkSwap: true,
+          },
+          // Also include at top level for backwards compatibility
+          signatures,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      // ========== END BULK SWAP HANDLING ==========
+
+      if (!serializedTransaction) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing serializedTransaction',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Validate signatures needed
+      if (!requireSignatures || !Array.isArray(requireSignatures)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing requireSignatures array',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      console.log('📋 Required signatures:', requireSignatures);
+
+      // Load private keys from ENV based on network
+      let makerPrivateKey: string | undefined;
+      let takerPrivateKey: string | undefined;
+
+      if (isMainnet) {
+        makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+        takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
+        console.log('🔐 Using MAINNET production test wallet keys');
+      } else {
+        makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+        takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+        console.log('🔐 Using DEVNET staging test wallet keys');
+      }
+
+      if (!makerPrivateKey || !takerPrivateKey) {
+        console.error(`❌ Missing private keys in environment for ${networkName}`);
+        return res.status(500).json({
+          success: false,
+          error: `Test wallet private keys not configured for ${networkName}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Load keypairs
+      let makerKeypair: Keypair;
+      let takerKeypair: Keypair;
+
+      try {
+        makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+        takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
+        console.log('✅ Keypairs loaded successfully');
+        console.log('   Maker:', makerKeypair.publicKey.toBase58());
+        console.log('   Taker:', takerKeypair.publicKey.toBase58());
+      } catch (error) {
+        console.error('❌ Failed to load keypairs:', error);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to load test wallet keypairs',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // === RETRY LOOP: Single retry on stale proof ===
+      const MAX_ATTEMPTS = 2; // Initial attempt + 1 retry
+      let signature: string | null = null;
+
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        console.log(`\n🔄 Execution attempt ${attempt}/${MAX_ATTEMPTS}`);
+
         try {
-          const txBuffer = Buffer.from(txInfo.serialized, 'base64');
-          const isVersioned = (txBuffer[0] & 0x80) !== 0;
-          
-          let signature: string;
-          
-          if (isVersioned) {
-            const versionedTx = VersionedTransaction.deserialize(txBuffer);
-            if (signers.length > 0) {
-              versionedTx.sign(signers);
-            }
-            signature = await connection.sendRawTransaction(versionedTx.serialize(), {
-              skipPreflight: false,
-              preflightCommitment: 'confirmed',
-            });
-          } else {
-            const tx = Transaction.from(txBuffer);
-            if (signers.length > 0) {
-              tx.partialSign(...signers);
-            }
-            signature = await connection.sendRawTransaction(tx.serialize(), {
-              skipPreflight: false,
-              preflightCommitment: 'confirmed',
+          // Deserialize transaction (handles both legacy and versioned)
+          const txBuffer = Buffer.from(serializedTransaction, 'base64');
+          const isVersioned = isVersionedTransaction(txBuffer);
+
+          console.log(`🔄 Transaction buffer info:`, {
+            length: txBuffer.length,
+            firstByte: txBuffer[0],
+            firstByteHex: txBuffer[0]?.toString(16),
+            isVersioned,
+            base64Preview: serializedTransaction.substring(0, 50) + '...',
+          });
+
+          // Determine which signers are needed
+          const signers: Keypair[] = [];
+          const makerAddress = makerKeypair.publicKey.toBase58();
+          const takerAddress = takerKeypair.publicKey.toBase58();
+
+          if (requireSignatures.includes(makerAddress)) {
+            signers.push(makerKeypair);
+            console.log('🔐 Adding Maker signature');
+          }
+
+          if (requireSignatures.includes(takerAddress)) {
+            signers.push(takerKeypair);
+            console.log('🔐 Adding Taker signature');
+          }
+
+          if (signers.length === 0) {
+            console.error('❌ No valid signers found');
+            return res.status(400).json({
+              success: false,
+              error: 'No valid signers found for this transaction',
+              timestamp: new Date().toISOString(),
             });
           }
-          
-          console.log(`   ✅ TX ${i + 1} sent: ${signature.substring(0, 20)}...`);
-          
-          // Wait for confirmation
+
+          let rawTransaction: Buffer | Uint8Array;
+
+          if (isVersioned) {
+            // Handle versioned transaction (V0 with ALT)
+            let versionedTx: VersionedTransaction;
+            try {
+              versionedTx = VersionedTransaction.deserialize(txBuffer);
+              console.log('✅ Versioned transaction deserialized');
+              console.log('   Existing signatures:', versionedTx.signatures.length);
+            } catch (error) {
+              console.error('❌ Failed to deserialize versioned transaction:', error);
+              return res.status(400).json({
+                success: false,
+                error: 'Invalid versioned transaction format',
+                timestamp: new Date().toISOString(),
+              });
+            }
+
+            // CRITICAL: VersionedTransaction.sign() REPLACES all signatures!
+            // We must preserve existing signatures (platform authority) and add new ones.
+            // The platform authority already signed during transaction building.
+            console.log('📤 Adding signatures to versioned transaction...');
+            console.log('   Preserving existing signatures and adding:', signers.length);
+
+            // Store existing signatures before signing
+            const existingSignatures = [...versionedTx.signatures];
+
+            // Sign with new signers (this replaces all signatures)
+            versionedTx.sign(signers);
+
+            // Restore non-null existing signatures that were overwritten
+            // The message.staticAccountKeys order determines signature indices
+            const staticKeys = versionedTx.message.staticAccountKeys;
+            for (let i = 0; i < existingSignatures.length && i < staticKeys.length; i++) {
+              const existingSig = existingSignatures[i];
+              // Check if this signature was non-null and got overwritten
+              if (existingSig && !existingSig.every((b) => b === 0)) {
+                // Check if the new signature at this index is null (all zeros)
+                const newSig = versionedTx.signatures[i];
+                if (!newSig || newSig.every((b) => b === 0)) {
+                  // Restore the existing signature
+                  versionedTx.signatures[i] = existingSig;
+                  console.log(
+                    `   Restored signature at index ${i} for ${staticKeys[i].toBase58()}`
+                  );
+                }
+              }
+            }
+
+            rawTransaction = versionedTx.serialize();
+          } else {
+            // Handle legacy transaction
+            let transaction: Transaction;
+            try {
+              transaction = Transaction.from(txBuffer);
+              console.log('✅ Legacy transaction deserialized');
+            } catch (error) {
+              console.error('❌ Failed to deserialize legacy transaction:', error);
+              console.error('❌ Transaction buffer info:', {
+                length: txBuffer.length,
+                firstByte: txBuffer[0],
+                firstByteHex: txBuffer[0]?.toString(16),
+                errorMessage: error instanceof Error ? error.message : 'Unknown error',
+              });
+              return res.status(400).json({
+                success: false,
+                error: `Invalid transaction format. Buffer length: ${
+                  txBuffer.length
+                }, first byte: 0x${
+                  txBuffer[0]?.toString(16) || 'undefined'
+                }. This may indicate a versioned transaction being incorrectly detected as legacy.`,
+                timestamp: new Date().toISOString(),
+              });
+            }
+
+            // CRITICAL: Transaction already has platform authority signature from creation
+            // Use partialSign to add maker/taker signatures without overwriting existing signature
+            console.log('📤 Adding remaining signatures to transaction...');
+            console.log('   Additional signers:', signers.length);
+            transaction.partialSign(...signers);
+
+            rawTransaction = transaction.serialize();
+          }
+
+          // Send the fully-signed transaction
+          console.log('📤 Submitting transaction to blockchain...');
+
+          // Send and confirm using raw transaction (preserves all signatures)
+          signature = await connection.sendRawTransaction(rawTransaction, {
+            skipPreflight: false,
+            preflightCommitment: 'confirmed',
+          });
+
+          // Wait for confirmation AND check for errors
           // Production transactions should complete within 30s - if they don't, something is wrong
           const confirmationTimeout = 30; // 30s for all networks - if it takes longer, investigate root cause
+          let confirmation;
           try {
-            // Use confirmTransaction with commitment level
-            // The default timeout is 30s, but we'll catch timeout errors and check status
-            const confirmation = await Promise.race([
+            // Use Promise.race to implement custom timeout
+            confirmation = (await Promise.race([
               connection.confirmTransaction(signature, 'confirmed'),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('TransactionExpiredTimeoutError')), confirmationTimeout * 1000)
+              new Promise((_, reject) =>
+                setTimeout(
+                  () => reject(new Error('TransactionExpiredTimeoutError')),
+                  confirmationTimeout * 1000
+                )
               ),
-            ]) as any;
-            
-            if (confirmation.value.err) {
-              throw new Error(`TX ${i + 1} failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
-            }
-            console.log(`   ✅ TX ${i + 1} confirmed`);
+            ])) as any;
           } catch (confirmError: any) {
             // If confirmation timed out, check if transaction actually succeeded
-            if (confirmError.name === 'TransactionExpiredTimeoutError' || 
-                confirmError.message === 'TransactionExpiredTimeoutError' ||
-                confirmError.message?.includes('not confirmed in')) {
-              console.warn(`   ⚠️  TX ${i + 1} confirmation timeout after ${confirmationTimeout}s - checking transaction status...`);
-              
+            if (
+              confirmError.name === 'TransactionExpiredTimeoutError' ||
+              confirmError.message === 'TransactionExpiredTimeoutError' ||
+              confirmError.message?.includes('not confirmed in')
+            ) {
+              console.warn(
+                `⚠️  Transaction confirmation timeout after ${confirmationTimeout}s - checking transaction status...`
+              );
+
               // Wait a bit more for transaction to potentially land
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+
               // Fallback: Check if transaction actually succeeded
               const txInfo = await connection.getTransaction(signature, {
                 commitment: 'confirmed',
                 maxSupportedTransactionVersion: 0,
               });
-              
+
               if (txInfo) {
                 if (txInfo.meta?.err) {
-                  throw new Error(`TX ${i + 1} failed on-chain: ${JSON.stringify(txInfo.meta.err)}`);
+                  throw new Error(`Transaction failed: ${JSON.stringify(txInfo.meta.err)}`);
                 }
                 // Transaction succeeded, just slow confirmation
-                console.log(`   ✅ TX ${i + 1} succeeded (confirmed via fallback check)`);
+                console.log(`✅ Transaction succeeded (confirmed via fallback check)`);
+                // Create a mock confirmation object for consistency
+                confirmation = { value: { err: null } };
               } else {
                 // Transaction not found - might still be processing or dropped
-                // Provide helpful error with explorer link
-                const explorerUrl = isMainnet 
+                const explorerUrl = isMainnet
                   ? `https://solscan.io/tx/${signature}`
                   : `https://solscan.io/tx/${signature}?cluster=devnet`;
                 throw new Error(
-                  `TX ${i + 1} not confirmed in ${confirmationTimeout}s. ` +
-                  `It is unknown if it succeeded or failed. Check signature ${signature} using the Solana Explorer or CLI tools. ` +
-                  `Explorer: ${explorerUrl}`
+                  `Transaction was not confirmed in ${confirmationTimeout}.00 seconds. ` +
+                    `It is unknown if it succeeded or failed. Check signature ${signature} using the Solana Explorer or CLI tools. ` +
+                    `Explorer: ${explorerUrl}`
                 );
               }
             } else {
@@ -1565,409 +2094,132 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
               throw confirmError;
             }
           }
-          signatures.push(signature);
-          
-          // Small delay between transactions to avoid rate limiting
-          if (i < bulkSwapInfo.transactions.length - 1) {
-            await new Promise(r => setTimeout(r, 200));
-          }
-          
-        } catch (txError: any) {
-          console.error(`   ❌ TX ${i + 1} failed:`, txError.message);
-          // For non-cNFT transactions (TX 1: SOL transfers), just fail - no stale proof retry needed
-          // cNFT transactions use the rapid JIT retry loop above and won't reach here
-          return res.status(500).json({
-            success: false,
-            error: `Transaction ${i + 1} (${txInfo.purpose}) failed: ${txError.message}`,
-            signatures,
-            timestamp: new Date().toISOString(),
-          });
-        }
-        // ========== END NON-cNFT TRANSACTION FLOW ==========
-      }
 
-      // All transactions completed successfully
-      console.log(`\n✅ All ${bulkSwapInfo.transactions.length} transactions completed successfully!`);
-      console.log('📝 Signatures:', signatures);
+          // CRITICAL: Check if transaction had errors (program errors are NOT thrown by confirmTransaction!)
+          // A transaction can be "confirmed" but still have failed at the program level
+          if (confirmation.value.err) {
+            const errorJson = JSON.stringify(confirmation.value.err);
+            console.error('❌ Transaction confirmed but FAILED with program error:', errorJson);
 
-      return res.json({
-        success: true,
-        data: {
-          signatures,
-          signature: signatures[signatures.length - 1], // Last signature for backwards compatibility
-          transactionCount: bulkSwapInfo.transactions.length,
-          strategy: bulkSwapInfo.strategy || 'DIRECT_BUBBLEGUM_BUNDLE',
-          network: networkName,
-          isBulkSwap: true,
-        },
-        // Also include at top level for backwards compatibility
-        signatures,
-        timestamp: new Date().toISOString(),
-      });
-    }
-    // ========== END BULK SWAP HANDLING ==========
-    
-    if (!serializedTransaction) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing serializedTransaction',
-        timestamp: new Date().toISOString(),
-      });
-    }
-    
-    // Validate signatures needed
-    if (!requireSignatures || !Array.isArray(requireSignatures)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing requireSignatures array',
-        timestamp: new Date().toISOString(),
-      });
-    }
-    
-    console.log('📋 Required signatures:', requireSignatures);
-    
-    // Load private keys from ENV based on network
-    let makerPrivateKey: string | undefined;
-    let takerPrivateKey: string | undefined;
-    
-    if (isMainnet) {
-      makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
-      takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
-      console.log('🔐 Using MAINNET production test wallet keys');
-    } else {
-      makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
-      takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
-      console.log('🔐 Using DEVNET staging test wallet keys');
-    }
-    
-    if (!makerPrivateKey || !takerPrivateKey) {
-      console.error(`❌ Missing private keys in environment for ${networkName}`);
-      return res.status(500).json({
-        success: false,
-        error: `Test wallet private keys not configured for ${networkName}`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-    
-    // Load keypairs
-    let makerKeypair: Keypair;
-    let takerKeypair: Keypair;
-    
-    try {
-      makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
-      takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
-      console.log('✅ Keypairs loaded successfully');
-      console.log('   Maker:', makerKeypair.publicKey.toBase58());
-      console.log('   Taker:', takerKeypair.publicKey.toBase58());
-    } catch (error) {
-      console.error('❌ Failed to load keypairs:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to load test wallet keypairs',
-        timestamp: new Date().toISOString(),
-      });
-    }
-    
-    // === RETRY LOOP: Single retry on stale proof ===
-    const MAX_ATTEMPTS = 2; // Initial attempt + 1 retry
-    let signature: string | null = null;
-    
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      console.log(`\n🔄 Execution attempt ${attempt}/${MAX_ATTEMPTS}`);
-      
-      try {
-        // Deserialize transaction (handles both legacy and versioned)
-        const txBuffer = Buffer.from(serializedTransaction, 'base64');
-        const isVersioned = isVersionedTransaction(txBuffer);
-        
-        console.log(`🔄 Transaction buffer info:`, {
-          length: txBuffer.length,
-          firstByte: txBuffer[0],
-          firstByteHex: txBuffer[0]?.toString(16),
-          isVersioned,
-          base64Preview: serializedTransaction.substring(0, 50) + '...',
-        });
-        
-        // Determine which signers are needed
-        const signers: Keypair[] = [];
-        const makerAddress = makerKeypair.publicKey.toBase58();
-        const takerAddress = takerKeypair.publicKey.toBase58();
-        
-        if (requireSignatures.includes(makerAddress)) {
-          signers.push(makerKeypair);
-          console.log('🔐 Adding Maker signature');
-        }
-        
-        if (requireSignatures.includes(takerAddress)) {
-          signers.push(takerKeypair);
-          console.log('🔐 Adding Taker signature');
-        }
-        
-        if (signers.length === 0) {
-          console.error('❌ No valid signers found');
-          return res.status(400).json({
-            success: false,
-            error: 'No valid signers found for this transaction',
-            timestamp: new Date().toISOString(),
-          });
-        }
-        
-        let rawTransaction: Buffer | Uint8Array;
-        
-        if (isVersioned) {
-          // Handle versioned transaction (V0 with ALT)
-          let versionedTx: VersionedTransaction;
-          try {
-            versionedTx = VersionedTransaction.deserialize(txBuffer);
-            console.log('✅ Versioned transaction deserialized');
-            console.log('   Existing signatures:', versionedTx.signatures.length);
-          } catch (error) {
-            console.error('❌ Failed to deserialize versioned transaction:', error);
-            return res.status(400).json({
-              success: false,
-              error: 'Invalid versioned transaction format',
-              timestamp: new Date().toISOString(),
-            });
-          }
-          
-          // CRITICAL: VersionedTransaction.sign() REPLACES all signatures!
-          // We must preserve existing signatures (platform authority) and add new ones.
-          // The platform authority already signed during transaction building.
-          console.log('📤 Adding signatures to versioned transaction...');
-          console.log('   Preserving existing signatures and adding:', signers.length);
-          
-          // Store existing signatures before signing
-          const existingSignatures = [...versionedTx.signatures];
-          
-          // Sign with new signers (this replaces all signatures)
-          versionedTx.sign(signers);
-          
-          // Restore non-null existing signatures that were overwritten
-          // The message.staticAccountKeys order determines signature indices
-          const staticKeys = versionedTx.message.staticAccountKeys;
-          for (let i = 0; i < existingSignatures.length && i < staticKeys.length; i++) {
-            const existingSig = existingSignatures[i];
-            // Check if this signature was non-null and got overwritten
-            if (existingSig && !existingSig.every(b => b === 0)) {
-              // Check if the new signature at this index is null (all zeros)
-              const newSig = versionedTx.signatures[i];
-              if (!newSig || newSig.every(b => b === 0)) {
-                // Restore the existing signature
-                versionedTx.signatures[i] = existingSig;
-                console.log(`   Restored signature at index ${i} for ${staticKeys[i].toBase58()}`);
+            // Parse error to give a better message
+            let errorMessage = `Transaction failed: ${errorJson}`;
+            let customErrorCode: number | undefined;
+            const err = confirmation.value.err as any;
+
+            // Check for custom program error (InstructionError with Custom code)
+            if (err.InstructionError) {
+              const [instructionIndex, errorDetail] = err.InstructionError;
+              if (errorDetail?.Custom !== undefined) {
+                const code = errorDetail.Custom as number;
+                customErrorCode = code;
+
+                // Try to provide helpful context based on known error codes
+                const errorCodes: { [key: number]: string } = {
+                  0: 'Unauthorized',
+                  21: 'StaleProof - Merkle root has changed since proof generation',
+                  24: 'MissingCoreAsset - Core NFT asset account is missing',
+                  25: 'MissingMplCoreProgram - The mpl-core program account is missing from the transaction',
+                  26: 'InvalidMplCoreProgram - Wrong mpl-core program ID provided',
+                };
+
+                const errorName = errorCodes[code] || `Unknown error code ${code}`;
+                errorMessage = `Program error: Instruction #${
+                  instructionIndex + 1
+                } failed with custom error code ${code} (${errorName})`;
               }
             }
-          }
-          
-          rawTransaction = versionedTx.serialize();
-        } else {
-          // Handle legacy transaction
-          let transaction: Transaction;
-          try {
-            transaction = Transaction.from(txBuffer);
-            console.log('✅ Legacy transaction deserialized');
-          } catch (error) {
-            console.error('❌ Failed to deserialize legacy transaction:', error);
-            console.error('❌ Transaction buffer info:', {
-              length: txBuffer.length,
-              firstByte: txBuffer[0],
-              firstByteHex: txBuffer[0]?.toString(16),
-              errorMessage: error instanceof Error ? error.message : 'Unknown error',
-            });
-            return res.status(400).json({
-              success: false,
-              error: `Invalid transaction format. Buffer length: ${txBuffer.length}, first byte: 0x${txBuffer[0]?.toString(16) || 'undefined'}. This may indicate a versioned transaction being incorrectly detected as legacy.`,
-              timestamp: new Date().toISOString(),
-            });
-          }
-          
-          // CRITICAL: Transaction already has platform authority signature from creation
-          // Use partialSign to add maker/taker signatures without overwriting existing signature
-          console.log('📤 Adding remaining signatures to transaction...');
-          console.log('   Additional signers:', signers.length);
-          transaction.partialSign(...signers);
-          
-          rawTransaction = transaction.serialize();
-        }
-        
-        // Send the fully-signed transaction
-        console.log('📤 Submitting transaction to blockchain...');
-        
-        // Send and confirm using raw transaction (preserves all signatures)
-        signature = await connection.sendRawTransaction(rawTransaction, {
-          skipPreflight: false,
-          preflightCommitment: 'confirmed',
-        });
-        
-        // Wait for confirmation AND check for errors
-        // Production transactions should complete within 30s - if they don't, something is wrong
-        const confirmationTimeout = 30; // 30s for all networks - if it takes longer, investigate root cause
-        let confirmation;
-        try {
-          // Use Promise.race to implement custom timeout
-          confirmation = await Promise.race([
-            connection.confirmTransaction(signature, 'confirmed'),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('TransactionExpiredTimeoutError')), confirmationTimeout * 1000)
-            ),
-          ]) as any;
-        } catch (confirmError: any) {
-          // If confirmation timed out, check if transaction actually succeeded
-          if (confirmError.name === 'TransactionExpiredTimeoutError' || 
-              confirmError.message === 'TransactionExpiredTimeoutError' ||
-              confirmError.message?.includes('not confirmed in')) {
-            console.warn(`⚠️  Transaction confirmation timeout after ${confirmationTimeout}s - checking transaction status...`);
-            
-            // Wait a bit more for transaction to potentially land
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Fallback: Check if transaction actually succeeded
-            const txInfo = await connection.getTransaction(signature, {
-              commitment: 'confirmed',
-              maxSupportedTransactionVersion: 0,
-            });
-            
-            if (txInfo) {
-              if (txInfo.meta?.err) {
-                throw new Error(`Transaction failed: ${JSON.stringify(txInfo.meta.err)}`);
+
+            // Create error with additional properties for retry logic
+            // The stale proof check in isCnftProofStaleError needs errorCode to detect on-chain failures
+            const programError = new Error(errorMessage) as any;
+            programError.errorCode = customErrorCode;
+
+            // Try to fetch transaction logs for debugging and stale proof detection
+            try {
+              const txInfo = await connection.getTransaction(signature, {
+                commitment: 'confirmed',
+                maxSupportedTransactionVersion: 0,
+              });
+              if (txInfo?.meta?.logMessages) {
+                programError.logs = txInfo.meta.logMessages;
+                console.error('Transaction logs:', programError.logs);
               }
-              // Transaction succeeded, just slow confirmation
-              console.log(`✅ Transaction succeeded (confirmed via fallback check)`);
-              // Create a mock confirmation object for consistency
-              confirmation = { value: { err: null } };
-            } else {
-              // Transaction not found - might still be processing or dropped
-              const explorerUrl = isMainnet 
-                ? `https://solscan.io/tx/${signature}`
-                : `https://solscan.io/tx/${signature}?cluster=devnet`;
-              throw new Error(
-                `Transaction was not confirmed in ${confirmationTimeout}.00 seconds. ` +
-                `It is unknown if it succeeded or failed. Check signature ${signature} using the Solana Explorer or CLI tools. ` +
-                `Explorer: ${explorerUrl}`
-              );
+            } catch (logError) {
+              console.warn('Could not fetch transaction logs:', logError);
             }
-          } else {
-            // Re-throw non-timeout errors
-            throw confirmError;
-          }
-        }
-        
-        // CRITICAL: Check if transaction had errors (program errors are NOT thrown by confirmTransaction!)
-        // A transaction can be "confirmed" but still have failed at the program level
-        if (confirmation.value.err) {
-          const errorJson = JSON.stringify(confirmation.value.err);
-          console.error('❌ Transaction confirmed but FAILED with program error:', errorJson);
-          
-          // Parse error to give a better message
-          let errorMessage = `Transaction failed: ${errorJson}`;
-          let customErrorCode: number | undefined;
-          const err = confirmation.value.err as any;
-          
-          // Check for custom program error (InstructionError with Custom code)
-          if (err.InstructionError) {
-            const [instructionIndex, errorDetail] = err.InstructionError;
-            if (errorDetail?.Custom !== undefined) {
-              const code = errorDetail.Custom as number;
-              customErrorCode = code;
-              
-              // Try to provide helpful context based on known error codes
-              const errorCodes: { [key: number]: string } = {
-                0: 'Unauthorized',
-                21: 'StaleProof - Merkle root has changed since proof generation',
-                24: 'MissingCoreAsset - Core NFT asset account is missing',
-                25: 'MissingMplCoreProgram - The mpl-core program account is missing from the transaction',
-                26: 'InvalidMplCoreProgram - Wrong mpl-core program ID provided',
-              };
-              
-              const errorName = errorCodes[code] || `Unknown error code ${code}`;
-              errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with custom error code ${code} (${errorName})`;
-            }
-          }
-          
-          // Create error with additional properties for retry logic
-          // The stale proof check in isCnftProofStaleError needs errorCode to detect on-chain failures
-          const programError = new Error(errorMessage) as any;
-          programError.errorCode = customErrorCode;
-          
-          // Try to fetch transaction logs for debugging and stale proof detection
-          try {
-            const txInfo = await connection.getTransaction(signature, {
-              commitment: 'confirmed',
-              maxSupportedTransactionVersion: 0,
-            });
-            if (txInfo?.meta?.logMessages) {
-              programError.logs = txInfo.meta.logMessages;
-              console.error('Transaction logs:', programError.logs);
-            }
-          } catch (logError) {
-            console.warn('Could not fetch transaction logs:', logError);
-          }
-          
-          throw programError;
-        }
-        
-        console.log(`✅ TRANSACTION CONFIRMED AND SUCCEEDED on attempt ${attempt}!`);
-        console.log('   Signature:', signature);
-        const explorerUrl = isMainnet 
-          ? `https://solscan.io/tx/${signature}`
-          : `https://solscan.io/tx/${signature}?cluster=devnet`;
-        console.log('   Solscan:', explorerUrl);
-        
-        // Success! Break out of retry loop
-        break;
-        
-      } catch (error: any) {
-        const isLastAttempt = attempt === MAX_ATTEMPTS;
-        const isStaleProof = isCnftProofStaleError(error);
-        
-        console.error(`❌ Attempt ${attempt} failed:`, error.message || error);
-        if (error.logs) {
-          console.error('Transaction logs:', error.logs);
-        }
-        
-        // If stale proof and we have more attempts and offerId, rebuild immediately
-        if (isStaleProof && !isLastAttempt && offerId) {
-          console.warn(`⚠️  Stale cNFT proof detected on attempt ${attempt}/${MAX_ATTEMPTS}`);
-          console.warn('   Rebuilding transaction with fresh proofs immediately...');
 
-          try {
-            // Clear proof cache to ensure fresh proofs are fetched
-            cnftService.clearAllCachedProofs();
-
-            // Rebuild transaction with fresh proofs
-            const rebuildResult = await offerManager.rebuildTransaction(offerId);
-            
-            // Use the fresh transaction for next attempt
-            serializedTransaction = rebuildResult.serializedTransaction;
-            
-            console.log('✅ Transaction rebuilt with fresh cNFT proofs');
-            console.log(`   Retrying execution immediately (attempt ${attempt + 1})...`);
-            
-            // No delay - execute immediately while proof is fresh
-            continue;
-            
-          } catch (rebuildError: any) {
-            console.error('❌ Failed to rebuild transaction:', rebuildError.message);
-            // Fall through to error response
+            throw programError;
           }
-        }
-        
-        // Either not a stale proof, or we've exhausted retries, or rebuild failed
-        if (isLastAttempt) {
-          console.error(`❌ All ${MAX_ATTEMPTS} attempts exhausted`);
-          
-          if (isStaleProof) {
-            return res.status(409).json({
+
+          console.log(`✅ TRANSACTION CONFIRMED AND SUCCEEDED on attempt ${attempt}!`);
+          console.log('   Signature:', signature);
+          const explorerUrl = isMainnet
+            ? `https://solscan.io/tx/${signature}`
+            : `https://solscan.io/tx/${signature}?cluster=devnet`;
+          console.log('   Solscan:', explorerUrl);
+
+          // Success! Break out of retry loop
+          break;
+        } catch (error: any) {
+          const isLastAttempt = attempt === MAX_ATTEMPTS;
+          const isStaleProof = isCnftProofStaleError(error);
+
+          console.error(`❌ Attempt ${attempt} failed:`, error.message || error);
+          if (error.logs) {
+            console.error('Transaction logs:', error.logs);
+          }
+
+          // If stale proof and we have more attempts and offerId, rebuild immediately
+          if (isStaleProof && !isLastAttempt && offerId) {
+            console.warn(`⚠️  Stale cNFT proof detected on attempt ${attempt}/${MAX_ATTEMPTS}`);
+            console.warn('   Rebuilding transaction with fresh proofs immediately...');
+
+            try {
+              // Clear proof cache to ensure fresh proofs are fetched
+              cnftService.clearAllCachedProofs();
+
+              // Rebuild transaction with fresh proofs
+              const rebuildResult = await offerManager.rebuildTransaction(offerId);
+
+              // Use the fresh transaction for next attempt
+              serializedTransaction = rebuildResult.serializedTransaction;
+
+              console.log('✅ Transaction rebuilt with fresh cNFT proofs');
+              console.log(`   Retrying execution immediately (attempt ${attempt + 1})...`);
+
+              // No delay - execute immediately while proof is fresh
+              continue;
+            } catch (rebuildError: any) {
+              console.error('❌ Failed to rebuild transaction:', rebuildError.message);
+              // Fall through to error response
+            }
+          }
+
+          // Either not a stale proof, or we've exhausted retries, or rebuild failed
+          if (isLastAttempt) {
+            console.error(`❌ All ${MAX_ATTEMPTS} attempts exhausted`);
+
+            if (isStaleProof) {
+              return res.status(409).json({
+                success: false,
+                error: 'Stale cNFT proof detected',
+                errorCode: 'STALE_CNFT_PROOF',
+                message: `cNFT proof became stale after ${MAX_ATTEMPTS} attempts. This indicates high activity on the Merkle tree.`,
+                offerId,
+                logs: error.logs || [],
+                timestamp: new Date().toISOString(),
+              });
+            }
+
+            return res.status(500).json({
               success: false,
-              error: 'Stale cNFT proof detected',
-              errorCode: 'STALE_CNFT_PROOF',
-              message: `cNFT proof became stale after ${MAX_ATTEMPTS} attempts. This indicates high activity on the Merkle tree.`,
-              offerId,
+              error: error.message || 'Transaction failed',
               logs: error.logs || [],
               timestamp: new Date().toISOString(),
             });
           }
-          
+
+          // Non-stale proof error - don't retry
           return res.status(500).json({
             success: false,
             error: error.message || 'Transaction failed',
@@ -1975,46 +2227,37 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             timestamp: new Date().toISOString(),
           });
         }
-        
-        // Non-stale proof error - don't retry
-        return res.status(500).json({
-          success: false,
-          error: error.message || 'Transaction failed',
-          logs: error.logs || [],
-          timestamp: new Date().toISOString(),
-        });
       }
+
+      // Success response (only reached if signature was set)
+      if (!signature) {
+        throw new Error('No signature generated after retry loop');
+      }
+
+      const finalExplorerUrl = isMainnet
+        ? `https://solscan.io/tx/${signature}`
+        : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          signature,
+          explorerUrl: finalExplorerUrl,
+          network: networkName,
+        },
+        message: `Swap executed successfully on ${networkName}`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('❌ Unexpected error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Internal server error',
+        timestamp: new Date().toISOString(),
+      });
     }
-    
-    // Success response (only reached if signature was set)
-    if (!signature) {
-      throw new Error('No signature generated after retry loop');
-    }
-    
-    const finalExplorerUrl = isMainnet 
-      ? `https://solscan.io/tx/${signature}`
-      : `https://solscan.io/tx/${signature}?cluster=devnet`;
-    
-    return res.status(200).json({
-      success: true,
-      data: {
-        signature,
-        explorerUrl: finalExplorerUrl,
-        network: networkName,
-      },
-      message: `Swap executed successfully on ${networkName}`,
-      timestamp: new Date().toISOString(),
-    });
-    
-  } catch (error: any) {
-    console.error('❌ Unexpected error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Internal server error',
-      timestamp: new Date().toISOString(),
-    });
   }
-});
+);
 
 /**
  * POST /api/test/execute-listing-delegation
@@ -2022,100 +2265,104 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
  * TEST ONLY - Executes a cNFT delegation transaction for listings
  * Uses the maker (seller) wallet to sign the delegation
  */
-router.post('/api/test/execute-listing-delegation', requireTestEnvironment, async (req: Request, res: Response) => {
-  console.log('\n🧪 TEST LISTING DELEGATION EXECUTION');
-  console.log('⏰ Timestamp:', new Date().toISOString());
+router.post(
+  '/api/test/execute-listing-delegation',
+  requireTestEnvironment,
+  async (req: Request, res: Response) => {
+    console.log('\n🧪 TEST LISTING DELEGATION EXECUTION');
+    console.log('⏰ Timestamp:', new Date().toISOString());
 
-  try {
-    const { listingId, serializedTransaction } = req.body;
+    try {
+      const { listingId, serializedTransaction } = req.body;
 
-    if (!serializedTransaction) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing serializedTransaction',
+      if (!serializedTransaction) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing serializedTransaction',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      console.log('📋 Listing ID:', listingId);
+
+      // Load maker (seller) private key
+      let makerPrivateKey: string | undefined;
+
+      if (isMainnet) {
+        makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+      } else {
+        makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+      }
+
+      if (!makerPrivateKey) {
+        return res.status(500).json({
+          success: false,
+          error: `Test wallet private key not configured for ${networkName}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+      console.log('✅ Maker keypair loaded:', makerKeypair.publicKey.toBase58());
+
+      // Deserialize and sign transaction
+      const txBuffer = Buffer.from(serializedTransaction, 'base64');
+      const isVersioned = isVersionedTransaction(txBuffer);
+
+      let signature: string;
+
+      if (isVersioned) {
+        const versionedTx = VersionedTransaction.deserialize(txBuffer);
+        versionedTx.sign([makerKeypair]);
+        signature = await connection.sendRawTransaction(versionedTx.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+      } else {
+        const transaction = Transaction.from(txBuffer);
+        transaction.partialSign(makerKeypair);
+        signature = await connection.sendRawTransaction(transaction.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+      }
+
+      console.log('📤 Transaction sent:', signature);
+
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+
+      console.log('✅ Delegation transaction confirmed!');
+
+      const explorerUrl = isMainnet
+        ? `https://solscan.io/tx/${signature}`
+        : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          signature,
+          explorerUrl,
+          network: networkName,
+          listingId,
+        },
+        message: 'Delegation transaction executed successfully',
         timestamp: new Date().toISOString(),
       });
-    }
-
-    console.log('📋 Listing ID:', listingId);
-
-    // Load maker (seller) private key
-    let makerPrivateKey: string | undefined;
-
-    if (isMainnet) {
-      makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
-    } else {
-      makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
-    }
-
-    if (!makerPrivateKey) {
+    } catch (error: any) {
+      console.error('❌ Delegation execution error:', error);
       return res.status(500).json({
         success: false,
-        error: `Test wallet private key not configured for ${networkName}`,
+        error: error.message || 'Delegation transaction failed',
         timestamp: new Date().toISOString(),
       });
     }
-
-    const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
-    console.log('✅ Maker keypair loaded:', makerKeypair.publicKey.toBase58());
-
-    // Deserialize and sign transaction
-    const txBuffer = Buffer.from(serializedTransaction, 'base64');
-    const isVersioned = isVersionedTransaction(txBuffer);
-
-    let signature: string;
-
-    if (isVersioned) {
-      const versionedTx = VersionedTransaction.deserialize(txBuffer);
-      versionedTx.sign([makerKeypair]);
-      signature = await connection.sendRawTransaction(versionedTx.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-    } else {
-      const transaction = Transaction.from(txBuffer);
-      transaction.partialSign(makerKeypair);
-      signature = await connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-    }
-
-    console.log('📤 Transaction sent:', signature);
-
-    // Wait for confirmation
-    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-
-    if (confirmation.value.err) {
-      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-    }
-
-    console.log('✅ Delegation transaction confirmed!');
-
-    const explorerUrl = isMainnet
-      ? `https://solscan.io/tx/${signature}`
-      : `https://solscan.io/tx/${signature}?cluster=devnet`;
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        signature,
-        explorerUrl,
-        network: networkName,
-        listingId,
-      },
-      message: 'Delegation transaction executed successfully',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    console.error('❌ Delegation execution error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Delegation transaction failed',
-      timestamp: new Date().toISOString(),
-    });
   }
-});
+);
 
 /**
  * POST /api/test/execute-buy-transaction
@@ -2128,186 +2375,197 @@ router.post('/api/test/execute-listing-delegation', requireTestEnvironment, asyn
  * 2. Transfers platform fee to fee collector
  * 3. Transfers cNFT from seller to buyer via delegation
  */
-router.post('/api/test/execute-buy-transaction', requireTestEnvironment, async (req: Request, res: Response) => {
-  console.log('\n🧪 TEST BUY TRANSACTION EXECUTION (Task 18)');
-  console.log('⏰ Timestamp:', new Date().toISOString());
-
-  try {
-    const { listingId, serializedTransaction, buyer } = req.body;
-
-    if (!serializedTransaction) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing serializedTransaction',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    console.log('📋 Listing ID:', listingId);
-    console.log('👤 Buyer:', buyer);
-
-    // Load taker (buyer) private key
-    let takerPrivateKey: string | undefined;
-
-    if (isMainnet) {
-      takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
-    } else {
-      takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
-    }
-
-    if (!takerPrivateKey) {
-      return res.status(500).json({
-        success: false,
-        error: `Test wallet private key not configured for ${networkName}`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
-    console.log('✅ Taker (buyer) keypair loaded:', takerKeypair.publicKey.toBase58());
-
-    // Verify buyer address matches taker keypair
-    if (buyer && buyer !== takerKeypair.publicKey.toBase58()) {
-      console.warn('⚠️ Buyer address does not match taker keypair');
-      console.warn('   Expected:', takerKeypair.publicKey.toBase58());
-      console.warn('   Got:', buyer);
-    }
-
-    // Deserialize and sign transaction
-    const txBuffer = Buffer.from(serializedTransaction, 'base64');
-    const isVersioned = isVersionedTransaction(txBuffer);
-
-    let signature: string;
-
-    if (isVersioned) {
-      const versionedTx = VersionedTransaction.deserialize(txBuffer);
-
-      // Store existing signatures before signing
-      const existingSignatures = [...versionedTx.signatures];
-
-      // Sign with buyer
-      versionedTx.sign([takerKeypair]);
-
-      // Restore non-null existing signatures that were overwritten (platform authority)
-      const staticKeys = versionedTx.message.staticAccountKeys;
-      for (let i = 0; i < existingSignatures.length && i < staticKeys.length; i++) {
-        const existingSig = existingSignatures[i];
-        if (existingSig && !existingSig.every(b => b === 0)) {
-          const newSig = versionedTx.signatures[i];
-          if (!newSig || newSig.every(b => b === 0)) {
-            versionedTx.signatures[i] = existingSig;
-            console.log(`   Restored signature at index ${i}`);
-          }
-        }
-      }
-
-      signature = await connection.sendRawTransaction(versionedTx.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-    } else {
-      const transaction = Transaction.from(txBuffer);
-      transaction.partialSign(takerKeypair);
-      signature = await connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-    }
-
-    console.log('📤 Buy transaction sent:', signature);
-
-    // Wait for confirmation with timeout
-    const confirmationTimeout = 30; // 30s timeout
-    let confirmation;
+router.post(
+  '/api/test/execute-buy-transaction',
+  requireTestEnvironment,
+  async (req: Request, res: Response) => {
+    console.log('\n🧪 TEST BUY TRANSACTION EXECUTION (Task 18)');
+    console.log('⏰ Timestamp:', new Date().toISOString());
 
     try {
-      confirmation = await Promise.race([
-        connection.confirmTransaction(signature, 'confirmed'),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('TransactionExpiredTimeoutError')), confirmationTimeout * 1000)
-        ),
-      ]) as any;
-    } catch (confirmError: any) {
-      if (confirmError.message === 'TransactionExpiredTimeoutError' ||
-        confirmError.message?.includes('not confirmed in')) {
-        console.warn('⚠️ Confirmation timeout - checking transaction status...');
+      const { listingId, serializedTransaction, buyer } = req.body;
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const txInfo = await connection.getTransaction(signature, {
-          commitment: 'confirmed',
-          maxSupportedTransactionVersion: 0,
+      if (!serializedTransaction) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing serializedTransaction',
+          timestamp: new Date().toISOString(),
         });
+      }
 
-        if (txInfo) {
-          if (txInfo.meta?.err) {
-            throw new Error(`Transaction failed: ${JSON.stringify(txInfo.meta.err)}`);
-          }
-          console.log('✅ Buy transaction succeeded (confirmed via fallback check)');
-          confirmation = { value: { err: null } };
-        } else {
-          const explorerUrl = isMainnet
-            ? `https://solscan.io/tx/${signature}`
-            : `https://solscan.io/tx/${signature}?cluster=devnet`;
-          throw new Error(
-            `Transaction not confirmed in ${confirmationTimeout}s. Check: ${explorerUrl}`
-          );
-        }
+      console.log('📋 Listing ID:', listingId);
+      console.log('👤 Buyer:', buyer);
+
+      // Load taker (buyer) private key
+      let takerPrivateKey: string | undefined;
+
+      if (isMainnet) {
+        takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
       } else {
-        throw confirmError;
+        takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
       }
-    }
 
-    if (confirmation.value.err) {
-      const errorJson = JSON.stringify(confirmation.value.err);
-      console.error('❌ Buy transaction failed:', errorJson);
+      if (!takerPrivateKey) {
+        return res.status(500).json({
+          success: false,
+          error: `Test wallet private key not configured for ${networkName}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
 
-      // Parse error for helpful message
-      let errorMessage = `Transaction failed: ${errorJson}`;
-      const err = confirmation.value.err as any;
+      const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
+      console.log('✅ Taker (buyer) keypair loaded:', takerKeypair.publicKey.toBase58());
 
-      if (err.InstructionError) {
-        const [instructionIndex, errorDetail] = err.InstructionError;
-        if (errorDetail?.Custom !== undefined) {
-          const code = errorDetail.Custom as number;
-          const errorCodes: { [key: number]: string } = {
-            0: 'Unauthorized',
-            21: 'StaleProof - Merkle root has changed',
-          };
-          const errorName = errorCodes[code] || `Error code ${code}`;
-          errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with ${errorName}`;
+      // Verify buyer address matches taker keypair
+      if (buyer && buyer !== takerKeypair.publicKey.toBase58()) {
+        console.warn('⚠️ Buyer address does not match taker keypair');
+        console.warn('   Expected:', takerKeypair.publicKey.toBase58());
+        console.warn('   Got:', buyer);
+      }
+
+      // Deserialize and sign transaction
+      const txBuffer = Buffer.from(serializedTransaction, 'base64');
+      const isVersioned = isVersionedTransaction(txBuffer);
+
+      let signature: string;
+
+      if (isVersioned) {
+        const versionedTx = VersionedTransaction.deserialize(txBuffer);
+
+        // Store existing signatures before signing
+        const existingSignatures = [...versionedTx.signatures];
+
+        // Sign with buyer
+        versionedTx.sign([takerKeypair]);
+
+        // Restore non-null existing signatures that were overwritten (platform authority)
+        const staticKeys = versionedTx.message.staticAccountKeys;
+        for (let i = 0; i < existingSignatures.length && i < staticKeys.length; i++) {
+          const existingSig = existingSignatures[i];
+          if (existingSig && !existingSig.every((b) => b === 0)) {
+            const newSig = versionedTx.signatures[i];
+            if (!newSig || newSig.every((b) => b === 0)) {
+              versionedTx.signatures[i] = existingSig;
+              console.log(`   Restored signature at index ${i}`);
+            }
+          }
+        }
+
+        signature = await connection.sendRawTransaction(versionedTx.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+      } else {
+        const transaction = Transaction.from(txBuffer);
+        transaction.partialSign(takerKeypair);
+        signature = await connection.sendRawTransaction(transaction.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+      }
+
+      console.log('📤 Buy transaction sent:', signature);
+
+      // Wait for confirmation with timeout
+      const confirmationTimeout = 30; // 30s timeout
+      let confirmation;
+
+      try {
+        confirmation = (await Promise.race([
+          connection.confirmTransaction(signature, 'confirmed'),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('TransactionExpiredTimeoutError')),
+              confirmationTimeout * 1000
+            )
+          ),
+        ])) as any;
+      } catch (confirmError: any) {
+        if (
+          confirmError.message === 'TransactionExpiredTimeoutError' ||
+          confirmError.message?.includes('not confirmed in')
+        ) {
+          console.warn('⚠️ Confirmation timeout - checking transaction status...');
+
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          const txInfo = await connection.getTransaction(signature, {
+            commitment: 'confirmed',
+            maxSupportedTransactionVersion: 0,
+          });
+
+          if (txInfo) {
+            if (txInfo.meta?.err) {
+              throw new Error(`Transaction failed: ${JSON.stringify(txInfo.meta.err)}`);
+            }
+            console.log('✅ Buy transaction succeeded (confirmed via fallback check)');
+            confirmation = { value: { err: null } };
+          } else {
+            const explorerUrl = isMainnet
+              ? `https://solscan.io/tx/${signature}`
+              : `https://solscan.io/tx/${signature}?cluster=devnet`;
+            throw new Error(
+              `Transaction not confirmed in ${confirmationTimeout}s. Check: ${explorerUrl}`
+            );
+          }
+        } else {
+          throw confirmError;
         }
       }
 
-      throw new Error(errorMessage);
+      if (confirmation.value.err) {
+        const errorJson = JSON.stringify(confirmation.value.err);
+        console.error('❌ Buy transaction failed:', errorJson);
+
+        // Parse error for helpful message
+        let errorMessage = `Transaction failed: ${errorJson}`;
+        const err = confirmation.value.err as any;
+
+        if (err.InstructionError) {
+          const [instructionIndex, errorDetail] = err.InstructionError;
+          if (errorDetail?.Custom !== undefined) {
+            const code = errorDetail.Custom as number;
+            const errorCodes: { [key: number]: string } = {
+              0: 'Unauthorized',
+              21: 'StaleProof - Merkle root has changed',
+            };
+            const errorName = errorCodes[code] || `Error code ${code}`;
+            errorMessage = `Program error: Instruction #${
+              instructionIndex + 1
+            } failed with ${errorName}`;
+          }
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      console.log('✅ Buy transaction confirmed!');
+
+      const explorerUrl = isMainnet
+        ? `https://solscan.io/tx/${signature}`
+        : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          signature,
+          explorerUrl,
+          network: networkName,
+          listingId,
+        },
+        message: 'Buy transaction executed successfully',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('❌ Buy transaction execution error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Buy transaction failed',
+        timestamp: new Date().toISOString(),
+      });
     }
-
-    console.log('✅ Buy transaction confirmed!');
-
-    const explorerUrl = isMainnet
-      ? `https://solscan.io/tx/${signature}`
-      : `https://solscan.io/tx/${signature}?cluster=devnet`;
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        signature,
-        explorerUrl,
-        network: networkName,
-        listingId,
-      },
-      message: 'Buy transaction executed successfully',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    console.error('❌ Buy transaction execution error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Buy transaction failed',
-      timestamp: new Date().toISOString(),
-    });
   }
-});
+);
 
 /**
  * POST /api/test/execute-listing-revoke
@@ -2315,100 +2573,104 @@ router.post('/api/test/execute-buy-transaction', requireTestEnvironment, async (
  * TEST ONLY - Executes a cNFT revoke transaction for cancelled listings
  * Uses the maker (seller) wallet to sign the revoke
  */
-router.post('/api/test/execute-listing-revoke', requireTestEnvironment, async (req: Request, res: Response) => {
-  console.log('\n🧪 TEST LISTING REVOKE EXECUTION');
-  console.log('⏰ Timestamp:', new Date().toISOString());
+router.post(
+  '/api/test/execute-listing-revoke',
+  requireTestEnvironment,
+  async (req: Request, res: Response) => {
+    console.log('\n🧪 TEST LISTING REVOKE EXECUTION');
+    console.log('⏰ Timestamp:', new Date().toISOString());
 
-  try {
-    const { listingId, serializedTransaction } = req.body;
+    try {
+      const { listingId, serializedTransaction } = req.body;
 
-    if (!serializedTransaction) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing serializedTransaction',
+      if (!serializedTransaction) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing serializedTransaction',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      console.log('📋 Listing ID:', listingId);
+
+      // Load maker (seller) private key
+      let makerPrivateKey: string | undefined;
+
+      if (isMainnet) {
+        makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+      } else {
+        makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+      }
+
+      if (!makerPrivateKey) {
+        return res.status(500).json({
+          success: false,
+          error: `Test wallet private key not configured for ${networkName}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+      console.log('✅ Maker keypair loaded:', makerKeypair.publicKey.toBase58());
+
+      // Deserialize and sign transaction
+      const txBuffer = Buffer.from(serializedTransaction, 'base64');
+      const isVersioned = isVersionedTransaction(txBuffer);
+
+      let signature: string;
+
+      if (isVersioned) {
+        const versionedTx = VersionedTransaction.deserialize(txBuffer);
+        versionedTx.sign([makerKeypair]);
+        signature = await connection.sendRawTransaction(versionedTx.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+      } else {
+        const transaction = Transaction.from(txBuffer);
+        transaction.partialSign(makerKeypair);
+        signature = await connection.sendRawTransaction(transaction.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+      }
+
+      console.log('📤 Transaction sent:', signature);
+
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+
+      console.log('✅ Revoke transaction confirmed!');
+
+      const explorerUrl = isMainnet
+        ? `https://solscan.io/tx/${signature}`
+        : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          signature,
+          explorerUrl,
+          network: networkName,
+          listingId,
+        },
+        message: 'Revoke transaction executed successfully',
         timestamp: new Date().toISOString(),
       });
-    }
-
-    console.log('📋 Listing ID:', listingId);
-
-    // Load maker (seller) private key
-    let makerPrivateKey: string | undefined;
-
-    if (isMainnet) {
-      makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
-    } else {
-      makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
-    }
-
-    if (!makerPrivateKey) {
+    } catch (error: any) {
+      console.error('❌ Revoke execution error:', error);
       return res.status(500).json({
         success: false,
-        error: `Test wallet private key not configured for ${networkName}`,
+        error: error.message || 'Revoke transaction failed',
         timestamp: new Date().toISOString(),
       });
     }
-
-    const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
-    console.log('✅ Maker keypair loaded:', makerKeypair.publicKey.toBase58());
-
-    // Deserialize and sign transaction
-    const txBuffer = Buffer.from(serializedTransaction, 'base64');
-    const isVersioned = isVersionedTransaction(txBuffer);
-
-    let signature: string;
-
-    if (isVersioned) {
-      const versionedTx = VersionedTransaction.deserialize(txBuffer);
-      versionedTx.sign([makerKeypair]);
-      signature = await connection.sendRawTransaction(versionedTx.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-    } else {
-      const transaction = Transaction.from(txBuffer);
-      transaction.partialSign(makerKeypair);
-      signature = await connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-    }
-
-    console.log('📤 Transaction sent:', signature);
-
-    // Wait for confirmation
-    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-
-    if (confirmation.value.err) {
-      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-    }
-
-    console.log('✅ Revoke transaction confirmed!');
-
-    const explorerUrl = isMainnet
-      ? `https://solscan.io/tx/${signature}`
-      : `https://solscan.io/tx/${signature}?cluster=devnet`;
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        signature,
-        explorerUrl,
-        network: networkName,
-        listingId,
-      },
-      message: 'Revoke transaction executed successfully',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    console.error('❌ Revoke execution error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Revoke transaction failed',
-      timestamp: new Date().toISOString(),
-    });
   }
-});
+);
 
 /**
  * POST /api/test/revoke-cnft-delegation
@@ -2418,148 +2680,155 @@ router.post('/api/test/execute-listing-revoke', requireTestEnvironment, async (r
  *
  * The owner must sign the revoke transaction.
  */
-router.post('/api/test/revoke-cnft-delegation', requireTestEnvironment, async (req: Request, res: Response) => {
-  console.log('\n🧪 TEST CNFT DELEGATION REVOKE');
-  console.log('⏰ Timestamp:', new Date().toISOString());
+router.post(
+  '/api/test/revoke-cnft-delegation',
+  requireTestEnvironment,
+  async (req: Request, res: Response) => {
+    console.log('\n🧪 TEST CNFT DELEGATION REVOKE');
+    console.log('⏰ Timestamp:', new Date().toISOString());
 
-  try {
-    const { assetId, ownerWallet } = req.body;
+    try {
+      const { assetId, ownerWallet } = req.body;
 
-    if (!assetId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing assetId',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    console.log('📋 Asset ID:', assetId);
-    console.log('👤 Owner Wallet:', ownerWallet || '(will use test wallet)');
-
-    // Check which test wallet matches the owner
-    const makerPrivateKey = isMainnet
-      ? process.env.MAINNET_PROD_SENDER_PRIVATE_KEY
-      : process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
-    const takerPrivateKey = isMainnet
-      ? process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY
-      : process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
-
-    if (!makerPrivateKey || !takerPrivateKey) {
-      return res.status(500).json({
-        success: false,
-        error: `Test wallet private keys not configured for ${networkName}`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
-    const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
-
-    // Determine owner based on ownerWallet param or fetch from DAS
-    let ownerKeypair: Keypair;
-
-    if (ownerWallet) {
-      if (ownerWallet === makerKeypair.publicKey.toBase58()) {
-        ownerKeypair = makerKeypair;
-      } else if (ownerWallet === takerKeypair.publicKey.toBase58()) {
-        ownerKeypair = takerKeypair;
-      } else {
+      if (!assetId) {
         return res.status(400).json({
           success: false,
-          error: `Owner wallet ${ownerWallet} is not a test wallet. Available: ${makerKeypair.publicKey.toBase58()}, ${takerKeypair.publicKey.toBase58()}`,
+          error: 'Missing assetId',
           timestamp: new Date().toISOString(),
         });
       }
-    } else {
-      // Auto-detect owner from DAS API
-      const delegationService = createCnftDelegationService(connection);
-      try {
-        // We'll try maker first, then taker
-        // The service will validate ownership when building the instruction
-        ownerKeypair = makerKeypair;
-      } catch {
-        ownerKeypair = takerKeypair;
+
+      console.log('📋 Asset ID:', assetId);
+      console.log('👤 Owner Wallet:', ownerWallet || '(will use test wallet)');
+
+      // Check which test wallet matches the owner
+      const makerPrivateKey = isMainnet
+        ? process.env.MAINNET_PROD_SENDER_PRIVATE_KEY
+        : process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+      const takerPrivateKey = isMainnet
+        ? process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY
+        : process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+
+      if (!makerPrivateKey || !takerPrivateKey) {
+        return res.status(500).json({
+          success: false,
+          error: `Test wallet private keys not configured for ${networkName}`,
+          timestamp: new Date().toISOString(),
+        });
       }
-    }
 
-    console.log('✅ Owner keypair loaded:', ownerKeypair.publicKey.toBase58());
+      const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+      const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
 
-    // Create delegation service and build revoke instruction
-    const delegationService = createCnftDelegationService(connection);
+      // Determine owner based on ownerWallet param or fetch from DAS
+      let ownerKeypair: Keypair;
 
-    console.log('🔧 Building revoke instruction...');
-    const revokeResult = await delegationService.buildRevokeInstruction({
-      assetId,
-      ownerPubkey: ownerKeypair.publicKey,
-    });
+      if (ownerWallet) {
+        if (ownerWallet === makerKeypair.publicKey.toBase58()) {
+          ownerKeypair = makerKeypair;
+        } else if (ownerWallet === takerKeypair.publicKey.toBase58()) {
+          ownerKeypair = takerKeypair;
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: `Owner wallet ${ownerWallet} is not a test wallet. Available: ${makerKeypair.publicKey.toBase58()}, ${takerKeypair.publicKey.toBase58()}`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      } else {
+        // Auto-detect owner from DAS API
+        const delegationService = createCnftDelegationService(connection);
+        try {
+          // We'll try maker first, then taker
+          // The service will validate ownership when building the instruction
+          ownerKeypair = makerKeypair;
+        } catch {
+          ownerKeypair = takerKeypair;
+        }
+      }
 
-    console.log('✅ Revoke instruction built:', {
-      treeAddress: revokeResult.treeAddress.toBase58(),
-      proofNodes: revokeResult.proofNodes.length,
-      estimatedSize: revokeResult.estimatedSize,
-    });
+      console.log('✅ Owner keypair loaded:', ownerKeypair.publicKey.toBase58());
 
-    // Build transaction with the revoke instruction
-    const transaction = new Transaction();
+      // Create delegation service and build revoke instruction
+      const delegationService = createCnftDelegationService(connection);
 
-    // Get recent blockhash
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-    transaction.recentBlockhash = blockhash;
-    transaction.lastValidBlockHeight = lastValidBlockHeight;
-    transaction.feePayer = ownerKeypair.publicKey;
-
-    // Add revoke instruction
-    transaction.add(revokeResult.instruction);
-
-    // Sign and send
-    transaction.sign(ownerKeypair);
-
-    console.log('📤 Sending revoke transaction...');
-    const signature = await connection.sendRawTransaction(transaction.serialize(), {
-      skipPreflight: false,
-      preflightCommitment: 'confirmed',
-    });
-
-    console.log('📤 Transaction sent:', signature);
-
-    // Wait for confirmation
-    const confirmation = await connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-    }, 'confirmed');
-
-    if (confirmation.value.err) {
-      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-    }
-
-    console.log('✅ Revoke transaction confirmed!');
-
-    const explorerUrl = isMainnet
-      ? `https://solscan.io/tx/${signature}`
-      : `https://solscan.io/tx/${signature}?cluster=devnet`;
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        signature,
-        explorerUrl,
-        network: networkName,
+      console.log('🔧 Building revoke instruction...');
+      const revokeResult = await delegationService.buildRevokeInstruction({
         assetId,
-        owner: ownerKeypair.publicKey.toBase58(),
-      },
-      message: 'cNFT delegation revoked successfully',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    console.error('❌ Revoke execution error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Revoke transaction failed',
-      timestamp: new Date().toISOString(),
-    });
+        ownerPubkey: ownerKeypair.publicKey,
+      });
+
+      console.log('✅ Revoke instruction built:', {
+        treeAddress: revokeResult.treeAddress.toBase58(),
+        proofNodes: revokeResult.proofNodes.length,
+        estimatedSize: revokeResult.estimatedSize,
+      });
+
+      // Build transaction with the revoke instruction
+      const transaction = new Transaction();
+
+      // Get recent blockhash
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.lastValidBlockHeight = lastValidBlockHeight;
+      transaction.feePayer = ownerKeypair.publicKey;
+
+      // Add revoke instruction
+      transaction.add(revokeResult.instruction);
+
+      // Sign and send
+      transaction.sign(ownerKeypair);
+
+      console.log('📤 Sending revoke transaction...');
+      const signature = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+
+      console.log('📤 Transaction sent:', signature);
+
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction(
+        {
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+        },
+        'confirmed'
+      );
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+
+      console.log('✅ Revoke transaction confirmed!');
+
+      const explorerUrl = isMainnet
+        ? `https://solscan.io/tx/${signature}`
+        : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          signature,
+          explorerUrl,
+          network: networkName,
+          assetId,
+          owner: ownerKeypair.publicKey.toBase58(),
+        },
+        message: 'cNFT delegation revoked successfully',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('❌ Revoke execution error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Revoke transaction failed',
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
-});
+);
 
 /**
  * Execute Lock Transaction (Two-Phase Swap)
@@ -2581,7 +2850,8 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
   console.log('========================================');
 
   const MAX_ATTEMPTS = 3;
-  let { swapId, serializedTransaction, transactionIndex, totalTransactions, party, assetId } = req.body;
+  let { swapId, serializedTransaction, transactionIndex, totalTransactions, party, assetId } =
+    req.body;
 
   // Default party to 'A' if not provided
   const partyValue: 'A' | 'B' = party === 'B' ? 'B' : 'A';
@@ -2614,7 +2884,9 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
   if (!signerPrivateKey) {
     return res.status(500).json({
       success: false,
-      error: `Missing ${isMainnet ? 'mainnet' : 'devnet'} ${partyValue === 'B' ? 'receiver' : 'sender'} private key`,
+      error: `Missing ${isMainnet ? 'mainnet' : 'devnet'} ${
+        partyValue === 'B' ? 'receiver' : 'sender'
+      } private key`,
       timestamp: new Date().toISOString(),
     });
   }
@@ -2660,7 +2932,9 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
       // JUST-IN-TIME VALIDATION: If assetId is provided, validate ONLY that specific asset
       // This is the fix for multi-cNFT swaps where sequential delegations modify the tree
       if (assetId) {
-        console.log(`\n   🎯 Just-in-time proof validation for asset: ${assetId.substring(0, 12)}...`);
+        console.log(
+          `\n   🎯 Just-in-time proof validation for asset: ${assetId.substring(0, 12)}...`
+        );
 
         try {
           // CRITICAL: Use skipCache=true to get fresh proof from DAS
@@ -2681,7 +2955,9 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
 
           // Check if this is a fatal "Asset Not Found" error
           if (errorMsg.includes('Asset Not Found') || errorMsg.includes('RecordNotFound')) {
-            console.error(`   ❌ FATAL: cNFT ${assetId.substring(0, 12)}... does not exist or was burned`);
+            console.error(
+              `   ❌ FATAL: cNFT ${assetId.substring(0, 12)}... does not exist or was burned`
+            );
             hasValidationError = true;
             validationErrorMessage = `cNFT ${assetId} not found - may have been burned or transferred`;
           } else {
@@ -2701,17 +2977,24 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
 
         if (swap) {
           const assets = partyValue === 'A' ? swap.assetsA : swap.assetsB;
-          const cnftAssets = (assets as any[]).filter((a: any) => a.type === 'CNFT' || a.type === 'cnft');
+          const cnftAssets = (assets as any[]).filter(
+            (a: any) => a.type === 'CNFT' || a.type === 'cnft'
+          );
 
           if (cnftAssets.length > 0) {
             for (const asset of cnftAssets) {
               try {
                 const cachedProof = await cnftService.getCnftProof(asset.identifier, false, 0);
                 if (cachedProof) {
-                  const validation = await cnftService.validateProofRoot(asset.identifier, cachedProof.root);
+                  const validation = await cnftService.validateProofRoot(
+                    asset.identifier,
+                    cachedProof.root
+                  );
 
                   if (!validation.isValid) {
-                    console.warn(`   ⚠️  Stale proof detected for ${asset.identifier.substring(0, 12)}...`);
+                    console.warn(
+                      `   ⚠️  Stale proof detected for ${asset.identifier.substring(0, 12)}...`
+                    );
                     hasStaleProof = true;
                   } else {
                     console.log(`   ✅ Proof valid for ${asset.identifier.substring(0, 12)}...`);
@@ -2719,16 +3002,26 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
                 }
               } catch (validationError: any) {
                 const errorMsg = validationError.message || 'Unknown error';
-                console.error(`   ❌ Validation failed for ${asset.identifier.substring(0, 12)}...:`, errorMsg);
+                console.error(
+                  `   ❌ Validation failed for ${asset.identifier.substring(0, 12)}...:`,
+                  errorMsg
+                );
 
                 // Check if this is a fatal "Asset Not Found" error
                 if (errorMsg.includes('Asset Not Found') || errorMsg.includes('RecordNotFound')) {
-                  console.error(`   ❌ FATAL: cNFT ${asset.identifier.substring(0, 12)}... does not exist or was burned`);
+                  console.error(
+                    `   ❌ FATAL: cNFT ${asset.identifier.substring(
+                      0,
+                      12
+                    )}... does not exist or was burned`
+                  );
                   hasValidationError = true;
                   validationErrorMessage = `cNFT ${asset.identifier} not found - may have been burned or transferred`;
                 } else {
                   // Other validation errors - treat as stale proof and try to rebuild
-                  console.warn(`   ⚠️  Treating validation error as stale proof, will attempt rebuild`);
+                  console.warn(
+                    `   ⚠️  Treating validation error as stale proof, will attempt rebuild`
+                  );
                   hasStaleProof = true;
                 }
               }
@@ -2773,11 +3066,14 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
           delegateAuthority
         );
 
-        const rebuildResult = await lockService.rebuildSingleLockTransaction({
-          swapId,
-          walletAddress: signer.publicKey.toBase58(),
-          party: partyValue,
-        }, transactionIndex || 0);
+        const rebuildResult = await lockService.rebuildSingleLockTransaction(
+          {
+            swapId,
+            walletAddress: signer.publicKey.toBase58(),
+            party: partyValue,
+          },
+          transactionIndex || 0
+        );
 
         if (rebuildResult.serialized) {
           serializedTransaction = rebuildResult.serialized;
@@ -2795,7 +3091,10 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
         console.log('   ✅ Non-cNFT transaction with valid proof, using original transaction');
       }
     } catch (validationError: any) {
-      console.warn('   ⚠️  Proactive validation failed, proceeding with original transaction:', validationError.message);
+      console.warn(
+        '   ⚠️  Proactive validation failed, proceeding with original transaction:',
+        validationError.message
+      );
     }
   }
   // ========== END PROACTIVE VALIDATION ==========
@@ -2811,7 +3110,9 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
           type: typeof serializedTransaction,
           value: serializedTransaction,
         });
-        throw new Error(`Invalid serializedTransaction: expected non-empty string, got ${typeof serializedTransaction}`);
+        throw new Error(
+          `Invalid serializedTransaction: expected non-empty string, got ${typeof serializedTransaction}`
+        );
       }
 
       // Validate base64 format
@@ -2857,8 +3158,8 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
         } catch (deserializeError: any) {
           // Detailed buffer analysis for debugging
           const signatureCount = txBuffer[0];
-          const expectedMinSize = 1 + (signatureCount * 64) + 3; // compact-u16 + signatures + min message header
-          const hasEnoughForSignatures = txBuffer.length >= 1 + (signatureCount * 64);
+          const expectedMinSize = 1 + signatureCount * 64 + 3; // compact-u16 + signatures + min message header
+          const hasEnoughForSignatures = txBuffer.length >= 1 + signatureCount * 64;
 
           console.error('   ❌ Transaction deserialization failed:', {
             error: deserializeError.message,
@@ -2869,18 +3170,33 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
             firstBytes: txBuffer.slice(0, Math.min(40, txBuffer.length)).toString('hex'),
             lastBytes: txBuffer.slice(Math.max(0, txBuffer.length - 20)).toString('hex'),
             isValidBase64: /^[A-Za-z0-9+/]*={0,2}$/.test(serializedTransaction || ''),
-            inputPreview: typeof serializedTransaction === 'string' ? serializedTransaction.substring(0, 80) : 'not a string',
+            inputPreview:
+              typeof serializedTransaction === 'string'
+                ? serializedTransaction.substring(0, 80)
+                : 'not a string',
           });
 
           // Check for common issues
           if (signatureCount > 10) {
-            console.error('   ⚠️ Unusually high signature count - may indicate buffer corruption or wrong format');
+            console.error(
+              '   ⚠️ Unusually high signature count - may indicate buffer corruption or wrong format'
+            );
           }
           if (!hasEnoughForSignatures) {
-            console.error(`   ⚠️ Buffer too short: need at least ${1 + signatureCount * 64} bytes for signatures, but only have ${txBuffer.length}`);
+            console.error(
+              `   ⚠️ Buffer too short: need at least ${
+                1 + signatureCount * 64
+              } bytes for signatures, but only have ${txBuffer.length}`
+            );
           }
 
-          throw new Error(`Failed to deserialize legacy transaction: ${deserializeError.message}. Buffer length: ${txBuffer.length}, signature count: ${signatureCount}, first byte: 0x${txBuffer[0]?.toString(16)}`);
+          throw new Error(
+            `Failed to deserialize legacy transaction: ${
+              deserializeError.message
+            }. Buffer length: ${
+              txBuffer.length
+            }, signature count: ${signatureCount}, first byte: 0x${txBuffer[0]?.toString(16)}`
+          );
         }
         transaction.partialSign(signer);
         signature = await connection.sendRawTransaction(transaction.serialize(), {
@@ -2930,7 +3246,9 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
           transactionIndex,
           attempt,
         },
-        message: `Lock transaction ${(transactionIndex ?? 0) + 1}/${totalTransactions ?? 1} executed successfully${attempt > 1 ? ` (after ${attempt} attempts)` : ''}`,
+        message: `Lock transaction ${(transactionIndex ?? 0) + 1}/${
+          totalTransactions ?? 1
+        } executed successfully${attempt > 1 ? ` (after ${attempt} attempts)` : ''}`,
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -2961,7 +3279,9 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
 
           // Update serializedTransaction for next attempt
           serializedTransaction = rebuiltTx.serialized;
-          console.log(`   ✅ Transaction rebuilt with fresh proof for cNFT at index ${transactionIndex}`);
+          console.log(
+            `   ✅ Transaction rebuilt with fresh proof for cNFT at index ${transactionIndex}`
+          );
 
           continue; // Retry with fresh transaction
         } catch (rebuildError: any) {
@@ -3127,15 +3447,17 @@ router.get('/api/test/nft-swap-history/:assetId', async (req: Request, res: Resp
     const assetMatches = createAssetMatcher(assetId);
 
     // Filter swaps that involve this asset
-    const filteredSwaps = swaps.filter((swap) => {
-      const offeredAssets = (swap.offeredAssets as AssetEntry[] | null) ?? [];
-      const requestedAssets = (swap.requestedAssets as AssetEntry[] | null) ?? [];
+    const filteredSwaps = swaps
+      .filter((swap) => {
+        const offeredAssets = (swap.offeredAssets as AssetEntry[] | null) ?? [];
+        const requestedAssets = (swap.requestedAssets as AssetEntry[] | null) ?? [];
 
-      const inOffered = offeredAssets.some(assetMatches);
-      const inRequested = requestedAssets.some(assetMatches);
+        const inOffered = offeredAssets.some(assetMatches);
+        const inRequested = requestedAssets.some(assetMatches);
 
-      return inOffered || inRequested;
-    }).slice(0, 20); // Limit to 20 results
+        return inOffered || inRequested;
+      })
+      .slice(0, 20); // Limit to 20 results
 
     // Transform into history format
     const history = filteredSwaps.map((swap) => {
@@ -3152,8 +3474,8 @@ router.get('/api/test/nft-swap-history/:assetId', async (req: Request, res: Resp
           ? swap.requestedSolLamports
           : BigInt(0)
         : swap.offeredSolLamports
-          ? swap.offeredSolLamports
-          : BigInt(0);
+        ? swap.offeredSolLamports
+        : BigInt(0);
 
       return {
         swapId: swap.id,
@@ -3259,4 +3581,3 @@ router.get('/api/test/nft-offers/:assetId', async (req: Request, res: Response) 
 });
 
 export default router;
-

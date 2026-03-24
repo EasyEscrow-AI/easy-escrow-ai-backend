@@ -10,6 +10,7 @@
  */
 
 import { PrismaClient, InstitutionEscrowStatus } from '../generated/prisma';
+import { prisma } from '../config/database';
 import type { SettlementMode, ReleaseMode } from '../types/institution-escrow';
 import { redisClient } from '../config/redis';
 import { AllowlistService, getAllowlistService } from './allowlist.service';
@@ -151,7 +152,7 @@ export class InstitutionEscrowService {
   private complianceService: ComplianceService;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
     this.allowlistService = getAllowlistService();
     this.complianceService = getComplianceService();
   }
@@ -347,7 +348,10 @@ export class InstitutionEscrowService {
           `[InstitutionEscrow] Mint mismatch: whitelist resolved "${resolvedMint}" but env USDC_MINT_ADDRESS is "${onChainMint.toBase58()}". Using env mint for on-chain tx.`
         );
       }
-      const feeCollectorPk = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
+      const feeCollectorPk = toPublicKey(
+        config.platform.feeCollectorAddress,
+        'feeCollectorAddress'
+      );
       const payerPk = toPublicKey(payerWallet, 'payerWallet');
       const recipientPk = toPublicKey(recipientWallet, 'recipientWallet');
       const settlementPk = toPublicKey(resolvedSettlementAuthority, 'settlementAuthority');
@@ -621,9 +625,15 @@ export class InstitutionEscrowService {
       data: updateData as any,
     });
 
-    await this.createAuditLog(escrowId, clientId, 'DRAFT_UPDATED', await this.resolveActorName(clientId), {
-      updatedFields: Object.keys(updateData),
-    });
+    await this.createAuditLog(
+      escrowId,
+      clientId,
+      'DRAFT_UPDATED',
+      await this.resolveActorName(clientId),
+      {
+        updatedFields: Object.keys(updateData),
+      }
+    );
 
     await this.cacheEscrow(updated);
 
@@ -716,10 +726,15 @@ export class InstitutionEscrowService {
       const onChainMint = programService.getUsdcMintAddress();
       if (escrow.usdcMint !== onChainMint.toBase58()) {
         console.warn(
-          `[InstitutionEscrow] Draft mint mismatch: DB has "${escrow.usdcMint}" but env USDC_MINT_ADDRESS is "${onChainMint.toBase58()}". Using env mint for on-chain tx.`
+          `[InstitutionEscrow] Draft mint mismatch: DB has "${
+            escrow.usdcMint
+          }" but env USDC_MINT_ADDRESS is "${onChainMint.toBase58()}". Using env mint for on-chain tx.`
         );
       }
-      const feeCollectorPk = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
+      const feeCollectorPk = toPublicKey(
+        config.platform.feeCollectorAddress,
+        'feeCollectorAddress'
+      );
       const payerPk = toPublicKey(escrow.payerWallet, 'payerWallet');
       const recipientPk = toPublicKey(escrow.recipientWallet!, 'recipientWallet');
       const settlementPk = toPublicKey(resolvedSettlementAuthority, 'settlementAuthority');
@@ -754,9 +769,15 @@ export class InstitutionEscrowService {
             /* non-critical */
           }
         }
-        await this.createAuditLog(escrowId, clientId, 'ON_CHAIN_INIT_FAILED', await this.resolveActorName(clientId), {
-          error: (error as Error).message,
-        });
+        await this.createAuditLog(
+          escrowId,
+          clientId,
+          'ON_CHAIN_INIT_FAILED',
+          await this.resolveActorName(clientId),
+          {
+            error: (error as Error).message,
+          }
+        );
         throw new Error(`On-chain escrow initialization failed: ${(error as Error).message}`);
       }
     }
@@ -927,10 +948,15 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createKytAuditLog(escrow, 'DEPOSIT_CONFIRMED', await this.resolveActorName(escrow.clientId), {
-      txSignature,
-      message: `${Number(escrow.amount)} USDC deposited to PDA`,
-    });
+    await this.createKytAuditLog(
+      escrow,
+      'DEPOSIT_CONFIRMED',
+      await this.resolveActorName(escrow.clientId),
+      {
+        txSignature,
+        message: `${Number(escrow.amount)} USDC deposited to PDA`,
+      }
+    );
 
     try {
       await getInstitutionNotificationService().notify({
@@ -1016,7 +1042,8 @@ export class InstitutionEscrowService {
     const analysis = await aiService.analyzeEscrow(escrow.escrowId, clientId);
 
     const selectedConditions: string[] = escrow.releaseConditions || [];
-    const results: Array<{ condition: string; label: string; passed: boolean; detail: string }> = [];
+    const results: Array<{ condition: string; label: string; passed: boolean; detail: string }> =
+      [];
 
     // 1. Legal compliance (always required for AI mode)
     const compliancePassed = analysis.recommendation !== 'REJECT' && analysis.riskScore < 70;
@@ -1031,18 +1058,20 @@ export class InstitutionEscrowService {
 
     // 2. Invoice amount match (if selected)
     if (selectedConditions.includes('invoice_amount_match')) {
-      const extractedAmount = analysis.extractedFields?.invoiceAmount
-        ?? analysis.extractedFields?.amount;
+      const extractedAmount =
+        analysis.extractedFields?.invoiceAmount ?? analysis.extractedFields?.amount;
       const escrowAmount = Number(escrow.amount);
-      const amountMatches = extractedAmount !== undefined
-        && Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
+      const amountMatches =
+        extractedAmount !== undefined && Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
       results.push({
         condition: 'invoice_amount_match',
         label: 'Invoice amount matches exactly',
         passed: !!amountMatches,
         detail: amountMatches
           ? `Invoice amount ${extractedAmount} matches escrow amount ${escrowAmount}`
-          : `Invoice amount ${extractedAmount ?? 'not found'} does not match escrow amount ${escrowAmount}`,
+          : `Invoice amount ${
+              extractedAmount ?? 'not found'
+            } does not match escrow amount ${escrowAmount}`,
       });
     }
 
@@ -1052,26 +1081,34 @@ export class InstitutionEscrowService {
         where: { id: clientId },
         select: { companyName: true, legalName: true, country: true },
       });
-      const extractedCompany = analysis.extractedFields?.companyName
-        ?? analysis.extractedFields?.clientName;
-      const clientMatch = extractedCompany !== undefined
-        && client
-        && (String(extractedCompany).toLowerCase().includes(client.companyName?.toLowerCase() || '')
-          || String(extractedCompany).toLowerCase().includes(client.legalName?.toLowerCase() || ''));
+      const extractedCompany =
+        analysis.extractedFields?.companyName ?? analysis.extractedFields?.clientName;
+      const clientMatch =
+        extractedCompany !== undefined &&
+        client &&
+        (String(extractedCompany)
+          .toLowerCase()
+          .includes(client.companyName?.toLowerCase() || '') ||
+          String(extractedCompany)
+            .toLowerCase()
+            .includes(client.legalName?.toLowerCase() || ''));
       results.push({
         condition: 'client_info_match',
         label: 'Client information matches exactly',
         passed: !!clientMatch,
         detail: clientMatch
           ? `Extracted company "${extractedCompany}" matches client record`
-          : `Extracted company "${extractedCompany ?? 'not found'}" does not match client "${client?.companyName}"`,
+          : `Extracted company "${extractedCompany ?? 'not found'}" does not match client "${
+              client?.companyName
+            }"`,
       });
     }
 
     // 4. Document signature verified (if selected)
     if (selectedConditions.includes('document_signature_verified')) {
-      const signatureVerified = analysis.extractedFields?.signatureVerified === true
-        || analysis.extractedFields?.docusignStatus === 'completed';
+      const signatureVerified =
+        analysis.extractedFields?.signatureVerified === true ||
+        analysis.extractedFields?.docusignStatus === 'completed';
       results.push({
         condition: 'document_signature_verified',
         label: 'Document signature is verified (via DocuSign)',
@@ -1119,7 +1156,10 @@ export class InstitutionEscrowService {
         summary: aiResult.aiAnalysis.summary,
         message: aiResult.passed
           ? `Risk score ${aiResult.aiAnalysis.riskScore / 100} — recommended release`
-          : `AI release blocked — ${aiResult.conditions.filter((c) => !c.passed).map((c) => c.label).join(', ')}`,
+          : `AI release blocked — ${aiResult.conditions
+              .filter((c) => !c.passed)
+              .map((c) => c.label)
+              .join(', ')}`,
       });
 
       if (!aiResult.passed) {
@@ -1130,9 +1170,14 @@ export class InstitutionEscrowService {
           type: 'ESCROW_COMPLIANCE_HOLD',
           priority: 'HIGH',
           title: 'AI Release Check Failed',
-          message: `Escrow ${escrow.escrowCode || escrowId} failed AI release conditions: ${failedConditions.map((c) => c.label).join(', ')}`,
+          message: `Escrow ${
+            escrow.escrowCode || escrowId
+          } failed AI release conditions: ${failedConditions.map((c) => c.label).join(', ')}`,
           metadata: {
-            failedConditions: failedConditions.map((c) => ({ condition: c.condition, detail: c.detail })),
+            failedConditions: failedConditions.map((c) => ({
+              condition: c.condition,
+              detail: c.detail,
+            })),
             riskScore: aiResult.aiAnalysis.riskScore,
           },
         });
@@ -1160,7 +1205,10 @@ export class InstitutionEscrowService {
         if (!config.platform.feeCollectorAddress) {
           throw new Error('Platform feeCollectorAddress is not configured');
         }
-        const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
+        const feeCollector = toPublicKey(
+          config.platform.feeCollectorAddress,
+          'feeCollectorAddress'
+        );
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
@@ -1228,15 +1276,17 @@ export class InstitutionEscrowService {
       }
     }
 
-    const releaseActor = escrow.releaseMode === 'ai' ? 'AI Orchestrator' : escrow.settlementAuthority;
+    const releaseActor =
+      escrow.releaseMode === 'ai' ? 'AI Orchestrator' : escrow.settlementAuthority;
     await this.createKytAuditLog(escrow, 'FUNDS_RELEASED', releaseActor, {
       releaseTxSignature: releaseTxSig,
       releaseMode: escrow.releaseMode || 'manual',
       releaseConditions: escrow.releaseConditions || [],
       notes,
-      message: escrow.releaseMode === 'ai'
-        ? 'AI auto-released — conditions met'
-        : `${Number(escrow.amount)} USDC released to recipient`,
+      message:
+        escrow.releaseMode === 'ai'
+          ? 'AI auto-released — conditions met'
+          : `${Number(escrow.amount)} USDC released to recipient`,
     });
 
     // Transition to COMPLETE: send notification and finalize
@@ -1364,13 +1414,18 @@ export class InstitutionEscrowService {
       }
     }
 
-    await this.createKytAuditLog(escrow, 'ESCROW_CANCELLED', await this.resolveActorName(escrow.clientId), {
-      reason,
-      previousStatus: escrow.status,
-      cancelTxSignature,
-      wasFunded: escrow.status === 'FUNDED',
-      message: reason ? `Cancelled — ${reason}` : 'Cancelled by client',
-    });
+    await this.createKytAuditLog(
+      escrow,
+      'ESCROW_CANCELLED',
+      await this.resolveActorName(escrow.clientId),
+      {
+        reason,
+        previousStatus: escrow.status,
+        cancelTxSignature,
+        wasFunded: escrow.status === 'FUNDED',
+        message: reason ? `Cancelled — ${reason}` : 'Cancelled by client',
+      }
+    );
 
     try {
       await getInstitutionNotificationService().notify({
@@ -1423,11 +1478,16 @@ export class InstitutionEscrowService {
             where: { escrowId },
             data: { status: 'INSUFFICIENT_FUNDS' },
           });
-          await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', await this.resolveActorName(escrow.clientId), {
-            available: tokenAccount.amount.toString(),
-            required: requiredMicroUsdc.toString(),
-            message: `Insufficient balance: has ${tokenAccount.amount}, needs ${requiredMicroUsdc} micro-USDC`,
-          });
+          await this.createKytAuditLog(
+            escrow,
+            'INSUFFICIENT_FUNDS',
+            await this.resolveActorName(escrow.clientId),
+            {
+              available: tokenAccount.amount.toString(),
+              required: requiredMicroUsdc.toString(),
+              message: `Insufficient balance: has ${tokenAccount.amount}, needs ${requiredMicroUsdc} micro-USDC`,
+            }
+          );
           try {
             await getInstitutionNotificationService().notify({
               clientId,
@@ -1461,10 +1521,15 @@ export class InstitutionEscrowService {
           where: { escrowId },
           data: { status: 'INSUFFICIENT_FUNDS' },
         });
-        await this.createKytAuditLog(escrow, 'INSUFFICIENT_FUNDS', await this.resolveActorName(escrow.clientId), {
-          reason: 'Token account does not exist',
-          message: 'Payer token account does not exist',
-        });
+        await this.createKytAuditLog(
+          escrow,
+          'INSUFFICIENT_FUNDS',
+          await this.resolveActorName(escrow.clientId),
+          {
+            reason: 'Token account does not exist',
+            message: 'Payer token account does not exist',
+          }
+        );
         try {
           await getInstitutionNotificationService().notify({
             clientId,
@@ -1618,7 +1683,13 @@ export class InstitutionEscrowService {
     const [originatorClient, beneficiaryClient] = await Promise.all([
       this.prisma.institutionClient.findUnique({
         where: { id: escrow.clientId },
-        select: { companyName: true, legalName: true, country: true, registrationCountry: true, lei: true },
+        select: {
+          companyName: true,
+          legalName: true,
+          country: true,
+          registrationCountry: true,
+          lei: true,
+        },
       }),
       escrow.recipientWallet
         ? this.prisma.institutionClient.findFirst({
@@ -1628,7 +1699,13 @@ export class InstitutionEscrowService {
                 { settledWallets: { has: escrow.recipientWallet } },
               ],
             },
-            select: { companyName: true, legalName: true, country: true, registrationCountry: true, lei: true },
+            select: {
+              companyName: true,
+              legalName: true,
+              country: true,
+              registrationCountry: true,
+              lei: true,
+            },
           })
         : Promise.resolve(null),
     ]);
@@ -1757,16 +1834,16 @@ export class InstitutionEscrowService {
    */
   private async resolvePartyNames(
     escrows: Array<Record<string, unknown>>,
-    payerClientId: string,
+    payerClientId: string
   ): Promise<PartyNames[]> {
     if (escrows.length === 0) return [];
 
-    const payerWallets = [...new Set(
-      escrows.map(e => (e as any).payerWallet).filter(Boolean),
-    )] as string[];
-    const recipientWallets = [...new Set(
-      escrows.map(e => (e as any).recipientWallet).filter(Boolean),
-    )] as string[];
+    const payerWallets = [
+      ...new Set(escrows.map((e) => (e as any).payerWallet).filter(Boolean)),
+    ] as string[];
+    const recipientWallets = [
+      ...new Set(escrows.map((e) => (e as any).recipientWallet).filter(Boolean)),
+    ] as string[];
 
     const [payerClient, payerAccounts, recipientAccounts, recipientClients] = await Promise.all([
       this.prisma.institutionClient.findUnique({
@@ -1783,7 +1860,9 @@ export class InstitutionEscrowService {
         ? this.prisma.institutionAccount.findMany({
             where: { walletAddress: { in: recipientWallets }, isActive: true },
             select: {
-              walletAddress: true, label: true, name: true,
+              walletAddress: true,
+              label: true,
+              name: true,
               client: { select: { id: true, companyName: true } },
             },
           })
@@ -1802,12 +1881,13 @@ export class InstitutionEscrowService {
     ]);
 
     // Payer account label lookup: wallet → label
-    const payerAccountMap = new Map(
-      payerAccounts.map(a => [a.walletAddress, a.label || a.name]),
-    );
+    const payerAccountMap = new Map(payerAccounts.map((a) => [a.walletAddress, a.label || a.name]));
 
     // Recipient lookup: wallet → { clientId, companyName, accountLabel }
-    const recipientMap = new Map<string, { clientId: string; companyName: string; accountLabel: string | null }>();
+    const recipientMap = new Map<
+      string,
+      { clientId: string; companyName: string; accountLabel: string | null }
+    >();
 
     // Accounts give us both client identity and account label
     for (const acct of recipientAccounts) {
@@ -1833,12 +1913,12 @@ export class InstitutionEscrowService {
       }
     }
 
-    return escrows.map(e => {
+    return escrows.map((e) => {
       const esc = e as any;
       const recipient = esc.recipientWallet ? recipientMap.get(esc.recipientWallet) : null;
       return {
         payerName: payerClient?.companyName || null,
-        payerAccountLabel: esc.payerWallet ? (payerAccountMap.get(esc.payerWallet) || null) : null,
+        payerAccountLabel: esc.payerWallet ? payerAccountMap.get(esc.payerWallet) || null : null,
         recipientName: recipient?.companyName || null,
         recipientAccountLabel: recipient?.accountLabel || null,
         counterpartyId: recipient?.clientId || null,
@@ -1846,7 +1926,10 @@ export class InstitutionEscrowService {
     });
   }
 
-  private formatEscrow(escrow: Record<string, unknown>, partyNames?: PartyNames): Record<string, unknown> {
+  private formatEscrow(
+    escrow: Record<string, unknown>,
+    partyNames?: PartyNames
+  ): Record<string, unknown> {
     const e = escrow as any;
     return {
       id: e.escrowCode,
@@ -1868,8 +1951,8 @@ export class InstitutionEscrowService {
       releaseMode: e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual'),
       approvalParties: e.approvalParties || [],
       releaseConditions: e.releaseConditions || [],
-      releaseConditionLabels: (e.releaseConditions || []).map((c: string) =>
-        AI_RELEASE_CONDITION_LABELS[c] || c
+      releaseConditionLabels: (e.releaseConditions || []).map(
+        (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
       ),
       approvalInstructions: e.approvalInstructions || null,
       escrowPda: e.escrowPda,
@@ -1987,7 +2070,8 @@ export class InstitutionEscrowService {
         title: AUDIT_ACTION_LABELS[l.action] || l.action,
         actor: l.actor,
         message: d.message || null,
-        txSignature: d.initTxSignature || d.txSignature || d.releaseTxSignature || d.cancelTxSignature || null,
+        txSignature:
+          d.initTxSignature || d.txSignature || d.releaseTxSignature || d.cancelTxSignature || null,
         amount: kyt?.amount || d.amount || null,
         currency: kyt?.currency || 'USDC',
         corridor: kyt?.corridor || null,

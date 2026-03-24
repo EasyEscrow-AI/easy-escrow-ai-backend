@@ -1,14 +1,13 @@
 /**
  * Status Update Service
- * 
+ *
  * Automatically updates agreement status based on expiry checks, deposits, and cancellation events.
  * Manages status transitions and emits events for status changes.
  */
 
-import { PrismaClient, AgreementStatus, DepositType, DepositStatus } from '../generated/prisma';
+import { AgreementStatus, DepositType, DepositStatus } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { WebhookEventsService } from './webhook-events.service';
-
-const prisma = new PrismaClient();
 
 /**
  * Status transition event
@@ -62,7 +61,7 @@ export type StatusUpdateListener = (event: StatusTransitionEvent) => void | Prom
 
 /**
  * Status Update Service Class
- * 
+ *
  * Manages automatic status transitions for agreements
  */
 export class StatusUpdateService {
@@ -153,7 +152,9 @@ export class StatusUpdateService {
 
       if (!applicableRule) {
         // No status change needed
-        console.log(`[StatusUpdateService] No status change needed for ${agreementId} (current: ${currentStatus})`);
+        console.log(
+          `[StatusUpdateService] No status change needed for ${agreementId} (current: ${currentStatus})`
+        );
         return {
           agreementId,
           success: true,
@@ -166,7 +167,9 @@ export class StatusUpdateService {
       const newStatus = applicableRule.to;
       await this.transitionStatus(agreementId, currentStatus, newStatus, applicableRule.reason);
 
-      console.log(`[StatusUpdateService] Status updated: ${agreementId} from ${currentStatus} to ${newStatus}`);
+      console.log(
+        `[StatusUpdateService] Status updated: ${agreementId} from ${currentStatus} to ${newStatus}`
+      );
 
       return {
         agreementId,
@@ -232,7 +235,9 @@ export class StatusUpdateService {
     toStatus: AgreementStatus,
     reason: string
   ): Promise<void> {
-    console.log(`[StatusUpdateService] Transitioning ${agreementId}: ${fromStatus} -> ${toStatus} (${reason})`);
+    console.log(
+      `[StatusUpdateService] Transitioning ${agreementId}: ${fromStatus} -> ${toStatus} (${reason})`
+    );
 
     try {
       // Update agreement status in database
@@ -271,7 +276,9 @@ export class StatusUpdateService {
    * Batch update status for multiple agreements
    */
   public async batchUpdateStatus(agreementIds: string[]): Promise<Map<string, StatusUpdateResult>> {
-    console.log(`[StatusUpdateService] Batch updating status for ${agreementIds.length} agreements`);
+    console.log(
+      `[StatusUpdateService] Batch updating status for ${agreementIds.length} agreements`
+    );
 
     const results = new Map<string, StatusUpdateResult>();
 
@@ -309,7 +316,9 @@ export class StatusUpdateService {
    */
   public onStatusUpdate(listener: StatusUpdateListener): void {
     this.listeners.push(listener);
-    console.log(`[StatusUpdateService] Registered status update listener (total: ${this.listeners.length})`);
+    console.log(
+      `[StatusUpdateService] Registered status update listener (total: ${this.listeners.length})`
+    );
   }
 
   /**
@@ -319,7 +328,9 @@ export class StatusUpdateService {
     const index = this.listeners.indexOf(listener);
     if (index > -1) {
       this.listeners.splice(index, 1);
-      console.log(`[StatusUpdateService] Removed status update listener (remaining: ${this.listeners.length})`);
+      console.log(
+        `[StatusUpdateService] Removed status update listener (remaining: ${this.listeners.length})`
+      );
     }
   }
 
@@ -402,7 +413,7 @@ export class StatusUpdateService {
 
       case AgreementStatus.NFT_LOCKED:
         // Publish asset locked event for NFT
-        const nftDeposit = agreement.deposits.find(d => d.type === DepositType.NFT);
+        const nftDeposit = agreement.deposits.find((d) => d.type === DepositType.NFT);
         if (nftDeposit) {
           await WebhookEventsService.publishAssetLocked({
             agreementId: agreement.agreementId,
@@ -565,4 +576,3 @@ export function resetStatusUpdateService(): void {
 }
 
 export default StatusUpdateService;
-
