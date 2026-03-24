@@ -646,6 +646,7 @@ exports.Prisma.InstitutionEscrowScalarFieldEnum = {
   escrowPda: 'escrowPda',
   vaultPda: 'vaultPda',
   nonceAccount: 'nonceAccount',
+  initTxSignature: 'initTxSignature',
   depositTxSignature: 'depositTxSignature',
   releaseTxSignature: 'releaseTxSignature',
   cancelTxSignature: 'cancelTxSignature',

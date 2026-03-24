@@ -405,6 +405,7 @@ export class InstitutionEscrowService {
         approvalParties: approvalParties || [],
         releaseConditions: releaseConditions || [],
         approvalInstructions,
+        initTxSignature,
       },
     });
 
@@ -769,6 +770,7 @@ export class InstitutionEscrowService {
         escrowPda,
         vaultPda,
         expiresAt,
+        initTxSignature,
       },
     });
 
@@ -1771,6 +1773,7 @@ export class InstitutionEscrowService {
       escrowPda: e.escrowPda,
       vaultPda: e.vaultPda,
       nonceAccount: e.nonceAccount,
+      initTxSignature: e.initTxSignature,
       depositTxSignature: e.depositTxSignature,
       releaseTxSignature: e.releaseTxSignature,
       cancelTxSignature: e.cancelTxSignature,
