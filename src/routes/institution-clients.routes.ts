@@ -45,7 +45,7 @@ const PUBLIC_PROFILE_SELECT = {
 
 // Shared visibility filter: active, non-archived clients
 function getVisibilityFilter(includeArchived = false) {
-  const where: any = { status: 'ACTIVE' };
+  const where: any = { status: { in: ['ACTIVE', 'PENDING_VERIFICATION'] } };
   if (!includeArchived) {
     where.isArchived = false;
   }
