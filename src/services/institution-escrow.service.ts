@@ -266,8 +266,16 @@ export class InstitutionEscrowService {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + expiryHours);
 
-    // 8. Determine settlement authority
-    const resolvedSettlementAuthority = settlementAuthority || client.primaryWallet || payerWallet;
+    // 8. Determine settlement authority — prefer explicit param, then client's primary wallet (if valid), else payer
+    let resolvedSettlementAuthority = settlementAuthority || payerWallet;
+    if (!settlementAuthority && client.primaryWallet) {
+      try {
+        new PublicKey(client.primaryWallet);
+        resolvedSettlementAuthority = client.primaryWallet;
+      } catch {
+        // client.primaryWallet is not a valid Solana address (e.g. placeholder seed data)
+      }
+    }
 
     // 9. Assign durable nonce for atomic settlement (required for on-chain proof)
     let nonceAccount: string | null = null;
