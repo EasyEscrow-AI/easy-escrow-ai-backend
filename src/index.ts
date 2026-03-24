@@ -58,6 +58,7 @@ import {
   getNonceReplenishmentScheduler,
 } from './services/nonce-schedulers.service';
 import { OfferExpiryScheduler } from './services/offer-expiry-scheduler.service';
+import { getInstitutionEscrowExpiryMonitor } from './services/institution-escrow-expiry-monitor.service';
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
@@ -131,6 +132,16 @@ const staleOfferCleanupScheduler = StaleOfferCleanupScheduler.getInstance(
     timezone: process.env.TZ || 'America/Los_Angeles',
   }
 );
+
+// Initialize institution escrow expiry monitor (gated by feature flag)
+const institutionEscrowExpiryMonitor =
+  process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true'
+    ? getInstitutionEscrowExpiryMonitor(prisma, {
+        schedule: '*/10 * * * *',
+        batchSize: 50,
+        timezone: process.env.TZ || 'America/Los_Angeles',
+      })
+    : null;
 
 // Security Middleware (apply first)
 app.use(helmetConfig);
@@ -822,6 +833,11 @@ const gracefulShutdown = async (signal: string) => {
     console.log('Disposing TransactionGroupBuilder...');
     transactionGroupBuilder.dispose();
 
+    // Stop institution escrow expiry monitor
+    if (institutionEscrowExpiryMonitor) {
+      institutionEscrowExpiryMonitor.stop();
+    }
+
     // Disconnect Redis
     console.log('Disconnecting Redis...');
     await disconnectRedis();
@@ -875,6 +891,12 @@ const startServer = async () => {
           console.log('Starting stale offer cleanup scheduler...');
           staleOfferCleanupScheduler.start();
           console.log('✅ Stale offer cleanup scheduler started (runs every 30 minutes)');
+
+          // Start institution escrow expiry monitor (if enabled)
+          if (institutionEscrowExpiryMonitor) {
+            institutionEscrowExpiryMonitor.start();
+            console.log('  Institution escrow expiry monitor started (runs every 10 minutes)');
+          }
 
           // DISABLED for BETA launch - Backup scheduler
           // Manual backups via CLI tools are sufficient for BETA phase
