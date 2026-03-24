@@ -61,6 +61,14 @@ const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
   document_signature_verified: 'Document signature is verified (via DocuSign)',
 };
 
+interface PartyNames {
+  payerName: string | null;
+  payerAccountLabel: string | null;
+  recipientName: string | null;
+  recipientAccountLabel: string | null;
+  counterpartyId: string | null;
+}
+
 /** Safely create a PublicKey from a string, with a field-specific error message. */
 function toPublicKey(value: string, fieldName: string): PublicKey {
   try {
@@ -463,8 +471,10 @@ export class InstitutionEscrowService {
     // 12. Cache in Redis
     await this.cacheEscrow(escrow);
 
+    const partyNames = await this.resolvePartyNames([escrow as any], clientId);
+
     return {
-      escrow: this.formatEscrow(escrow),
+      escrow: this.formatEscrow(escrow, partyNames[0]),
       complianceResult: {
         passed: complianceResult.passed,
         riskScore: complianceResult.riskScore,
@@ -551,7 +561,8 @@ export class InstitutionEscrowService {
 
     await this.cacheEscrow(escrow);
 
-    return this.formatEscrow(escrow);
+    const partyNames = await this.resolvePartyNames([escrow as any], clientId);
+    return this.formatEscrow(escrow, partyNames[0]);
   }
 
   /**
@@ -616,7 +627,8 @@ export class InstitutionEscrowService {
 
     await this.cacheEscrow(updated);
 
-    return this.formatEscrow(updated);
+    const partyNames = await this.resolvePartyNames([updated as any], clientId);
+    return this.formatEscrow(updated, partyNames[0]);
   }
 
   /**
@@ -817,8 +829,10 @@ export class InstitutionEscrowService {
       console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
     }
 
+    const submitPartyNames = await this.resolvePartyNames([updated as any], clientId);
+
     return {
-      escrow: this.formatEscrow(updated),
+      escrow: this.formatEscrow(updated, submitPartyNames[0]),
       complianceResult: {
         passed: complianceResult.passed,
         riskScore: complianceResult.riskScore,
@@ -935,7 +949,8 @@ export class InstitutionEscrowService {
 
     await this.cacheEscrow(updated);
 
-    return this.formatEscrow(updated);
+    const depositPartyNames = await this.resolvePartyNames([updated as any], clientId);
+    return this.formatEscrow(updated, depositPartyNames[0]);
   }
 
   /**
@@ -1253,12 +1268,14 @@ export class InstitutionEscrowService {
       });
 
       await this.cacheEscrow(completed);
-      return this.formatEscrow(completed);
+      const releasePartyNames = await this.resolvePartyNames([completed as any], clientId);
+      return this.formatEscrow(completed, releasePartyNames[0]);
     } catch (error) {
       // If notification/completion fails, escrow stays RELEASED (still valid terminal state)
       console.warn('[InstitutionEscrow] COMPLETE transition failed (non-critical):', error);
       await this.cacheEscrow(updated);
-      return this.formatEscrow(updated);
+      const releasePartyNames = await this.resolvePartyNames([updated as any], clientId);
+      return this.formatEscrow(updated, releasePartyNames[0]);
     }
   }
 
@@ -1375,7 +1392,8 @@ export class InstitutionEscrowService {
 
     await this.cacheEscrow(updated);
 
-    return this.formatEscrow(updated);
+    const cancelPartyNames = await this.resolvePartyNames([updated as any], clientId);
+    return this.formatEscrow(updated, cancelPartyNames[0]);
   }
 
   /**
@@ -1498,9 +1516,8 @@ export class InstitutionEscrowService {
     } catch {
       // Cache miss
     }
-
-    const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
-    return this.formatEscrow(escrow);
+    const partyNames = await this.resolvePartyNames([escrow as any], escrow.clientId);
+    return this.formatEscrow(escrow, partyNames[0]);
   }
 
   /**
@@ -1528,8 +1545,10 @@ export class InstitutionEscrowService {
       this.prisma.institutionEscrow.count({ where: where as any }),
     ]);
 
+    const partyNamesArr = await this.resolvePartyNames(escrows as any[], clientId);
+
     return {
-      escrows: escrows.map((e) => this.formatEscrow(e)),
+      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i])),
       total,
       limit,
       offset,
@@ -1732,9 +1751,102 @@ export class InstitutionEscrowService {
   };
 
   /**
-   * Format escrow for API response (list view — lightweight)
+   * Batch-resolve party names for a list of escrows.
+   * Returns a PartyNames[] aligned with the input array.
+   * Uses 4 parallel queries regardless of escrow count.
    */
-  private formatEscrow(escrow: Record<string, unknown>): Record<string, unknown> {
+  private async resolvePartyNames(
+    escrows: Array<Record<string, unknown>>,
+    payerClientId: string,
+  ): Promise<PartyNames[]> {
+    if (escrows.length === 0) return [];
+
+    const payerWallets = [...new Set(
+      escrows.map(e => (e as any).payerWallet).filter(Boolean),
+    )] as string[];
+    const recipientWallets = [...new Set(
+      escrows.map(e => (e as any).recipientWallet).filter(Boolean),
+    )] as string[];
+
+    const [payerClient, payerAccounts, recipientAccounts, recipientClients] = await Promise.all([
+      this.prisma.institutionClient.findUnique({
+        where: { id: payerClientId },
+        select: { companyName: true },
+      }),
+      payerWallets.length > 0
+        ? this.prisma.institutionAccount.findMany({
+            where: { clientId: payerClientId, walletAddress: { in: payerWallets }, isActive: true },
+            select: { walletAddress: true, label: true, name: true },
+          })
+        : Promise.resolve([]),
+      recipientWallets.length > 0
+        ? this.prisma.institutionAccount.findMany({
+            where: { walletAddress: { in: recipientWallets }, isActive: true },
+            select: {
+              walletAddress: true, label: true, name: true,
+              client: { select: { id: true, companyName: true } },
+            },
+          })
+        : Promise.resolve([]),
+      recipientWallets.length > 0
+        ? this.prisma.institutionClient.findMany({
+            where: {
+              OR: [
+                { primaryWallet: { in: recipientWallets } },
+                { settledWallets: { hasSome: recipientWallets } },
+              ],
+            },
+            select: { id: true, companyName: true, primaryWallet: true, settledWallets: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    // Payer account label lookup: wallet → label
+    const payerAccountMap = new Map(
+      payerAccounts.map(a => [a.walletAddress, a.label || a.name]),
+    );
+
+    // Recipient lookup: wallet → { clientId, companyName, accountLabel }
+    const recipientMap = new Map<string, { clientId: string; companyName: string; accountLabel: string | null }>();
+
+    // Accounts give us both client identity and account label
+    for (const acct of recipientAccounts) {
+      const acctClient = (acct as any).client;
+      if (acctClient && !recipientMap.has(acct.walletAddress)) {
+        recipientMap.set(acct.walletAddress, {
+          clientId: acctClient.id,
+          companyName: acctClient.companyName,
+          accountLabel: acct.label || acct.name,
+        });
+      }
+    }
+
+    // Client direct wallets (primaryWallet / settledWallets) — no account label
+    for (const c of recipientClients) {
+      const wallets: string[] = [];
+      if (c.primaryWallet) wallets.push(c.primaryWallet);
+      if (c.settledWallets) wallets.push(...c.settledWallets);
+      for (const w of wallets) {
+        if (recipientWallets.includes(w) && !recipientMap.has(w)) {
+          recipientMap.set(w, { clientId: c.id, companyName: c.companyName, accountLabel: null });
+        }
+      }
+    }
+
+    return escrows.map(e => {
+      const esc = e as any;
+      const recipient = esc.recipientWallet ? recipientMap.get(esc.recipientWallet) : null;
+      return {
+        payerName: payerClient?.companyName || null,
+        payerAccountLabel: esc.payerWallet ? (payerAccountMap.get(esc.payerWallet) || null) : null,
+        recipientName: recipient?.companyName || null,
+        recipientAccountLabel: recipient?.accountLabel || null,
+        counterpartyId: recipient?.clientId || null,
+      };
+    });
+  }
+
+  private formatEscrow(escrow: Record<string, unknown>, partyNames?: PartyNames): Record<string, unknown> {
     const e = escrow as any;
     return {
       id: e.escrowCode,
@@ -1772,16 +1884,21 @@ export class InstitutionEscrowService {
       updatedAt: e.updatedAt,
       resolvedAt: e.resolvedAt,
       fundedAt: e.fundedAt,
+      payerName: partyNames?.payerName ?? null,
+      payerAccountLabel: partyNames?.payerAccountLabel ?? null,
+      recipientName: partyNames?.recipientName ?? null,
+      recipientAccountLabel: partyNames?.recipientAccountLabel ?? null,
+      counterpartyId: partyNames?.counterpartyId ?? null,
     };
   }
 
   private async formatEscrowEnriched(
     escrow: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
-    const base = this.formatEscrow(escrow);
     const e = escrow as any;
 
-    const [corridorRecord, client, aiAnalyses, auditLogs] = await Promise.all([
+    const [partyNamesArr, corridorRecord, client, aiAnalyses, auditLogs] = await Promise.all([
+      this.resolvePartyNames([escrow], e.clientId),
       e.corridor
         ? this.prisma.institutionCorridor.findUnique({ where: { code: e.corridor } })
         : Promise.resolve(null),
@@ -1816,6 +1933,8 @@ export class InstitutionEscrowService {
       }),
     ]);
 
+    const base = this.formatEscrow(escrow, partyNamesArr[0]);
+
     if (corridorRecord) {
       base.corridor = {
         code: corridorRecord.code,
@@ -1834,23 +1953,20 @@ export class InstitutionEscrowService {
       country: client?.country || null,
     };
 
-    const recipientClient = e.recipientWallet
-      ? await this.prisma.institutionClient.findFirst({
-          where: {
-            OR: [
-              { primaryWallet: e.recipientWallet },
-              { settledWallets: { has: e.recipientWallet } },
-            ],
-          },
-          select: { companyName: true, country: true },
-        })
-      : null;
-
     base.recipient = {
-      name: recipientClient?.companyName || 'External Wallet',
+      name: partyNamesArr[0]?.recipientName || 'External Wallet',
       wallet: e.recipientWallet,
-      country: recipientClient?.country || null,
+      country: null as string | null,
     };
+
+    // Resolve recipient country if we have a counterpartyId
+    if (partyNamesArr[0]?.counterpartyId) {
+      const recipientClient = await this.prisma.institutionClient.findUnique({
+        where: { id: partyNamesArr[0].counterpartyId },
+        select: { country: true },
+      });
+      (base.recipient as any).country = recipientClient?.country || null;
+    }
 
     base.complianceChecks = aiAnalyses.map((a) => ({
       id: a.id,
