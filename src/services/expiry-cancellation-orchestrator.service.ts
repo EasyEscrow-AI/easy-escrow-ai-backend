@@ -1,17 +1,24 @@
 /**
  * Expiry and Cancellation Orchestrator Service
- * 
+ *
  * Integrates all expiry and cancellation components into a cohesive system.
  * Provides comprehensive error handling, monitoring, and resource cleanup.
  */
 
 import { ExpiryService, getExpiryService, ExpiryCheckResult } from './expiry.service';
 import { RefundService, getRefundService, RefundResult } from './refund.service';
-import { CancellationService, getCancellationService, CancellationResult } from './cancellation.service';
-import { StatusUpdateService, getStatusUpdateService, StatusTransitionEvent } from './status-update.service';
-import { PrismaClient, AgreementStatus } from '../generated/prisma';
-
-const prisma = new PrismaClient();
+import {
+  CancellationService,
+  getCancellationService,
+  CancellationResult,
+} from './cancellation.service';
+import {
+  StatusUpdateService,
+  getStatusUpdateService,
+  StatusTransitionEvent,
+} from './status-update.service';
+import { AgreementStatus } from '../generated/prisma';
+import { prisma } from '../config/database';
 
 /**
  * Orchestrator configuration
@@ -78,7 +85,7 @@ export type OrchestratorEventListener = (event: OrchestratorEvent) => void | Pro
 
 /**
  * Expiry and Cancellation Orchestrator Class
- * 
+ *
  * Coordinates all expiry, refund, cancellation, and status update operations
  */
 export class ExpiryCancellationOrchestrator {
@@ -86,17 +93,17 @@ export class ExpiryCancellationOrchestrator {
   private refundService: RefundService;
   private cancellationService: CancellationService;
   private statusUpdateService: StatusUpdateService;
-  
+
   private config: Required<OrchestratorConfig>;
   private isRunning: boolean = false;
   private eventListeners: OrchestratorEventListener[] = [];
-  
+
   private statistics = {
     totalExpiredAgreements: 0,
     totalRefundedAgreements: 0,
     totalCancelledAgreements: 0,
   };
-  
+
   private errors: Array<{ timestamp: Date; service: string; error: string }> = [];
   private refundProcessingTimer?: NodeJS.Timeout;
 
@@ -105,7 +112,7 @@ export class ExpiryCancellationOrchestrator {
     // Increased defaults for better throughput (up from 10 and 50)
     const defaultRefundBatchSize = parseInt(process.env.REFUND_BATCH_SIZE || '50', 10);
     const defaultExpiryBatchSize = parseInt(process.env.EXPIRY_BATCH_SIZE || '200', 10);
-    
+
     this.config = {
       expiryCheckIntervalMs: config?.expiryCheckIntervalMs || 60000, // 1 minute
       autoProcessRefunds: config?.autoProcessRefunds ?? true,
@@ -244,7 +251,7 @@ export class ExpiryCancellationOrchestrator {
       });
 
       // Filter agreements that have deposits
-      const agreementsWithDeposits = expiredAgreements.filter(a => a.deposits.length > 0);
+      const agreementsWithDeposits = expiredAgreements.filter((a) => a.deposits.length > 0);
 
       if (agreementsWithDeposits.length === 0) {
         console.log('[ExpiryCancellationOrchestrator] No expired agreements requiring refunds');
@@ -256,14 +263,14 @@ export class ExpiryCancellationOrchestrator {
       );
 
       // Process refunds
-      const agreementIds = agreementsWithDeposits.map(a => a.agreementId);
+      const agreementIds = agreementsWithDeposits.map((a) => a.agreementId);
       const results = await this.refundService.batchProcessRefunds(agreementIds);
 
       // Update statistics
       for (const [agreementId, result] of results.entries()) {
         if (result.success) {
           this.statistics.totalRefundedAgreements++;
-          
+
           // Emit refund event
           await this.emitEvent({
             type: OrchestratorEventType.REFUND_PROCESSED,
@@ -276,8 +283,8 @@ export class ExpiryCancellationOrchestrator {
 
       console.log(
         `[ExpiryCancellationOrchestrator] Refund processing completed - ` +
-        `Successful: ${Array.from(results.values()).filter(r => r.success).length}, ` +
-        `Failed: ${Array.from(results.values()).filter(r => !r.success).length}`
+          `Successful: ${Array.from(results.values()).filter((r) => r.success).length}, ` +
+          `Failed: ${Array.from(results.values()).filter((r) => !r.success).length}`
       );
 
       return results;
@@ -301,7 +308,7 @@ export class ExpiryCancellationOrchestrator {
       // Track expired agreements
       if (event.toStatus === AgreementStatus.EXPIRED) {
         this.statistics.totalExpiredAgreements++;
-        
+
         await this.emitEvent({
           type: OrchestratorEventType.AGREEMENT_EXPIRED,
           agreementId: event.agreementId,
@@ -313,7 +320,7 @@ export class ExpiryCancellationOrchestrator {
       // Track cancelled agreements
       if (event.toStatus === AgreementStatus.CANCELLED) {
         this.statistics.totalCancelledAgreements++;
-        
+
         await this.emitEvent({
           type: OrchestratorEventType.CANCELLATION_EXECUTED,
           agreementId: event.agreementId,
@@ -350,7 +357,7 @@ export class ExpiryCancellationOrchestrator {
     try {
       // Check and update status
       const statusResult = await this.statusUpdateService.updateAgreementStatus(agreementId);
-      
+
       if (!statusResult.success) {
         errors.push(statusResult.error || 'Failed to update status');
       }
@@ -362,13 +369,13 @@ export class ExpiryCancellationOrchestrator {
       if (expired) {
         try {
           const eligibility = await this.refundService.checkRefundEligibility(agreementId);
-          
+
           if (eligibility.eligible) {
             const refundResult = await this.refundService.processRefunds(agreementId);
             refunded = refundResult.success;
-            
+
             if (!refunded && refundResult.errors.length > 0) {
-              errors.push(...refundResult.errors.map(e => e.error));
+              errors.push(...refundResult.errors.map((e) => e.error));
             }
           }
         } catch (error) {
@@ -378,7 +385,10 @@ export class ExpiryCancellationOrchestrator {
 
       return { expired, refunded, errors };
     } catch (error) {
-      console.error(`[ExpiryCancellationOrchestrator] Error processing expiry for ${agreementId}:`, error);
+      console.error(
+        `[ExpiryCancellationOrchestrator] Error processing expiry for ${agreementId}:`,
+        error
+      );
       errors.push(error instanceof Error ? error.message : 'Unknown error');
       return { expired: false, refunded: false, errors };
     }
@@ -389,7 +399,7 @@ export class ExpiryCancellationOrchestrator {
    */
   public async getStatus(): Promise<OrchestratorStatus> {
     const expiryStatus = this.expiryService.getStatus();
-    
+
     // Count pending refunds
     const pendingRefunds = await prisma.agreement.count({
       where: {
@@ -429,7 +439,9 @@ export class ExpiryCancellationOrchestrator {
    */
   public addEventListener(listener: OrchestratorEventListener): void {
     this.eventListeners.push(listener);
-    console.log(`[ExpiryCancellationOrchestrator] Registered event listener (total: ${this.eventListeners.length})`);
+    console.log(
+      `[ExpiryCancellationOrchestrator] Registered event listener (total: ${this.eventListeners.length})`
+    );
   }
 
   /**
@@ -439,7 +451,9 @@ export class ExpiryCancellationOrchestrator {
     const index = this.eventListeners.indexOf(listener);
     if (index > -1) {
       this.eventListeners.splice(index, 1);
-      console.log(`[ExpiryCancellationOrchestrator] Removed event listener (remaining: ${this.eventListeners.length})`);
+      console.log(
+        `[ExpiryCancellationOrchestrator] Removed event listener (remaining: ${this.eventListeners.length})`
+      );
     }
   }
 
@@ -502,7 +516,7 @@ export class ExpiryCancellationOrchestrator {
     recentErrors: number;
   }> {
     const recentErrors = this.errors.filter(
-      e => Date.now() - e.timestamp.getTime() < 300000 // Last 5 minutes
+      (e) => Date.now() - e.timestamp.getTime() < 300000 // Last 5 minutes
     ).length;
 
     const healthy = this.isRunning && recentErrors < 10;
@@ -546,4 +560,3 @@ export function resetExpiryCancellationOrchestrator(): void {
 }
 
 export default ExpiryCancellationOrchestrator;
-

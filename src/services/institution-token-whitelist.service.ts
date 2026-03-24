@@ -10,6 +10,7 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
+import { prisma as sharedPrisma } from '../config/database';
 
 export interface ApprovedToken {
   symbol: string;
@@ -31,7 +32,7 @@ export class InstitutionTokenWhitelistService {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor(prisma?: PrismaClient) {
-    this.prisma = prisma || new PrismaClient();
+    this.prisma = prisma || sharedPrisma;
   }
 
   private async loadCache(): Promise<Map<string, ApprovedToken>> {
@@ -108,7 +109,7 @@ export class InstitutionTokenWhitelistService {
       const approved = await this.listApprovedTokens();
       const symbols = approved.map((t) => t.symbol).join(', ');
       throw new Error(
-        `Token mint ${mintAddress} is not on the approved whitelist. Supported tokens: ${symbols}`,
+        `Token mint ${mintAddress} is not on the approved whitelist. Supported tokens: ${symbols}`
       );
     }
     return token;

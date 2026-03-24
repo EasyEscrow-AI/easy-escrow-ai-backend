@@ -7,6 +7,7 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { AllowlistService, getAllowlistService } from './allowlist.service';
 
 // ─── New Interfaces ────────────────────────────────────────
@@ -67,7 +68,7 @@ export class ComplianceService {
   private thresholdsCachedAt = 0;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
     this.allowlistService = getAllowlistService();
   }
 
@@ -96,7 +97,10 @@ export class ComplianceService {
         this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
       }
     } catch (err) {
-      console.warn('[ComplianceService] Failed to load thresholds from DB, using defaults:', err instanceof Error ? err.message : err);
+      console.warn(
+        '[ComplianceService] Failed to load thresholds from DB, using defaults:',
+        err instanceof Error ? err.message : err
+      );
       this.cachedThresholds = { ...DEFAULT_THRESHOLDS };
     }
 
@@ -109,14 +113,15 @@ export class ComplianceService {
    */
   async validateTransaction(params: ComplianceCheckParams): Promise<ComplianceResult> {
     // Fetch all needed data in parallel
-    const [client, corridor, branches, payerAllowlisted, recipientAllowlisted, limitsResult] = await Promise.all([
-      this.prisma.institutionClient.findUnique({ where: { id: params.clientId } }),
-      this.prisma.institutionCorridor.findUnique({ where: { code: params.corridor } }),
-      this.prisma.institutionBranch.findMany({ where: { clientId: params.clientId } }),
-      this.allowlistService.isAllowlisted(params.payerWallet),
-      this.allowlistService.isAllowlisted(params.recipientWallet),
-      this.checkTransactionLimits(params.clientId, params.amount, params.corridor),
-    ]);
+    const [client, corridor, branches, payerAllowlisted, recipientAllowlisted, limitsResult] =
+      await Promise.all([
+        this.prisma.institutionClient.findUnique({ where: { id: params.clientId } }),
+        this.prisma.institutionCorridor.findUnique({ where: { code: params.corridor } }),
+        this.prisma.institutionBranch.findMany({ where: { clientId: params.clientId } }),
+        this.allowlistService.isAllowlisted(params.payerWallet),
+        this.allowlistService.isAllowlisted(params.recipientWallet),
+        this.checkTransactionLimits(params.clientId, params.amount, params.corridor),
+      ]);
 
     // Verify payer wallet belongs to client
     let payerOwnership = true;
@@ -144,7 +149,10 @@ export class ComplianceService {
     ];
 
     // Aggregate
-    const riskScore = Math.min(100, checks.reduce((sum, c) => sum + c.score, 0));
+    const riskScore = Math.min(
+      100,
+      checks.reduce((sum, c) => sum + c.score, 0)
+    );
     const riskLevel = riskLevelFromScore(riskScore);
 
     // Build backward-compatible flags and reasons
@@ -161,16 +169,18 @@ export class ComplianceService {
     }
 
     // Derive backward-compatible booleans
-    const corridorValidCheck = checks.find(c => c.id === 'CORRIDOR_VALIDITY');
-    const corridorRiskCheck = checks.find(c => c.id === 'CORRIDOR_RISK');
-    const walletCheck = checks.find(c => c.id === 'WALLET_ALLOWLIST');
-    const limitsCheck = checks.find(c => c.id === 'TRANSACTION_LIMITS');
+    const corridorValidCheck = checks.find((c) => c.id === 'CORRIDOR_VALIDITY');
+    const corridorRiskCheck = checks.find((c) => c.id === 'CORRIDOR_RISK');
+    const walletCheck = checks.find((c) => c.id === 'WALLET_ALLOWLIST');
+    const limitsCheck = checks.find((c) => c.id === 'TRANSACTION_LIMITS');
 
-    const corridorValid = (corridorValidCheck?.status !== 'FAIL') &&
-      (corridorRiskCheck?.status !== 'FAIL') &&
+    const corridorValid =
+      corridorValidCheck?.status !== 'FAIL' &&
+      corridorRiskCheck?.status !== 'FAIL' &&
       this.isCorridorStructurallyValid(corridor, params.amount);
     const walletsAllowlisted = walletCheck?.status === 'PASS';
-    const limitsWithinRange = limitsCheck?.status === 'PASS' || limitsCheck?.status === 'NOT_APPLICABLE';
+    const limitsWithinRange =
+      limitsCheck?.status === 'PASS' || limitsCheck?.status === 'NOT_APPLICABLE';
 
     // Add risk flags based on thresholds
     const thresholds = await this.getComplianceThresholds();
@@ -184,7 +194,7 @@ export class ComplianceService {
     const passed =
       corridorValid &&
       walletsAllowlisted &&
-      (limitsWithinRange) &&
+      limitsWithinRange &&
       riskScore < thresholds.rejectScore;
 
     return {
@@ -211,7 +221,12 @@ export class ComplianceService {
   // ─── 12 Individual Check Methods ────────────────────────────
 
   private checkKycVerification(client: any): ComplianceCheckItem {
-    const base = { id: 'KYC_VERIFICATION', name: 'KYC/KYB Verification', maxScore: 15, description: 'Verifies KYC/KYB status of the client' };
+    const base = {
+      id: 'KYC_VERIFICATION',
+      name: 'KYC/KYB Verification',
+      maxScore: 15,
+      description: 'Verifies KYC/KYB status of the client',
+    };
     if (!client) {
       return { ...base, status: 'FAIL', score: 15, detail: 'Client not found' };
     }
@@ -227,7 +242,12 @@ export class ComplianceService {
   }
 
   private checkSanctionsScreening(client: any): ComplianceCheckItem {
-    const base = { id: 'SANCTIONS_SCREENING', name: 'Sanctions Screening (OFAC/EU/UN)', maxScore: 15, description: 'Screens client against OFAC, EU, and UN sanctions lists' };
+    const base = {
+      id: 'SANCTIONS_SCREENING',
+      name: 'Sanctions Screening (OFAC/EU/UN)',
+      maxScore: 15,
+      description: 'Screens client against OFAC, EU, and UN sanctions lists',
+    };
     if (!client) {
       return { ...base, status: 'FAIL', score: 15, detail: 'Client not found for sanctions check' };
     }
@@ -246,7 +266,12 @@ export class ComplianceService {
   }
 
   private checkCorridorRisk(corridor: any): ComplianceCheckItem {
-    const base = { id: 'CORRIDOR_RISK', name: 'Corridor Risk Level', maxScore: 12, description: 'Assesses risk level of the payment corridor' };
+    const base = {
+      id: 'CORRIDOR_RISK',
+      name: 'Corridor Risk Level',
+      maxScore: 12,
+      description: 'Assesses risk level of the payment corridor',
+    };
     if (!corridor) {
       return { ...base, status: 'FAIL', score: 12, detail: 'Corridor not found' };
     }
@@ -258,7 +283,12 @@ export class ComplianceService {
       case 'HIGH':
         return { ...base, status: 'FAIL', score: 12, detail: 'High-risk corridor' };
       default:
-        return { ...base, status: 'FAIL', score: 12, detail: `Unknown corridor risk level: ${corridor.riskLevel}` };
+        return {
+          ...base,
+          status: 'FAIL',
+          score: 12,
+          detail: `Unknown corridor risk level: ${corridor.riskLevel}`,
+        };
     }
   }
 
@@ -266,13 +296,21 @@ export class ComplianceService {
     payerAllowlisted: boolean,
     recipientAllowlisted: boolean,
     payerOwnership: boolean,
-    params: ComplianceCheckParams,
+    params: ComplianceCheckParams
   ): ComplianceCheckItem {
-    const base = { id: 'WALLET_ALLOWLIST', name: 'Wallet Allowlist', maxScore: 12, description: 'Verifies both payer and recipient wallets are on the allowlist' };
+    const base = {
+      id: 'WALLET_ALLOWLIST',
+      name: 'Wallet Allowlist',
+      maxScore: 12,
+      description: 'Verifies both payer and recipient wallets are on the allowlist',
+    };
     const issues: string[] = [];
-    if (!payerAllowlisted) issues.push(`Payer wallet ${params.payerWallet} is not on the allowlist`);
-    if (!payerOwnership) issues.push(`Payer wallet ${params.payerWallet} does not belong to the requesting client`);
-    if (!recipientAllowlisted) issues.push(`Recipient wallet ${params.recipientWallet} is not on the allowlist`);
+    if (!payerAllowlisted)
+      issues.push(`Payer wallet ${params.payerWallet} is not on the allowlist`);
+    if (!payerOwnership)
+      issues.push(`Payer wallet ${params.payerWallet} does not belong to the requesting client`);
+    if (!recipientAllowlisted)
+      issues.push(`Recipient wallet ${params.recipientWallet} is not on the allowlist`);
     if (issues.length > 0) {
       return { ...base, status: 'FAIL', score: 12, detail: issues.join('; ') };
     }
@@ -282,9 +320,14 @@ export class ComplianceService {
   private checkTransactionLimitsFromResult(
     limitsResult: { valid: boolean; reasons: string[] },
     corridor: any,
-    amount: number,
+    amount: number
   ): ComplianceCheckItem {
-    const base = { id: 'TRANSACTION_LIMITS', name: 'Transaction Limits', maxScore: 10, description: 'Checks per-transaction, daily, and monthly volume limits' };
+    const base = {
+      id: 'TRANSACTION_LIMITS',
+      name: 'Transaction Limits',
+      maxScore: 10,
+      description: 'Checks per-transaction, daily, and monthly volume limits',
+    };
     if (!corridor) {
       return { ...base, status: 'FAIL', score: 10, detail: 'Corridor not found for limits check' };
     }
@@ -294,32 +337,67 @@ export class ComplianceService {
     // Check if approaching limit (>80% of per-tx max)
     const maxAmount = Number(corridor.maxAmount);
     if (maxAmount > 0 && amount > maxAmount * 0.8) {
-      return { ...base, status: 'WARNING', score: 5, detail: `Amount is ${Math.round((amount / maxAmount) * 100)}% of per-transaction maximum` };
+      return {
+        ...base,
+        status: 'WARNING',
+        score: 5,
+        detail: `Amount is ${Math.round((amount / maxAmount) * 100)}% of per-transaction maximum`,
+      };
     }
     return { ...base, status: 'PASS', score: 0 };
   }
 
   private checkAmountThreshold(amount: number): ComplianceCheckItem {
-    const base = { id: 'AMOUNT_THRESHOLD', name: 'Amount Risk', maxScore: 8, description: 'Evaluates transaction amount against risk thresholds' };
+    const base = {
+      id: 'AMOUNT_THRESHOLD',
+      name: 'Amount Risk',
+      maxScore: 8,
+      description: 'Evaluates transaction amount against risk thresholds',
+    };
     if (amount >= 100000) {
-      return { ...base, status: 'FAIL', score: 8, detail: `Amount $${amount.toLocaleString()} exceeds $100k high-risk threshold` };
+      return {
+        ...base,
+        status: 'FAIL',
+        score: 8,
+        detail: `Amount $${amount.toLocaleString()} exceeds $100k high-risk threshold`,
+      };
     }
     if (amount >= 10000) {
-      return { ...base, status: 'WARNING', score: 4, detail: `Amount $${amount.toLocaleString()} exceeds $10k reporting threshold` };
+      return {
+        ...base,
+        status: 'WARNING',
+        score: 4,
+        detail: `Amount $${amount.toLocaleString()} exceeds $10k reporting threshold`,
+      };
     }
     return { ...base, status: 'PASS', score: 0 };
   }
 
   private checkSourceOfFunds(client: any): ComplianceCheckItem {
-    const base = { id: 'SOURCE_OF_FUNDS', name: 'Source of Funds', maxScore: 8, description: 'Verifies source of funds documentation' };
+    const base = {
+      id: 'SOURCE_OF_FUNDS',
+      name: 'Source of Funds',
+      maxScore: 8,
+      description: 'Verifies source of funds documentation',
+    };
     if (!client) {
-      return { ...base, status: 'FAIL', score: 8, detail: 'Client not found for source of funds check' };
+      return {
+        ...base,
+        status: 'FAIL',
+        score: 8,
+        detail: 'Client not found for source of funds check',
+      };
     }
     const sof = client.sourceOfFunds;
     if (sof && sof.toLowerCase() !== 'undocumented' && sof.toLowerCase() !== 'unknown') {
       // Has documented source of funds
       if (sof.toLowerCase() === 'partial' || sof.toLowerCase() === 'pending') {
-        return { ...base, status: 'WARNING', score: 4, detail: 'Source of funds partially documented' };
+        return {
+          ...base,
+          status: 'WARNING',
+          score: 4,
+          detail: 'Source of funds partially documented',
+        };
       }
       return { ...base, status: 'PASS', score: 0 };
     }
@@ -330,7 +408,12 @@ export class ComplianceService {
   }
 
   private checkPepScreening(client: any): ComplianceCheckItem {
-    const base = { id: 'PEP_SCREENING', name: 'PEP Screening', maxScore: 5, description: 'Screens for Politically Exposed Persons' };
+    const base = {
+      id: 'PEP_SCREENING',
+      name: 'PEP Screening',
+      maxScore: 5,
+      description: 'Screens for Politically Exposed Persons',
+    };
     if (!client) {
       return { ...base, status: 'FAIL', score: 5, detail: 'Client not found for PEP screening' };
     }
@@ -346,7 +429,12 @@ export class ComplianceService {
   }
 
   private checkRegulatoryStatus(client: any): ComplianceCheckItem {
-    const base = { id: 'REGULATORY_STATUS', name: 'Regulatory Compliance', maxScore: 5, description: 'Verifies regulatory compliance status' };
+    const base = {
+      id: 'REGULATORY_STATUS',
+      name: 'Regulatory Compliance',
+      maxScore: 5,
+      description: 'Verifies regulatory compliance status',
+    };
     if (!client) {
       return { ...base, status: 'FAIL', score: 5, detail: 'Client not found for regulatory check' };
     }
@@ -368,27 +456,54 @@ export class ComplianceService {
   }
 
   private checkBranchCompliance(branches: any[]): ComplianceCheckItem {
-    const base = { id: 'BRANCH_COMPLIANCE', name: 'Branch Compliance', maxScore: 4, description: 'Verifies compliance status of client branches' };
+    const base = {
+      id: 'BRANCH_COMPLIANCE',
+      name: 'Branch Compliance',
+      maxScore: 4,
+      description: 'Verifies compliance status of client branches',
+    };
     if (!branches || branches.length === 0) {
       return { ...base, status: 'NOT_APPLICABLE', score: 0, detail: 'No branches registered' };
     }
-    const sanctioned = branches.filter(b => b.isSanctioned);
+    const sanctioned = branches.filter((b) => b.isSanctioned);
     if (sanctioned.length > 0) {
-      return { ...base, status: 'FAIL', score: 4, detail: `${sanctioned.length} branch(es) in sanctioned jurisdictions` };
+      return {
+        ...base,
+        status: 'FAIL',
+        score: 4,
+        detail: `${sanctioned.length} branch(es) in sanctioned jurisdictions`,
+      };
     }
-    const underReview = branches.filter(b => b.complianceStatus === 'UNDER_REVIEW');
+    const underReview = branches.filter((b) => b.complianceStatus === 'UNDER_REVIEW');
     if (underReview.length > 0) {
-      return { ...base, status: 'WARNING', score: 2, detail: `${underReview.length} branch(es) under compliance review` };
+      return {
+        ...base,
+        status: 'WARNING',
+        score: 2,
+        detail: `${underReview.length} branch(es) under compliance review`,
+      };
     }
-    const blocked = branches.filter(b => b.complianceStatus === 'BLOCKED' || b.complianceStatus === 'SUSPENDED');
+    const blocked = branches.filter(
+      (b) => b.complianceStatus === 'BLOCKED' || b.complianceStatus === 'SUSPENDED'
+    );
     if (blocked.length > 0) {
-      return { ...base, status: 'FAIL', score: 4, detail: `${blocked.length} branch(es) blocked or suspended` };
+      return {
+        ...base,
+        status: 'FAIL',
+        score: 4,
+        detail: `${blocked.length} branch(es) blocked or suspended`,
+      };
     }
     return { ...base, status: 'PASS', score: 0 };
   }
 
   private checkClientTier(client: any): ComplianceCheckItem {
-    const base = { id: 'CLIENT_TIER', name: 'Client Tier', maxScore: 3, description: 'Assesses risk based on client tier level' };
+    const base = {
+      id: 'CLIENT_TIER',
+      name: 'Client Tier',
+      maxScore: 3,
+      description: 'Assesses risk based on client tier level',
+    };
     if (!client) {
       return { ...base, status: 'FAIL', score: 3, detail: 'Client not found' };
     }
@@ -398,14 +513,24 @@ export class ComplianceService {
       case 'PREMIUM':
         return { ...base, status: 'WARNING', score: 1, detail: 'Premium tier client' };
       case 'STANDARD':
-        return { ...base, status: 'FAIL', score: 3, detail: 'Standard tier client — elevated risk' };
+        return {
+          ...base,
+          status: 'FAIL',
+          score: 3,
+          detail: 'Standard tier client — elevated risk',
+        };
       default:
         return { ...base, status: 'FAIL', score: 3, detail: `Unknown client tier: ${client.tier}` };
     }
   }
 
   private checkCorridorValidity(corridor: any): ComplianceCheckItem {
-    const base = { id: 'CORRIDOR_VALIDITY', name: 'Corridor Active Status', maxScore: 3, description: 'Verifies the corridor is active' };
+    const base = {
+      id: 'CORRIDOR_VALIDITY',
+      name: 'Corridor Active Status',
+      maxScore: 3,
+      description: 'Verifies the corridor is active',
+    };
     if (!corridor) {
       return { ...base, status: 'FAIL', score: 3, detail: 'Corridor not found' };
     }
@@ -432,7 +557,7 @@ export class ComplianceService {
 
   async validateCorridor(
     corridorCode: string,
-    amount: number,
+    amount: number
   ): Promise<{ valid: boolean; reasons: string[] }> {
     const reasons: string[] = [];
 
@@ -465,7 +590,7 @@ export class ComplianceService {
   async validateWallets(
     payerWallet: string,
     recipientWallet: string,
-    clientId?: string,
+    clientId?: string
   ): Promise<{ valid: boolean; reasons: string[] }> {
     const reasons: string[] = [];
 
@@ -492,7 +617,7 @@ export class ComplianceService {
   async checkTransactionLimits(
     clientId: string,
     amount: number,
-    corridorCode: string,
+    corridorCode: string
   ): Promise<{ valid: boolean; reasons: string[] }> {
     const reasons: string[] = [];
 

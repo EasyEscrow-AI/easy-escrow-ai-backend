@@ -15,6 +15,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { PrismaClient } from '../generated/prisma';
+import { prisma as sharedPrisma } from '../config/database';
 import { redisClient } from '../config/redis';
 import { DataAnonymizer, CLIENT_SENSITIVE_FIELDS } from '../utils/data-anonymizer';
 import { KNOWLEDGEBASE } from '../data/ai-chat-knowledgebase';
@@ -203,7 +204,7 @@ export class AiChatService {
   private anthropic: Anthropic | null = null;
 
   constructor(prisma?: PrismaClient) {
-    this.prisma = prisma ?? new PrismaClient();
+    this.prisma = prisma ?? sharedPrisma;
   }
 
   private getAnthropicClient(): Anthropic {

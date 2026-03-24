@@ -14,6 +14,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { PrismaClient } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { redisClient } from '../config/redis';
 import crypto from 'crypto';
 import {
@@ -62,7 +63,7 @@ export class AiAnalysisService {
   private anthropic: Anthropic | null = null;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
   }
 
   private getAnthropicClient(): Anthropic {
@@ -140,7 +141,7 @@ export class AiAnalysisService {
     ];
     if (unsupportedForAnalysis.includes(file.mimeType)) {
       throw new Error(
-        `AI analysis does not support ${file.mimeType} files. Please convert to PDF before analyzing.`,
+        `AI analysis does not support ${file.mimeType} files. Please convert to PDF before analyzing.`
       );
     }
 
@@ -157,10 +158,7 @@ export class AiAnalysisService {
     const { anonymizedText, piiMap } = this.anonymizePii(documentText);
 
     // Generate document hash for deduplication
-    const documentHash = crypto
-      .createHash('sha256')
-      .update(fileBuffer)
-      .digest('hex');
+    const documentHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
     // Check if we already analyzed this exact document
     const existingAnalysis = await this.prisma.institutionAiAnalysis.findFirst({
@@ -179,12 +177,14 @@ export class AiAnalysisService {
 
     // Build non-PII client context for the AI prompt (no personal names/addresses)
     const clientInfo = escrow.client;
-    const clientContext = clientInfo ? {
-      companyName: clientInfo.companyName,
-      legalName: clientInfo.legalName || undefined,
-      country: clientInfo.country || undefined,
-      industry: clientInfo.industry || undefined,
-    } : undefined;
+    const clientContext = clientInfo
+      ? {
+          companyName: clientInfo.companyName,
+          legalName: clientInfo.legalName || undefined,
+          country: clientInfo.country || undefined,
+          industry: clientInfo.industry || undefined,
+        }
+      : undefined;
 
     // Call Claude API
     const model = process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
@@ -194,7 +194,7 @@ export class AiAnalysisService {
       file.mimeType,
       context,
       model,
-      clientContext,
+      clientContext
     );
 
     // Store in database
@@ -226,10 +226,7 @@ export class AiAnalysisService {
   /**
    * Get analysis results for an escrow
    */
-  async getAnalysisResults(
-    escrowId: string,
-    clientId: string,
-  ): Promise<AiAnalysisResult[]> {
+  async getAnalysisResults(escrowId: string, clientId: string): Promise<AiAnalysisResult[]> {
     // Verify escrow belongs to client
     const escrow = await this.prisma.institutionEscrow.findFirst({
       where: { ...escrowWhere(escrowId), clientId },
@@ -261,7 +258,7 @@ export class AiAnalysisService {
   async analyzeEscrow(
     escrowId: string,
     clientId: string,
-    options: { anonymize?: boolean } = {},
+    options: { anonymize?: boolean } = {}
   ): Promise<EscrowAnalysisResult> {
     const { anonymize = true } = options;
     await this.checkRateLimit(clientId);
@@ -344,7 +341,7 @@ export class AiAnalysisService {
       hasDeposit: escrow.deposits.length > 0,
       depositCount: escrow.deposits.length,
       fileCount: escrow.files.length,
-      fileTypes: escrow.files.map(f => f.documentType),
+      fileTypes: escrow.files.map((f) => f.documentType),
       expiresAt: escrow.expiresAt?.toISOString() ?? null,
       createdAt: escrow.createdAt.toISOString(),
       fundedAt: escrow.fundedAt?.toISOString() || null,
@@ -368,21 +365,26 @@ export class AiAnalysisService {
     };
 
     // Step 1: Content-hash caching — hash escrow data for dedup regardless of escrowId
-    const summaryHash = crypto.createHash('sha256')
+    const summaryHash = crypto
+      .createHash('sha256')
       .update(JSON.stringify(escrowSummary, Object.keys(escrowSummary).sort()))
       .digest('hex');
     const hashCacheKey = `${AI_CACHE_PREFIX}escrow:hash:${summaryHash}`;
     try {
       const hashCached = await redisClient.get(hashCacheKey);
       if (hashCached) return JSON.parse(hashCached);
-    } catch { /* miss */ }
+    } catch {
+      /* miss */
+    }
 
     // Check escrowId-based cache
     const cacheKey = `${AI_CACHE_PREFIX}escrow:${resolvedEscrowId}`;
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) return JSON.parse(cached);
-    } catch { /* cache miss */ }
+    } catch {
+      /* cache miss */
+    }
 
     // Check for existing analysis of same escrow (dedup by type)
     const existing = await this.prisma.institutionAiAnalysis.findFirst({
@@ -390,7 +392,8 @@ export class AiAnalysisService {
       orderBy: { createdAt: 'desc' },
     });
     // Re-analyze if escrow status changed since last analysis
-    const statusChanged = existing && (existing.extractedFields as any)?.escrow_status !== escrow.status;
+    const statusChanged =
+      existing && (existing.extractedFields as any)?.escrow_status !== escrow.status;
     if (existing && !statusChanged) {
       const result: EscrowAnalysisResult = {
         riskScore: existing.riskScore,
@@ -404,9 +407,10 @@ export class AiAnalysisService {
     }
 
     // Step 3: Model selection — use Haiku for DRAFT, Sonnet for everything else
-    const model = escrow.status === 'DRAFT'
-      ? (process.env.AI_ANALYSIS_MODEL_DRAFT || 'claude-haiku-4-5-20251001')
-      : (process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514');
+    const model =
+      escrow.status === 'DRAFT'
+        ? process.env.AI_ANALYSIS_MODEL_DRAFT || 'claude-haiku-4-5-20251001'
+        : process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
     const maxTokens = escrow.status === 'DRAFT' ? 2048 : 4096;
 
     const client = this.getAnthropicClient();
@@ -417,7 +421,11 @@ export class AiAnalysisService {
       ? anonymizer.anonymizeObject(escrowSummary, ESCROW_SENSITIVE_FIELDS)
       : escrowSummary;
 
-    const systemPrompt = `You are EasyEscrow AI, a compliance analyst for cross-border stablecoin escrow payments on Solana.${anonymize ? ' Tokenized fields (e.g. [COMPANY_1], [WALLET_1]) will be resolved after — reference them as-is.' : ''}
+    const systemPrompt = `You are EasyEscrow AI, a compliance analyst for cross-border stablecoin escrow payments on Solana.${
+      anonymize
+        ? ' Tokenized fields (e.g. [COMPANY_1], [WALLET_1]) will be resolved after — reference them as-is.'
+        : ''
+    }
 
 Analyze the escrow JSON and return a step-by-step compliance assessment. The escrow may be DRAFT (partial data) or any later state. Use "pending" for sections where required data is null/missing.
 
@@ -471,15 +479,17 @@ RESPONSE FORMAT (valid JSON only, no other text):
       model,
       max_tokens: maxTokens,
       system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      messages: [{
-        role: 'user',
-        content: `Analyze this escrow transaction:\n\n${JSON.stringify(dataForAi, null, 2)}`,
-      }],
+      messages: [
+        {
+          role: 'user',
+          content: `Analyze this escrow transaction:\n\n${JSON.stringify(dataForAi, null, 2)}`,
+        },
+      ],
     });
 
     const responseText = response.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map(block => block.text)
+      .map((block) => block.text)
       .join('');
 
     let result: EscrowAnalysisResult;
@@ -538,7 +548,9 @@ RESPONSE FORMAT (valid JSON only, no other text):
       const resultJson = JSON.stringify(result);
       await redisClient.set(cacheKey, resultJson, 'EX', AI_CACHE_TTL);
       await redisClient.set(hashCacheKey, resultJson, 'EX', AI_CACHE_TTL);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return result;
   }
@@ -552,7 +564,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
   async analyzeEscrowFast(
     escrowId: string,
     clientId: string,
-    options: { anonymize?: boolean } = {},
+    options: { anonymize?: boolean } = {}
   ): Promise<EscrowAnalysisResult> {
     await this.checkRateLimit(clientId);
 
@@ -581,7 +593,12 @@ RESPONSE FORMAT (valid JSON only, no other text):
     }
 
     // Fetch available corridors
-    let availableCorridors: Array<{ code: string; riskLevel: string; minAmount: number; maxAmount: number }> = [];
+    let availableCorridors: Array<{
+      code: string;
+      riskLevel: string;
+      minAmount: number;
+      maxAmount: number;
+    }> = [];
     try {
       const clientCountry = escrow.client?.country;
       if (clientCountry) {
@@ -590,14 +607,16 @@ RESPONSE FORMAT (valid JSON only, no other text):
           select: { code: true, riskLevel: true, minAmount: true, maxAmount: true },
           orderBy: { riskLevel: 'asc' },
         });
-        availableCorridors = corridors.map(c => ({
+        availableCorridors = corridors.map((c) => ({
           code: c.code,
           riskLevel: c.riskLevel,
           minAmount: Number(c.minAmount),
           maxAmount: Number(c.maxAmount),
         }));
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     // Build EscrowData for the rules engine
     const escrowData: EscrowData = {
@@ -649,7 +668,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
       hasDeposit: escrow.deposits.length > 0,
       depositCount: escrow.deposits.length,
       fileCount: escrow.files.length,
-      fileTypes: escrow.files.map(f => f.documentType),
+      fileTypes: escrow.files.map((f) => f.documentType),
       expiresAt: escrow.expiresAt?.toISOString() ?? null,
       createdAt: escrow.createdAt.toISOString(),
       fundedAt: escrow.fundedAt?.toISOString() || null,
@@ -672,7 +691,8 @@ RESPONSE FORMAT (valid JSON only, no other text):
       availableCorridors: availableCorridors.length > 0 ? availableCorridors : null,
     };
 
-    const summaryHash = crypto.createHash('sha256')
+    const summaryHash = crypto
+      .createHash('sha256')
       .update(JSON.stringify(escrowSummary, Object.keys(escrowSummary).sort()))
       .digest('hex');
     const hashCacheKey = `${AI_CACHE_PREFIX}escrow:hash:${summaryHash}`;
@@ -683,7 +703,9 @@ RESPONSE FORMAT (valid JSON only, no other text):
         const aiResult = JSON.parse(hashCached) as EscrowAnalysisResult;
         return { ...aiResult, tier: 'full', aiAnalysisAvailable: true };
       }
-    } catch { /* miss */ }
+    } catch {
+      /* miss */
+    }
 
     // No cached AI result — fire background AI call and return preliminary
     this.analyzeEscrow(escrowId, clientId, options).catch(() => {
@@ -708,7 +730,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
    */
   async getEscrowAnalysis(
     escrowId: string,
-    clientId: string,
+    clientId: string
   ): Promise<Array<EscrowAnalysisResult>> {
     const escrow = await this.prisma.institutionEscrow.findFirst({
       where: { ...escrowWhere(escrowId), clientId },
@@ -722,7 +744,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
       orderBy: { createdAt: 'desc' },
     });
 
-    return analyses.map(a => ({
+    return analyses.map((a) => ({
       riskScore: a.riskScore,
       extractedFields: a.extractedFields as Record<string, unknown>,
       factors: a.factors as Array<{ name: string; weight: number; value: number }>,
@@ -739,7 +761,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
    */
   async analyzeClient(
     clientId: string,
-    options: { anonymize?: boolean } = {},
+    options: { anonymize?: boolean } = {}
   ): Promise<AiAnalysisResult & { summary: string }> {
     const { anonymize = true } = options;
     await this.checkRateLimit(clientId);
@@ -764,7 +786,9 @@ RESPONSE FORMAT (valid JSON only, no other text):
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) return JSON.parse(cached);
-    } catch { /* cache miss */ }
+    } catch {
+      /* cache miss */
+    }
 
     const model = process.env.AI_ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
     const client = this.getAnthropicClient();
@@ -793,8 +817,8 @@ RESPONSE FORMAT (valid JSON only, no other text):
       walletCustodyType: clientRecord.walletCustodyType,
       preferredSettlementChain: clientRecord.preferredSettlementChain,
       walletCount: clientRecord.wallets.length,
-      hasPrimaryWallet: clientRecord.wallets.some(w => w.isPrimary),
-      hasSettlementWallet: clientRecord.wallets.some(w => w.isSettlement),
+      hasPrimaryWallet: clientRecord.wallets.some((w) => w.isPrimary),
+      hasSettlementWallet: clientRecord.wallets.some((w) => w.isSettlement),
       onboardingCompleted: !!clientRecord.onboardingCompletedAt,
       escrowHistory: {
         totalEscrows: clientRecord.escrows.length,
@@ -802,11 +826,11 @@ RESPONSE FORMAT (valid JSON only, no other text):
           acc[e.status] = (acc[e.status] || 0) + 1;
           return acc;
         }, {}),
-        corridorsUsed: [...new Set(clientRecord.escrows.map(e => e.corridor))],
+        corridorsUsed: [...new Set(clientRecord.escrows.map((e) => e.corridor))],
         totalVolume: clientRecord.escrows.reduce((sum, e) => sum + Number(e.amount), 0),
       },
       accountAge: Math.floor(
-        (Date.now() - clientRecord.createdAt.getTime()) / (1000 * 60 * 60 * 24),
+        (Date.now() - clientRecord.createdAt.getTime()) / (1000 * 60 * 60 * 24)
       ),
     };
 
@@ -815,7 +839,11 @@ RESPONSE FORMAT (valid JSON only, no other text):
       ? anonymizer.anonymizeObject(clientProfile, CLIENT_SENSITIVE_FIELDS)
       : clientProfile;
 
-    const systemPrompt = `You are EasyEscrow AI, an institutional compliance analyst. Analyze the following institution client profile and provide a comprehensive compliance and risk assessment.${anonymize ? '\n\nNote: Some fields have been tokenized for privacy (e.g. [COMPANY_1], [PERSON_1]). Reference these tokens in your analysis — they will be resolved to real values after.' : ''}
+    const systemPrompt = `You are EasyEscrow AI, an institutional compliance analyst. Analyze the following institution client profile and provide a comprehensive compliance and risk assessment.${
+      anonymize
+        ? '\n\nNote: Some fields have been tokenized for privacy (e.g. [COMPANY_1], [PERSON_1]). Reference these tokens in your analysis — they will be resolved to real values after.'
+        : ''
+    }
 
 Your response MUST be valid JSON with this exact structure:
 {
@@ -849,15 +877,21 @@ Respond with ONLY the JSON object, no additional text.`;
       model,
       max_tokens: 2048,
       system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      messages: [{
-        role: 'user',
-        content: `Analyze this institution client profile:\n\n${JSON.stringify(dataForAi, null, 2)}`,
-      }],
+      messages: [
+        {
+          role: 'user',
+          content: `Analyze this institution client profile:\n\n${JSON.stringify(
+            dataForAi,
+            null,
+            2
+          )}`,
+        },
+      ],
     });
 
     const responseText = response.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map(block => block.text)
+      .map((block) => block.text)
       .join('');
 
     let result: AiAnalysisResult & { summary: string };
@@ -909,7 +943,9 @@ Respond with ONLY the JSON object, no additional text.`;
 
     try {
       await redisClient.set(cacheKey, JSON.stringify(result), 'EX', AI_CACHE_TTL);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return result;
   }
@@ -918,14 +954,14 @@ Respond with ONLY the JSON object, no additional text.`;
    * Get stored client-level analysis results
    */
   async getClientAnalysis(
-    clientId: string,
+    clientId: string
   ): Promise<Array<AiAnalysisResult & { summary: string }>> {
     const analyses = await this.prisma.institutionAiAnalysis.findMany({
       where: { clientId, analysisType: 'CLIENT' },
       orderBy: { createdAt: 'desc' },
     });
 
-    return analyses.map(a => ({
+    return analyses.map((a) => ({
       riskScore: a.riskScore,
       extractedFields: a.extractedFields as Record<string, unknown>,
       factors: a.factors as Array<{ name: string; weight: number; value: number }>,
@@ -984,7 +1020,7 @@ Respond with ONLY the JSON object, no additional text.`;
       legalName?: string;
       country?: string;
       industry?: string;
-    },
+    }
   ): Promise<AiAnalysisResult> {
     const client = this.getAnthropicClient();
 
@@ -1018,7 +1054,9 @@ Risk scoring guidelines:
 Respond with ONLY the JSON object, no additional text.`;
 
     let contextInfo = context
-      ? `\nEscrow Context: Expected amount: ${context.expectedAmount || 'unknown'}, PO#: ${context.poNumber || 'unknown'}, Corridor: ${context.corridor || 'unknown'}`
+      ? `\nEscrow Context: Expected amount: ${context.expectedAmount || 'unknown'}, PO#: ${
+          context.poNumber || 'unknown'
+        }, Corridor: ${context.corridor || 'unknown'}`
       : '';
 
     if (clientContext) {
@@ -1075,11 +1113,13 @@ Respond with ONLY the JSON object, no additional text.`;
       return {
         riskScore: Math.min(100, Math.max(0, (parsed.risk_score as number) || 50)),
         extractedFields: (parsed.extracted_fields as Record<string, unknown>) || {},
-        factors: ((parsed.factors as any[]) || []).map((f: { name: string; weight: number; value: number }) => ({
-          name: f.name,
-          weight: Math.min(1, Math.max(0, f.weight || 0)),
-          value: Math.min(100, Math.max(0, f.value || 0)),
-        })),
+        factors: ((parsed.factors as any[]) || []).map(
+          (f: { name: string; weight: number; value: number }) => ({
+            name: f.name,
+            weight: Math.min(1, Math.max(0, f.weight || 0)),
+            value: Math.min(100, Math.max(0, f.value || 0)),
+          })
+        ),
         recommendation: ['APPROVE', 'REVIEW', 'REJECT'].includes(parsed.recommendation as string)
           ? (parsed.recommendation as 'APPROVE' | 'REVIEW' | 'REJECT')
           : 'REVIEW',
@@ -1163,15 +1203,12 @@ Respond with ONLY the JSON object, no additional text.`;
     let addressCounter = 1;
 
     // Email addresses
-    anonymized = anonymized.replace(
-      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
-      (match) => {
-        const key = `[EMAIL_${personCounter}]`;
-        piiMap.set(key, match);
-        personCounter++;
-        return key;
-      },
-    );
+    anonymized = anonymized.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, (match) => {
+      const key = `[EMAIL_${personCounter}]`;
+      piiMap.set(key, match);
+      personCounter++;
+      return key;
+    });
 
     // Phone numbers (various formats)
     anonymized = anonymized.replace(
@@ -1185,19 +1222,16 @@ Respond with ONLY the JSON object, no additional text.`;
           return key;
         }
         return match;
-      },
+      }
     );
 
     // Bank account numbers (sequences of 8-20 digits)
-    anonymized = anonymized.replace(
-      /\b\d{8,20}\b/g,
-      (match) => {
-        const key = `[ACCOUNT_${accountCounter}]`;
-        piiMap.set(key, match);
-        accountCounter++;
-        return key;
-      },
-    );
+    anonymized = anonymized.replace(/\b\d{8,20}\b/g, (match) => {
+      const key = `[ACCOUNT_${accountCounter}]`;
+      piiMap.set(key, match);
+      accountCounter++;
+      return key;
+    });
 
     // Postal/ZIP addresses (multi-line patterns with common keywords)
     // This is a simplified approach - real PII detection would need NER
@@ -1208,7 +1242,7 @@ Respond with ONLY the JSON object, no additional text.`;
         piiMap.set(key, match);
         addressCounter++;
         return key;
-      },
+      }
     );
 
     return { anonymizedText: anonymized, piiMap };
@@ -1226,7 +1260,7 @@ Respond with ONLY the JSON object, no additional text.`;
       }
       if (current > AI_RATE_LIMIT_MAX) {
         throw new Error(
-          `AI analysis rate limit exceeded. Maximum ${AI_RATE_LIMIT_MAX} requests per minute.`,
+          `AI analysis rate limit exceeded. Maximum ${AI_RATE_LIMIT_MAX} requests per minute.`
         );
       }
     } catch (error) {
