@@ -17,7 +17,10 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
 process.env.USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-import { InstitutionEscrowService, CreateEscrowParams } from '../../../src/services/institution-escrow.service';
+import {
+  InstitutionEscrowService,
+  CreateEscrowParams,
+} from '../../../src/services/institution-escrow.service';
 
 describe('InstitutionEscrowService', () => {
   let sandbox: sinon.SinonSandbox;
@@ -124,6 +127,7 @@ describe('InstitutionEscrowService', () => {
       },
       institutionAccount: {
         findMany: sandbox.stub().resolves([]),
+        findFirst: sandbox.stub().resolves({ clientId: 'other-client-id' }),
       },
       institutionCorridor: {
         findUnique: sandbox.stub().resolves(null),
@@ -184,9 +188,7 @@ describe('InstitutionEscrowService', () => {
     });
 
     it('should reject non-ACTIVE client', async () => {
-      prismaStub.institutionClient.findUnique.resolves(
-        makeClient({ status: 'SUSPENDED' }),
-      );
+      prismaStub.institutionClient.findUnique.resolves(makeClient({ status: 'SUSPENDED' }));
 
       try {
         await service.createEscrow(defaultParams);
@@ -198,9 +200,7 @@ describe('InstitutionEscrowService', () => {
     });
 
     it('should reject non-VERIFIED KYC', async () => {
-      prismaStub.institutionClient.findUnique.resolves(
-        makeClient({ kycStatus: 'PENDING' }),
-      );
+      prismaStub.institutionClient.findUnique.resolves(makeClient({ kycStatus: 'PENDING' }));
 
       try {
         await service.createEscrow(defaultParams);
@@ -255,6 +255,38 @@ describe('InstitutionEscrowService', () => {
         expect(err.message).to.equal('Client not found');
       }
     });
+    it('should reject unregistered external recipient wallet', async () => {
+      // No account found, no client found
+      prismaStub.institutionAccount.findFirst.resolves(null);
+      prismaStub.institutionClient.findFirst.resolves(null);
+
+      try {
+        await service.createEscrow(defaultParams);
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('not registered to any institution');
+      }
+    });
+
+    it('should reject sending to own account', async () => {
+      // Account found but belongs to same client
+      prismaStub.institutionAccount.findFirst.resolves({ clientId: CLIENT_ID });
+
+      try {
+        await service.createEscrow(defaultParams);
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('Cannot send to your own account');
+      }
+    });
+
+    it('should accept recipient wallet from another institution', async () => {
+      // Account found and belongs to different client
+      prismaStub.institutionAccount.findFirst.resolves({ clientId: 'other-institution-id' });
+
+      const result = await service.createEscrow(defaultParams);
+      expect(result).to.have.property('escrow');
+    });
   });
 
   // ─── recordDeposit ──────────────────────────────────────────
@@ -263,9 +295,7 @@ describe('InstitutionEscrowService', () => {
     const TX_SIG = 'txsig123abc';
 
     it('should record deposit on CREATED escrow', async () => {
-      prismaStub.institutionEscrow.findUnique.resolves(
-        makeEscrow({ status: 'CREATED' }),
-      );
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow({ status: 'CREATED' }));
 
       const result = await service.recordDeposit(CLIENT_ID, ESCROW_ID, TX_SIG);
 
@@ -275,9 +305,7 @@ describe('InstitutionEscrowService', () => {
     });
 
     it('should reject deposit on non-CREATED escrow', async () => {
-      prismaStub.institutionEscrow.findUnique.resolves(
-        makeEscrow({ status: 'FUNDED' }),
-      );
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow({ status: 'FUNDED' }));
 
       try {
         await service.recordDeposit(CLIENT_ID, ESCROW_ID, TX_SIG);
@@ -294,7 +322,7 @@ describe('InstitutionEscrowService', () => {
         makeEscrow({
           status: 'CREATED',
           expiresAt: new Date(Date.now() - 1000), // expired
-        }),
+        })
       );
 
       try {
@@ -310,9 +338,7 @@ describe('InstitutionEscrowService', () => {
 
   describe('releaseFunds', () => {
     it('should release funds on FUNDED escrow', async () => {
-      prismaStub.institutionEscrow.findUnique.resolves(
-        makeEscrow({ status: 'FUNDED' }),
-      );
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow({ status: 'FUNDED' }));
 
       const result = await service.releaseFunds(CLIENT_ID, ESCROW_ID, 'Test release');
 
@@ -321,9 +347,7 @@ describe('InstitutionEscrowService', () => {
     });
 
     it('should reject release on non-FUNDED escrow', async () => {
-      prismaStub.institutionEscrow.findUnique.resolves(
-        makeEscrow({ status: 'CREATED' }),
-      );
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow({ status: 'CREATED' }));
 
       try {
         await service.releaseFunds(CLIENT_ID, ESCROW_ID);
@@ -339,9 +363,7 @@ describe('InstitutionEscrowService', () => {
 
   describe('cancelEscrow', () => {
     it('should cancel CREATED escrow', async () => {
-      prismaStub.institutionEscrow.findUnique.resolves(
-        makeEscrow({ status: 'CREATED' }),
-      );
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow({ status: 'CREATED' }));
 
       const result = await service.cancelEscrow(CLIENT_ID, ESCROW_ID, 'Changed mind');
 
@@ -350,9 +372,7 @@ describe('InstitutionEscrowService', () => {
     });
 
     it('should cancel FUNDED escrow', async () => {
-      prismaStub.institutionEscrow.findUnique.resolves(
-        makeEscrow({ status: 'FUNDED' }),
-      );
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow({ status: 'FUNDED' }));
 
       const result = await service.cancelEscrow(CLIENT_ID, ESCROW_ID, 'Refund needed');
 
@@ -360,9 +380,7 @@ describe('InstitutionEscrowService', () => {
     });
 
     it('should reject cancel on RELEASED escrow', async () => {
-      prismaStub.institutionEscrow.findUnique.resolves(
-        makeEscrow({ status: 'RELEASED' }),
-      );
+      prismaStub.institutionEscrow.findUnique.resolves(makeEscrow({ status: 'RELEASED' }));
 
       try {
         await service.cancelEscrow(CLIENT_ID, ESCROW_ID);
@@ -392,7 +410,7 @@ describe('InstitutionEscrowService', () => {
           clientId: 'other-client',
           payerWallet: 'UnrelatedPayer11111111111111111111111111111111',
           recipientWallet: 'UnrelatedRecip11111111111111111111111111111111',
-        }),
+        })
       );
 
       try {
@@ -409,7 +427,7 @@ describe('InstitutionEscrowService', () => {
         makeEscrow({
           clientId: 'other-client',
           recipientWallet: PAYER_WALLET, // matches CLIENT_ID's primaryWallet
-        }),
+        })
       );
 
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
@@ -423,11 +441,9 @@ describe('InstitutionEscrowService', () => {
           clientId: 'other-client',
           payerWallet: 'SomeOtherPayer1111111111111111111111111111111',
           recipientWallet: ACCOUNT_WALLET,
-        }),
+        })
       );
-      prismaStub.institutionAccount.findMany.resolves([
-        { walletAddress: ACCOUNT_WALLET },
-      ]);
+      prismaStub.institutionAccount.findMany.resolves([{ walletAddress: ACCOUNT_WALLET }]);
 
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
       expect(result).to.have.property('escrowId', ESCROW_CODE);
@@ -439,7 +455,7 @@ describe('InstitutionEscrowService', () => {
           clientId: 'other-client',
           payerWallet: PAYER_WALLET, // matches CLIENT_ID's primaryWallet
           recipientWallet: 'SomeRecipient11111111111111111111111111111111',
-        }),
+        })
       );
 
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
@@ -462,7 +478,10 @@ describe('InstitutionEscrowService', () => {
 
   describe('listEscrows', () => {
     it('should return paginated results', async () => {
-      prismaStub.institutionEscrow.findMany.resolves([makeEscrow(), makeEscrow({ escrowId: 'escrow-789' })]);
+      prismaStub.institutionEscrow.findMany.resolves([
+        makeEscrow(),
+        makeEscrow({ escrowId: 'escrow-789' }),
+      ]);
       prismaStub.institutionEscrow.count.resolves(2);
 
       const result = await service.listEscrows({
@@ -529,7 +548,9 @@ describe('InstitutionEscrowService', () => {
     it('should resolve payerName from client companyName', async () => {
       prismaStub.institutionEscrow.findMany.resolves([makeEscrow()]);
       prismaStub.institutionEscrow.count.resolves(1);
-      prismaStub.institutionClient.findUnique.resolves(makeClient({ companyName: 'Optimus Exchange AG' }));
+      prismaStub.institutionClient.findUnique.resolves(
+        makeClient({ companyName: 'Optimus Exchange AG' })
+      );
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
@@ -542,8 +563,10 @@ describe('InstitutionEscrowService', () => {
 
       // Stub the account query — first call is for payer accounts (matching clientId + payerWallet)
       prismaStub.institutionAccount.findMany
-        .onFirstCall().resolves([{ walletAddress: PAYER_WALLET, label: 'Operating Account', name: 'Main' }])
-        .onSecondCall().resolves([]); // recipient accounts
+        .onFirstCall()
+        .resolves([{ walletAddress: PAYER_WALLET, label: 'Operating Account', name: 'Main' }])
+        .onSecondCall()
+        .resolves([]); // recipient accounts
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
@@ -556,13 +579,17 @@ describe('InstitutionEscrowService', () => {
 
       // Second account query (recipient accounts) returns match with client
       prismaStub.institutionAccount.findMany
-        .onFirstCall().resolves([]) // payer accounts
-        .onSecondCall().resolves([{
-          walletAddress: RECIPIENT_WALLET,
-          label: 'Treasury',
-          name: 'Treasury Account',
-          client: { id: 'recipient-client-id', companyName: 'Satoshi Industries' },
-        }]);
+        .onFirstCall()
+        .resolves([]) // payer accounts
+        .onSecondCall()
+        .resolves([
+          {
+            walletAddress: RECIPIENT_WALLET,
+            label: 'Treasury',
+            name: 'Treasury Account',
+            client: { id: 'recipient-client-id', companyName: 'Satoshi Industries' },
+          },
+        ]);
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
@@ -578,12 +605,14 @@ describe('InstitutionEscrowService', () => {
       // No account matches
       prismaStub.institutionAccount.findMany.resolves([]);
       // But client primaryWallet matches
-      prismaStub.institutionClient.findMany.resolves([{
-        id: 'recipient-client-id',
-        companyName: 'Recipient Corp',
-        primaryWallet: RECIPIENT_WALLET,
-        settledWallets: [],
-      }]);
+      prismaStub.institutionClient.findMany.resolves([
+        {
+          id: 'recipient-client-id',
+          companyName: 'Recipient Corp',
+          primaryWallet: RECIPIENT_WALLET,
+          settledWallets: [],
+        },
+      ]);
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
@@ -593,7 +622,9 @@ describe('InstitutionEscrowService', () => {
     });
 
     it('should return null fields when no matches found', async () => {
-      prismaStub.institutionEscrow.findMany.resolves([makeEscrow({ recipientWallet: 'unknown-wallet' })]);
+      prismaStub.institutionEscrow.findMany.resolves([
+        makeEscrow({ recipientWallet: 'unknown-wallet' }),
+      ]);
       prismaStub.institutionEscrow.count.resolves(1);
       prismaStub.institutionAccount.findMany.resolves([]);
       prismaStub.institutionClient.findMany.resolves([]);
@@ -612,11 +643,9 @@ describe('InstitutionEscrowService', () => {
           clientId: 'other-client',
           payerWallet: 'SomeOtherPayer1111111111111111111111111111111',
           recipientWallet: PAYER_WALLET,
-        }),
+        })
       );
-      prismaStub.institutionAccount.findMany.resolves([
-        { walletAddress: PAYER_WALLET },
-      ]);
+      prismaStub.institutionAccount.findMany.resolves([{ walletAddress: PAYER_WALLET }]);
 
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
 
