@@ -77,7 +77,11 @@ export class InstitutionFileService {
     this.bucket = spacesConfig.bucket;
 
     this.s3Client = new S3Client({
-      endpoint: endpoint ? `https://${endpoint}` : undefined,
+      endpoint: endpoint
+        ? endpoint.startsWith('https://')
+          ? endpoint
+          : `https://${endpoint}`
+        : undefined,
       region,
       credentials: {
         accessKeyId: spacesConfig.key,

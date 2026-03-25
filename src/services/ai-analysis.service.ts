@@ -1237,7 +1237,9 @@ Respond with ONLY the JSON object, no additional text.`;
     const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3');
     const s3 = new S3Client({
       endpoint: process.env.DO_SPACES_ENDPOINT
-        ? `https://${process.env.DO_SPACES_ENDPOINT}`
+        ? process.env.DO_SPACES_ENDPOINT.startsWith('https://')
+          ? process.env.DO_SPACES_ENDPOINT
+          : `https://${process.env.DO_SPACES_ENDPOINT}`
         : undefined,
       region: process.env.DO_SPACES_REGION || 'nyc3',
       credentials: {
