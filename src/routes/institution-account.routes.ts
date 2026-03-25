@@ -2,7 +2,7 @@
  * Institution Account Routes
  *
  * POST   /api/v1/institution/accounts                  -> Create account
- * GET    /api/v1/institution/accounts                  -> List accounts (with balances)
+ * GET    /api/v1/institution/accounts                  -> List accounts (?branchId=&includeBalances=true)
  * GET    /api/v1/institution/accounts/:id              -> Get account + balance
  * PUT    /api/v1/institution/accounts/:id              -> Update account
  * DELETE /api/v1/institution/accounts/:id              -> Deactivate account
@@ -86,6 +86,8 @@ router.get(
         filters.verificationStatus = req.query.verificationStatus;
       }
       if (req.query.isActive !== undefined) filters.isActive = req.query.isActive === 'true';
+      if (req.query.branchId) filters.branchId = req.query.branchId as string;
+      if (req.query.includeBalances === 'true') filters.includeBalances = true;
 
       const accounts = await service.listAccounts(req.institutionClient!.clientId, filters);
 
