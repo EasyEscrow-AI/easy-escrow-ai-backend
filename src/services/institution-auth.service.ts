@@ -116,7 +116,7 @@ export class InstitutionAuthService {
   async generateTokens(clientId: string, email: string, tier: string) {
     const jwtSecret = this.getJwtSecret();
     const escrowConfig = getInstitutionEscrowConfig();
-    const accessTokenExpiry = escrowConfig.jwt.accessTokenExpiry || '15m';
+    const accessTokenExpiry = escrowConfig.jwt.accessTokenExpiry || '1h';
     const refreshTokenExpiry = escrowConfig.jwt.refreshTokenExpiry || '7d';
 
     // Convert expiry strings to seconds for jwt.sign
