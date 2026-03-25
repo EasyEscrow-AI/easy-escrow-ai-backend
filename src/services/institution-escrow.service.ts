@@ -296,7 +296,10 @@ export class InstitutionEscrowService {
       resolvedMint = await tokenWhitelist.getDefaultMint();
     }
 
-    // 5. Calculate platform fee with min/max clamping from client settings
+    // 5. Validate recipient wallet belongs to a registered institution
+    await this.validateRecipientWallet(recipientWallet, clientId);
+
+    // 6. Calculate platform fee with min/max clamping from client settings
     const platformFee = await this.calculatePlatformFee(clientId, amount);
 
     // 6. Determine initial status — always CREATED per lifecycle design.
@@ -685,6 +688,9 @@ export class InstitutionEscrowService {
     if (!client) throw new Error('Client not found');
     if (client.kycStatus !== 'VERIFIED')
       throw new Error(`KYC status is ${client.kycStatus}. Must be VERIFIED.`);
+
+    // Validate recipient wallet belongs to a registered institution
+    await this.validateRecipientWallet(escrow.recipientWallet, clientId);
 
     // Run compliance checks
     const complianceResult = await this.complianceService.validateTransaction({
@@ -1842,6 +1848,49 @@ export class InstitutionEscrowService {
     EXPIRED: 'Expired',
     FAILED: 'Failed',
   };
+
+  /**
+   * Validate that a recipient wallet belongs to a registered institution account
+   * or client wallet. Rejects unknown external wallets.
+   */
+  private async validateRecipientWallet(
+    recipientWallet: string,
+    payerClientId: string
+  ): Promise<void> {
+    // Check institution accounts
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { walletAddress: recipientWallet },
+      select: { clientId: true },
+    });
+
+    if (account) {
+      if (account.clientId === payerClientId) {
+        throw new Error('Cannot send to your own account');
+      }
+      return; // Valid — belongs to another institution
+    }
+
+    // Check client primary/settled wallets
+    const client = await this.prisma.institutionClient.findFirst({
+      where: {
+        OR: [{ primaryWallet: recipientWallet }, { settledWallets: { has: recipientWallet } }],
+      },
+      select: { id: true },
+    });
+
+    if (client) {
+      if (client.id === payerClientId) {
+        throw new Error('Cannot send to your own wallet');
+      }
+      return; // Valid — belongs to another institution
+    }
+
+    throw new Error(
+      `Recipient wallet ${recipientWallet.substring(0, 8)}...${recipientWallet.slice(
+        -4
+      )} is not registered to any institution. Only verified institutional wallets are accepted.`
+    );
+  }
 
   /**
    * Batch-resolve party names for a list of escrows.
