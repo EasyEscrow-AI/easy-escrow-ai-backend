@@ -7,6 +7,14 @@
 import { body, param, query } from 'express-validator';
 
 const SOLANA_ADDRESS_REGEX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const ESCROW_CODE_REGEX = /^EE-[A-Z0-9]{3,4}-[A-Z0-9]{3,4}$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Validate that a value is either a UUID or an escrow code (EE-XXX-XXX) */
+function isUuidOrEscrowCode(value: string) {
+  if (UUID_REGEX.test(value) || ESCROW_CODE_REGEX.test(value)) return true;
+  throw new Error('Must be a valid UUID or escrow code (EE-XXX-XXX)');
+}
 const CORRIDOR_REGEX = /^[A-Z]{2}-[A-Z]{2}$/;
 const CONDITION_TYPES = ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'];
 const SETTLEMENT_MODES = ['escrow', 'direct'];
@@ -86,7 +94,9 @@ export const validateCreateInstitutionEscrow = [
     .optional()
     .isString()
     .isIn(VALID_RELEASE_CONDITIONS)
-    .withMessage(`Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`),
+    .withMessage(
+      `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
   body('approvalInstructions')
     .optional()
     .isString()
@@ -164,7 +174,9 @@ export const validateSaveDraft = [
     .optional()
     .isString()
     .isIn(VALID_RELEASE_CONDITIONS)
-    .withMessage(`Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`),
+    .withMessage(
+      `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
   body('approvalInstructions')
     .optional()
     .isString()
@@ -176,7 +188,7 @@ export const validateSaveDraft = [
  * Validate update draft request body (all fields optional)
  */
 export const validateUpdateDraft = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('payerWallet')
     .optional()
     .isString()
@@ -244,7 +256,9 @@ export const validateUpdateDraft = [
     .optional()
     .isString()
     .isIn(VALID_RELEASE_CONDITIONS)
-    .withMessage(`Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`),
+    .withMessage(
+      `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
   body('approvalInstructions')
     .optional()
     .isString()
@@ -256,7 +270,7 @@ export const validateUpdateDraft = [
  * Validate submit draft request
  */
 export const validateSubmitDraft = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('expiryHours')
     .optional()
     .isInt({ min: 1, max: 2160 })
@@ -267,7 +281,7 @@ export const validateSubmitDraft = [
  * Validate deposit recording
  */
 export const validateRecordDeposit = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('txSignature')
     .isString()
     .matches(/^[1-9A-HJ-NP-Za-km-z]{80,90}$/)
@@ -278,7 +292,7 @@ export const validateRecordDeposit = [
  * Validate release funds request
  */
 export const validateReleaseFunds = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('notes')
     .optional()
     .isString()
@@ -290,7 +304,7 @@ export const validateReleaseFunds = [
  * Validate cancel escrow request
  */
 export const validateCancelEscrow = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('reason')
     .optional()
     .isString()
@@ -302,7 +316,7 @@ export const validateCancelEscrow = [
  * Validate AI analysis request
  */
 export const validateAiAnalysis = [
-  param('escrow_id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('escrow_id').custom(isUuidOrEscrowCode),
   body('fileId').isUUID().withMessage('fileId must be a valid UUID'),
   body('context').optional().isObject().withMessage('context must be an object'),
   body('context.expectedAmount')
