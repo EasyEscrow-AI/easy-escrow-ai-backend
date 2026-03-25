@@ -479,7 +479,10 @@ export class InstitutionEscrowService {
     // 12. Cache in Redis
     await this.cacheEscrow(escrow);
 
-    const partyNames = await this.resolvePartyNames([escrow as any], clientId);
+    const [partyNames, activityLog] = await Promise.all([
+      this.resolvePartyNames([escrow as any], clientId),
+      this.getActivityLog(escrow.escrowId),
+    ]);
 
     return {
       escrow: this.formatEscrow(escrow, partyNames[0]),
@@ -490,6 +493,7 @@ export class InstitutionEscrowService {
         checks: complianceResult.checks,
         riskLevel: complianceResult.riskLevel,
       },
+      activityLog,
     };
   }
 
@@ -856,7 +860,10 @@ export class InstitutionEscrowService {
       console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
     }
 
-    const submitPartyNames = await this.resolvePartyNames([updated as any], clientId);
+    const [submitPartyNames, submitActivityLog] = await Promise.all([
+      this.resolvePartyNames([updated as any], clientId),
+      this.getActivityLog(updated.escrowId),
+    ]);
 
     return {
       escrow: this.formatEscrow(updated, submitPartyNames[0]),
@@ -867,6 +874,7 @@ export class InstitutionEscrowService {
         checks: complianceResult.checks,
         riskLevel: complianceResult.riskLevel,
       },
+      activityLog: submitActivityLog,
     };
   }
 
@@ -1987,7 +1995,7 @@ export class InstitutionEscrowService {
   ): Promise<Record<string, unknown>> {
     const e = escrow as any;
 
-    const [partyNamesArr, corridorRecord, client, aiAnalyses, auditLogs] = await Promise.all([
+    const [partyNamesArr, corridorRecord, client, aiAnalyses] = await Promise.all([
       this.resolvePartyNames([escrow], e.clientId),
       e.corridor
         ? this.prisma.institutionCorridor.findUnique({ where: { code: e.corridor } })
@@ -2008,12 +2016,6 @@ export class InstitutionEscrowService {
           factors: true,
           createdAt: true,
         },
-      }),
-      this.prisma.institutionAuditLog.findMany({
-        where: { escrowId: e.escrowId },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-        select: { id: true, action: true, actor: true, details: true, createdAt: true },
       }),
     ]);
 
@@ -2062,7 +2064,27 @@ export class InstitutionEscrowService {
       createdAt: a.createdAt,
     }));
 
-    base.activityLog = auditLogs.map((l) => {
+    base.activityLog = await this.getActivityLog(e.escrowId);
+
+    return base;
+  }
+
+  /**
+   * Fetch and format recent activity log entries for an escrow.
+   * Reusable by create/submit responses to avoid a separate GET call.
+   */
+  private async getActivityLog(
+    escrowId: string,
+    limit = 50
+  ): Promise<Array<Record<string, unknown>>> {
+    const auditLogs = await this.prisma.institutionAuditLog.findMany({
+      where: { escrowId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: { id: true, action: true, actor: true, details: true, createdAt: true },
+    });
+
+    return auditLogs.map((l) => {
       const d = (l.details || {}) as Record<string, unknown>;
       const kyt = d.kyt as Record<string, unknown> | undefined;
       return {
@@ -2084,8 +2106,6 @@ export class InstitutionEscrowService {
         createdAt: l.createdAt,
       };
     });
-
-    return base;
   }
 }
 
