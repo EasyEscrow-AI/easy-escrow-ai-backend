@@ -5,7 +5,8 @@
  * Each client can have up to 10 accounts (Treasury, Operations, Settlement, etc.)
  * with per-account wallet, verification, limits, and settings.
  *
- * Balance is fetched live from Solana RPC (SOL + USDC), cached in Redis (5-min TTL).
+ * Balance is fetched live from Solana RPC (SOL + approved tokens), cached in Redis (5-min TTL).
+ * On staging/devnet, token mints are overridden via env vars so balances resolve correctly.
  */
 
 import { prisma } from '../config/database';
@@ -14,6 +15,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { isValidSolanaAddress } from '../models/validators/solana.validator';
 import { getSolanaService } from './solana.service';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
+import { getEffectiveMint, normalizeSymbol } from '../utils/token-env-mapping';
 import type {
   PrismaClient,
   Prisma,
@@ -23,7 +25,7 @@ import type {
 } from '../generated/prisma';
 
 const MAX_ACCOUNTS_PER_CLIENT = 10;
-const BALANCE_CACHE_TTL = 300; // 5 minutes — frontend fetches live per-account
+const BALANCE_CACHE_TTL = 300; // 5 minutes — balance refreshable via POST /refresh-balance
 const BALANCE_CACHE_PREFIX = 'institution:account:balance:';
 
 const VALID_ACCOUNT_TYPES: InstitutionAccountType[] = [
@@ -208,7 +210,10 @@ export class InstitutionAccountService {
           const balance = await this.getAccountBalance(account.walletAddress);
           return { ...account, balance };
         } catch {
-          return { ...account, balance: { sol: 0, usdc: 0, tokens: [], lastUpdated: new Date().toISOString() } };
+          return {
+            ...account,
+            balance: { sol: 0, usdc: 0, tokens: [], lastUpdated: new Date().toISOString() },
+          };
         }
       })
     );
@@ -526,13 +531,9 @@ export class InstitutionAccountService {
         select: { symbol: true, name: true, mintAddress: true, decimals: true },
       });
 
-      // Override USDC mint from env so staging/devnet uses the correct address
-      const envUsdcMint = process.env.USDC_MINT_ADDRESS;
-
       for (const token of approvedTokens) {
-        // Use env-configured mint for USDC (DB may have mainnet mint on staging)
-        const mintAddress =
-          token.symbol === 'USDC' && envUsdcMint ? envUsdcMint : token.mintAddress;
+        // Use env-configured mint for staging/devnet (DB has mainnet mints)
+        const mintAddress = getEffectiveMint(token.symbol, token.mintAddress);
 
         // Skip tokens with pending/placeholder mint addresses
         if (!isValidSolanaAddress(mintAddress)) continue;
@@ -550,9 +551,12 @@ export class InstitutionAccountService {
             tokenBalance += Number(amount) / 10 ** token.decimals;
           }
 
+          // Always return canonical symbol (USDC not USDC-DEV)
+          const displaySymbol = normalizeSymbol(token.symbol);
+
           if (tokenBalance > 0) {
             tokens.push({
-              symbol: token.symbol,
+              symbol: displaySymbol,
               name: token.name,
               balance: tokenBalance,
               mintAddress,
@@ -560,7 +564,7 @@ export class InstitutionAccountService {
           }
 
           // Keep USDC in the top-level field for backwards compatibility
-          if (token.symbol === 'USDC') {
+          if (displaySymbol === 'USDC') {
             usdcBalance = tokenBalance;
           }
         } catch {
@@ -601,17 +605,14 @@ export class InstitutionAccountService {
       throw new Error('Account not found');
     }
 
-    // Bust cache first, then fetch fresh from RPC
+    // Bust cache, then fetch fresh from RPC
     const cacheKey = `${BALANCE_CACHE_PREFIX}${account.walletAddress}`;
     try {
       await redisClient.del(cacheKey);
     } catch {
-      // Redis unavailable — fetch will still work without cache
+      // Redis unavailable — fetch will still work
     }
 
-    // Fetch fresh — getAccountBalance will re-cache the result on success
-    // If RPC fails, it returns zeros which also get cached; this is acceptable
-    // since the user explicitly requested a refresh
     const balance = await this.getAccountBalance(account.walletAddress);
     return { ...account, balance };
   }

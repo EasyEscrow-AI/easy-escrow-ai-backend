@@ -1,17 +1,17 @@
 /**
  * Institution Account Routes
  *
- * GET    /api/v1/institution/account/profile     -> Client profile overview
- * POST   /api/v1/institution/accounts            -> Create account
- * GET    /api/v1/institution/accounts             -> List accounts (with filters)
- * GET    /api/v1/institution/accounts/:id         -> Get account + balance
- * PUT    /api/v1/institution/accounts/:id         -> Update account
- * DELETE /api/v1/institution/accounts/:id         -> Deactivate account
- * PUT    /api/v1/institution/accounts/:id/default -> Set as default
- * GET    /api/v1/institution/accounts/:id/balance  -> Get cached balance
+ * GET    /api/v1/institution/account/profile              -> Client profile overview
+ * POST   /api/v1/institution/accounts                     -> Create account
+ * GET    /api/v1/institution/accounts                     -> List accounts (with balances)
+ * GET    /api/v1/institution/accounts/:id                 -> Get account + balance
+ * PUT    /api/v1/institution/accounts/:id                 -> Update account
+ * DELETE /api/v1/institution/accounts/:id                 -> Deactivate account
+ * PUT    /api/v1/institution/accounts/:id/default         -> Set as default
+ * GET    /api/v1/institution/accounts/:id/balance         -> Get cached balance
  * POST   /api/v1/institution/accounts/:id/refresh-balance -> Bust cache, re-fetch live
- * GET    /api/v1/institution/accounts/:id/settings -> Get account settings
- * PATCH  /api/v1/institution/accounts/:id/settings -> Update account settings
+ * GET    /api/v1/institution/accounts/:id/settings        -> Get account settings
+ * PATCH  /api/v1/institution/accounts/:id/settings        -> Update account settings
  */
 
 import { Router, Response } from 'express';
