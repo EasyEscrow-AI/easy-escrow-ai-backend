@@ -233,6 +233,7 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.institutionTokens = '/api/v1/institution/tokens';
     response.endpoints.institutionAccounts = '/api/v1/institution/accounts';
     response.endpoints.aiChat = '/api/v1/ai/chat';
+    response.endpoints.privacy = '/api/v1/privacy';
   }
 
   // Only include documentation field if OpenAPI spec loaded successfully
