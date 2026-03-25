@@ -10,6 +10,7 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
+import { getEffectiveMint, normalizeSymbol } from '../utils/token-env-mapping';
 
 export interface ApprovedToken {
   symbol: string;
@@ -45,10 +46,12 @@ export class InstitutionTokenWhitelistService {
 
     this.cache = new Map();
     for (const t of tokens) {
-      this.cache.set(t.mintAddress, {
-        symbol: t.symbol,
+      // Resolve env-overridden mint (staging/devnet use different mints than mainnet)
+      const effectiveMint = getEffectiveMint(t.symbol, t.mintAddress);
+      this.cache.set(effectiveMint, {
+        symbol: normalizeSymbol(t.symbol),
         name: t.name,
-        mintAddress: t.mintAddress,
+        mintAddress: effectiveMint,
         decimals: t.decimals,
         issuer: t.issuer,
         jurisdiction: t.jurisdiction,
@@ -108,7 +111,7 @@ export class InstitutionTokenWhitelistService {
       const approved = await this.listApprovedTokens();
       const symbols = approved.map((t) => t.symbol).join(', ');
       throw new Error(
-        `Token mint ${mintAddress} is not on the approved whitelist. Supported tokens: ${symbols}`,
+        `Token mint ${mintAddress} is not on the approved whitelist. Supported tokens: ${symbols}`
       );
     }
     return token;
