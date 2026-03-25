@@ -116,6 +116,25 @@ router.get(
         filters.verificationStatus = req.query.verificationStatus;
       }
       if (req.query.isActive !== undefined) filters.isActive = req.query.isActive === 'true';
+      if (req.query.branchId) {
+        const branchId = req.query.branchId as string;
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!UUID_RE.test(branchId)) {
+          return res
+            .status(400)
+            .json({ error: 'Invalid branchId — must be a UUID', timestamp: new Date().toISOString() });
+        }
+        filters.branchId = branchId;
+      }
+      if (req.query.includeBalances !== undefined) {
+        const val = req.query.includeBalances as string;
+        if (val !== 'true' && val !== 'false') {
+          return res
+            .status(400)
+            .json({ error: 'Invalid includeBalances — must be true or false', timestamp: new Date().toISOString() });
+        }
+        filters.includeBalances = val === 'true';
+      }
 
       const accounts = await service.listAccounts(req.institutionClient!.clientId, filters);
 
