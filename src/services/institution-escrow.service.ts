@@ -31,6 +31,10 @@ import {
   getAccount,
   TokenAccountNotFoundError,
 } from '@solana/spl-token';
+import { resolveReleaseDestination } from './privacy/privacy-router.service';
+import { getStealthAddressService } from './privacy/stealth-address.service';
+import { PrivacyLevel, PrivacyPreferences } from './privacy/privacy.types';
+import { isPrivacyEnabled } from '../utils/featureFlags';
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
 const ESCROW_CACHE_TTL = 300; // 5 minutes
@@ -1153,7 +1157,8 @@ export class InstitutionEscrowService {
     clientId: string,
     idOrCode: string,
     notes?: string,
-    actorEmail?: string
+    actorEmail?: string,
+    privacyPreferences?: PrivacyPreferences
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1212,6 +1217,7 @@ export class InstitutionEscrowService {
     }
 
     // Update status to RELEASING
+    const originalStatus = escrow.status;
     await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: { status: 'RELEASING' },
@@ -1219,6 +1225,41 @@ export class InstitutionEscrowService {
 
     // Check payer's token balance before settlement
     await this.checkPayerBalance(escrow, clientId);
+
+    // Resolve release destination (standard or stealth address)
+    const effectivePrivacy = privacyPreferences || {
+      level: (escrow.privacyLevel as PrivacyLevel) || PrivacyLevel.NONE,
+    };
+
+    let releaseRecipient = escrow.recipientWallet!;
+    let stealthPaymentId: string | undefined;
+
+    if (isPrivacyEnabled() && effectivePrivacy.level === PrivacyLevel.STEALTH) {
+      try {
+        const privacyResult = await resolveReleaseDestination(
+          escrow.recipientWallet!,
+          clientId,
+          escrowId,
+          escrow.usdcMint,
+          BigInt(Math.round(Number(escrow.amount) * 1_000_000)), // Convert USDC to raw
+          effectivePrivacy
+        );
+        releaseRecipient = privacyResult.recipientAddress;
+        stealthPaymentId = privacyResult.stealthPaymentId;
+        console.log(
+          `[InstitutionEscrow] Stealth release for ${escrowId}, stealth addr: ${releaseRecipient}`
+        );
+      } catch (privacyError) {
+        console.error('[InstitutionEscrow] Stealth address derivation failed:', privacyError);
+        await this.prisma.institutionEscrow.update({
+          where: { escrowId },
+          data: { status: originalStatus },
+        });
+        throw new Error(
+          `Stealth address derivation failed: ${(privacyError as Error).message}`
+        );
+      }
+    }
 
     // Execute on-chain release (transfer USDC from vault to recipient)
     let releaseTxSig: string | null = null;
@@ -1235,7 +1276,7 @@ export class InstitutionEscrowService {
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
-          recipientWallet: toPublicKey(escrow.recipientWallet!, 'recipientWallet'),
+          recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
           feeCollector,
           usdcMint,
           escrowCode: escrow.escrowCode,
@@ -1243,8 +1284,27 @@ export class InstitutionEscrowService {
         console.log(
           `[InstitutionEscrow] On-chain release success for ${escrowId}, tx: ${releaseTxSig}`
         );
+
+        // Confirm stealth payment if applicable
+        if (stealthPaymentId && releaseTxSig) {
+          try {
+            const stealthService = getStealthAddressService();
+            await stealthService.confirmStealthPayment(stealthPaymentId, releaseTxSig);
+          } catch (err) {
+            console.warn('[InstitutionEscrow] Stealth payment confirmation failed (non-critical):', err);
+          }
+        }
       } catch (error) {
         console.error('[InstitutionEscrow] On-chain release failed:', error);
+        // Mark stealth payment as failed if applicable
+        if (stealthPaymentId) {
+          try {
+            const stealthService = getStealthAddressService();
+            await stealthService.failStealthPayment(stealthPaymentId);
+          } catch (err) {
+            console.warn('[InstitutionEscrow] Stealth payment failure update failed:', err);
+          }
+        }
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
           data: { status: 'FUNDED' },
@@ -1284,6 +1344,8 @@ export class InstitutionEscrowService {
         status: 'RELEASED',
         releaseTxSignature: releaseTxSig,
         resolvedAt: new Date(),
+        ...(stealthPaymentId ? { stealthPaymentId } : {}),
+        ...(effectivePrivacy.level !== PrivacyLevel.NONE ? { privacyLevel: effectivePrivacy.level } : {}),
       },
     });
 
@@ -1310,6 +1372,8 @@ export class InstitutionEscrowService {
         escrow.releaseMode === 'ai'
           ? 'AI auto-released — conditions met'
           : `${Number(escrow.amount)} USDC released to recipient`,
+      privacyLevel: effectivePrivacy.level,
+      ...(stealthPaymentId ? { stealthPaymentId, stealthAddress: releaseRecipient } : {}),
     });
 
     // Transition to COMPLETE: send notification and finalize
@@ -2034,6 +2098,10 @@ export class InstitutionEscrowService {
           (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
         ),
         instructions: e.approvalInstructions || null,
+      },
+      privacy: {
+        level: e.privacyLevel || 'NONE',
+        stealthPaymentId: e.stealthPaymentId || null,
       },
       transactions: {
         initTx: e.initTxSignature || null,

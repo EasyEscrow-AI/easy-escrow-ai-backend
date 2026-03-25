@@ -318,11 +318,20 @@ router.post(
 
     try {
       const service = getInstitutionEscrowService();
+      const privacyPreferences = req.body.privacyLevel || req.body.useJito || req.body.metaAddressId
+        ? {
+            level: req.body.privacyLevel || 'NONE',
+            useJito: req.body.useJito,
+            metaAddressId: req.body.metaAddressId,
+          }
+        : undefined;
+
       const result = await service.releaseFunds(
         req.institutionClient!.clientId,
         req.params.id,
         req.body.notes,
-        req.institutionClient!.email
+        req.institutionClient!.email,
+        privacyPreferences
       );
 
       res.status(200).json({
