@@ -9,7 +9,7 @@
  * 5. List/get escrows (Redis cache + Prisma)
  */
 
-import { PrismaClient, InstitutionEscrowStatus } from '../generated/prisma';
+import { PrismaClient, InstitutionEscrowStatus, PrivacyLevel as PrismaPrivacyLevel } from '../generated/prisma';
 import { prisma } from '../config/database';
 import type { SettlementMode, ReleaseMode } from '../types/institution-escrow';
 import { redisClient } from '../config/redis';
@@ -31,6 +31,10 @@ import {
   getAccount,
   TokenAccountNotFoundError,
 } from '@solana/spl-token';
+import { resolveReleaseDestination } from './privacy/privacy-router.service';
+import { getStealthAddressService } from './privacy/stealth-address.service';
+import { PrivacyLevel, PrivacyPreferences } from './privacy/privacy.types';
+import { isPrivacyEnabled } from '../utils/featureFlags';
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
 const ESCROW_CACHE_TTL = 300; // 5 minutes
@@ -1153,7 +1157,8 @@ export class InstitutionEscrowService {
     clientId: string,
     idOrCode: string,
     notes?: string,
-    actorEmail?: string
+    actorEmail?: string,
+    privacyPreferences?: PrivacyPreferences
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1212,6 +1217,7 @@ export class InstitutionEscrowService {
     }
 
     // Update status to RELEASING
+    const originalStatus = escrow.status;
     await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: { status: 'RELEASING' },
@@ -1219,6 +1225,44 @@ export class InstitutionEscrowService {
 
     // Check payer's token balance before settlement
     await this.checkPayerBalance(escrow, clientId);
+
+    // Resolve release destination (standard or stealth address)
+    const effectivePrivacy = privacyPreferences || {
+      level: (escrow.privacyLevel as PrivacyLevel) || PrivacyLevel.STEALTH,
+    };
+
+    let releaseRecipient = escrow.recipientWallet!;
+    let stealthPaymentId: string | undefined;
+
+    let actualPrivacyLevel = PrivacyLevel.NONE;
+
+    if (isPrivacyEnabled() && effectivePrivacy.level === PrivacyLevel.STEALTH) {
+      try {
+        const privacyResult = await resolveReleaseDestination(
+          escrow.recipientWallet!,
+          clientId,
+          escrowId,
+          escrow.usdcMint,
+          BigInt(Math.round(Number(escrow.amount) * 1_000_000)), // Convert USDC to raw
+          effectivePrivacy
+        );
+        releaseRecipient = privacyResult.recipientAddress;
+        stealthPaymentId = privacyResult.stealthPaymentId;
+        actualPrivacyLevel = privacyResult.privacyLevel;
+        console.log(
+          `[InstitutionEscrow] Release for ${escrowId} with privacy=${actualPrivacyLevel}, addr: ${releaseRecipient}`
+        );
+      } catch (privacyError) {
+        console.error('[InstitutionEscrow] Stealth address derivation failed:', privacyError);
+        await this.prisma.institutionEscrow.update({
+          where: { escrowId },
+          data: { status: originalStatus },
+        });
+        throw new Error(
+          `Stealth address derivation failed: ${(privacyError as Error).message}`
+        );
+      }
+    }
 
     // Execute on-chain release (transfer USDC from vault to recipient)
     let releaseTxSig: string | null = null;
@@ -1235,7 +1279,7 @@ export class InstitutionEscrowService {
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
-          recipientWallet: toPublicKey(escrow.recipientWallet!, 'recipientWallet'),
+          recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
           feeCollector,
           usdcMint,
           escrowCode: escrow.escrowCode,
@@ -1243,8 +1287,27 @@ export class InstitutionEscrowService {
         console.log(
           `[InstitutionEscrow] On-chain release success for ${escrowId}, tx: ${releaseTxSig}`
         );
+
+        // Confirm stealth payment if applicable
+        if (stealthPaymentId && releaseTxSig) {
+          try {
+            const stealthService = getStealthAddressService();
+            await stealthService.confirmStealthPayment(stealthPaymentId, releaseTxSig);
+          } catch (err) {
+            console.warn('[InstitutionEscrow] Stealth payment confirmation failed (non-critical):', err);
+          }
+        }
       } catch (error) {
         console.error('[InstitutionEscrow] On-chain release failed:', error);
+        // Mark stealth payment as failed if applicable
+        if (stealthPaymentId) {
+          try {
+            const stealthService = getStealthAddressService();
+            await stealthService.failStealthPayment(stealthPaymentId);
+          } catch (err) {
+            console.warn('[InstitutionEscrow] Stealth payment failure update failed:', err);
+          }
+        }
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
           data: { status: 'FUNDED' },
@@ -1284,6 +1347,8 @@ export class InstitutionEscrowService {
         status: 'RELEASED',
         releaseTxSignature: releaseTxSig,
         resolvedAt: new Date(),
+        ...(stealthPaymentId ? { stealthPaymentId } : {}),
+        privacyLevel: actualPrivacyLevel as unknown as PrismaPrivacyLevel,
       },
     });
 
@@ -1310,6 +1375,8 @@ export class InstitutionEscrowService {
         escrow.releaseMode === 'ai'
           ? 'AI auto-released — conditions met'
           : `${Number(escrow.amount)} USDC released to recipient`,
+      privacyLevel: effectivePrivacy.level,
+      ...(stealthPaymentId ? { stealthPaymentId, stealthAddress: releaseRecipient } : {}),
     });
 
     // Transition to COMPLETE: send notification and finalize
@@ -1593,20 +1660,15 @@ export class InstitutionEscrowService {
    * Get a single escrow by code or ID (scoped to client)
    */
   async getEscrow(clientId: string, idOrCode: string): Promise<Record<string, unknown>> {
-    // Try Redis cache first (cache keyed by escrowCode)
-    try {
-      const cached = await redisClient.get(`${ESCROW_CACHE_PREFIX}${idOrCode}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.clientId === clientId) {
-          return this.formatEscrow(parsed);
-        }
-      }
-    } catch {
-      // Cache miss
+    // Skip cache for detail view — we need enriched data from DB
+    const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
+    // Counterparty requests get the base format (no AI analyses, audit logs)
+    const isOwner = escrow.clientId === clientId;
+    if (isOwner) {
+      return this.formatEscrowEnriched(escrow, clientId);
     }
     const partyNames = await this.resolvePartyNames([escrow as any], escrow.clientId);
-    return this.formatEscrow(escrow, partyNames[0]);
+    return this.formatEscrow(escrow, partyNames[0], clientId);
   }
 
   /**
@@ -1637,7 +1699,7 @@ export class InstitutionEscrowService {
     const partyNamesArr = await this.resolvePartyNames(escrows as any[], clientId);
 
     return {
-      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i])),
+      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i], clientId)),
       total,
       limit,
       offset,
@@ -1704,6 +1766,8 @@ export class InstitutionEscrowService {
    * audit entry is self-contained for compliance / Travel Rule purposes.
    */
   private async buildKytContext(escrow: any): Promise<Record<string, unknown>> {
+    const isStealth = escrow.privacyLevel === 'STEALTH';
+
     const [originatorClient, beneficiaryClient] = await Promise.all([
       this.prisma.institutionClient.findUnique({
         where: { id: escrow.clientId },
@@ -1715,7 +1779,7 @@ export class InstitutionEscrowService {
           lei: true,
         },
       }),
-      escrow.recipientWallet
+      escrow.recipientWallet && !isStealth
         ? this.prisma.institutionClient.findFirst({
             where: {
               OR: [
@@ -1743,6 +1807,7 @@ export class InstitutionEscrowService {
         cryptoChain: 'solana',
         corridor: escrow.corridor,
         escrowPda: escrow.escrowPda || null,
+        privacyLevel: escrow.privacyLevel || 'NONE',
         originator: {
           name: originatorClient?.companyName || null,
           legalName: originatorClient?.legalName || null,
@@ -1751,14 +1816,16 @@ export class InstitutionEscrowService {
           registrationCountry: originatorClient?.registrationCountry || null,
           lei: originatorClient?.lei || null,
         },
-        beneficiary: {
-          name: beneficiaryClient?.companyName || null,
-          legalName: beneficiaryClient?.legalName || null,
-          wallet: escrow.recipientWallet || null,
-          country: beneficiaryClient?.country || null,
-          registrationCountry: beneficiaryClient?.registrationCountry || null,
-          lei: beneficiaryClient?.lei || null,
-        },
+        beneficiary: isStealth
+          ? { name: 'Stealth Recipient', wallet: null, country: null }
+          : {
+              name: beneficiaryClient?.companyName || null,
+              legalName: beneficiaryClient?.legalName || null,
+              wallet: escrow.recipientWallet || null,
+              country: beneficiaryClient?.country || null,
+              registrationCountry: beneficiaryClient?.registrationCountry || null,
+              lei: beneficiaryClient?.lei || null,
+            },
       },
     };
   }
@@ -1995,9 +2062,18 @@ export class InstitutionEscrowService {
 
   private formatEscrow(
     escrow: Record<string, unknown>,
-    partyNames?: PartyNames
+    partyNames?: PartyNames,
+    callerClientId?: string
   ): Record<string, unknown> {
     const e = escrow as any;
+
+    // Privacy-aware masking: hide recipientWallet for non-owners when STEALTH
+    const privacyLevel = e.privacyLevel || 'NONE';
+    const isOwner = !callerClientId || callerClientId === e.clientId;
+    const isRecipient =
+      callerClientId && partyNames?.counterpartyId === callerClientId;
+    const shouldMask = privacyLevel === 'STEALTH' && !isOwner && !isRecipient;
+
     return {
       escrowId: e.escrowCode,
       internalId: e.escrowId,
@@ -2014,10 +2090,12 @@ export class InstitutionEscrowService {
         wallet: e.payerWallet,
       },
       to: {
-        clientId: partyNames?.counterpartyId ?? null,
-        name: partyNames?.recipientName ?? (e.recipientWallet ? 'External Wallet' : null),
-        accountLabel: partyNames?.recipientAccountLabel ?? null,
-        wallet: e.recipientWallet,
+        clientId: shouldMask ? null : (partyNames?.counterpartyId ?? null),
+        name: shouldMask
+          ? 'Stealth Recipient'
+          : (partyNames?.recipientName ?? (e.recipientWallet ? 'External Wallet' : null)),
+        accountLabel: shouldMask ? null : (partyNames?.recipientAccountLabel ?? null),
+        wallet: shouldMask ? null : e.recipientWallet,
       },
       settlement: {
         mode: e.settlementMode || 'escrow',
@@ -2037,6 +2115,10 @@ export class InstitutionEscrowService {
         ),
         instructions: e.approvalInstructions || null,
       },
+      privacy: {
+        level: e.privacyLevel || 'NONE',
+        stealthPaymentId: e.stealthPaymentId || null,
+      },
       transactions: {
         initTx: e.initTxSignature || null,
         depositTx: e.depositTxSignature || null,
@@ -2054,7 +2136,8 @@ export class InstitutionEscrowService {
   }
 
   private async formatEscrowEnriched(
-    escrow: Record<string, unknown>
+    escrow: Record<string, unknown>,
+    callerClientId?: string
   ): Promise<Record<string, unknown>> {
     const e = escrow as any;
 
@@ -2084,12 +2167,21 @@ export class InstitutionEscrowService {
       }),
     ]);
 
-    const base = this.formatEscrow(escrow, partyNamesArr[0]);
+    const base = this.formatEscrow(escrow, partyNamesArr[0], callerClientId);
+
+    // Privacy-aware masking check (same logic as formatEscrow)
+    const privacyLevel = e.privacyLevel || 'NONE';
+    const isOwner = !callerClientId || callerClientId === e.clientId;
+    const isRecipient =
+      callerClientId && partyNamesArr[0]?.counterpartyId === callerClientId;
+    const shouldMask = privacyLevel === 'STEALTH' && !isOwner && !isRecipient;
 
     // Enrich from/to with country
     (base.from as any).country = client?.country || null;
 
-    if (partyNamesArr[0]?.counterpartyId) {
+    if (shouldMask) {
+      (base.to as any).country = null;
+    } else if (partyNamesArr[0]?.counterpartyId) {
       const rclient = await this.prisma.institutionClient.findUnique({
         where: { id: partyNamesArr[0].counterpartyId },
         select: { country: true },
