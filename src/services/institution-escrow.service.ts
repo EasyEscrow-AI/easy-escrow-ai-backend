@@ -139,6 +139,7 @@ export interface UpdateDraftParams {
 export interface CreateEscrowResult {
   escrow: Record<string, unknown>;
   complianceResult: Record<string, unknown>;
+  activityLog: Array<Record<string, unknown>>;
 }
 
 export interface ListEscrowsParams {
@@ -295,7 +296,10 @@ export class InstitutionEscrowService {
       resolvedMint = await tokenWhitelist.getDefaultMint();
     }
 
-    // 5. Calculate platform fee with min/max clamping from client settings
+    // 5. Validate recipient wallet belongs to a registered institution
+    await this.validateRecipientWallet(recipientWallet, clientId);
+
+    // 6. Calculate platform fee with min/max clamping from client settings
     const platformFee = await this.calculatePlatformFee(clientId, amount);
 
     // 6. Determine initial status — always CREATED per lifecycle design.
@@ -684,6 +688,9 @@ export class InstitutionEscrowService {
     if (!client) throw new Error('Client not found');
     if (client.kycStatus !== 'VERIFIED')
       throw new Error(`KYC status is ${client.kycStatus}. Must be VERIFIED.`);
+
+    // Validate recipient wallet belongs to a registered institution
+    await this.validateRecipientWallet(escrow.recipientWallet, clientId);
 
     // Run compliance checks
     const complianceResult = await this.complianceService.validateTransaction({
@@ -1845,6 +1852,49 @@ export class InstitutionEscrowService {
   };
 
   /**
+   * Validate that a recipient wallet belongs to a registered institution account
+   * or client wallet. Rejects unknown external wallets.
+   */
+  private async validateRecipientWallet(
+    recipientWallet: string,
+    payerClientId: string
+  ): Promise<void> {
+    // Check institution accounts
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { walletAddress: recipientWallet },
+      select: { clientId: true },
+    });
+
+    if (account) {
+      if (account.clientId === payerClientId) {
+        throw new Error('Cannot send to your own account');
+      }
+      return; // Valid — belongs to another institution
+    }
+
+    // Check client primary/settled wallets
+    const client = await this.prisma.institutionClient.findFirst({
+      where: {
+        OR: [{ primaryWallet: recipientWallet }, { settledWallets: { has: recipientWallet } }],
+      },
+      select: { id: true },
+    });
+
+    if (client) {
+      if (client.id === payerClientId) {
+        throw new Error('Cannot send to your own wallet');
+      }
+      return; // Valid — belongs to another institution
+    }
+
+    throw new Error(
+      `Recipient wallet ${recipientWallet.substring(0, 8)}...${recipientWallet.slice(
+        -4
+      )} is not registered to any institution. Only verified institutional wallets are accepted.`
+    );
+  }
+
+  /**
    * Batch-resolve party names for a list of escrows.
    * Returns a PartyNames[] aligned with the input array.
    * Uses 4 parallel queries regardless of escrow count.
@@ -1869,13 +1919,13 @@ export class InstitutionEscrowService {
       }),
       payerWallets.length > 0
         ? this.prisma.institutionAccount.findMany({
-            where: { clientId: payerClientId, walletAddress: { in: payerWallets }, isActive: true },
+            where: { clientId: payerClientId, walletAddress: { in: payerWallets } },
             select: { walletAddress: true, label: true, name: true },
           })
         : Promise.resolve([]),
       recipientWallets.length > 0
         ? this.prisma.institutionAccount.findMany({
-            where: { walletAddress: { in: recipientWallets }, isActive: true },
+            where: { walletAddress: { in: recipientWallets } },
             select: {
               walletAddress: true,
               label: true,
@@ -1949,46 +1999,57 @@ export class InstitutionEscrowService {
   ): Record<string, unknown> {
     const e = escrow as any;
     return {
-      id: e.escrowCode,
       escrowId: e.escrowCode,
       internalId: e.escrowId,
-      clientId: e.clientId,
-      payerWallet: e.payerWallet,
-      recipientWallet: e.recipientWallet,
-      usdcMint: e.usdcMint,
+      status: e.status,
+      statusLabel: InstitutionEscrowService.STATUS_LABELS[e.status] || e.status,
       amount: Number(e.amount),
       platformFee: Number(e.platformFee),
       corridor: e.corridor,
-      conditionType: e.conditionType,
-      status: e.status,
-      statusLabel: InstitutionEscrowService.STATUS_LABELS[e.status] || e.status,
-      settlementAuthority: e.settlementAuthority,
       riskScore: e.riskScore,
-      settlementMode: e.settlementMode || 'escrow',
-      releaseMode: e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual'),
-      approvalParties: e.approvalParties || [],
-      releaseConditions: e.releaseConditions || [],
-      releaseConditionLabels: (e.releaseConditions || []).map(
-        (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
-      ),
-      approvalInstructions: e.approvalInstructions || null,
-      escrowPda: e.escrowPda,
-      vaultPda: e.vaultPda,
-      nonceAccount: e.nonceAccount,
-      initTxSignature: e.initTxSignature,
-      depositTxSignature: e.depositTxSignature,
-      releaseTxSignature: e.releaseTxSignature,
-      cancelTxSignature: e.cancelTxSignature,
-      expiresAt: e.expiresAt,
-      createdAt: e.createdAt,
-      updatedAt: e.updatedAt,
-      resolvedAt: e.resolvedAt,
-      fundedAt: e.fundedAt,
-      payerName: partyNames?.payerName ?? null,
-      payerAccountLabel: partyNames?.payerAccountLabel ?? null,
-      recipientName: partyNames?.recipientName ?? null,
-      recipientAccountLabel: partyNames?.recipientAccountLabel ?? null,
-      counterpartyId: partyNames?.counterpartyId ?? null,
+      from: {
+        clientId: e.clientId,
+        name: partyNames?.payerName ?? null,
+        accountLabel: partyNames?.payerAccountLabel ?? null,
+        wallet: e.payerWallet,
+      },
+      to: {
+        clientId: partyNames?.counterpartyId ?? null,
+        name: partyNames?.recipientName ?? (e.recipientWallet ? 'External Wallet' : null),
+        accountLabel: partyNames?.recipientAccountLabel ?? null,
+        wallet: e.recipientWallet,
+      },
+      settlement: {
+        mode: e.settlementMode || 'escrow',
+        tokenMint: e.usdcMint,
+        escrowPda: e.escrowPda,
+        vaultPda: e.vaultPda,
+        nonceAccount: e.nonceAccount,
+        authority: e.settlementAuthority,
+      },
+      release: {
+        mode: e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual'),
+        conditionType: e.conditionType,
+        approvalParties: e.approvalParties || [],
+        conditions: e.releaseConditions || [],
+        conditionLabels: (e.releaseConditions || []).map(
+          (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
+        ),
+        instructions: e.approvalInstructions || null,
+      },
+      transactions: {
+        initTx: e.initTxSignature || null,
+        depositTx: e.depositTxSignature || null,
+        releaseTx: e.releaseTxSignature || null,
+        cancelTx: e.cancelTxSignature || null,
+      },
+      timestamps: {
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+        expiresAt: e.expiresAt,
+        fundedAt: e.fundedAt,
+        resolvedAt: e.resolvedAt,
+      },
     };
   }
 
@@ -1997,15 +2058,17 @@ export class InstitutionEscrowService {
   ): Promise<Record<string, unknown>> {
     const e = escrow as any;
 
-    const [partyNamesArr, corridorRecord, client, aiAnalyses] = await Promise.all([
+    const [partyNamesArr, corridorRecord, client, recipientClient, aiAnalyses] = await Promise.all([
       this.resolvePartyNames([escrow], e.clientId),
       e.corridor
         ? this.prisma.institutionCorridor.findUnique({ where: { code: e.corridor } })
         : Promise.resolve(null),
       this.prisma.institutionClient.findUnique({
         where: { id: e.clientId },
-        select: { companyName: true, country: true, primaryWallet: true },
+        select: { companyName: true, country: true },
       }),
+      // Pre-fetch recipient client for country — resolvePartyNames gives us the counterpartyId
+      Promise.resolve(null as any), // placeholder, resolved below
       this.prisma.institutionAiAnalysis.findMany({
         where: { escrowId: e.escrowId },
         orderBy: { createdAt: 'desc' },
@@ -2023,37 +2086,31 @@ export class InstitutionEscrowService {
 
     const base = this.formatEscrow(escrow, partyNamesArr[0]);
 
+    // Enrich from/to with country
+    (base.from as any).country = client?.country || null;
+
+    if (partyNamesArr[0]?.counterpartyId) {
+      const rclient = await this.prisma.institutionClient.findUnique({
+        where: { id: partyNamesArr[0].counterpartyId },
+        select: { country: true },
+      });
+      (base.to as any).country = rclient?.country || null;
+    } else {
+      (base.to as any).country = null;
+    }
+
+    // Enrich corridor with full details
     if (corridorRecord) {
       base.corridor = {
         code: corridorRecord.code,
-        name: `${corridorRecord.sourceCountry} → ${corridorRecord.destCountry}`,
+        name:
+          corridorRecord.name || `${corridorRecord.sourceCountry} → ${corridorRecord.destCountry}`,
         sourceCountry: corridorRecord.sourceCountry,
         destCountry: corridorRecord.destCountry,
         riskLevel: corridorRecord.riskLevel,
         requiredDocuments: corridorRecord.requiredDocuments,
         compliance: corridorRecord.status,
       };
-    }
-
-    base.sender = {
-      name: client?.companyName || 'Unknown',
-      wallet: e.payerWallet,
-      country: client?.country || null,
-    };
-
-    base.recipient = {
-      name: partyNamesArr[0]?.recipientName || 'External Wallet',
-      wallet: e.recipientWallet,
-      country: null as string | null,
-    };
-
-    // Resolve recipient country if we have a counterpartyId
-    if (partyNamesArr[0]?.counterpartyId) {
-      const recipientClient = await this.prisma.institutionClient.findUnique({
-        where: { id: partyNamesArr[0].counterpartyId },
-        select: { country: true },
-      });
-      (base.recipient as any).country = recipientClient?.country || null;
     }
 
     base.complianceChecks = aiAnalyses.map((a) => ({
@@ -2066,7 +2123,21 @@ export class InstitutionEscrowService {
       createdAt: a.createdAt,
     }));
 
-    base.activityLog = await this.getActivityLog(e.escrowId);
+    base.activityLog = (await this.getActivityLog(e.escrowId)).map((log) => {
+      // Strip nested details.kyt to avoid data bloat — KYT fields are already flattened
+      const { details, ...rest } = log as any;
+      return {
+        ...rest,
+        details: details
+          ? {
+              message: details.message || null,
+              riskLevel: details.riskLevel || null,
+              riskScore: details.riskScore || null,
+              flags: details.flags || null,
+            }
+          : null,
+      };
+    });
 
     return base;
   }
