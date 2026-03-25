@@ -49,6 +49,14 @@ export function isJitoBundlesEnabled(): boolean {
 }
 
 /**
+ * Check if privacy features (stealth addresses) are enabled.
+ * Enabled by default for institution endpoints (PRIVACY_ENABLED !== 'false').
+ */
+export function isPrivacyEnabled(): boolean {
+  return process.env.PRIVACY_ENABLED !== 'false';
+}
+
+/**
  * Log the current state of JITO bundles feature flag.
  * Useful for debugging and startup diagnostics.
  */

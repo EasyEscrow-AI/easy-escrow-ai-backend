@@ -34,6 +34,7 @@ import {
 } from '../middleware/institution-escrow-validation.middleware';
 import { requireNotPaused } from '../middleware/institution-escrow-pause.middleware';
 import { getInstitutionEscrowService } from '../services/institution-escrow.service';
+import { PrivacyLevel } from '../services/privacy/privacy.types';
 
 const router = Router();
 
@@ -318,11 +319,20 @@ router.post(
 
     try {
       const service = getInstitutionEscrowService();
+      const privacyPreferences = req.body.privacyLevel || req.body.useJito || req.body.metaAddressId
+        ? {
+            level: (req.body.privacyLevel as PrivacyLevel) || PrivacyLevel.NONE,
+            useJito: req.body.useJito,
+            metaAddressId: req.body.metaAddressId,
+          }
+        : undefined;
+
       const result = await service.releaseFunds(
         req.institutionClient!.clientId,
         req.params.id,
         req.body.notes,
-        req.institutionClient!.email
+        req.institutionClient!.email,
+        privacyPreferences
       );
 
       res.status(200).json({

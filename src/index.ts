@@ -39,6 +39,7 @@ import {
   institutionReferenceRoutes,
   institutionBootstrapRoutes,
   institutionSearchRoutes,
+  privacyRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -766,6 +767,7 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionReferenceRoutes);
   app.use(institutionBootstrapRoutes);
   app.use(institutionSearchRoutes);
+  app.use(privacyRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled
@@ -784,6 +786,13 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
     });
   });
   app.use('/api/v1/ai', (_req, res) => {
+    res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Institution escrow is not enabled on this server',
+      timestamp: new Date().toISOString(),
+    });
+  });
+  app.use('/api/v1/privacy', (_req, res) => {
     res.status(503).json({
       error: 'Service Unavailable',
       message: 'Institution escrow is not enabled on this server',

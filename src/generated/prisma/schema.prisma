@@ -909,18 +909,19 @@ model InstitutionClient {
   isArchived            Boolean   @default(false) @map("is_archived")
 
   // Relations
-  refreshTokens  InstitutionRefreshToken[]
-  settings       InstitutionClientSettings?
-  apiKeys        InstitutionApiKey[]
-  escrows        InstitutionEscrow[]
-  auditLogs      InstitutionAuditLog[]
-  files          InstitutionFile[]
-  wallets        InstitutionWallet[]
-  accounts       InstitutionAccount[]
-  aiAnalyses     InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
-  notifications  InstitutionNotification[]
-  branches       InstitutionBranch[]
-  directPayments DirectPayment[]
+  refreshTokens        InstitutionRefreshToken[]
+  settings             InstitutionClientSettings?
+  apiKeys              InstitutionApiKey[]
+  escrows              InstitutionEscrow[]
+  auditLogs            InstitutionAuditLog[]
+  files                InstitutionFile[]
+  wallets              InstitutionWallet[]
+  accounts             InstitutionAccount[]
+  aiAnalyses           InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
+  notifications        InstitutionNotification[]
+  branches             InstitutionBranch[]
+  directPayments       DirectPayment[]
+  stealthMetaAddresses StealthMetaAddress[]
 
   @@index([email])
   @@index([status])
@@ -1010,6 +1011,9 @@ model InstitutionAccount {
   isDefault Boolean @default(false) @map("is_default")
   isActive  Boolean @default(true) @map("is_active")
 
+  // Stealth / Privacy
+  stealthMetaAddressId String? @unique @map("stealth_meta_address_id")
+
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -1018,8 +1022,9 @@ model InstitutionAccount {
   branchId String? @map("branch_id")
 
   // Relations
-  client InstitutionClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  branch InstitutionBranch? @relation(fields: [branchId], references: [id])
+  client             InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  branch             InstitutionBranch?  @relation(fields: [branchId], references: [id])
+  stealthMetaAddress StealthMetaAddress? @relation(fields: [stealthMetaAddressId], references: [id])
 
   @@unique([clientId, name])
   @@index([clientId])
@@ -1196,6 +1201,10 @@ model InstitutionEscrow {
   approvalParties      String[] @default([]) @map("approval_parties")
   releaseConditions    String[] @default([]) @map("release_conditions")
   approvalInstructions String?  @map("approval_instructions")
+
+  // Privacy
+  privacyLevel     PrivacyLevel? @default(STEALTH) @map("privacy_level")
+  stealthPaymentId String?       @map("stealth_payment_id")
 
   // On-chain references
   escrowPda          String? @map("escrow_pda")
@@ -1532,4 +1541,61 @@ model SystemSetting {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("system_settings")
+}
+
+// ============================================
+// STEALTH ADDRESS / PRIVACY MODELS
+// ============================================
+
+enum PrivacyLevel {
+  NONE
+  STEALTH
+}
+
+// Stealth meta-address for institution clients (scan + spend keypairs)
+model StealthMetaAddress {
+  id                  String   @id @default(uuid())
+  institutionClientId String   @map("institution_client_id")
+  label               String?
+  scanPublicKey       String   @map("scan_public_key")
+  spendPublicKey      String   @map("spend_public_key")
+  encryptedScanKey    String   @map("encrypted_scan_key")
+  encryptedSpendKey   String   @map("encrypted_spend_key")
+  viewingKeyShared    Boolean  @default(false) @map("viewing_key_shared")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  stealthPayments StealthPayment[]
+  accounts        InstitutionAccount[]
+  client          InstitutionClient    @relation(fields: [institutionClientId], references: [id])
+
+  @@unique([institutionClientId, label])
+  @@index([institutionClientId])
+  @@map("stealth_meta_addresses")
+}
+
+// Stealth payment tracking (one-time addresses derived from meta-addresses)
+model StealthPayment {
+  id                 String    @id @default(uuid())
+  metaAddressId      String    @map("meta_address_id")
+  stealthAddress     String    @map("stealth_address")
+  ephemeralPublicKey String    @map("ephemeral_public_key")
+  escrowId           String?   @map("escrow_id")
+  tokenMint          String    @map("token_mint")
+  amountRaw          BigInt    @map("amount_raw")
+  status             String    @default("PENDING") // PENDING, CONFIRMED, SWEPT, FAILED
+  releaseTxSignature String?   @map("release_tx_signature")
+  sweepTxSignature   String?   @map("sweep_tx_signature")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  confirmedAt        DateTime? @map("confirmed_at")
+  sweptAt            DateTime? @map("swept_at")
+
+  metaAddress StealthMetaAddress @relation(fields: [metaAddressId], references: [id], onDelete: Cascade)
+
+  @@index([metaAddressId])
+  @@index([stealthAddress])
+  @@index([escrowId])
+  @@index([status])
+  @@map("stealth_payments")
 }

@@ -16,6 +16,8 @@ import { isValidSolanaAddress } from '../models/validators/solana.validator';
 import { getSolanaService } from './solana.service';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 import { getEffectiveMint, normalizeSymbol } from '../utils/token-env-mapping';
+import { isPrivacyEnabled } from '../utils/featureFlags';
+import { getStealthAddressService } from './privacy/stealth-address.service';
 import type {
   PrismaClient,
   Prisma,
@@ -166,6 +168,24 @@ export class InstitutionAccountService {
         isDefault: isFirst,
       },
     });
+
+    // Auto-generate stealth meta-address for the account (privacy-by-default)
+    if (isPrivacyEnabled()) {
+      try {
+        const stealthService = getStealthAddressService();
+        const meta = await stealthService.registerMetaAddress(clientId, `account:${account.id}`);
+        await this.prisma.institutionAccount.update({
+          where: { id: account.id },
+          data: { stealthMetaAddressId: meta.id },
+        });
+        console.log(
+          `[InstitutionAccount] Auto-generated stealth meta-address ${meta.id} for account ${account.id}`
+        );
+      } catch (error) {
+        // Non-critical: account still works without stealth
+        console.warn('[InstitutionAccount] Failed to auto-generate stealth meta-address:', error);
+      }
+    }
 
     return account;
   }
