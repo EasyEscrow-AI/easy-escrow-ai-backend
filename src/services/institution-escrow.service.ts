@@ -139,6 +139,7 @@ export interface UpdateDraftParams {
 export interface CreateEscrowResult {
   escrow: Record<string, unknown>;
   complianceResult: Record<string, unknown>;
+  activityLog: Array<Record<string, unknown>>;
 }
 
 export interface ListEscrowsParams {
@@ -1867,13 +1868,13 @@ export class InstitutionEscrowService {
       }),
       payerWallets.length > 0
         ? this.prisma.institutionAccount.findMany({
-            where: { clientId: payerClientId, walletAddress: { in: payerWallets }, isActive: true },
+            where: { clientId: payerClientId, walletAddress: { in: payerWallets } },
             select: { walletAddress: true, label: true, name: true },
           })
         : Promise.resolve([]),
       recipientWallets.length > 0
         ? this.prisma.institutionAccount.findMany({
-            where: { walletAddress: { in: recipientWallets }, isActive: true },
+            where: { walletAddress: { in: recipientWallets } },
             select: {
               walletAddress: true,
               label: true,
@@ -1984,7 +1985,7 @@ export class InstitutionEscrowService {
       fundedAt: e.fundedAt,
       payerName: partyNames?.payerName ?? null,
       payerAccountLabel: partyNames?.payerAccountLabel ?? null,
-      recipientName: partyNames?.recipientName ?? null,
+      recipientName: partyNames?.recipientName ?? (e.recipientWallet ? 'External Wallet' : null),
       recipientAccountLabel: partyNames?.recipientAccountLabel ?? null,
       counterpartyId: partyNames?.counterpartyId ?? null,
     };
