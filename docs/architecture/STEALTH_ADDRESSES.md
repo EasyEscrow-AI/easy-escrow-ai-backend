@@ -2,7 +2,7 @@
 
 ## Overview
 
-EasyEscrow.ai uses **Dual-Key Stealth Address Protocol (DKSAP)** to provide address unlinkability for institution escrow USDC transfers. Implemented via the `solana-stealth` npm package.
+EasyEscrow.ai uses **Dual-Key Stealth Address Protocol (DKSAP)** to provide address unlinkability for institution escrow USDC transfers. Implemented natively using `@noble/ed25519` for all elliptic curve operations.
 
 **Privacy is enabled by default for all institutional endpoints.** Every institution account automatically receives a stealth meta-address on creation. Escrow releases use stealth addresses when available, falling back to standard addresses when no meta-address exists.
 

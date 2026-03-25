@@ -65,7 +65,7 @@ openssl rand -base64 48 | head -c 48
 | Risk | Mitigation |
 |------|------------|
 | Encryption secret leak | Rotate and re-encrypt all keys; consider HSM |
-| `solana-stealth` supply chain | Pin exact version; audit before upgrading |
+| Native DKSAP crypto | Review `stealth-crypto.ts` for correctness; audit scalar reduction |
 | Stealth ATA rent (~0.002 SOL) | Budget for per-payment rent costs |
 | Sweep failures (no SOL for gas) | Pre-fund stealth address or subsidize gas |
 

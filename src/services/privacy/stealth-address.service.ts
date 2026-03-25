@@ -430,7 +430,7 @@ export class StealthAddressService {
       payment.ephemeralPublicKey
     );
 
-    // Use solana-stealth's tokenFromStealth to sweep tokens
+    // Sweep tokens from stealth address to destination wallet
     const connection = new Connection(config.solana.rpcUrl, 'confirmed');
     const tokenMint = new PublicKey(payment.tokenMint);
     const destination = new PublicKey(destinationWallet);
