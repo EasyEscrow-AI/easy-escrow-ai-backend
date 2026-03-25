@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: EasyEscrow.ai API
-  version: 1.1.0
+  version: 1.2.0
   contact:
     name: EasyEscrow.ai Support
     email: support@easyescrow.ai
@@ -49,6 +49,21 @@ tags:
   - name: Changelog
     description: |
       ## Changelog
+
+      ### v1.2.0 — Portal Integration
+      **Released: 26 March 2026**
+
+      New endpoints for the institution portal and branch management.
+
+      - **Branches** — `GET /branches` with `riskLevel`, `isHeadquarters`, nested accounts
+      - **Dashboard** — 8 analytics endpoints (metrics, cashflow, pending actions, branch/corridor activity, compliance, sanctions)
+      - **Direct Payments** — list and detail endpoints for non-escrow transfers
+      - **Reports** — compliance reports, audit logs, receipt history, escrow activity logs
+      - **Reference data** — exchange rates, sanctioned regions, corridor list
+      - **Receipts** — HTML/PDF receipt download and JSON receipt data
+      - **Bootstrap** — single post-login endpoint to hydrate the full portal
+      - **Account enhancements** — `branchId` filter, `includeBalances` opt-in, per-account settings, profile endpoint, refresh-balance
+      - **Deposit transaction** — `GET /institution-escrow/{id}/deposit-tx` for unsigned Solana transactions
 
       ### v1.1.0 — Institutional Escrow
       **Released: 17 March 2026**
@@ -345,6 +360,24 @@ tags:
       All messages pass through an anonymization pipeline that redacts PII (names, addresses,
       wallet keys, amounts) before sending to the AI model. Responses are then de-anonymized
       before returning to the client.
+  - name: Institution Branches
+    description: Branch management for multi-location institutions. Each branch has a geographic location, regulatory body, and compliance status. Accounts are linked to branches via `branchId`.
+  - name: Institution Dashboard
+    description: Dashboard analytics and metrics for the institution portal — cashflow, pending actions, branch/corridor activity, compliance scorecard, and sanctions alerts.
+  - name: Institution Direct Payments
+    description: Direct (non-escrow) USDC transfers between institutions, tracked with corridor metadata and compliance scoring.
+  - name: Institution Reports
+    description: Compliance reports, audit logs, receipt history, and escrow activity logs for regulatory and internal review.
+  - name: Institution Reference
+    description: Reference data — exchange rates, sanctioned regions, and payment corridors.
+  - name: Institution Receipts
+    description: Generate HTML/PDF receipts and structured JSON receipt data for completed escrows.
+  - name: Institution Bootstrap
+    description: Post-login endpoint that returns all data needed to hydrate the portal — profile, settings, accounts, branches, corridors, and notifications in a single request.
+  - name: Privacy
+    description: |
+      Stealth address management for private escrow payments. Feature-gated — returns 503 when not enabled.
+      Includes meta-address registration, blockchain scanning for incoming payments, and sweep operations.
   - name: Institution Notifications
     description: |
       ## In-App & Email Notifications
@@ -3393,6 +3426,271 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  # ── AI Analysis (body-based + corridor) ─────────────────────────────
+
+  /api/v1/institution/ai/analyze-escrow:
+    post:
+      tags: [AI Analysis]
+      summary: Analyze escrow (body-based)
+      description: |
+        Submit an escrow ID in the request body for AI compliance analysis.
+        Alternative to the path-based `POST /ai/analyze-escrow/{escrow_id}`.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [escrowId]
+              properties:
+                escrowId:
+                  type: string
+                  format: uuid
+                  description: Escrow to analyze
+      responses:
+        '200':
+          description: Analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/ai/analyze-corridor:
+    get:
+      tags: [AI Analysis]
+      summary: Analyze corridor
+      description: AI-powered risk and compliance analysis for a specific payment corridor.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: corridor
+          required: true
+          schema: { type: string }
+          description: Corridor code (e.g. `CH-SG`)
+        - in: query
+          name: amount
+          schema: { type: number }
+          description: Transaction amount for threshold analysis
+      responses:
+        '200':
+          description: Corridor analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ── Privacy (Stealth Addresses) ────────────────────────────────────────
+
+  /api/v1/privacy/meta-address:
+    post:
+      tags: [Privacy]
+      summary: Register stealth meta-address
+      description: |
+        Generate and register a stealth meta-address for receiving private payments.
+        Feature-gated — returns 503 if privacy is not enabled.
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                  maxLength: 100
+                  description: Human-readable label for this meta-address
+      responses:
+        '201':
+          description: Meta-address registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '503':
+          description: Privacy features not enabled
+
+  /api/v1/privacy/meta-address/{clientId}:
+    get:
+      tags: [Privacy]
+      summary: List meta-addresses
+      description: Get all stealth meta-addresses for the authenticated client.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Meta-addresses retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+        '403':
+          description: Cannot access another client's meta-addresses
+
+  /api/v1/privacy/meta-address/{id}:
+    delete:
+      tags: [Privacy]
+      summary: Deactivate meta-address
+      description: Deactivate a stealth meta-address (soft delete).
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Meta-address deactivated
+        '404':
+          description: Meta-address not found
+
+  /api/v1/privacy/scan:
+    post:
+      tags: [Privacy]
+      summary: Scan for stealth payments
+      description: Scan the blockchain for incoming stealth payments to your meta-addresses.
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Filter by payment status
+      responses:
+        '200':
+          description: Scan results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/privacy/sweep/{paymentId}:
+    post:
+      tags: [Privacy]
+      summary: Sweep stealth payment
+      description: Sweep funds from a stealth address to a destination wallet. Rate limited to 10/min.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: paymentId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [destinationWallet]
+              properties:
+                destinationWallet:
+                  type: string
+                  description: Solana wallet to sweep funds to
+      responses:
+        '200':
+          description: Sweep initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/privacy/payments:
+    get:
+      tags: [Privacy]
+      summary: List stealth payments
+      description: List all stealth payments received by the institution.
+      security:
+        - BearerAuth: []
+      parameters:
+        - { in: query, name: status, schema: { type: string } }
+        - { in: query, name: limit, schema: { type: integer, default: 20, maximum: 100 } }
+        - { in: query, name: offset, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Payments listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/privacy/payments/{id}:
+    get:
+      tags: [Privacy]
+      summary: Get stealth payment
+      description: Get details of a specific stealth payment.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '404':
+          description: Payment not found
+
   # ── Institution Accounts ─────────────────────────────────────────────
 
   /api/v1/institution/accounts:
@@ -3483,6 +3781,18 @@ paths:
           schema:
             type: boolean
           description: Filter by active status
+        - in: query
+          name: branchId
+          schema:
+            type: string
+            format: uuid
+          description: Filter accounts by branch UUID
+        - in: query
+          name: includeBalances
+          schema:
+            type: boolean
+            default: false
+          description: When `true`, fetches live SOL/token balances for each account (expensive — N RPC calls). When omitted or `false`, balance is not included. Use `GET /accounts/{id}/balance` for individual lookups.
       responses:
         '200':
           description: Accounts retrieved
@@ -3991,6 +4301,809 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Access denied (notification belongs to another client)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Branches ──────────────────────────────────────────────
+
+  /api/v1/institution/branches:
+    get:
+      tags:
+        - Institution Branches
+      summary: List branches
+      description: |
+        Returns all branches for the authenticated institution, ordered by creation date.
+        Each branch includes nested active accounts and computed fields:
+        - `riskLevel` — derived from `riskScore` (0-20 = low, 21-50 = medium, 51+ = high)
+        - `isHeadquarters` — `true` for the first (oldest) branch
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Branches retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InstitutionBranch'
+                  count:
+                    type: integer
+                    example: 4
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Account Extras ─────────────────────────────────────────
+
+  /api/v1/institution/account/profile:
+    get:
+      tags:
+        - Institution Accounts
+      summary: Client profile overview
+      description: Returns the institution client profile including settings and active accounts summary.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    description: Client profile with settings and accounts
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/accounts/{id}/refresh-balance:
+    post:
+      tags:
+        - Institution Accounts
+      summary: Refresh balance
+      description: Bust the Redis cache and re-fetch live SOL + token balances from the Solana RPC for this account.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Account ID
+      responses:
+        '200':
+          description: Balance refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionAccount'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/accounts/{id}/settings:
+    get:
+      tags:
+        - Institution Accounts
+      summary: Get account settings
+      description: Returns notification toggles, currency preference, approval settings, and whitelist config for an account.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Account ID
+      responses:
+        '200':
+          description: Settings retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      defaultCurrency:
+                        type: string
+                        example: "USDC"
+                      notifyOnEscrowCreated:
+                        type: boolean
+                      notifyOnEscrowFunded:
+                        type: boolean
+                      notifyOnEscrowReleased:
+                        type: boolean
+                      notifyOnComplianceAlert:
+                        type: boolean
+                      approvalMode:
+                        type: string
+                        enum: [AUTO, SINGLE_APPROVAL, MULTI_APPROVAL]
+                      whitelistEnforced:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+        - Institution Accounts
+      summary: Update account settings
+      description: |
+        Update notification toggles, currency, approval mode, and whitelist settings.
+        Supported currencies: USDC, USDT, EURC.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Account ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                defaultCurrency:
+                  type: string
+                  enum: [USDC, USDT, EURC]
+                notifyOnEscrowCreated:
+                  type: boolean
+                notifyOnEscrowFunded:
+                  type: boolean
+                notifyOnEscrowReleased:
+                  type: boolean
+                notifyOnComplianceAlert:
+                  type: boolean
+                approvalMode:
+                  type: string
+                  enum: [AUTO, SINGLE_APPROVAL, MULTI_APPROVAL]
+                whitelistEnforced:
+                  type: boolean
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionAccount'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Dashboard ──────────────────────────────────────────────
+
+  /api/v1/institution/dashboard/metrics:
+    get:
+      tags: [Institution Dashboard]
+      summary: Dashboard metrics
+      description: Key metrics — total volume, escrow count, active accounts, compliance score.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Metrics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/dashboard/cashflow:
+    get:
+      tags: [Institution Dashboard]
+      summary: Cashflow data
+      description: Inflow/outflow cashflow data for charting.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: period
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+            default: 30d
+          description: Time period for cashflow aggregation
+      responses:
+        '200':
+          description: Cashflow data retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/dashboard/pending-actions:
+    get:
+      tags: [Institution Dashboard]
+      summary: Pending actions
+      description: Escrows awaiting deposit, release, or compliance review.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Pending actions retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/dashboard/recent-direct:
+    get:
+      tags: [Institution Dashboard]
+      summary: Recent direct payments
+      description: Most recent direct (non-escrow) payments.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Recent payments retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/dashboard/branch-activity:
+    get:
+      tags: [Institution Dashboard]
+      summary: Branch activity
+      description: Payment volume and escrow counts per branch.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Branch activity retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/dashboard/corridor-activity:
+    get:
+      tags: [Institution Dashboard]
+      summary: Corridor activity
+      description: Payment volume and risk distribution per corridor.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Corridor activity retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/dashboard/compliance:
+    get:
+      tags: [Institution Dashboard]
+      summary: Compliance scorecard
+      description: Overall compliance health — KYB status, travel rule adherence, flagged transactions.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Compliance scorecard retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/dashboard/sanctions:
+    get:
+      tags: [Institution Dashboard]
+      summary: Sanctions alerts
+      description: Active sanctions screening alerts for branches and counterparties.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Sanctions data retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+
+  # ── Institution Direct Payments ────────────────────────────────────────
+
+  /api/v1/institution/direct-payments:
+    get:
+      tags: [Institution Direct Payments]
+      summary: List direct payments
+      description: Paginated list of direct (non-escrow) USDC transfers with optional filters.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [completed, processing, failed] }
+          description: Filter by payment status
+        - in: query
+          name: corridor
+          schema: { type: string }
+          description: Filter by corridor code (e.g. `CH-SG`)
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+          description: Start date (ISO 8601)
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+          description: End date (ISO 8601)
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Payments retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  count: { type: integer }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/direct-payments/{id}:
+    get:
+      tags: [Institution Direct Payments]
+      summary: Get direct payment
+      description: Retrieve a single direct payment by ID.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+          description: Payment ID
+      responses:
+        '200':
+          description: Payment retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '404':
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Reports ────────────────────────────────────────────────
+
+  /api/v1/institution/reports/compliance:
+    get:
+      tags: [Institution Reports]
+      summary: Compliance report
+      description: Compliance checks, travel rule triggers, and EDD flags for your escrows.
+      security:
+        - BearerAuth: []
+      parameters:
+        - { in: query, name: from, schema: { type: string, format: date } }
+        - { in: query, name: to, schema: { type: string, format: date } }
+        - { in: query, name: limit, schema: { type: integer, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Report retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/reports/audit:
+    get:
+      tags: [Institution Reports]
+      summary: Audit log
+      description: Chronological audit trail of all institution actions (escrow creation, deposits, releases, settings changes).
+      security:
+        - BearerAuth: []
+      parameters:
+        - { in: query, name: action, schema: { type: string }, description: Filter by action type }
+        - { in: query, name: escrowId, schema: { type: string, format: uuid }, description: Filter by escrow }
+        - { in: query, name: from, schema: { type: string, format: date } }
+        - { in: query, name: to, schema: { type: string, format: date } }
+        - { in: query, name: limit, schema: { type: integer, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Audit log retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/reports/receipts:
+    get:
+      tags: [Institution Reports]
+      summary: Receipt history
+      description: List of receipts for completed escrows and payments.
+      security:
+        - BearerAuth: []
+      parameters:
+        - { in: query, name: from, schema: { type: string, format: date } }
+        - { in: query, name: to, schema: { type: string, format: date } }
+        - { in: query, name: type, schema: { type: string } }
+        - { in: query, name: limit, schema: { type: integer, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Receipts retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/reports/escrow-log:
+    get:
+      tags: [Institution Reports]
+      summary: Escrow activity log
+      description: Detailed activity log for escrow lifecycle events.
+      security:
+        - BearerAuth: []
+      parameters:
+        - { in: query, name: escrowId, schema: { type: string, format: uuid } }
+        - { in: query, name: from, schema: { type: string, format: date } }
+        - { in: query, name: to, schema: { type: string, format: date } }
+        - { in: query, name: limit, schema: { type: integer, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Escrow log retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  # ── Institution Reference ──────────────────────────────────────────────
+
+  /api/v1/institution/exchange-rates:
+    get:
+      tags: [Institution Reference]
+      summary: Exchange rates
+      description: |
+        Indicative exchange rates for supported currency pairs.
+        Stablecoin pegs (USDC/USD, USDT/USD) are fixed at 1:1.
+        Fiat pairs (USD/CHF, USD/SGD, etc.) are indicative and update periodically.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Rates retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        rate: { type: number, example: 0.8820 }
+                        source: { type: string, example: "indicative" }
+                        updatedAt: { type: string, format: date-time }
+                  disclaimer: { type: string }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/sanctioned-regions:
+    get:
+      tags: [Institution Reference]
+      summary: Sanctioned regions
+      description: List of sanctioned country codes (ISO 3166-1 alpha-2). Branches in these regions are flagged.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Sanctioned regions retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items: { type: string }
+                    example: ["RU", "BY", "KP", "IR", "SY", "CU"]
+                  source: { type: string, example: "OFAC/EU Consolidated" }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/institution/corridors:
+    get:
+      tags: [Institution Reference]
+      summary: List corridors
+      description: All active payment corridors with compliance thresholds, risk levels, and required documents.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Corridors retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  corridors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, example: "ch-sg" }
+                        code: { type: string, example: "CH-SG" }
+                        name: { type: string, example: "Switzerland → Singapore" }
+                        compliance: { type: string, example: "FINMA + MAS" }
+                        corridorRiskLevel: { type: string, enum: [LOW, MEDIUM, HIGH] }
+                        travelRuleThreshold: { type: number, example: 1000 }
+                        eddThreshold: { type: number, example: 20000 }
+                        reportingThreshold: { type: number, example: 20000 }
+
+  # ── Institution Receipts ───────────────────────────────────────────────
+
+  /api/v1/institution-escrow/{escrowId}/receipt:
+    get:
+      tags: [Institution Receipts]
+      summary: Download receipt
+      description: |
+        Generate an escrow receipt in HTML or PDF format.
+        Headers include `Cache-Control: private, no-store, must-revalidate`.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrowId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Escrow ID
+        - in: query
+          name: format
+          schema: { type: string, enum: [html, pdf], default: html }
+          description: Output format
+      responses:
+        '200':
+          description: Receipt generated
+          content:
+            text/html:
+              schema: { type: string }
+            application/pdf:
+              schema: { type: string, format: binary }
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution-escrow/{escrowId}/receipt/data:
+    get:
+      tags: [Institution Receipts]
+      summary: Receipt data (JSON)
+      description: Structured JSON receipt data for an escrow, suitable for frontend rendering.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrowId
+          required: true
+          schema: { type: string, format: uuid }
+          description: Escrow ID
+      responses:
+        '200':
+          description: Receipt data retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Escrow Extras ──────────────────────────────────────────
+
+  /api/v1/institution-escrow/{id}/deposit-tx:
+    get:
+      tags: [Institution Escrow]
+      summary: Get deposit transaction
+      description: Returns the unsigned Solana transaction for funding an escrow. The client signs and submits this transaction, then calls `POST /deposit` with the signature.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+          description: Escrow ID
+      responses:
+        '200':
+          description: Deposit transaction built
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Bootstrap ──────────────────────────────────────────────
+
+  /api/v1/institution/bootstrap:
+    get:
+      tags: [Institution Bootstrap]
+      summary: Bootstrap data
+      description: |
+        Returns all data needed to hydrate the portal after login in a single request.
+        Includes: client profile, settings, accounts, branches, corridors, recent notifications, and approved tokens.
+
+        **Rate limit:** 10 requests per minute.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Bootstrap data retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '404':
+          description: Client not found
           content:
             application/json:
               schema:
@@ -6678,6 +7791,12 @@ components:
           type: boolean
           description: Whether this is the default account for new escrows
           example: true
+        branchId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Linked branch UUID (use `GET /branches` to resolve metadata)
+          example: "b861b2a8-42de-451b-9f8c-995d9bf5f47c"
         isActive:
           type: boolean
           description: Whether the account is active
@@ -6694,6 +7813,81 @@ components:
           type: string
           format: date-time
         updatedAt:
+          type: string
+          format: date-time
+
+    # ── Institution Branch Schemas ─────────────────────────────────────
+
+    InstitutionBranch:
+      type: object
+      description: A geographic branch of an institution
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "b861b2a8-42de-451b-9f8c-995d9bf5f47c"
+        name:
+          type: string
+          example: "Zurich HQ"
+        city:
+          type: string
+          example: "Zurich"
+        country:
+          type: string
+          example: "Switzerland"
+        countryCode:
+          type: string
+          description: ISO 3166-1 alpha-2
+          example: "CH"
+        address:
+          type: string
+          nullable: true
+          example: "Bahnhofstrasse 42, 8001 Zurich"
+        timezone:
+          type: string
+          example: "Europe/Zurich"
+        regulatoryBody:
+          type: string
+          nullable: true
+          example: "FINMA"
+        riskScore:
+          type: integer
+          description: Numeric risk score (0-100)
+          example: 5
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+          description: "Computed: 0-20 = low, 21-50 = medium, 51+ = high"
+          example: "low"
+        complianceStatus:
+          type: string
+          enum: [ACTIVE, SUSPENDED, UNDER_REVIEW, BLOCKED]
+          example: "ACTIVE"
+        isSanctioned:
+          type: boolean
+          example: false
+        isHeadquarters:
+          type: boolean
+          description: "`true` for the first (oldest) branch"
+          example: true
+        isActive:
+          type: boolean
+          example: true
+        accounts:
+          type: array
+          description: Active accounts linked to this branch
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              label: { type: string }
+              accountType: { type: string, enum: [TREASURY, OPERATIONS, SETTLEMENT, COLLATERAL, GENERAL] }
+              walletAddress: { type: string }
+              chain: { type: string, example: "solana" }
+              verificationStatus: { type: string, enum: [PENDING, VERIFIED, SUSPENDED, REJECTED] }
+              isDefault: { type: boolean }
+        createdAt:
           type: string
           format: date-time
 
