@@ -11,6 +11,7 @@ const BCRYPT_ROUNDS = 12;
 const LOGIN_RATE_LIMIT_MAX = 5;
 const LOGIN_RATE_LIMIT_TTL = 900; // 15 minutes in seconds
 const REDIS_LOGIN_PREFIX = 'institution:login:attempts:';
+const REFRESH_TOKEN_GRACE_PERIOD_MS = 30_000; // 30 seconds grace period for rotated tokens
 
 /**
  * Institution Authentication Service
@@ -115,7 +116,7 @@ export class InstitutionAuthService {
   async generateTokens(clientId: string, email: string, tier: string) {
     const jwtSecret = this.getJwtSecret();
     const escrowConfig = getInstitutionEscrowConfig();
-    const accessTokenExpiry = escrowConfig.jwt.accessTokenExpiry || '15m';
+    const accessTokenExpiry = escrowConfig.jwt.accessTokenExpiry || '1h';
     const refreshTokenExpiry = escrowConfig.jwt.refreshTokenExpiry || '7d';
 
     // Convert expiry strings to seconds for jwt.sign
@@ -146,10 +147,13 @@ export class InstitutionAuthService {
       },
     });
 
+    const refreshExpirySec = Math.floor(refreshExpiryMs / 1000);
+
     return {
       accessToken,
       refreshToken,
       expiresIn: accessExpirySec,
+      refreshExpiresIn: refreshExpirySec,
     };
   }
 
@@ -170,8 +174,14 @@ export class InstitutionAuthService {
       throw new Error('Invalid refresh token');
     }
 
+    // Allow a 30-second grace period after revocation to handle race conditions
+    // (e.g., multiple tabs or retry logic using the old token after rotation)
     if (storedToken.revokedAt) {
-      throw new Error('Refresh token has been revoked');
+      const gracePeriodExpired =
+        storedToken.revokedAt.getTime() < Date.now() - REFRESH_TOKEN_GRACE_PERIOD_MS;
+      if (gracePeriodExpired) {
+        throw new Error('Refresh token has been revoked');
+      }
     }
 
     if (storedToken.expiresAt < new Date()) {
