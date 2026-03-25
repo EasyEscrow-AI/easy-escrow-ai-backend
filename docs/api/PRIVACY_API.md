@@ -2,6 +2,8 @@
 
 All endpoints require institution JWT authentication (`Authorization: Bearer <token>`).
 
+**Privacy is enabled by default for all institutional operations.** Each institution account automatically receives a stealth meta-address on creation. Escrow releases use stealth addresses when available, falling back gracefully to standard addresses when no meta-address exists. No per-request opt-in is needed.
+
 ## Meta-Address Management
 
 ### POST /api/v1/privacy/meta-address
@@ -166,14 +168,14 @@ Get stealth payment details.
 
 ### POST /api/v1/institution-escrow/:id/release
 
-Extended with optional privacy fields:
+**Default behavior:** STEALTH is used automatically when the recipient wallet has an associated meta-address. No extra fields needed — just release as normal. The system auto-looks up the meta-address by wallet. If the recipient has no meta-address, falls back to standard transfer.
 
-**Request:**
+**Optional overrides:**
+
 ```json
 {
   "notes": "Release approved",
-  "privacyLevel": "STEALTH",
-  "metaAddressId": "uuid",
+  "privacyLevel": "NONE",
   "useJito": false
 }
 ```

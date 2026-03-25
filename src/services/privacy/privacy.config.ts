@@ -21,7 +21,8 @@ export function loadPrivacyConfig(): PrivacyConfig {
   return {
     enabled,
     stealthKeyEncryptionSecret: process.env.STEALTH_KEY_ENCRYPTION_SECRET || '',
-    defaultPrivacyLevel: (process.env.DEFAULT_PRIVACY_LEVEL as PrivacyLevel) || PrivacyLevel.NONE,
+    defaultPrivacyLevel:
+      (process.env.DEFAULT_PRIVACY_LEVEL as PrivacyLevel) || PrivacyLevel.STEALTH,
     jitoDefault: process.env.PRIVACY_JITO_DEFAULT?.toLowerCase() === 'true',
   };
 }

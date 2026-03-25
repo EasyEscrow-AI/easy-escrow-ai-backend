@@ -35,8 +35,14 @@ CREATE TABLE "stealth_payments" (
 );
 
 -- AlterTable: Add privacy fields to institution_escrows
-ALTER TABLE "institution_escrows" ADD COLUMN "privacy_level" TEXT DEFAULT 'NONE';
+ALTER TABLE "institution_escrows" ADD COLUMN "privacy_level" TEXT DEFAULT 'STEALTH';
 ALTER TABLE "institution_escrows" ADD COLUMN "stealth_payment_id" TEXT;
+
+-- AlterTable: Add stealth meta-address link to institution_accounts
+ALTER TABLE "institution_accounts" ADD COLUMN "stealth_meta_address_id" TEXT;
+
+-- AddForeignKey
+ALTER TABLE "institution_accounts" ADD CONSTRAINT "institution_accounts_stealth_meta_address_id_fkey" FOREIGN KEY ("stealth_meta_address_id") REFERENCES "stealth_meta_addresses"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- CreateIndex
 CREATE INDEX "stealth_meta_addresses_institution_client_id_idx" ON "stealth_meta_addresses"("institution_client_id");

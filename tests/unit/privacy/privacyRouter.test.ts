@@ -8,8 +8,8 @@ describe('PrivacyRouterService', () => {
     sandbox = sinon.createSandbox();
     process.env.PRIVACY_ENABLED = 'true';
     process.env.STEALTH_KEY_ENCRYPTION_SECRET = 'a'.repeat(32);
-    process.env.DEFAULT_PRIVACY_LEVEL = 'NONE';
     process.env.PRIVACY_JITO_DEFAULT = 'false';
+    // Don't set DEFAULT_PRIVACY_LEVEL — let it use the default (STEALTH)
   });
 
   afterEach(() => {
@@ -22,7 +22,7 @@ describe('PrivacyRouterService', () => {
     resetPrivacyConfig();
   });
 
-  it('should return standard recipient when privacy level is NONE', async () => {
+  it('should return standard recipient when privacy level is explicitly NONE', async () => {
     const {
       resolveReleaseDestination,
     } = require('../../../src/services/privacy/privacy-router.service');
@@ -64,24 +64,31 @@ describe('PrivacyRouterService', () => {
     expect(result.privacyLevel).to.equal('NONE');
   });
 
-  it('should throw when STEALTH requested without metaAddressId', async () => {
+  it('should fall back to NONE when STEALTH requested but no meta-address found', async () => {
     const {
       resolveReleaseDestination,
     } = require('../../../src/services/privacy/privacy-router.service');
 
-    try {
-      await resolveReleaseDestination(
-        'recipientWalletBase58',
-        'client-123',
-        'escrow-456',
-        'usdcMint',
-        BigInt(1000000),
-        { level: 'STEALTH' }
-      );
-      expect.fail('Should have thrown');
-    } catch (error: any) {
-      expect(error.message).to.include('metaAddressId is required');
-    }
+    // No metaAddressId provided, and auto-lookup will find nothing (no DB)
+    // The service's findMetaAddressForWallet will throw/return null, causing fallback
+    const result = await resolveReleaseDestination(
+      'recipientWalletBase58',
+      'client-123',
+      'escrow-456',
+      'usdcMint',
+      BigInt(1000000),
+      { level: 'STEALTH' }
+    );
+
+    // Should gracefully fall back to NONE
+    expect(result.recipientAddress).to.equal('recipientWalletBase58');
+    expect(result.privacyLevel).to.equal('NONE');
+  });
+
+  it('should default to STEALTH level when no preference specified', async () => {
+    const { getPrivacyConfig } = require('../../../src/services/privacy/privacy.config');
+    const config = getPrivacyConfig();
+    expect(config.defaultPrivacyLevel).to.equal('STEALTH');
   });
 
   it('should respect useJito preference', async () => {

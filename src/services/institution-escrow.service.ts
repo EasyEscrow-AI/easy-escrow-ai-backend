@@ -1228,7 +1228,7 @@ export class InstitutionEscrowService {
 
     // Resolve release destination (standard or stealth address)
     const effectivePrivacy = privacyPreferences || {
-      level: (escrow.privacyLevel as PrivacyLevel) || PrivacyLevel.NONE,
+      level: (escrow.privacyLevel as PrivacyLevel) || PrivacyLevel.STEALTH,
     };
 
     let releaseRecipient = escrow.recipientWallet!;

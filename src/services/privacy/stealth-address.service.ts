@@ -102,6 +102,47 @@ export class StealthAddressService {
   }
 
   /**
+   * Find a meta-address linked to a wallet via InstitutionAccount.
+   * Used for auto-lookup when releasing to a recipient wallet.
+   * Returns the meta-address ID, or null if none found.
+   */
+  async findMetaAddressForWallet(walletAddress: string): Promise<string | null> {
+    // Look up the account that owns this wallet, check if it has a stealth meta-address
+    const account = await prisma.institutionAccount.findFirst({
+      where: { walletAddress, isActive: true, stealthMetaAddressId: { not: null } },
+      select: { stealthMetaAddressId: true },
+    });
+
+    if (account?.stealthMetaAddressId) {
+      // Verify the meta-address is still active
+      const meta = await prisma.stealthMetaAddress.findFirst({
+        where: { id: account.stealthMetaAddressId, isActive: true },
+        select: { id: true },
+      });
+      return meta?.id || null;
+    }
+
+    // Fallback: find any active meta-address for a client that owns this wallet
+    const client = await prisma.institutionClient.findFirst({
+      where: {
+        OR: [{ primaryWallet: walletAddress }, { settledWallets: { has: walletAddress } }],
+      },
+      select: { id: true },
+    });
+
+    if (client) {
+      const meta = await prisma.stealthMetaAddress.findFirst({
+        where: { institutionClientId: client.id, isActive: true },
+        select: { id: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      return meta?.id || null;
+    }
+
+    return null;
+  }
+
+  /**
    * Get a specific meta-address by ID with ownership check.
    */
   async getMetaAddress(clientId: string, metaAddressId: string) {

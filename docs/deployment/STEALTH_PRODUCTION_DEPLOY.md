@@ -13,9 +13,11 @@ Add to production environment:
 ```env
 PRIVACY_ENABLED=true
 STEALTH_KEY_ENCRYPTION_SECRET=<generate-unique-32+-char-secret>
-DEFAULT_PRIVACY_LEVEL=NONE
+DEFAULT_PRIVACY_LEVEL=STEALTH
 PRIVACY_JITO_DEFAULT=false
 ```
+
+Privacy is **STEALTH by default** for all institutional endpoints. If a recipient has no meta-address, the system gracefully falls back to standard transfers (NONE). Set `DEFAULT_PRIVACY_LEVEL=NONE` to disable stealth-by-default.
 
 **IMPORTANT:** Use a different `STEALTH_KEY_ENCRYPTION_SECRET` than staging.
 
@@ -41,11 +43,12 @@ openssl rand -base64 48 | head -c 48
 
 ## Post-Deploy Verification
 
-1. Create test meta-address via API
-2. Create test escrow with `privacyLevel: STEALTH`
+1. Create an institution account — verify stealth meta-address is auto-generated
+2. Create test escrow (STEALTH is default — no need to specify)
 3. Fund and release escrow — verify on-chain USDC goes to stealth address
 4. Scan and sweep — verify USDC arrives at destination wallet
 5. Check audit logs contain stealth metadata
+6. Create escrow to a wallet with no meta-address — verify graceful fallback to NONE
 
 ## What Changes from Staging
 

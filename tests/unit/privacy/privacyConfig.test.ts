@@ -46,17 +46,17 @@ describe('PrivacyConfig', () => {
       expect(config.enabled).to.equal(false);
     });
 
-    it('should default privacy level to NONE', () => {
-      const { loadPrivacyConfig } = require('../../../src/services/privacy/privacy.config');
-      const config = loadPrivacyConfig();
-      expect(config.defaultPrivacyLevel).to.equal('NONE');
-    });
-
-    it('should read DEFAULT_PRIVACY_LEVEL from env', () => {
-      process.env.DEFAULT_PRIVACY_LEVEL = 'STEALTH';
+    it('should default privacy level to STEALTH', () => {
       const { loadPrivacyConfig } = require('../../../src/services/privacy/privacy.config');
       const config = loadPrivacyConfig();
       expect(config.defaultPrivacyLevel).to.equal('STEALTH');
+    });
+
+    it('should read DEFAULT_PRIVACY_LEVEL from env', () => {
+      process.env.DEFAULT_PRIVACY_LEVEL = 'NONE';
+      const { loadPrivacyConfig } = require('../../../src/services/privacy/privacy.config');
+      const config = loadPrivacyConfig();
+      expect(config.defaultPrivacyLevel).to.equal('NONE');
     });
 
     it('should default jitoDefault to false', () => {

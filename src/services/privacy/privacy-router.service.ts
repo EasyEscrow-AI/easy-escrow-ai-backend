@@ -2,12 +2,11 @@
  * Privacy Router Service
  *
  * Routes escrow operations to the appropriate privacy strategy based on
- * the requested privacy level. Acts as the main entry point for privacy-aware
- * escrow operations.
+ * the requested privacy level. Default is STEALTH for all institutional
+ * endpoints — falls back to NONE if the recipient has no meta-address.
  */
 
-import { PublicKey } from '@solana/web3.js';
-import { PrivacyLevel, PrivacyPreferences, StealthPaymentResult } from './privacy.types';
+import { PrivacyLevel, PrivacyPreferences } from './privacy.types';
 import { getPrivacyConfig } from './privacy.config';
 import { isPrivacyEnabled } from '../../utils/featureFlags';
 import { getStealthAddressService } from './stealth-address.service';
@@ -22,7 +21,14 @@ export interface PrivacyRouteResult {
 
 /**
  * Resolve the release destination based on privacy preferences.
- * Returns the address to send funds to (stealth or standard).
+ *
+ * Default behavior (STEALTH):
+ *   1. If metaAddressId is provided explicitly, use it
+ *   2. Otherwise, auto-lookup a meta-address for the recipient wallet
+ *   3. If no meta-address found, gracefully fall back to NONE
+ *
+ * This means every institution account with a registered meta-address
+ * automatically gets stealth privacy — no per-request opt-in needed.
  */
 export async function resolveReleaseDestination(
   recipientWallet: string,
@@ -36,7 +42,7 @@ export async function resolveReleaseDestination(
   const level = preferences?.level || config.defaultPrivacyLevel;
   const useJito = preferences?.useJito ?? config.jitoDefault;
 
-  // If privacy disabled or level is NONE, return standard recipient
+  // If privacy disabled or explicitly NONE, return standard recipient
   if (!isPrivacyEnabled() || level === PrivacyLevel.NONE) {
     return {
       recipientAddress: recipientWallet,
@@ -47,14 +53,34 @@ export async function resolveReleaseDestination(
 
   // STEALTH level: derive stealth address from recipient's meta-address
   if (level === PrivacyLevel.STEALTH) {
-    if (!preferences?.metaAddressId) {
-      throw new Error('metaAddressId is required for STEALTH privacy level');
+    const stealthService = getStealthAddressService();
+    let metaAddressId: string | undefined = preferences?.metaAddressId;
+
+    // Auto-lookup: find meta-address linked to the recipient's account/wallet
+    if (!metaAddressId) {
+      try {
+        metaAddressId =
+          (await stealthService.findMetaAddressForWallet(recipientWallet)) ?? undefined;
+      } catch (error) {
+        console.warn('[PrivacyRouter] Auto-lookup failed, falling back to NONE:', error);
+      }
     }
 
-    const stealthService = getStealthAddressService();
+    // Graceful fallback: no meta-address → use standard address (NONE)
+    if (!metaAddressId) {
+      console.log(
+        `[PrivacyRouter] No stealth meta-address for wallet ${recipientWallet}, falling back to NONE`
+      );
+      return {
+        recipientAddress: recipientWallet,
+        privacyLevel: PrivacyLevel.NONE,
+        useJito,
+      };
+    }
+
     const { stealthPaymentId, stealthAddress, ephemeralPublicKey } =
       await stealthService.createStealthPayment({
-        metaAddressId: preferences.metaAddressId,
+        metaAddressId,
         escrowId,
         tokenMint,
         amountRaw,
