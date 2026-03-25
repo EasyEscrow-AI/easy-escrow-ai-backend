@@ -34,8 +34,13 @@ import { getAiAnalysisService } from '../services/ai-analysis.service';
 import { getCorridorAnalysisService } from '../services/corridor-analysis.service';
 
 // Param-only validation for GET routes (no body required)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ESCROW_CODE_REGEX = /^EE-[A-Z0-9]{3,4}-[A-Z0-9]{3,4}$/;
 const validateEscrowIdParam = [
-  param('escrow_id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('escrow_id').custom((value: string) => {
+    if (UUID_REGEX.test(value) || ESCROW_CODE_REGEX.test(value)) return true;
+    throw new Error('Must be a valid UUID or escrow code (EE-XXX-XXX)');
+  }),
 ];
 
 const router = Router();
@@ -84,9 +89,12 @@ async function handleAnalyzeDocument(req: InstitutionAuthenticatedRequest, res: 
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    const status = error.message.includes('rate limit') ? 429
-      : error.message.includes('not found') ? 404
-      : error.message.includes('not configured') ? 503
+    const status = error.message.includes('rate limit')
+      ? 429
+      : error.message.includes('not found')
+      ? 404
+      : error.message.includes('not configured')
+      ? 503
       : 500;
     res.status(status).json({
       error: 'Analysis Failed',
@@ -111,7 +119,7 @@ async function handleGetDocumentAnalysis(req: InstitutionAuthenticatedRequest, r
     const service = getAiAnalysisService();
     const results = await service.getAnalysisResults(
       req.params.escrow_id,
-      req.institutionClient!.clientId,
+      req.institutionClient!.clientId
     );
 
     res.status(200).json({
@@ -140,16 +148,27 @@ router.post(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ error: 'Validation Error', details: errors.array(), timestamp: new Date().toISOString() });
+      res
+        .status(400)
+        .json({
+          error: 'Validation Error',
+          details: errors.array(),
+          timestamp: new Date().toISOString(),
+        });
       return;
     }
 
     try {
       const service = getAiAnalysisService();
       const tier = req.body?.tier;
-      const result = tier === 'fast'
-        ? await service.analyzeEscrowFast(req.params.escrow_id, req.institutionClient!.clientId, { anonymize: true })
-        : await service.analyzeEscrow(req.params.escrow_id, req.institutionClient!.clientId, { anonymize: true });
+      const result =
+        tier === 'fast'
+          ? await service.analyzeEscrowFast(req.params.escrow_id, req.institutionClient!.clientId, {
+              anonymize: true,
+            })
+          : await service.analyzeEscrow(req.params.escrow_id, req.institutionClient!.clientId, {
+              anonymize: true,
+            });
 
       res.status(200).json({
         success: true,
@@ -157,9 +176,12 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('rate limit') ? 429
-        : error.message.includes('not found') ? 404
-        : error.message.includes('not configured') ? 503
+      const status = error.message.includes('rate limit')
+        ? 429
+        : error.message.includes('not found')
+        ? 404
+        : error.message.includes('not configured')
+        ? 503
         : 500;
       res.status(status).json({
         error: 'Escrow Analysis Failed',
@@ -167,7 +189,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // GET /api/v1/ai/escrow-analysis/:escrow_id — get stored escrow analysis results
@@ -179,7 +201,13 @@ router.get(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ error: 'Validation Error', details: errors.array(), timestamp: new Date().toISOString() });
+      res
+        .status(400)
+        .json({
+          error: 'Validation Error',
+          details: errors.array(),
+          timestamp: new Date().toISOString(),
+        });
       return;
     }
 
@@ -187,7 +215,7 @@ router.get(
       const service = getAiAnalysisService();
       const results = await service.getEscrowAnalysis(
         req.params.escrow_id,
-        req.institutionClient!.clientId,
+        req.institutionClient!.clientId
       );
 
       res.status(200).json({
@@ -203,19 +231,18 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // POST /api/v1/institution/ai/analyze-escrow — body-based escrow analysis (accepts UUID or escrow code)
 const validateEscrowIdBody = [
   body('escrowId')
     .isString()
-    .matches(/^(EE-[A-Z0-9]{3}-[A-Z0-9]{3}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i)
+    .matches(
+      /^(EE-[A-Z0-9]{3}-[A-Z0-9]{3}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i
+    )
     .withMessage('escrowId must be a valid UUID or escrow code (EE-XXX-XXX)'),
-  body('tier')
-    .optional()
-    .isIn(['fast', 'full'])
-    .withMessage('tier must be "fast" or "full"'),
+  body('tier').optional().isIn(['fast', 'full']).withMessage('tier must be "fast" or "full"'),
 ];
 
 router.post(
@@ -226,16 +253,27 @@ router.post(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ error: 'Validation Error', details: errors.array(), timestamp: new Date().toISOString() });
+      res
+        .status(400)
+        .json({
+          error: 'Validation Error',
+          details: errors.array(),
+          timestamp: new Date().toISOString(),
+        });
       return;
     }
 
     try {
       const service = getAiAnalysisService();
       const tier = req.body.tier;
-      const result = tier === 'fast'
-        ? await service.analyzeEscrowFast(req.body.escrowId, req.institutionClient!.clientId, { anonymize: true })
-        : await service.analyzeEscrow(req.body.escrowId, req.institutionClient!.clientId, { anonymize: true });
+      const result =
+        tier === 'fast'
+          ? await service.analyzeEscrowFast(req.body.escrowId, req.institutionClient!.clientId, {
+              anonymize: true,
+            })
+          : await service.analyzeEscrow(req.body.escrowId, req.institutionClient!.clientId, {
+              anonymize: true,
+            });
 
       res.status(200).json({
         success: true,
@@ -243,9 +281,12 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('rate limit') ? 429
-        : error.message.includes('not found') ? 404
-        : error.message.includes('not configured') ? 503
+      const status = error.message.includes('rate limit')
+        ? 429
+        : error.message.includes('not found')
+        ? 404
+        : error.message.includes('not configured')
+        ? 503
         : 500;
       res.status(status).json({
         error: 'Escrow Analysis Failed',
@@ -253,7 +294,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // ─── Document Analysis ──────────────────────────────────────────
@@ -264,7 +305,7 @@ router.post(
   strictRateLimiter,
   requireInstitutionAuth,
   validateAiAnalysis,
-  handleAnalyzeDocument,
+  handleAnalyzeDocument
 );
 
 // GET /api/v1/ai/escrow-doc-analysis/:escrow_id (primary)
@@ -273,7 +314,7 @@ router.get(
   standardRateLimiter,
   requireInstitutionAuth,
   validateEscrowIdParam,
-  handleGetDocumentAnalysis,
+  handleGetDocumentAnalysis
 );
 
 // Legacy aliases (backward compatibility)
@@ -282,7 +323,7 @@ router.post(
   strictRateLimiter,
   requireInstitutionAuth,
   validateAiAnalysis,
-  handleAnalyzeDocument,
+  handleAnalyzeDocument
 );
 
 router.get(
@@ -290,7 +331,7 @@ router.get(
   standardRateLimiter,
   requireInstitutionAuth,
   validateEscrowIdParam,
-  handleGetDocumentAnalysis,
+  handleGetDocumentAnalysis
 );
 
 // ─── Corridor Analysis ──────────────────────────────────────────
@@ -308,10 +349,7 @@ const validateCorridorAnalysis = [
     .isAlpha()
     .isUppercase()
     .withMessage('toCountry must be a 2-letter uppercase country code'),
-  query('amount')
-    .optional()
-    .isFloat({ min: 1 })
-    .withMessage('amount must be a positive number'),
+  query('amount').optional().isFloat({ min: 1 }).withMessage('amount must be a positive number'),
   query('currency')
     .optional()
     .isString()
@@ -351,8 +389,10 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('not found') ? 404
-        : error.message.includes('not supported') ? 404
+      const status = error.message.includes('not found')
+        ? 404
+        : error.message.includes('not supported')
+        ? 404
         : 500;
       res.status(status).json({
         error: 'Corridor Analysis Failed',
@@ -360,7 +400,7 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // ─── Client Analysis ────────────────────────────────────────────
@@ -373,10 +413,9 @@ router.post(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getAiAnalysisService();
-      const result = await service.analyzeClient(
-        req.institutionClient!.clientId,
-        { anonymize: true },
-      );
+      const result = await service.analyzeClient(req.institutionClient!.clientId, {
+        anonymize: true,
+      });
 
       res.status(200).json({
         success: true,
@@ -384,9 +423,12 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('rate limit') ? 429
-        : error.message.includes('not found') ? 404
-        : error.message.includes('not configured') ? 503
+      const status = error.message.includes('rate limit')
+        ? 429
+        : error.message.includes('not found')
+        ? 404
+        : error.message.includes('not configured')
+        ? 503
         : 500;
       res.status(status).json({
         error: 'Client Analysis Failed',
@@ -394,7 +436,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 // GET /api/v1/ai/client-analysis — get stored client analysis results
@@ -405,9 +447,7 @@ router.get(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getAiAnalysisService();
-      const results = await service.getClientAnalysis(
-        req.institutionClient!.clientId,
-      );
+      const results = await service.getClientAnalysis(req.institutionClient!.clientId);
 
       res.status(200).json({
         success: true,
@@ -421,7 +461,7 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 export default router;
