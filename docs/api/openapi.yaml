@@ -374,6 +374,10 @@ tags:
     description: Generate HTML/PDF receipts and structured JSON receipt data for completed escrows.
   - name: Institution Bootstrap
     description: Post-login endpoint that returns all data needed to hydrate the portal — profile, settings, accounts, branches, corridors, and notifications in a single request.
+  - name: Privacy
+    description: |
+      Stealth address management for private escrow payments. Feature-gated — returns 503 when not enabled.
+      Includes meta-address registration, blockchain scanning for incoming payments, and sweep operations.
   - name: Institution Notifications
     description: |
       ## In-App & Email Notifications
@@ -3421,6 +3425,271 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  # ── AI Analysis (body-based + corridor) ─────────────────────────────
+
+  /api/v1/institution/ai/analyze-escrow:
+    post:
+      tags: [AI Analysis]
+      summary: Analyze escrow (body-based)
+      description: |
+        Submit an escrow ID in the request body for AI compliance analysis.
+        Alternative to the path-based `POST /ai/analyze-escrow/{escrow_id}`.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [escrowId]
+              properties:
+                escrowId:
+                  type: string
+                  format: uuid
+                  description: Escrow to analyze
+      responses:
+        '200':
+          description: Analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/ai/analyze-corridor:
+    get:
+      tags: [AI Analysis]
+      summary: Analyze corridor
+      description: AI-powered risk and compliance analysis for a specific payment corridor.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: corridor
+          required: true
+          schema: { type: string }
+          description: Corridor code (e.g. `CH-SG`)
+        - in: query
+          name: amount
+          schema: { type: number }
+          description: Transaction amount for threshold analysis
+      responses:
+        '200':
+          description: Corridor analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ── Privacy (Stealth Addresses) ────────────────────────────────────────
+
+  /api/v1/privacy/meta-address:
+    post:
+      tags: [Privacy]
+      summary: Register stealth meta-address
+      description: |
+        Generate and register a stealth meta-address for receiving private payments.
+        Feature-gated — returns 503 if privacy is not enabled.
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                  maxLength: 100
+                  description: Human-readable label for this meta-address
+      responses:
+        '201':
+          description: Meta-address registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '503':
+          description: Privacy features not enabled
+
+  /api/v1/privacy/meta-address/{clientId}:
+    get:
+      tags: [Privacy]
+      summary: List meta-addresses
+      description: Get all stealth meta-addresses for the authenticated client.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Meta-addresses retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+        '403':
+          description: Cannot access another client's meta-addresses
+
+  /api/v1/privacy/meta-address/{id}:
+    delete:
+      tags: [Privacy]
+      summary: Deactivate meta-address
+      description: Deactivate a stealth meta-address (soft delete).
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Meta-address deactivated
+        '404':
+          description: Meta-address not found
+
+  /api/v1/privacy/scan:
+    post:
+      tags: [Privacy]
+      summary: Scan for stealth payments
+      description: Scan the blockchain for incoming stealth payments to your meta-addresses.
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Filter by payment status
+      responses:
+        '200':
+          description: Scan results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { type: object } }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/privacy/sweep/{paymentId}:
+    post:
+      tags: [Privacy]
+      summary: Sweep stealth payment
+      description: Sweep funds from a stealth address to a destination wallet. Rate limited to 10/min.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: paymentId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [destinationWallet]
+              properties:
+                destinationWallet:
+                  type: string
+                  description: Solana wallet to sweep funds to
+      responses:
+        '200':
+          description: Sweep initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/privacy/payments:
+    get:
+      tags: [Privacy]
+      summary: List stealth payments
+      description: List all stealth payments received by the institution.
+      security:
+        - BearerAuth: []
+      parameters:
+        - { in: query, name: status, schema: { type: string } }
+        - { in: query, name: limit, schema: { type: integer, default: 20, maximum: 100 } }
+        - { in: query, name: offset, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Payments listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+
+  /api/v1/privacy/payments/{id}:
+    get:
+      tags: [Privacy]
+      summary: Get stealth payment
+      description: Get details of a specific stealth payment.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: object }
+                  timestamp: { type: string, format: date-time }
+        '404':
+          description: Payment not found
 
   # ── Institution Accounts ─────────────────────────────────────────────
 
