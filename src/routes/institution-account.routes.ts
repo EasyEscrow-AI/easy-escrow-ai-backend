@@ -3,7 +3,7 @@
  *
  * GET    /api/v1/institution/account/profile              -> Client profile overview
  * POST   /api/v1/institution/accounts                     -> Create account
- * GET    /api/v1/institution/accounts                     -> List accounts (with balances)
+ * GET    /api/v1/institution/accounts                     -> List accounts (?branchId=&includeBalances=true)
  * GET    /api/v1/institution/accounts/:id                 -> Get account + balance
  * PUT    /api/v1/institution/accounts/:id                 -> Update account
  * DELETE /api/v1/institution/accounts/:id                 -> Deactivate account
