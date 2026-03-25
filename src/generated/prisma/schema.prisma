@@ -1004,9 +1004,15 @@ model InstitutionAccount {
   notifyOnEscrowReleased  Boolean @default(true) @map("notify_on_escrow_released")
   notifyOnComplianceAlert Boolean @default(true) @map("notify_on_compliance_alert")
 
+  // Account preferences
+  defaultCurrency String @default("USDC") @map("default_currency")
+
   // Status
   isDefault Boolean @default(false) @map("is_default")
   isActive  Boolean @default(true) @map("is_active")
+
+  // Stealth / Privacy
+  stealthMetaAddressId String? @unique @map("stealth_meta_address_id")
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
@@ -1016,8 +1022,9 @@ model InstitutionAccount {
   branchId String? @map("branch_id")
 
   // Relations
-  client InstitutionClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  branch InstitutionBranch? @relation(fields: [branchId], references: [id])
+  client             InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  branch             InstitutionBranch?  @relation(fields: [branchId], references: [id])
+  stealthMetaAddress StealthMetaAddress? @relation(fields: [stealthMetaAddressId], references: [id])
 
   @@unique([clientId, name])
   @@index([clientId])
@@ -1061,6 +1068,7 @@ model InstitutionBranch {
 // Direct payments (non-escrow transfers between institutions)
 model DirectPayment {
   id               String    @id @default(uuid())
+  paymentCode      String?   @unique @map("payment_code") // Human-readable ID: EE-XXX-XXX
   clientId         String    @map("client_id")
   sender           String // sender name/label
   senderCountry    String    @map("sender_country")
@@ -1084,6 +1092,7 @@ model DirectPayment {
   client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
+  @@index([paymentCode])
   @@index([status])
   @@index([corridor])
   @@index([createdAt])
@@ -1128,6 +1137,14 @@ model InstitutionClientSettings {
   riskTolerance             String   @default("low") @map("risk_tolerance") // low, medium, high
   defaultToken              String   @default("usdc") @map("default_token")
   emailNotifications        Boolean  @default(true) @map("email_notifications")
+  language                  String? // en, de, fr, ar, zh, es
+  theme                     String? // light, dark, system
+  twoFactorEnabled          Boolean  @default(false) @map("two_factor_enabled")
+  aiRecommendations         Boolean  @default(true) @map("ai_recommendations")
+  feeBps                    Int      @default(20) @map("fee_bps") // Fee in basis points (default 0.20%)
+  minFeeUsdc                Decimal  @default(0.20) @map("min_fee_usdc") @db.Decimal(20, 6) // Minimum fee in USDC
+  maxFeeUsdc                Decimal  @default(20.00) @map("max_fee_usdc") @db.Decimal(20, 6) // Maximum fee in USDC
+  notificationPreferences   Json?    @map("notification_preferences") // Per-event notification prefs [{event, inApp, email, sms}]
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
 
@@ -1165,7 +1182,7 @@ model InstitutionApiKey {
 model InstitutionEscrow {
   id                  String                    @id @default(uuid())
   escrowId            String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
-  escrowCode          String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
+  escrowCode          String                    @unique @map("escrow_code") // Human-readable ID: EE-XXX-XXX
   clientId            String                    @map("client_id")
   payerWallet         String                    @map("payer_wallet")
   recipientWallet     String?                   @map("recipient_wallet")
@@ -1178,14 +1195,22 @@ model InstitutionEscrow {
   settlementAuthority String                    @map("settlement_authority")
   riskScore           Int?                      @map("risk_score")
 
+  // Settlement & release configuration
+  settlementMode       String?  @map("settlement_mode") // "escrow" | "direct"
+  releaseMode          String?  @map("release_mode") // "manual" | "ai"
+  approvalParties      String[] @default([]) @map("approval_parties")
+  releaseConditions    String[] @default([]) @map("release_conditions")
+  approvalInstructions String?  @map("approval_instructions")
+
   // Privacy
-  privacyLevel     String? @default("NONE") @map("privacy_level")
-  stealthPaymentId String? @map("stealth_payment_id")
+  privacyLevel     PrivacyLevel? @default(STEALTH) @map("privacy_level")
+  stealthPaymentId String?       @map("stealth_payment_id")
 
   // On-chain references
   escrowPda          String? @map("escrow_pda")
   vaultPda           String? @map("vault_pda")
   nonceAccount       String? @map("nonce_account")
+  initTxSignature    String? @map("init_tx_signature")
   depositTxSignature String? @map("deposit_tx_signature")
   releaseTxSignature String? @map("release_tx_signature")
   cancelTxSignature  String? @map("cancel_tx_signature")
@@ -1292,24 +1317,57 @@ enum AiAnalysisType {
 
 // Corridor configuration
 model InstitutionCorridor {
-  id                String         @id @default(uuid())
-  sourceCountry     String         @map("source_country")
-  destCountry       String         @map("dest_country")
-  code              String         @unique // e.g. 'SG-CH'
-  minAmount         Decimal        @map("min_amount") @db.Decimal(20, 6)
-  maxAmount         Decimal        @map("max_amount") @db.Decimal(20, 6)
-  dailyLimit        Decimal        @map("daily_limit") @db.Decimal(20, 6)
-  monthlyLimit      Decimal        @map("monthly_limit") @db.Decimal(20, 6)
-  requiredDocuments String[]       @default([]) @map("required_documents")
-  riskLevel         String         @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
-  status            CorridorStatus @default(ACTIVE)
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @updatedAt @map("updated_at")
+  id                  String         @id @default(uuid())
+  sourceCountry       String         @map("source_country")
+  destCountry         String         @map("dest_country")
+  code                String         @unique // e.g. 'SG-CH'
+  name                String? // Display name e.g. 'Switzerland → Singapore'
+  compliance          String? // Regulatory bodies e.g. 'FINMA + MAS'
+  description         String? // Human-readable description
+  riskReason          String?        @map("risk_reason") // Explanation of risk classification
+  travelRuleThreshold Decimal        @default(1000) @map("travel_rule_threshold") @db.Decimal(18, 2)
+  eddThreshold        Decimal        @default(10000) @map("edd_threshold") @db.Decimal(18, 2)
+  reportingThreshold  Decimal        @default(15000) @map("reporting_threshold") @db.Decimal(18, 2)
+  minAmount           Decimal        @map("min_amount") @db.Decimal(20, 6)
+  maxAmount           Decimal        @map("max_amount") @db.Decimal(20, 6)
+  dailyLimit          Decimal        @map("daily_limit") @db.Decimal(20, 6)
+  monthlyLimit        Decimal        @map("monthly_limit") @db.Decimal(20, 6)
+  requiredDocuments   String[]       @default([]) @map("required_documents")
+  riskLevel           String         @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
+  status              CorridorStatus @default(ACTIVE)
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  thresholdRules CorridorThresholdRule[]
 
   @@index([code])
   @@index([status])
   @@index([sourceCountry, destCountry], name: "idx_corridor_countries")
   @@map("institution_corridors")
+}
+
+// Per-corridor compliance threshold rules for amount-based risk evaluation
+model CorridorThresholdRule {
+  id              String   @id @default(uuid())
+  corridorCode    String   @map("corridor_code")
+  ruleId          String   @map("rule_id") // travel_rule, edd, reporting, round_number, structuring, large_transaction
+  label           String // Display label
+  riskLevel       String   @map("risk_level") // low, medium, high
+  thresholdAmount Decimal? @map("threshold_amount") @db.Decimal(18, 2)
+  thresholdType   String   @map("threshold_type") // gte, range, pattern
+  thresholdMax    Decimal? @map("threshold_max") @db.Decimal(18, 2)
+  currency        String   @default("USD")
+  detailTemplate  String   @map("detail_template") @db.Text
+  regulationRef   String   @map("regulation_ref")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  corridor InstitutionCorridor @relation(fields: [corridorCode], references: [code])
+
+  @@unique([corridorCode, ruleId], name: "idx_corridor_rule_unique")
+  @@index([corridorCode, isActive])
+  @@map("corridor_threshold_rules")
 }
 
 // ============================================
@@ -1489,6 +1547,11 @@ model SystemSetting {
 // STEALTH ADDRESS / PRIVACY MODELS
 // ============================================
 
+enum PrivacyLevel {
+  NONE
+  STEALTH
+}
+
 // Stealth meta-address for institution clients (scan + spend keypairs)
 model StealthMetaAddress {
   id                  String   @id @default(uuid())
@@ -1504,7 +1567,8 @@ model StealthMetaAddress {
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   stealthPayments StealthPayment[]
-  client          InstitutionClient @relation(fields: [institutionClientId], references: [id])
+  accounts        InstitutionAccount[]
+  client          InstitutionClient    @relation(fields: [institutionClientId], references: [id])
 
   @@unique([institutionClientId, label])
   @@index([institutionClientId])
@@ -1527,7 +1591,7 @@ model StealthPayment {
   confirmedAt        DateTime? @map("confirmed_at")
   sweptAt            DateTime? @map("swept_at")
 
-  metaAddress StealthMetaAddress @relation(fields: [metaAddressId], references: [id])
+  metaAddress StealthMetaAddress @relation(fields: [metaAddressId], references: [id], onDelete: Cascade)
 
   @@index([metaAddressId])
   @@index([stealthAddress])

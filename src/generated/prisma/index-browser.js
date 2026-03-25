@@ -517,8 +517,10 @@ exports.Prisma.InstitutionAccountScalarFieldEnum = {
   notifyOnEscrowFunded: 'notifyOnEscrowFunded',
   notifyOnEscrowReleased: 'notifyOnEscrowReleased',
   notifyOnComplianceAlert: 'notifyOnComplianceAlert',
+  defaultCurrency: 'defaultCurrency',
   isDefault: 'isDefault',
   isActive: 'isActive',
+  stealthMetaAddressId: 'stealthMetaAddressId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   branchId: 'branchId'
@@ -546,6 +548,7 @@ exports.Prisma.InstitutionBranchScalarFieldEnum = {
 
 exports.Prisma.DirectPaymentScalarFieldEnum = {
   id: 'id',
+  paymentCode: 'paymentCode',
   clientId: 'clientId',
   sender: 'sender',
   senderCountry: 'senderCountry',
@@ -596,6 +599,14 @@ exports.Prisma.InstitutionClientSettingsScalarFieldEnum = {
   riskTolerance: 'riskTolerance',
   defaultToken: 'defaultToken',
   emailNotifications: 'emailNotifications',
+  language: 'language',
+  theme: 'theme',
+  twoFactorEnabled: 'twoFactorEnabled',
+  aiRecommendations: 'aiRecommendations',
+  feeBps: 'feeBps',
+  minFeeUsdc: 'minFeeUsdc',
+  maxFeeUsdc: 'maxFeeUsdc',
+  notificationPreferences: 'notificationPreferences',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -628,11 +639,17 @@ exports.Prisma.InstitutionEscrowScalarFieldEnum = {
   status: 'status',
   settlementAuthority: 'settlementAuthority',
   riskScore: 'riskScore',
+  settlementMode: 'settlementMode',
+  releaseMode: 'releaseMode',
+  approvalParties: 'approvalParties',
+  releaseConditions: 'releaseConditions',
+  approvalInstructions: 'approvalInstructions',
   privacyLevel: 'privacyLevel',
   stealthPaymentId: 'stealthPaymentId',
   escrowPda: 'escrowPda',
   vaultPda: 'vaultPda',
   nonceAccount: 'nonceAccount',
+  initTxSignature: 'initTxSignature',
   depositTxSignature: 'depositTxSignature',
   releaseTxSignature: 'releaseTxSignature',
   cancelTxSignature: 'cancelTxSignature',
@@ -685,6 +702,13 @@ exports.Prisma.InstitutionCorridorScalarFieldEnum = {
   sourceCountry: 'sourceCountry',
   destCountry: 'destCountry',
   code: 'code',
+  name: 'name',
+  compliance: 'compliance',
+  description: 'description',
+  riskReason: 'riskReason',
+  travelRuleThreshold: 'travelRuleThreshold',
+  eddThreshold: 'eddThreshold',
+  reportingThreshold: 'reportingThreshold',
   minAmount: 'minAmount',
   maxAmount: 'maxAmount',
   dailyLimit: 'dailyLimit',
@@ -692,6 +716,23 @@ exports.Prisma.InstitutionCorridorScalarFieldEnum = {
   requiredDocuments: 'requiredDocuments',
   riskLevel: 'riskLevel',
   status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CorridorThresholdRuleScalarFieldEnum = {
+  id: 'id',
+  corridorCode: 'corridorCode',
+  ruleId: 'ruleId',
+  label: 'label',
+  riskLevel: 'riskLevel',
+  thresholdAmount: 'thresholdAmount',
+  thresholdType: 'thresholdType',
+  thresholdMax: 'thresholdMax',
+  currency: 'currency',
+  detailTemplate: 'detailTemplate',
+  regulationRef: 'regulationRef',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1059,6 +1100,11 @@ exports.InstitutionEscrowStatus = exports.$Enums.InstitutionEscrowStatus = {
   FAILED: 'FAILED'
 };
 
+exports.PrivacyLevel = exports.$Enums.PrivacyLevel = {
+  NONE: 'NONE',
+  STEALTH: 'STEALTH'
+};
+
 exports.AiAnalysisType = exports.$Enums.AiAnalysisType = {
   DOCUMENT: 'DOCUMENT',
   ESCROW: 'ESCROW',
@@ -1146,6 +1192,7 @@ exports.Prisma.ModelName = {
   InstitutionAuditLog: 'InstitutionAuditLog',
   InstitutionAiAnalysis: 'InstitutionAiAnalysis',
   InstitutionCorridor: 'InstitutionCorridor',
+  CorridorThresholdRule: 'CorridorThresholdRule',
   InstitutionApprovedToken: 'InstitutionApprovedToken',
   AdminUser: 'AdminUser',
   AdminRefreshToken: 'AdminRefreshToken',

@@ -34,6 +34,8 @@ Generate and register a new stealth meta-address.
 
 Get all active meta-addresses for a client (own client ID only).
 
+> **Note:** The path `:clientId` is validated against the authenticated JWT's `clientId`. Returns `403 Forbidden` if they do not match.
+
 **Response (200):**
 ```json
 {

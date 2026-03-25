@@ -34,15 +34,25 @@ CREATE TABLE "stealth_payments" (
     CONSTRAINT "stealth_payments_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateEnum
+CREATE TYPE "PrivacyLevel" AS ENUM ('NONE', 'STEALTH');
+
 -- AlterTable: Add privacy fields to institution_escrows
-ALTER TABLE "institution_escrows" ADD COLUMN "privacy_level" TEXT DEFAULT 'STEALTH';
+-- Add column without default first (avoids backfilling existing rows with 'STEALTH')
+ALTER TABLE "institution_escrows" ADD COLUMN "privacy_level" "PrivacyLevel";
 ALTER TABLE "institution_escrows" ADD COLUMN "stealth_payment_id" TEXT;
 
--- AlterTable: Add stealth meta-address link to institution_accounts
+-- Set default for new rows only (existing rows keep NULL = no privacy was used)
+ALTER TABLE "institution_escrows" ALTER COLUMN "privacy_level" SET DEFAULT 'STEALTH';
+
+-- AlterTable: Add stealth meta-address link to institution_accounts (1:1)
 ALTER TABLE "institution_accounts" ADD COLUMN "stealth_meta_address_id" TEXT;
 
 -- AddForeignKey
 ALTER TABLE "institution_accounts" ADD CONSTRAINT "institution_accounts_stealth_meta_address_id_fkey" FOREIGN KEY ("stealth_meta_address_id") REFERENCES "stealth_meta_addresses"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- CreateIndex (unique: 1:1 relationship between account and meta-address)
+CREATE UNIQUE INDEX "institution_accounts_stealth_meta_address_id_key" ON "institution_accounts"("stealth_meta_address_id");
 
 -- CreateIndex
 CREATE INDEX "stealth_meta_addresses_institution_client_id_idx" ON "stealth_meta_addresses"("institution_client_id");
@@ -66,4 +76,4 @@ CREATE INDEX "stealth_payments_status_idx" ON "stealth_payments"("status");
 ALTER TABLE "stealth_meta_addresses" ADD CONSTRAINT "stealth_meta_addresses_institution_client_id_fkey" FOREIGN KEY ("institution_client_id") REFERENCES "institution_clients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stealth_payments" ADD CONSTRAINT "stealth_payments_meta_address_id_fkey" FOREIGN KEY ("meta_address_id") REFERENCES "stealth_meta_addresses"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "stealth_payments" ADD CONSTRAINT "stealth_payments_meta_address_id_fkey" FOREIGN KEY ("meta_address_id") REFERENCES "stealth_meta_addresses"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -1012,7 +1012,7 @@ model InstitutionAccount {
   isActive  Boolean @default(true)  @map("is_active")
 
   // Stealth / Privacy
-  stealthMetaAddressId String? @map("stealth_meta_address_id")
+  stealthMetaAddressId String? @unique @map("stealth_meta_address_id")
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
@@ -1203,7 +1203,7 @@ model InstitutionEscrow {
   approvalInstructions  String?                   @map("approval_instructions")
 
   // Privacy
-  privacyLevel          String?                   @default("STEALTH") @map("privacy_level")
+  privacyLevel          PrivacyLevel?              @default(STEALTH) @map("privacy_level")
   stealthPaymentId      String?                   @map("stealth_payment_id")
 
   // On-chain references
@@ -1547,6 +1547,11 @@ model SystemSetting {
 // STEALTH ADDRESS / PRIVACY MODELS
 // ============================================
 
+enum PrivacyLevel {
+  NONE
+  STEALTH
+}
+
 // Stealth meta-address for institution clients (scan + spend keypairs)
 model StealthMetaAddress {
   id                  String   @id @default(uuid())
@@ -1586,7 +1591,7 @@ model StealthPayment {
   confirmedAt         DateTime? @map("confirmed_at")
   sweptAt             DateTime? @map("swept_at")
 
-  metaAddress         StealthMetaAddress @relation(fields: [metaAddressId], references: [id])
+  metaAddress         StealthMetaAddress @relation(fields: [metaAddressId], references: [id], onDelete: Cascade)
 
   @@index([metaAddressId])
   @@index([stealthAddress])

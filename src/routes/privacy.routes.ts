@@ -5,7 +5,7 @@
  * All endpoints require institution JWT authentication.
  */
 
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import {
   requireInstitutionAuth,
   InstitutionAuthenticatedRequest,
@@ -34,7 +34,7 @@ const strictRateLimiter = rateLimit({
 function requirePrivacyEnabled(
   _req: InstitutionAuthenticatedRequest,
   res: Response,
-  next: Function
+  next: NextFunction
 ): void {
   if (!isPrivacyEnabled()) {
     res.status(503).json({
@@ -55,10 +55,30 @@ router.post(
   requirePrivacyEnabled,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
+      // Validate label if provided
+      if (req.body.label !== undefined) {
+        if (typeof req.body.label !== 'string' || req.body.label.trim().length === 0) {
+          res.status(400).json({
+            error: 'Validation Error',
+            message: 'label must be a non-empty string',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+        if (req.body.label.length > 100) {
+          res.status(400).json({
+            error: 'Validation Error',
+            message: 'label must be at most 100 characters',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      }
+
       const service = getStealthAddressService();
       const result = await service.registerMetaAddress(
         req.institutionClient!.clientId,
-        req.body.label
+        req.body.label?.trim()
       );
 
       res.status(201).json({
@@ -213,9 +233,11 @@ router.get(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getStealthAddressService();
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
+      const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
       const result = await service.listPayments(req.institutionClient!.clientId, {
-        limit: parseInt(req.query.limit as string) || 20,
-        offset: parseInt(req.query.offset as string) || 0,
+        limit,
+        offset,
         status: req.query.status as any,
       });
 

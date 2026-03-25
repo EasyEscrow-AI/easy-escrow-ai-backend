@@ -78,21 +78,30 @@ export async function resolveReleaseDestination(
       };
     }
 
-    const { stealthPaymentId, stealthAddress, ephemeralPublicKey } =
-      await stealthService.createStealthPayment({
-        metaAddressId,
-        escrowId,
-        tokenMint,
-        amountRaw,
-      });
+    try {
+      const { stealthPaymentId, stealthAddress, ephemeralPublicKey } =
+        await stealthService.createStealthPayment({
+          metaAddressId,
+          escrowId,
+          tokenMint,
+          amountRaw,
+        });
 
-    return {
-      recipientAddress: stealthAddress,
-      privacyLevel: PrivacyLevel.STEALTH,
-      stealthPaymentId,
-      ephemeralPublicKey,
-      useJito,
-    };
+      return {
+        recipientAddress: stealthAddress,
+        privacyLevel: PrivacyLevel.STEALTH,
+        stealthPaymentId,
+        ephemeralPublicKey,
+        useJito,
+      };
+    } catch (error) {
+      console.error('[PrivacyRouter] createStealthPayment failed, falling back to NONE:', error);
+      return {
+        recipientAddress: recipientWallet,
+        privacyLevel: PrivacyLevel.NONE,
+        useJito,
+      };
+    }
   }
 
   throw new Error(`Unknown privacy level: ${level}`);

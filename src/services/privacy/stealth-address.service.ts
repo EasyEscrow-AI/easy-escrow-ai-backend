@@ -148,6 +148,17 @@ export class StealthAddressService {
   async getMetaAddress(clientId: string, metaAddressId: string) {
     const record = await prisma.stealthMetaAddress.findUnique({
       where: { id: metaAddressId },
+      select: {
+        id: true,
+        institutionClientId: true,
+        label: true,
+        scanPublicKey: true,
+        spendPublicKey: true,
+        viewingKeyShared: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!record || record.institutionClientId !== clientId) {
@@ -228,24 +239,30 @@ export class StealthAddressService {
    * Confirm a stealth payment (after on-chain transaction succeeds).
    */
   async confirmStealthPayment(paymentId: string, releaseTxSignature: string): Promise<void> {
-    await prisma.stealthPayment.update({
-      where: { id: paymentId },
+    const result = await prisma.stealthPayment.updateMany({
+      where: { id: paymentId, status: 'PENDING' },
       data: {
         status: 'CONFIRMED',
         releaseTxSignature,
         confirmedAt: new Date(),
       },
     });
+    if (result.count === 0) {
+      console.warn(`[StealthAddress] confirmStealthPayment: payment ${paymentId} not in PENDING status, skipped`);
+    }
   }
 
   /**
-   * Mark a stealth payment as failed.
+   * Mark a stealth payment as failed (only if currently PENDING).
    */
   async failStealthPayment(paymentId: string): Promise<void> {
-    await prisma.stealthPayment.update({
-      where: { id: paymentId },
+    const result = await prisma.stealthPayment.updateMany({
+      where: { id: paymentId, status: 'PENDING' },
       data: { status: 'FAILED' },
     });
+    if (result.count === 0) {
+      console.warn(`[StealthAddress] failStealthPayment: payment ${paymentId} not in PENDING status, skipped`);
+    }
   }
 
   /**
@@ -436,6 +453,9 @@ export class StealthAddressService {
     const destination = new PublicKey(destinationWallet);
 
     const amount = Number(payment.amountRaw);
+    if (!Number.isSafeInteger(amount)) {
+      throw new Error(`amountRaw ${payment.amountRaw} exceeds Number.MAX_SAFE_INTEGER — cannot safely convert`);
+    }
     const txSignature = await sendTokensFromStealth({
       connection,
       scalarKey,

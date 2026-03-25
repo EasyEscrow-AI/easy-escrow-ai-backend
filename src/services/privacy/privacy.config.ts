@@ -18,11 +18,23 @@ export interface PrivacyConfig {
 export function loadPrivacyConfig(): PrivacyConfig {
   const enabled = process.env.PRIVACY_ENABLED !== 'false'; // true by default
 
+  // Validate DEFAULT_PRIVACY_LEVEL if provided
+  const rawLevel = process.env.DEFAULT_PRIVACY_LEVEL;
+  let defaultPrivacyLevel = PrivacyLevel.STEALTH;
+  if (rawLevel) {
+    if (Object.values(PrivacyLevel).includes(rawLevel as PrivacyLevel)) {
+      defaultPrivacyLevel = rawLevel as PrivacyLevel;
+    } else {
+      console.warn(
+        `[PrivacyConfig] Invalid DEFAULT_PRIVACY_LEVEL="${rawLevel}", using STEALTH. Valid values: ${Object.values(PrivacyLevel).join(', ')}`
+      );
+    }
+  }
+
   return {
     enabled,
     stealthKeyEncryptionSecret: process.env.STEALTH_KEY_ENCRYPTION_SECRET || '',
-    defaultPrivacyLevel:
-      (process.env.DEFAULT_PRIVACY_LEVEL as PrivacyLevel) || PrivacyLevel.STEALTH,
+    defaultPrivacyLevel,
     jitoDefault: process.env.PRIVACY_JITO_DEFAULT?.toLowerCase() === 'true',
   };
 }

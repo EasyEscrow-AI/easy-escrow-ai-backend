@@ -61,7 +61,12 @@ export interface StealthPaymentRecord {
   sweptAt: Date | null;
 }
 
-export type StealthPaymentStatus = 'PENDING' | 'CONFIRMED' | 'SWEPT' | 'FAILED';
+export enum StealthPaymentStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  SWEPT = 'SWEPT',
+  FAILED = 'FAILED',
+}
 
 export interface SweepResult {
   txSignature: string;

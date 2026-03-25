@@ -21,8 +21,9 @@ export interface EncryptedData {
 }
 
 function deriveKey(secret: string): Buffer {
-  // Use SHA-256 to derive a fixed-length key from the secret
-  return crypto.createHash('sha256').update(secret).digest();
+  // Use HKDF to derive a fixed-length key from the secret (more robust than plain SHA-256)
+  const salt = Buffer.alloc(KEY_LENGTH, 0); // fixed zero salt for deterministic derivation
+  return Buffer.from(crypto.hkdfSync('sha256', secret, salt, 'stealth-key-encryption', KEY_LENGTH));
 }
 
 /**

@@ -154,6 +154,11 @@ export type InstitutionAiAnalysis = $Result.DefaultSelection<Prisma.$Institution
  */
 export type InstitutionCorridor = $Result.DefaultSelection<Prisma.$InstitutionCorridorPayload>
 /**
+ * Model CorridorThresholdRule
+ * 
+ */
+export type CorridorThresholdRule = $Result.DefaultSelection<Prisma.$CorridorThresholdRulePayload>
+/**
  * Model InstitutionApprovedToken
  * 
  */
@@ -590,6 +595,14 @@ export const NotificationPriority: {
 
 export type NotificationPriority = (typeof NotificationPriority)[keyof typeof NotificationPriority]
 
+
+export const PrivacyLevel: {
+  NONE: 'NONE',
+  STEALTH: 'STEALTH'
+};
+
+export type PrivacyLevel = (typeof PrivacyLevel)[keyof typeof PrivacyLevel]
+
 }
 
 export type AgreementStatus = $Enums.AgreementStatus
@@ -727,6 +740,10 @@ export const NotificationType: typeof $Enums.NotificationType
 export type NotificationPriority = $Enums.NotificationPriority
 
 export const NotificationPriority: typeof $Enums.NotificationPriority
+
+export type PrivacyLevel = $Enums.PrivacyLevel
+
+export const PrivacyLevel: typeof $Enums.PrivacyLevel
 
 /**
  * ##  Prisma Client ʲˢ
@@ -1125,6 +1142,16 @@ export class PrismaClient<
     * ```
     */
   get institutionCorridor(): Prisma.InstitutionCorridorDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.corridorThresholdRule`: Exposes CRUD operations for the **CorridorThresholdRule** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CorridorThresholdRules
+    * const corridorThresholdRules = await prisma.corridorThresholdRule.findMany()
+    * ```
+    */
+  get corridorThresholdRule(): Prisma.CorridorThresholdRuleDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.institutionApprovedToken`: Exposes CRUD operations for the **InstitutionApprovedToken** model.
@@ -1673,6 +1700,7 @@ export namespace Prisma {
     InstitutionAuditLog: 'InstitutionAuditLog',
     InstitutionAiAnalysis: 'InstitutionAiAnalysis',
     InstitutionCorridor: 'InstitutionCorridor',
+    CorridorThresholdRule: 'CorridorThresholdRule',
     InstitutionApprovedToken: 'InstitutionApprovedToken',
     AdminUser: 'AdminUser',
     AdminRefreshToken: 'AdminRefreshToken',
@@ -1699,7 +1727,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionAccount" | "institutionBranch" | "directPayment" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "institutionApprovedToken" | "adminUser" | "adminRefreshToken" | "institutionFile" | "institutionNotification" | "systemSetting" | "stealthMetaAddress" | "stealthPayment"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "twoPhaseSwap" | "institutionClient" | "institutionWallet" | "institutionAccount" | "institutionBranch" | "directPayment" | "institutionRefreshToken" | "institutionClientSettings" | "institutionApiKey" | "institutionEscrow" | "institutionDeposit" | "institutionAuditLog" | "institutionAiAnalysis" | "institutionCorridor" | "corridorThresholdRule" | "institutionApprovedToken" | "adminUser" | "adminRefreshToken" | "institutionFile" | "institutionNotification" | "systemSetting" | "stealthMetaAddress" | "stealthPayment"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3775,6 +3803,80 @@ export namespace Prisma {
           }
         }
       }
+      CorridorThresholdRule: {
+        payload: Prisma.$CorridorThresholdRulePayload<ExtArgs>
+        fields: Prisma.CorridorThresholdRuleFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CorridorThresholdRuleFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CorridorThresholdRuleFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>
+          }
+          findFirst: {
+            args: Prisma.CorridorThresholdRuleFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CorridorThresholdRuleFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>
+          }
+          findMany: {
+            args: Prisma.CorridorThresholdRuleFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>[]
+          }
+          create: {
+            args: Prisma.CorridorThresholdRuleCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>
+          }
+          createMany: {
+            args: Prisma.CorridorThresholdRuleCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CorridorThresholdRuleCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>[]
+          }
+          delete: {
+            args: Prisma.CorridorThresholdRuleDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>
+          }
+          update: {
+            args: Prisma.CorridorThresholdRuleUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>
+          }
+          deleteMany: {
+            args: Prisma.CorridorThresholdRuleDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CorridorThresholdRuleUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CorridorThresholdRuleUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>[]
+          }
+          upsert: {
+            args: Prisma.CorridorThresholdRuleUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CorridorThresholdRulePayload>
+          }
+          aggregate: {
+            args: Prisma.CorridorThresholdRuleAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCorridorThresholdRule>
+          }
+          groupBy: {
+            args: Prisma.CorridorThresholdRuleGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CorridorThresholdRuleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CorridorThresholdRuleCountArgs<ExtArgs>
+            result: $Utils.Optional<CorridorThresholdRuleCountAggregateOutputType> | number
+          }
+        }
+      }
       InstitutionApprovedToken: {
         payload: Prisma.$InstitutionApprovedTokenPayload<ExtArgs>
         fields: Prisma.InstitutionApprovedTokenFieldRefs
@@ -4491,6 +4593,7 @@ export namespace Prisma {
     institutionAuditLog?: InstitutionAuditLogOmit
     institutionAiAnalysis?: InstitutionAiAnalysisOmit
     institutionCorridor?: InstitutionCorridorOmit
+    corridorThresholdRule?: CorridorThresholdRuleOmit
     institutionApprovedToken?: InstitutionApprovedTokenOmit
     adminUser?: AdminUserOmit
     adminRefreshToken?: AdminRefreshTokenOmit
@@ -5034,6 +5137,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type InstitutionCorridorCountOutputType
+   */
+
+  export type InstitutionCorridorCountOutputType = {
+    thresholdRules: number
+  }
+
+  export type InstitutionCorridorCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    thresholdRules?: boolean | InstitutionCorridorCountOutputTypeCountThresholdRulesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * InstitutionCorridorCountOutputType without action
+   */
+  export type InstitutionCorridorCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionCorridorCountOutputType
+     */
+    select?: InstitutionCorridorCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * InstitutionCorridorCountOutputType without action
+   */
+  export type InstitutionCorridorCountOutputTypeCountThresholdRulesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CorridorThresholdRuleWhereInput
+  }
+
+
+  /**
    * Count Type AdminUserCountOutputType
    */
 
@@ -5070,10 +5204,12 @@ export namespace Prisma {
 
   export type StealthMetaAddressCountOutputType = {
     stealthPayments: number
+    accounts: number
   }
 
   export type StealthMetaAddressCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     stealthPayments?: boolean | StealthMetaAddressCountOutputTypeCountStealthPaymentsArgs
+    accounts?: boolean | StealthMetaAddressCountOutputTypeCountAccountsArgs
   }
 
   // Custom InputTypes
@@ -5092,6 +5228,13 @@ export namespace Prisma {
    */
   export type StealthMetaAddressCountOutputTypeCountStealthPaymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: StealthPaymentWhereInput
+  }
+
+  /**
+   * StealthMetaAddressCountOutputType without action
+   */
+  export type StealthMetaAddressCountOutputTypeCountAccountsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstitutionAccountWhereInput
   }
 
 
@@ -27498,8 +27641,10 @@ export namespace Prisma {
     notifyOnEscrowFunded: boolean | null
     notifyOnEscrowReleased: boolean | null
     notifyOnComplianceAlert: boolean | null
+    defaultCurrency: string | null
     isDefault: boolean | null
     isActive: boolean | null
+    stealthMetaAddressId: string | null
     createdAt: Date | null
     updatedAt: Date | null
     branchId: string | null
@@ -27534,8 +27679,10 @@ export namespace Prisma {
     notifyOnEscrowFunded: boolean | null
     notifyOnEscrowReleased: boolean | null
     notifyOnComplianceAlert: boolean | null
+    defaultCurrency: string | null
     isDefault: boolean | null
     isActive: boolean | null
+    stealthMetaAddressId: string | null
     createdAt: Date | null
     updatedAt: Date | null
     branchId: string | null
@@ -27571,8 +27718,10 @@ export namespace Prisma {
     notifyOnEscrowFunded: number
     notifyOnEscrowReleased: number
     notifyOnComplianceAlert: number
+    defaultCurrency: number
     isDefault: number
     isActive: number
+    stealthMetaAddressId: number
     createdAt: number
     updatedAt: number
     branchId: number
@@ -27629,8 +27778,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: true
     notifyOnEscrowReleased?: true
     notifyOnComplianceAlert?: true
+    defaultCurrency?: true
     isDefault?: true
     isActive?: true
+    stealthMetaAddressId?: true
     createdAt?: true
     updatedAt?: true
     branchId?: true
@@ -27665,8 +27816,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: true
     notifyOnEscrowReleased?: true
     notifyOnComplianceAlert?: true
+    defaultCurrency?: true
     isDefault?: true
     isActive?: true
+    stealthMetaAddressId?: true
     createdAt?: true
     updatedAt?: true
     branchId?: true
@@ -27702,8 +27855,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: true
     notifyOnEscrowReleased?: true
     notifyOnComplianceAlert?: true
+    defaultCurrency?: true
     isDefault?: true
     isActive?: true
+    stealthMetaAddressId?: true
     createdAt?: true
     updatedAt?: true
     branchId?: true
@@ -27826,8 +27981,10 @@ export namespace Prisma {
     notifyOnEscrowFunded: boolean
     notifyOnEscrowReleased: boolean
     notifyOnComplianceAlert: boolean
+    defaultCurrency: string
     isDefault: boolean
     isActive: boolean
+    stealthMetaAddressId: string | null
     createdAt: Date
     updatedAt: Date
     branchId: string | null
@@ -27882,13 +28039,16 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
+    stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAccount"]>
 
   export type InstitutionAccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -27921,13 +28081,16 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
+    stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAccount"]>
 
   export type InstitutionAccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -27960,13 +28123,16 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
+    stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
   }, ExtArgs["result"]["institutionAccount"]>
 
   export type InstitutionAccountSelectScalar = {
@@ -27999,25 +28165,30 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     branchId?: boolean
   }
 
-  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "isDefault" | "isActive" | "createdAt" | "updatedAt" | "branchId", ExtArgs["result"]["institutionAccount"]>
+  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "defaultCurrency" | "isDefault" | "isActive" | "stealthMetaAddressId" | "createdAt" | "updatedAt" | "branchId", ExtArgs["result"]["institutionAccount"]>
   export type InstitutionAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
+    stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
   }
   export type InstitutionAccountIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
+    stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
   }
   export type InstitutionAccountIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
+    stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
   }
 
   export type $InstitutionAccountPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -28025,6 +28196,7 @@ export namespace Prisma {
     objects: {
       client: Prisma.$InstitutionClientPayload<ExtArgs>
       branch: Prisma.$InstitutionBranchPayload<ExtArgs> | null
+      stealthMetaAddress: Prisma.$StealthMetaAddressPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -28056,8 +28228,10 @@ export namespace Prisma {
       notifyOnEscrowFunded: boolean
       notifyOnEscrowReleased: boolean
       notifyOnComplianceAlert: boolean
+      defaultCurrency: string
       isDefault: boolean
       isActive: boolean
+      stealthMetaAddressId: string | null
       createdAt: Date
       updatedAt: Date
       branchId: string | null
@@ -28457,6 +28631,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     branch<T extends InstitutionAccount$branchArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionAccount$branchArgs<ExtArgs>>): Prisma__InstitutionBranchClient<$Result.GetResult<Prisma.$InstitutionBranchPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    stealthMetaAddress<T extends InstitutionAccount$stealthMetaAddressArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionAccount$stealthMetaAddressArgs<ExtArgs>>): Prisma__StealthMetaAddressClient<$Result.GetResult<Prisma.$StealthMetaAddressPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -28515,8 +28690,10 @@ export namespace Prisma {
     readonly notifyOnEscrowFunded: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly notifyOnEscrowReleased: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly notifyOnComplianceAlert: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly defaultCurrency: FieldRef<"InstitutionAccount", 'String'>
     readonly isDefault: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly isActive: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly stealthMetaAddressId: FieldRef<"InstitutionAccount", 'String'>
     readonly createdAt: FieldRef<"InstitutionAccount", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionAccount", 'DateTime'>
     readonly branchId: FieldRef<"InstitutionAccount", 'String'>
@@ -28932,6 +29109,25 @@ export namespace Prisma {
      */
     include?: InstitutionBranchInclude<ExtArgs> | null
     where?: InstitutionBranchWhereInput
+  }
+
+  /**
+   * InstitutionAccount.stealthMetaAddress
+   */
+  export type InstitutionAccount$stealthMetaAddressArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StealthMetaAddress
+     */
+    select?: StealthMetaAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StealthMetaAddress
+     */
+    omit?: StealthMetaAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StealthMetaAddressInclude<ExtArgs> | null
+    where?: StealthMetaAddressWhereInput
   }
 
   /**
@@ -30257,6 +30453,7 @@ export namespace Prisma {
 
   export type DirectPaymentMinAggregateOutputType = {
     id: string | null
+    paymentCode: string | null
     clientId: string | null
     sender: string | null
     senderCountry: string | null
@@ -30280,6 +30477,7 @@ export namespace Prisma {
 
   export type DirectPaymentMaxAggregateOutputType = {
     id: string | null
+    paymentCode: string | null
     clientId: string | null
     sender: string | null
     senderCountry: string | null
@@ -30303,6 +30501,7 @@ export namespace Prisma {
 
   export type DirectPaymentCountAggregateOutputType = {
     id: number
+    paymentCode: number
     clientId: number
     sender: number
     senderCountry: number
@@ -30340,6 +30539,7 @@ export namespace Prisma {
 
   export type DirectPaymentMinAggregateInputType = {
     id?: true
+    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30363,6 +30563,7 @@ export namespace Prisma {
 
   export type DirectPaymentMaxAggregateInputType = {
     id?: true
+    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30386,6 +30587,7 @@ export namespace Prisma {
 
   export type DirectPaymentCountAggregateInputType = {
     id?: true
+    paymentCode?: true
     clientId?: true
     sender?: true
     senderCountry?: true
@@ -30496,6 +30698,7 @@ export namespace Prisma {
 
   export type DirectPaymentGroupByOutputType = {
     id: string
+    paymentCode: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -30538,6 +30741,7 @@ export namespace Prisma {
 
   export type DirectPaymentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30562,6 +30766,7 @@ export namespace Prisma {
 
   export type DirectPaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30586,6 +30791,7 @@ export namespace Prisma {
 
   export type DirectPaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30610,6 +30816,7 @@ export namespace Prisma {
 
   export type DirectPaymentSelectScalar = {
     id?: boolean
+    paymentCode?: boolean
     clientId?: boolean
     sender?: boolean
     senderCountry?: boolean
@@ -30631,7 +30838,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type DirectPaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "sender" | "senderCountry" | "senderWallet" | "recipient" | "recipientCountry" | "recipientWallet" | "amount" | "currency" | "corridor" | "status" | "txHash" | "platformFee" | "riskScore" | "settlementMode" | "releaseMode" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["directPayment"]>
+  export type DirectPaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "paymentCode" | "clientId" | "sender" | "senderCountry" | "senderWallet" | "recipient" | "recipientCountry" | "recipientWallet" | "amount" | "currency" | "corridor" | "status" | "txHash" | "platformFee" | "riskScore" | "settlementMode" | "releaseMode" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["directPayment"]>
   export type DirectPaymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -30649,6 +30856,7 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      paymentCode: string | null
       clientId: string
       sender: string
       senderCountry: string
@@ -31093,6 +31301,7 @@ export namespace Prisma {
    */
   interface DirectPaymentFieldRefs {
     readonly id: FieldRef<"DirectPayment", 'String'>
+    readonly paymentCode: FieldRef<"DirectPayment", 'String'>
     readonly clientId: FieldRef<"DirectPayment", 'String'>
     readonly sender: FieldRef<"DirectPayment", 'String'>
     readonly senderCountry: FieldRef<"DirectPayment", 'String'>
@@ -32638,11 +32847,17 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgAggregateOutputType = {
     autoApproveThreshold: Decimal | null
     manualReviewThreshold: Decimal | null
+    feeBps: number | null
+    minFeeUsdc: Decimal | null
+    maxFeeUsdc: Decimal | null
   }
 
   export type InstitutionClientSettingsSumAggregateOutputType = {
     autoApproveThreshold: Decimal | null
     manualReviewThreshold: Decimal | null
+    feeBps: number | null
+    minFeeUsdc: Decimal | null
+    maxFeeUsdc: Decimal | null
   }
 
   export type InstitutionClientSettingsMinAggregateOutputType = {
@@ -32662,6 +32877,13 @@ export namespace Prisma {
     riskTolerance: string | null
     defaultToken: string | null
     emailNotifications: boolean | null
+    language: string | null
+    theme: string | null
+    twoFactorEnabled: boolean | null
+    aiRecommendations: boolean | null
+    feeBps: number | null
+    minFeeUsdc: Decimal | null
+    maxFeeUsdc: Decimal | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -32683,6 +32905,13 @@ export namespace Prisma {
     riskTolerance: string | null
     defaultToken: string | null
     emailNotifications: boolean | null
+    language: string | null
+    theme: string | null
+    twoFactorEnabled: boolean | null
+    aiRecommendations: boolean | null
+    feeBps: number | null
+    minFeeUsdc: Decimal | null
+    maxFeeUsdc: Decimal | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -32705,6 +32934,14 @@ export namespace Prisma {
     riskTolerance: number
     defaultToken: number
     emailNotifications: number
+    language: number
+    theme: number
+    twoFactorEnabled: number
+    aiRecommendations: number
+    feeBps: number
+    minFeeUsdc: number
+    maxFeeUsdc: number
+    notificationPreferences: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -32714,11 +32951,17 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgAggregateInputType = {
     autoApproveThreshold?: true
     manualReviewThreshold?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
   }
 
   export type InstitutionClientSettingsSumAggregateInputType = {
     autoApproveThreshold?: true
     manualReviewThreshold?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
   }
 
   export type InstitutionClientSettingsMinAggregateInputType = {
@@ -32738,6 +32981,13 @@ export namespace Prisma {
     riskTolerance?: true
     defaultToken?: true
     emailNotifications?: true
+    language?: true
+    theme?: true
+    twoFactorEnabled?: true
+    aiRecommendations?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -32759,6 +33009,13 @@ export namespace Prisma {
     riskTolerance?: true
     defaultToken?: true
     emailNotifications?: true
+    language?: true
+    theme?: true
+    twoFactorEnabled?: true
+    aiRecommendations?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -32781,6 +33038,14 @@ export namespace Prisma {
     riskTolerance?: true
     defaultToken?: true
     emailNotifications?: true
+    language?: true
+    theme?: true
+    twoFactorEnabled?: true
+    aiRecommendations?: true
+    feeBps?: true
+    minFeeUsdc?: true
+    maxFeeUsdc?: true
+    notificationPreferences?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -32890,6 +33155,14 @@ export namespace Prisma {
     riskTolerance: string
     defaultToken: string
     emailNotifications: boolean
+    language: string | null
+    theme: string | null
+    twoFactorEnabled: boolean
+    aiRecommendations: boolean
+    feeBps: number
+    minFeeUsdc: Decimal
+    maxFeeUsdc: Decimal
+    notificationPreferences: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: InstitutionClientSettingsCountAggregateOutputType | null
@@ -32931,6 +33204,14 @@ export namespace Prisma {
     riskTolerance?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
+    language?: boolean
+    theme?: boolean
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: boolean
+    minFeeUsdc?: boolean
+    maxFeeUsdc?: boolean
+    notificationPreferences?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32954,6 +33235,14 @@ export namespace Prisma {
     riskTolerance?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
+    language?: boolean
+    theme?: boolean
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: boolean
+    minFeeUsdc?: boolean
+    maxFeeUsdc?: boolean
+    notificationPreferences?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -32977,6 +33266,14 @@ export namespace Prisma {
     riskTolerance?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
+    language?: boolean
+    theme?: boolean
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: boolean
+    minFeeUsdc?: boolean
+    maxFeeUsdc?: boolean
+    notificationPreferences?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -33000,11 +33297,19 @@ export namespace Prisma {
     riskTolerance?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
+    language?: boolean
+    theme?: boolean
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: boolean
+    minFeeUsdc?: boolean
+    maxFeeUsdc?: boolean
+    notificationPreferences?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
+  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "language" | "theme" | "twoFactorEnabled" | "aiRecommendations" | "feeBps" | "minFeeUsdc" | "maxFeeUsdc" | "notificationPreferences" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
   export type InstitutionClientSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -33038,6 +33343,14 @@ export namespace Prisma {
       riskTolerance: string
       defaultToken: string
       emailNotifications: boolean
+      language: string | null
+      theme: string | null
+      twoFactorEnabled: boolean
+      aiRecommendations: boolean
+      feeBps: number
+      minFeeUsdc: Prisma.Decimal
+      maxFeeUsdc: Prisma.Decimal
+      notificationPreferences: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["institutionClientSettings"]>
@@ -33481,6 +33794,14 @@ export namespace Prisma {
     readonly riskTolerance: FieldRef<"InstitutionClientSettings", 'String'>
     readonly defaultToken: FieldRef<"InstitutionClientSettings", 'String'>
     readonly emailNotifications: FieldRef<"InstitutionClientSettings", 'Boolean'>
+    readonly language: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly theme: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly twoFactorEnabled: FieldRef<"InstitutionClientSettings", 'Boolean'>
+    readonly aiRecommendations: FieldRef<"InstitutionClientSettings", 'Boolean'>
+    readonly feeBps: FieldRef<"InstitutionClientSettings", 'Int'>
+    readonly minFeeUsdc: FieldRef<"InstitutionClientSettings", 'Decimal'>
+    readonly maxFeeUsdc: FieldRef<"InstitutionClientSettings", 'Decimal'>
+    readonly notificationPreferences: FieldRef<"InstitutionClientSettings", 'Json'>
     readonly createdAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionClientSettings", 'DateTime'>
   }
@@ -35055,11 +35376,15 @@ export namespace Prisma {
     status: $Enums.InstitutionEscrowStatus | null
     settlementAuthority: string | null
     riskScore: number | null
-    privacyLevel: string | null
+    settlementMode: string | null
+    releaseMode: string | null
+    approvalInstructions: string | null
+    privacyLevel: $Enums.PrivacyLevel | null
     stealthPaymentId: string | null
     escrowPda: string | null
     vaultPda: string | null
     nonceAccount: string | null
+    initTxSignature: string | null
     depositTxSignature: string | null
     releaseTxSignature: string | null
     cancelTxSignature: string | null
@@ -35085,11 +35410,15 @@ export namespace Prisma {
     status: $Enums.InstitutionEscrowStatus | null
     settlementAuthority: string | null
     riskScore: number | null
-    privacyLevel: string | null
+    settlementMode: string | null
+    releaseMode: string | null
+    approvalInstructions: string | null
+    privacyLevel: $Enums.PrivacyLevel | null
     stealthPaymentId: string | null
     escrowPda: string | null
     vaultPda: string | null
     nonceAccount: string | null
+    initTxSignature: string | null
     depositTxSignature: string | null
     releaseTxSignature: string | null
     cancelTxSignature: string | null
@@ -35115,11 +35444,17 @@ export namespace Prisma {
     status: number
     settlementAuthority: number
     riskScore: number
+    settlementMode: number
+    releaseMode: number
+    approvalParties: number
+    releaseConditions: number
+    approvalInstructions: number
     privacyLevel: number
     stealthPaymentId: number
     escrowPda: number
     vaultPda: number
     nonceAccount: number
+    initTxSignature: number
     depositTxSignature: number
     releaseTxSignature: number
     cancelTxSignature: number
@@ -35159,11 +35494,15 @@ export namespace Prisma {
     status?: true
     settlementAuthority?: true
     riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    approvalInstructions?: true
     privacyLevel?: true
     stealthPaymentId?: true
     escrowPda?: true
     vaultPda?: true
     nonceAccount?: true
+    initTxSignature?: true
     depositTxSignature?: true
     releaseTxSignature?: true
     cancelTxSignature?: true
@@ -35189,11 +35528,15 @@ export namespace Prisma {
     status?: true
     settlementAuthority?: true
     riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    approvalInstructions?: true
     privacyLevel?: true
     stealthPaymentId?: true
     escrowPda?: true
     vaultPda?: true
     nonceAccount?: true
+    initTxSignature?: true
     depositTxSignature?: true
     releaseTxSignature?: true
     cancelTxSignature?: true
@@ -35219,11 +35562,17 @@ export namespace Prisma {
     status?: true
     settlementAuthority?: true
     riskScore?: true
+    settlementMode?: true
+    releaseMode?: true
+    approvalParties?: true
+    releaseConditions?: true
+    approvalInstructions?: true
     privacyLevel?: true
     stealthPaymentId?: true
     escrowPda?: true
     vaultPda?: true
     nonceAccount?: true
+    initTxSignature?: true
     depositTxSignature?: true
     releaseTxSignature?: true
     cancelTxSignature?: true
@@ -35336,11 +35685,17 @@ export namespace Prisma {
     status: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore: number | null
-    privacyLevel: string | null
+    settlementMode: string | null
+    releaseMode: string | null
+    approvalParties: string[]
+    releaseConditions: string[]
+    approvalInstructions: string | null
+    privacyLevel: $Enums.PrivacyLevel | null
     stealthPaymentId: string | null
     escrowPda: string | null
     vaultPda: string | null
     nonceAccount: string | null
+    initTxSignature: string | null
     depositTxSignature: string | null
     releaseTxSignature: string | null
     cancelTxSignature: string | null
@@ -35385,11 +35740,17 @@ export namespace Prisma {
     status?: boolean
     settlementAuthority?: boolean
     riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    approvalParties?: boolean
+    releaseConditions?: boolean
+    approvalInstructions?: boolean
     privacyLevel?: boolean
     stealthPaymentId?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
     nonceAccount?: boolean
+    initTxSignature?: boolean
     depositTxSignature?: boolean
     releaseTxSignature?: boolean
     cancelTxSignature?: boolean
@@ -35421,11 +35782,17 @@ export namespace Prisma {
     status?: boolean
     settlementAuthority?: boolean
     riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    approvalParties?: boolean
+    releaseConditions?: boolean
+    approvalInstructions?: boolean
     privacyLevel?: boolean
     stealthPaymentId?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
     nonceAccount?: boolean
+    initTxSignature?: boolean
     depositTxSignature?: boolean
     releaseTxSignature?: boolean
     cancelTxSignature?: boolean
@@ -35452,11 +35819,17 @@ export namespace Prisma {
     status?: boolean
     settlementAuthority?: boolean
     riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    approvalParties?: boolean
+    releaseConditions?: boolean
+    approvalInstructions?: boolean
     privacyLevel?: boolean
     stealthPaymentId?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
     nonceAccount?: boolean
+    initTxSignature?: boolean
     depositTxSignature?: boolean
     releaseTxSignature?: boolean
     cancelTxSignature?: boolean
@@ -35483,11 +35856,17 @@ export namespace Prisma {
     status?: boolean
     settlementAuthority?: boolean
     riskScore?: boolean
+    settlementMode?: boolean
+    releaseMode?: boolean
+    approvalParties?: boolean
+    releaseConditions?: boolean
+    approvalInstructions?: boolean
     privacyLevel?: boolean
     stealthPaymentId?: boolean
     escrowPda?: boolean
     vaultPda?: boolean
     nonceAccount?: boolean
+    initTxSignature?: boolean
     depositTxSignature?: boolean
     releaseTxSignature?: boolean
     cancelTxSignature?: boolean
@@ -35498,7 +35877,7 @@ export namespace Prisma {
     fundedAt?: boolean
   }
 
-  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "privacyLevel" | "stealthPaymentId" | "escrowPda" | "vaultPda" | "nonceAccount" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
+  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "settlementMode" | "releaseMode" | "approvalParties" | "releaseConditions" | "approvalInstructions" | "privacyLevel" | "stealthPaymentId" | "escrowPda" | "vaultPda" | "nonceAccount" | "initTxSignature" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
   export type InstitutionEscrowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
@@ -35538,11 +35917,17 @@ export namespace Prisma {
       status: $Enums.InstitutionEscrowStatus
       settlementAuthority: string
       riskScore: number | null
-      privacyLevel: string | null
+      settlementMode: string | null
+      releaseMode: string | null
+      approvalParties: string[]
+      releaseConditions: string[]
+      approvalInstructions: string | null
+      privacyLevel: $Enums.PrivacyLevel | null
       stealthPaymentId: string | null
       escrowPda: string | null
       vaultPda: string | null
       nonceAccount: string | null
+      initTxSignature: string | null
       depositTxSignature: string | null
       releaseTxSignature: string | null
       cancelTxSignature: string | null
@@ -35993,11 +36378,17 @@ export namespace Prisma {
     readonly status: FieldRef<"InstitutionEscrow", 'InstitutionEscrowStatus'>
     readonly settlementAuthority: FieldRef<"InstitutionEscrow", 'String'>
     readonly riskScore: FieldRef<"InstitutionEscrow", 'Int'>
-    readonly privacyLevel: FieldRef<"InstitutionEscrow", 'String'>
+    readonly settlementMode: FieldRef<"InstitutionEscrow", 'String'>
+    readonly releaseMode: FieldRef<"InstitutionEscrow", 'String'>
+    readonly approvalParties: FieldRef<"InstitutionEscrow", 'String[]'>
+    readonly releaseConditions: FieldRef<"InstitutionEscrow", 'String[]'>
+    readonly approvalInstructions: FieldRef<"InstitutionEscrow", 'String'>
+    readonly privacyLevel: FieldRef<"InstitutionEscrow", 'PrivacyLevel'>
     readonly stealthPaymentId: FieldRef<"InstitutionEscrow", 'String'>
     readonly escrowPda: FieldRef<"InstitutionEscrow", 'String'>
     readonly vaultPda: FieldRef<"InstitutionEscrow", 'String'>
     readonly nonceAccount: FieldRef<"InstitutionEscrow", 'String'>
+    readonly initTxSignature: FieldRef<"InstitutionEscrow", 'String'>
     readonly depositTxSignature: FieldRef<"InstitutionEscrow", 'String'>
     readonly releaseTxSignature: FieldRef<"InstitutionEscrow", 'String'>
     readonly cancelTxSignature: FieldRef<"InstitutionEscrow", 'String'>
@@ -40024,6 +40415,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorAvgAggregateOutputType = {
+    travelRuleThreshold: Decimal | null
+    eddThreshold: Decimal | null
+    reportingThreshold: Decimal | null
     minAmount: Decimal | null
     maxAmount: Decimal | null
     dailyLimit: Decimal | null
@@ -40031,6 +40425,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorSumAggregateOutputType = {
+    travelRuleThreshold: Decimal | null
+    eddThreshold: Decimal | null
+    reportingThreshold: Decimal | null
     minAmount: Decimal | null
     maxAmount: Decimal | null
     dailyLimit: Decimal | null
@@ -40042,6 +40439,13 @@ export namespace Prisma {
     sourceCountry: string | null
     destCountry: string | null
     code: string | null
+    name: string | null
+    compliance: string | null
+    description: string | null
+    riskReason: string | null
+    travelRuleThreshold: Decimal | null
+    eddThreshold: Decimal | null
+    reportingThreshold: Decimal | null
     minAmount: Decimal | null
     maxAmount: Decimal | null
     dailyLimit: Decimal | null
@@ -40057,6 +40461,13 @@ export namespace Prisma {
     sourceCountry: string | null
     destCountry: string | null
     code: string | null
+    name: string | null
+    compliance: string | null
+    description: string | null
+    riskReason: string | null
+    travelRuleThreshold: Decimal | null
+    eddThreshold: Decimal | null
+    reportingThreshold: Decimal | null
     minAmount: Decimal | null
     maxAmount: Decimal | null
     dailyLimit: Decimal | null
@@ -40072,6 +40483,13 @@ export namespace Prisma {
     sourceCountry: number
     destCountry: number
     code: number
+    name: number
+    compliance: number
+    description: number
+    riskReason: number
+    travelRuleThreshold: number
+    eddThreshold: number
+    reportingThreshold: number
     minAmount: number
     maxAmount: number
     dailyLimit: number
@@ -40086,6 +40504,9 @@ export namespace Prisma {
 
 
   export type InstitutionCorridorAvgAggregateInputType = {
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40093,6 +40514,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorSumAggregateInputType = {
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40104,6 +40528,13 @@ export namespace Prisma {
     sourceCountry?: true
     destCountry?: true
     code?: true
+    name?: true
+    compliance?: true
+    description?: true
+    riskReason?: true
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40119,6 +40550,13 @@ export namespace Prisma {
     sourceCountry?: true
     destCountry?: true
     code?: true
+    name?: true
+    compliance?: true
+    description?: true
+    riskReason?: true
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40134,6 +40572,13 @@ export namespace Prisma {
     sourceCountry?: true
     destCountry?: true
     code?: true
+    name?: true
+    compliance?: true
+    description?: true
+    riskReason?: true
+    travelRuleThreshold?: true
+    eddThreshold?: true
+    reportingThreshold?: true
     minAmount?: true
     maxAmount?: true
     dailyLimit?: true
@@ -40237,6 +40682,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name: string | null
+    compliance: string | null
+    description: string | null
+    riskReason: string | null
+    travelRuleThreshold: Decimal
+    eddThreshold: Decimal
+    reportingThreshold: Decimal
     minAmount: Decimal
     maxAmount: Decimal
     dailyLimit: Decimal
@@ -40272,6 +40724,13 @@ export namespace Prisma {
     sourceCountry?: boolean
     destCountry?: boolean
     code?: boolean
+    name?: boolean
+    compliance?: boolean
+    description?: boolean
+    riskReason?: boolean
+    travelRuleThreshold?: boolean
+    eddThreshold?: boolean
+    reportingThreshold?: boolean
     minAmount?: boolean
     maxAmount?: boolean
     dailyLimit?: boolean
@@ -40281,6 +40740,8 @@ export namespace Prisma {
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    thresholdRules?: boolean | InstitutionCorridor$thresholdRulesArgs<ExtArgs>
+    _count?: boolean | InstitutionCorridorCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionCorridor"]>
 
   export type InstitutionCorridorSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -40288,6 +40749,13 @@ export namespace Prisma {
     sourceCountry?: boolean
     destCountry?: boolean
     code?: boolean
+    name?: boolean
+    compliance?: boolean
+    description?: boolean
+    riskReason?: boolean
+    travelRuleThreshold?: boolean
+    eddThreshold?: boolean
+    reportingThreshold?: boolean
     minAmount?: boolean
     maxAmount?: boolean
     dailyLimit?: boolean
@@ -40304,6 +40772,13 @@ export namespace Prisma {
     sourceCountry?: boolean
     destCountry?: boolean
     code?: boolean
+    name?: boolean
+    compliance?: boolean
+    description?: boolean
+    riskReason?: boolean
+    travelRuleThreshold?: boolean
+    eddThreshold?: boolean
+    reportingThreshold?: boolean
     minAmount?: boolean
     maxAmount?: boolean
     dailyLimit?: boolean
@@ -40320,6 +40795,13 @@ export namespace Prisma {
     sourceCountry?: boolean
     destCountry?: boolean
     code?: boolean
+    name?: boolean
+    compliance?: boolean
+    description?: boolean
+    riskReason?: boolean
+    travelRuleThreshold?: boolean
+    eddThreshold?: boolean
+    reportingThreshold?: boolean
     minAmount?: boolean
     maxAmount?: boolean
     dailyLimit?: boolean
@@ -40331,16 +40813,31 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type InstitutionCorridorOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sourceCountry" | "destCountry" | "code" | "minAmount" | "maxAmount" | "dailyLimit" | "monthlyLimit" | "requiredDocuments" | "riskLevel" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionCorridor"]>
+  export type InstitutionCorridorOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sourceCountry" | "destCountry" | "code" | "name" | "compliance" | "description" | "riskReason" | "travelRuleThreshold" | "eddThreshold" | "reportingThreshold" | "minAmount" | "maxAmount" | "dailyLimit" | "monthlyLimit" | "requiredDocuments" | "riskLevel" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionCorridor"]>
+  export type InstitutionCorridorInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    thresholdRules?: boolean | InstitutionCorridor$thresholdRulesArgs<ExtArgs>
+    _count?: boolean | InstitutionCorridorCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type InstitutionCorridorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type InstitutionCorridorIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $InstitutionCorridorPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "InstitutionCorridor"
-    objects: {}
+    objects: {
+      thresholdRules: Prisma.$CorridorThresholdRulePayload<ExtArgs>[]
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       sourceCountry: string
       destCountry: string
       code: string
+      name: string | null
+      compliance: string | null
+      description: string | null
+      riskReason: string | null
+      travelRuleThreshold: Prisma.Decimal
+      eddThreshold: Prisma.Decimal
+      reportingThreshold: Prisma.Decimal
       minAmount: Prisma.Decimal
       maxAmount: Prisma.Decimal
       dailyLimit: Prisma.Decimal
@@ -40744,6 +41241,7 @@ export namespace Prisma {
    */
   export interface Prisma__InstitutionCorridorClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    thresholdRules<T extends InstitutionCorridor$thresholdRulesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionCorridor$thresholdRulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -40777,6 +41275,13 @@ export namespace Prisma {
     readonly sourceCountry: FieldRef<"InstitutionCorridor", 'String'>
     readonly destCountry: FieldRef<"InstitutionCorridor", 'String'>
     readonly code: FieldRef<"InstitutionCorridor", 'String'>
+    readonly name: FieldRef<"InstitutionCorridor", 'String'>
+    readonly compliance: FieldRef<"InstitutionCorridor", 'String'>
+    readonly description: FieldRef<"InstitutionCorridor", 'String'>
+    readonly riskReason: FieldRef<"InstitutionCorridor", 'String'>
+    readonly travelRuleThreshold: FieldRef<"InstitutionCorridor", 'Decimal'>
+    readonly eddThreshold: FieldRef<"InstitutionCorridor", 'Decimal'>
+    readonly reportingThreshold: FieldRef<"InstitutionCorridor", 'Decimal'>
     readonly minAmount: FieldRef<"InstitutionCorridor", 'Decimal'>
     readonly maxAmount: FieldRef<"InstitutionCorridor", 'Decimal'>
     readonly dailyLimit: FieldRef<"InstitutionCorridor", 'Decimal'>
@@ -40803,6 +41308,10 @@ export namespace Prisma {
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
+    /**
      * Filter, which InstitutionCorridor to fetch.
      */
     where: InstitutionCorridorWhereUniqueInput
@@ -40821,6 +41330,10 @@ export namespace Prisma {
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
+    /**
      * Filter, which InstitutionCorridor to fetch.
      */
     where: InstitutionCorridorWhereUniqueInput
@@ -40838,6 +41351,10 @@ export namespace Prisma {
      * Omit specific fields from the InstitutionCorridor
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
     /**
      * Filter, which InstitutionCorridor to fetch.
      */
@@ -40887,6 +41404,10 @@ export namespace Prisma {
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
+    /**
      * Filter, which InstitutionCorridor to fetch.
      */
     where?: InstitutionCorridorWhereInput
@@ -40935,6 +41456,10 @@ export namespace Prisma {
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
+    /**
      * Filter, which InstitutionCorridors to fetch.
      */
     where?: InstitutionCorridorWhereInput
@@ -40977,6 +41502,10 @@ export namespace Prisma {
      * Omit specific fields from the InstitutionCorridor
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
     /**
      * The data needed to create a InstitutionCorridor.
      */
@@ -41025,6 +41554,10 @@ export namespace Prisma {
      * Omit specific fields from the InstitutionCorridor
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
     /**
      * The data needed to update a InstitutionCorridor.
      */
@@ -41092,6 +41625,10 @@ export namespace Prisma {
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
+    /**
      * The filter to search for the InstitutionCorridor to update in case it exists.
      */
     where: InstitutionCorridorWhereUniqueInput
@@ -41118,6 +41655,10 @@ export namespace Prisma {
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
+    /**
      * Filter which InstitutionCorridor to delete.
      */
     where: InstitutionCorridorWhereUniqueInput
@@ -41138,6 +41679,30 @@ export namespace Prisma {
   }
 
   /**
+   * InstitutionCorridor.thresholdRules
+   */
+  export type InstitutionCorridor$thresholdRulesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    where?: CorridorThresholdRuleWhereInput
+    orderBy?: CorridorThresholdRuleOrderByWithRelationInput | CorridorThresholdRuleOrderByWithRelationInput[]
+    cursor?: CorridorThresholdRuleWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CorridorThresholdRuleScalarFieldEnum | CorridorThresholdRuleScalarFieldEnum[]
+  }
+
+  /**
    * InstitutionCorridor without action
    */
   export type InstitutionCorridorDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -41149,6 +41714,1223 @@ export namespace Prisma {
      * Omit specific fields from the InstitutionCorridor
      */
     omit?: InstitutionCorridorOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionCorridorInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CorridorThresholdRule
+   */
+
+  export type AggregateCorridorThresholdRule = {
+    _count: CorridorThresholdRuleCountAggregateOutputType | null
+    _avg: CorridorThresholdRuleAvgAggregateOutputType | null
+    _sum: CorridorThresholdRuleSumAggregateOutputType | null
+    _min: CorridorThresholdRuleMinAggregateOutputType | null
+    _max: CorridorThresholdRuleMaxAggregateOutputType | null
+  }
+
+  export type CorridorThresholdRuleAvgAggregateOutputType = {
+    thresholdAmount: Decimal | null
+    thresholdMax: Decimal | null
+  }
+
+  export type CorridorThresholdRuleSumAggregateOutputType = {
+    thresholdAmount: Decimal | null
+    thresholdMax: Decimal | null
+  }
+
+  export type CorridorThresholdRuleMinAggregateOutputType = {
+    id: string | null
+    corridorCode: string | null
+    ruleId: string | null
+    label: string | null
+    riskLevel: string | null
+    thresholdAmount: Decimal | null
+    thresholdType: string | null
+    thresholdMax: Decimal | null
+    currency: string | null
+    detailTemplate: string | null
+    regulationRef: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CorridorThresholdRuleMaxAggregateOutputType = {
+    id: string | null
+    corridorCode: string | null
+    ruleId: string | null
+    label: string | null
+    riskLevel: string | null
+    thresholdAmount: Decimal | null
+    thresholdType: string | null
+    thresholdMax: Decimal | null
+    currency: string | null
+    detailTemplate: string | null
+    regulationRef: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CorridorThresholdRuleCountAggregateOutputType = {
+    id: number
+    corridorCode: number
+    ruleId: number
+    label: number
+    riskLevel: number
+    thresholdAmount: number
+    thresholdType: number
+    thresholdMax: number
+    currency: number
+    detailTemplate: number
+    regulationRef: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CorridorThresholdRuleAvgAggregateInputType = {
+    thresholdAmount?: true
+    thresholdMax?: true
+  }
+
+  export type CorridorThresholdRuleSumAggregateInputType = {
+    thresholdAmount?: true
+    thresholdMax?: true
+  }
+
+  export type CorridorThresholdRuleMinAggregateInputType = {
+    id?: true
+    corridorCode?: true
+    ruleId?: true
+    label?: true
+    riskLevel?: true
+    thresholdAmount?: true
+    thresholdType?: true
+    thresholdMax?: true
+    currency?: true
+    detailTemplate?: true
+    regulationRef?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CorridorThresholdRuleMaxAggregateInputType = {
+    id?: true
+    corridorCode?: true
+    ruleId?: true
+    label?: true
+    riskLevel?: true
+    thresholdAmount?: true
+    thresholdType?: true
+    thresholdMax?: true
+    currency?: true
+    detailTemplate?: true
+    regulationRef?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CorridorThresholdRuleCountAggregateInputType = {
+    id?: true
+    corridorCode?: true
+    ruleId?: true
+    label?: true
+    riskLevel?: true
+    thresholdAmount?: true
+    thresholdType?: true
+    thresholdMax?: true
+    currency?: true
+    detailTemplate?: true
+    regulationRef?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CorridorThresholdRuleAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CorridorThresholdRule to aggregate.
+     */
+    where?: CorridorThresholdRuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CorridorThresholdRules to fetch.
+     */
+    orderBy?: CorridorThresholdRuleOrderByWithRelationInput | CorridorThresholdRuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CorridorThresholdRuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CorridorThresholdRules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CorridorThresholdRules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CorridorThresholdRules
+    **/
+    _count?: true | CorridorThresholdRuleCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CorridorThresholdRuleAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CorridorThresholdRuleSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CorridorThresholdRuleMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CorridorThresholdRuleMaxAggregateInputType
+  }
+
+  export type GetCorridorThresholdRuleAggregateType<T extends CorridorThresholdRuleAggregateArgs> = {
+        [P in keyof T & keyof AggregateCorridorThresholdRule]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCorridorThresholdRule[P]>
+      : GetScalarType<T[P], AggregateCorridorThresholdRule[P]>
+  }
+
+
+
+
+  export type CorridorThresholdRuleGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CorridorThresholdRuleWhereInput
+    orderBy?: CorridorThresholdRuleOrderByWithAggregationInput | CorridorThresholdRuleOrderByWithAggregationInput[]
+    by: CorridorThresholdRuleScalarFieldEnum[] | CorridorThresholdRuleScalarFieldEnum
+    having?: CorridorThresholdRuleScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CorridorThresholdRuleCountAggregateInputType | true
+    _avg?: CorridorThresholdRuleAvgAggregateInputType
+    _sum?: CorridorThresholdRuleSumAggregateInputType
+    _min?: CorridorThresholdRuleMinAggregateInputType
+    _max?: CorridorThresholdRuleMaxAggregateInputType
+  }
+
+  export type CorridorThresholdRuleGroupByOutputType = {
+    id: string
+    corridorCode: string
+    ruleId: string
+    label: string
+    riskLevel: string
+    thresholdAmount: Decimal | null
+    thresholdType: string
+    thresholdMax: Decimal | null
+    currency: string
+    detailTemplate: string
+    regulationRef: string
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: CorridorThresholdRuleCountAggregateOutputType | null
+    _avg: CorridorThresholdRuleAvgAggregateOutputType | null
+    _sum: CorridorThresholdRuleSumAggregateOutputType | null
+    _min: CorridorThresholdRuleMinAggregateOutputType | null
+    _max: CorridorThresholdRuleMaxAggregateOutputType | null
+  }
+
+  type GetCorridorThresholdRuleGroupByPayload<T extends CorridorThresholdRuleGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CorridorThresholdRuleGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CorridorThresholdRuleGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CorridorThresholdRuleGroupByOutputType[P]>
+            : GetScalarType<T[P], CorridorThresholdRuleGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CorridorThresholdRuleSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    corridorCode?: boolean
+    ruleId?: boolean
+    label?: boolean
+    riskLevel?: boolean
+    thresholdAmount?: boolean
+    thresholdType?: boolean
+    thresholdMax?: boolean
+    currency?: boolean
+    detailTemplate?: boolean
+    regulationRef?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    corridor?: boolean | InstitutionCorridorDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["corridorThresholdRule"]>
+
+  export type CorridorThresholdRuleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    corridorCode?: boolean
+    ruleId?: boolean
+    label?: boolean
+    riskLevel?: boolean
+    thresholdAmount?: boolean
+    thresholdType?: boolean
+    thresholdMax?: boolean
+    currency?: boolean
+    detailTemplate?: boolean
+    regulationRef?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    corridor?: boolean | InstitutionCorridorDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["corridorThresholdRule"]>
+
+  export type CorridorThresholdRuleSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    corridorCode?: boolean
+    ruleId?: boolean
+    label?: boolean
+    riskLevel?: boolean
+    thresholdAmount?: boolean
+    thresholdType?: boolean
+    thresholdMax?: boolean
+    currency?: boolean
+    detailTemplate?: boolean
+    regulationRef?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    corridor?: boolean | InstitutionCorridorDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["corridorThresholdRule"]>
+
+  export type CorridorThresholdRuleSelectScalar = {
+    id?: boolean
+    corridorCode?: boolean
+    ruleId?: boolean
+    label?: boolean
+    riskLevel?: boolean
+    thresholdAmount?: boolean
+    thresholdType?: boolean
+    thresholdMax?: boolean
+    currency?: boolean
+    detailTemplate?: boolean
+    regulationRef?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CorridorThresholdRuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "corridorCode" | "ruleId" | "label" | "riskLevel" | "thresholdAmount" | "thresholdType" | "thresholdMax" | "currency" | "detailTemplate" | "regulationRef" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["corridorThresholdRule"]>
+  export type CorridorThresholdRuleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    corridor?: boolean | InstitutionCorridorDefaultArgs<ExtArgs>
+  }
+  export type CorridorThresholdRuleIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    corridor?: boolean | InstitutionCorridorDefaultArgs<ExtArgs>
+  }
+  export type CorridorThresholdRuleIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    corridor?: boolean | InstitutionCorridorDefaultArgs<ExtArgs>
+  }
+
+  export type $CorridorThresholdRulePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CorridorThresholdRule"
+    objects: {
+      corridor: Prisma.$InstitutionCorridorPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      corridorCode: string
+      ruleId: string
+      label: string
+      riskLevel: string
+      thresholdAmount: Prisma.Decimal | null
+      thresholdType: string
+      thresholdMax: Prisma.Decimal | null
+      currency: string
+      detailTemplate: string
+      regulationRef: string
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["corridorThresholdRule"]>
+    composites: {}
+  }
+
+  type CorridorThresholdRuleGetPayload<S extends boolean | null | undefined | CorridorThresholdRuleDefaultArgs> = $Result.GetResult<Prisma.$CorridorThresholdRulePayload, S>
+
+  type CorridorThresholdRuleCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CorridorThresholdRuleFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CorridorThresholdRuleCountAggregateInputType | true
+    }
+
+  export interface CorridorThresholdRuleDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CorridorThresholdRule'], meta: { name: 'CorridorThresholdRule' } }
+    /**
+     * Find zero or one CorridorThresholdRule that matches the filter.
+     * @param {CorridorThresholdRuleFindUniqueArgs} args - Arguments to find a CorridorThresholdRule
+     * @example
+     * // Get one CorridorThresholdRule
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CorridorThresholdRuleFindUniqueArgs>(args: SelectSubset<T, CorridorThresholdRuleFindUniqueArgs<ExtArgs>>): Prisma__CorridorThresholdRuleClient<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CorridorThresholdRule that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CorridorThresholdRuleFindUniqueOrThrowArgs} args - Arguments to find a CorridorThresholdRule
+     * @example
+     * // Get one CorridorThresholdRule
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CorridorThresholdRuleFindUniqueOrThrowArgs>(args: SelectSubset<T, CorridorThresholdRuleFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CorridorThresholdRuleClient<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CorridorThresholdRule that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CorridorThresholdRuleFindFirstArgs} args - Arguments to find a CorridorThresholdRule
+     * @example
+     * // Get one CorridorThresholdRule
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CorridorThresholdRuleFindFirstArgs>(args?: SelectSubset<T, CorridorThresholdRuleFindFirstArgs<ExtArgs>>): Prisma__CorridorThresholdRuleClient<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CorridorThresholdRule that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CorridorThresholdRuleFindFirstOrThrowArgs} args - Arguments to find a CorridorThresholdRule
+     * @example
+     * // Get one CorridorThresholdRule
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CorridorThresholdRuleFindFirstOrThrowArgs>(args?: SelectSubset<T, CorridorThresholdRuleFindFirstOrThrowArgs<ExtArgs>>): Prisma__CorridorThresholdRuleClient<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CorridorThresholdRules that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CorridorThresholdRuleFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CorridorThresholdRules
+     * const corridorThresholdRules = await prisma.corridorThresholdRule.findMany()
+     * 
+     * // Get first 10 CorridorThresholdRules
+     * const corridorThresholdRules = await prisma.corridorThresholdRule.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const corridorThresholdRuleWithIdOnly = await prisma.corridorThresholdRule.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CorridorThresholdRuleFindManyArgs>(args?: SelectSubset<T, CorridorThresholdRuleFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CorridorThresholdRule.
+     * @param {CorridorThresholdRuleCreateArgs} args - Arguments to create a CorridorThresholdRule.
+     * @example
+     * // Create one CorridorThresholdRule
+     * const CorridorThresholdRule = await prisma.corridorThresholdRule.create({
+     *   data: {
+     *     // ... data to create a CorridorThresholdRule
+     *   }
+     * })
+     * 
+     */
+    create<T extends CorridorThresholdRuleCreateArgs>(args: SelectSubset<T, CorridorThresholdRuleCreateArgs<ExtArgs>>): Prisma__CorridorThresholdRuleClient<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CorridorThresholdRules.
+     * @param {CorridorThresholdRuleCreateManyArgs} args - Arguments to create many CorridorThresholdRules.
+     * @example
+     * // Create many CorridorThresholdRules
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CorridorThresholdRuleCreateManyArgs>(args?: SelectSubset<T, CorridorThresholdRuleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CorridorThresholdRules and returns the data saved in the database.
+     * @param {CorridorThresholdRuleCreateManyAndReturnArgs} args - Arguments to create many CorridorThresholdRules.
+     * @example
+     * // Create many CorridorThresholdRules
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CorridorThresholdRules and only return the `id`
+     * const corridorThresholdRuleWithIdOnly = await prisma.corridorThresholdRule.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CorridorThresholdRuleCreateManyAndReturnArgs>(args?: SelectSubset<T, CorridorThresholdRuleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CorridorThresholdRule.
+     * @param {CorridorThresholdRuleDeleteArgs} args - Arguments to delete one CorridorThresholdRule.
+     * @example
+     * // Delete one CorridorThresholdRule
+     * const CorridorThresholdRule = await prisma.corridorThresholdRule.delete({
+     *   where: {
+     *     // ... filter to delete one CorridorThresholdRule
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CorridorThresholdRuleDeleteArgs>(args: SelectSubset<T, CorridorThresholdRuleDeleteArgs<ExtArgs>>): Prisma__CorridorThresholdRuleClient<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CorridorThresholdRule.
+     * @param {CorridorThresholdRuleUpdateArgs} args - Arguments to update one CorridorThresholdRule.
+     * @example
+     * // Update one CorridorThresholdRule
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CorridorThresholdRuleUpdateArgs>(args: SelectSubset<T, CorridorThresholdRuleUpdateArgs<ExtArgs>>): Prisma__CorridorThresholdRuleClient<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CorridorThresholdRules.
+     * @param {CorridorThresholdRuleDeleteManyArgs} args - Arguments to filter CorridorThresholdRules to delete.
+     * @example
+     * // Delete a few CorridorThresholdRules
+     * const { count } = await prisma.corridorThresholdRule.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CorridorThresholdRuleDeleteManyArgs>(args?: SelectSubset<T, CorridorThresholdRuleDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CorridorThresholdRules.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CorridorThresholdRuleUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CorridorThresholdRules
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CorridorThresholdRuleUpdateManyArgs>(args: SelectSubset<T, CorridorThresholdRuleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CorridorThresholdRules and returns the data updated in the database.
+     * @param {CorridorThresholdRuleUpdateManyAndReturnArgs} args - Arguments to update many CorridorThresholdRules.
+     * @example
+     * // Update many CorridorThresholdRules
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CorridorThresholdRules and only return the `id`
+     * const corridorThresholdRuleWithIdOnly = await prisma.corridorThresholdRule.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CorridorThresholdRuleUpdateManyAndReturnArgs>(args: SelectSubset<T, CorridorThresholdRuleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CorridorThresholdRule.
+     * @param {CorridorThresholdRuleUpsertArgs} args - Arguments to update or create a CorridorThresholdRule.
+     * @example
+     * // Update or create a CorridorThresholdRule
+     * const corridorThresholdRule = await prisma.corridorThresholdRule.upsert({
+     *   create: {
+     *     // ... data to create a CorridorThresholdRule
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CorridorThresholdRule we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CorridorThresholdRuleUpsertArgs>(args: SelectSubset<T, CorridorThresholdRuleUpsertArgs<ExtArgs>>): Prisma__CorridorThresholdRuleClient<$Result.GetResult<Prisma.$CorridorThresholdRulePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CorridorThresholdRules.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CorridorThresholdRuleCountArgs} args - Arguments to filter CorridorThresholdRules to count.
+     * @example
+     * // Count the number of CorridorThresholdRules
+     * const count = await prisma.corridorThresholdRule.count({
+     *   where: {
+     *     // ... the filter for the CorridorThresholdRules we want to count
+     *   }
+     * })
+    **/
+    count<T extends CorridorThresholdRuleCountArgs>(
+      args?: Subset<T, CorridorThresholdRuleCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CorridorThresholdRuleCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CorridorThresholdRule.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CorridorThresholdRuleAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CorridorThresholdRuleAggregateArgs>(args: Subset<T, CorridorThresholdRuleAggregateArgs>): Prisma.PrismaPromise<GetCorridorThresholdRuleAggregateType<T>>
+
+    /**
+     * Group by CorridorThresholdRule.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CorridorThresholdRuleGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CorridorThresholdRuleGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CorridorThresholdRuleGroupByArgs['orderBy'] }
+        : { orderBy?: CorridorThresholdRuleGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CorridorThresholdRuleGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCorridorThresholdRuleGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CorridorThresholdRule model
+   */
+  readonly fields: CorridorThresholdRuleFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CorridorThresholdRule.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CorridorThresholdRuleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    corridor<T extends InstitutionCorridorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionCorridorDefaultArgs<ExtArgs>>): Prisma__InstitutionCorridorClient<$Result.GetResult<Prisma.$InstitutionCorridorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CorridorThresholdRule model
+   */
+  interface CorridorThresholdRuleFieldRefs {
+    readonly id: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly corridorCode: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly ruleId: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly label: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly riskLevel: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly thresholdAmount: FieldRef<"CorridorThresholdRule", 'Decimal'>
+    readonly thresholdType: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly thresholdMax: FieldRef<"CorridorThresholdRule", 'Decimal'>
+    readonly currency: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly detailTemplate: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly regulationRef: FieldRef<"CorridorThresholdRule", 'String'>
+    readonly isActive: FieldRef<"CorridorThresholdRule", 'Boolean'>
+    readonly createdAt: FieldRef<"CorridorThresholdRule", 'DateTime'>
+    readonly updatedAt: FieldRef<"CorridorThresholdRule", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CorridorThresholdRule findUnique
+   */
+  export type CorridorThresholdRuleFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which CorridorThresholdRule to fetch.
+     */
+    where: CorridorThresholdRuleWhereUniqueInput
+  }
+
+  /**
+   * CorridorThresholdRule findUniqueOrThrow
+   */
+  export type CorridorThresholdRuleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which CorridorThresholdRule to fetch.
+     */
+    where: CorridorThresholdRuleWhereUniqueInput
+  }
+
+  /**
+   * CorridorThresholdRule findFirst
+   */
+  export type CorridorThresholdRuleFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which CorridorThresholdRule to fetch.
+     */
+    where?: CorridorThresholdRuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CorridorThresholdRules to fetch.
+     */
+    orderBy?: CorridorThresholdRuleOrderByWithRelationInput | CorridorThresholdRuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CorridorThresholdRules.
+     */
+    cursor?: CorridorThresholdRuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CorridorThresholdRules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CorridorThresholdRules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CorridorThresholdRules.
+     */
+    distinct?: CorridorThresholdRuleScalarFieldEnum | CorridorThresholdRuleScalarFieldEnum[]
+  }
+
+  /**
+   * CorridorThresholdRule findFirstOrThrow
+   */
+  export type CorridorThresholdRuleFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which CorridorThresholdRule to fetch.
+     */
+    where?: CorridorThresholdRuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CorridorThresholdRules to fetch.
+     */
+    orderBy?: CorridorThresholdRuleOrderByWithRelationInput | CorridorThresholdRuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CorridorThresholdRules.
+     */
+    cursor?: CorridorThresholdRuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CorridorThresholdRules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CorridorThresholdRules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CorridorThresholdRules.
+     */
+    distinct?: CorridorThresholdRuleScalarFieldEnum | CorridorThresholdRuleScalarFieldEnum[]
+  }
+
+  /**
+   * CorridorThresholdRule findMany
+   */
+  export type CorridorThresholdRuleFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which CorridorThresholdRules to fetch.
+     */
+    where?: CorridorThresholdRuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CorridorThresholdRules to fetch.
+     */
+    orderBy?: CorridorThresholdRuleOrderByWithRelationInput | CorridorThresholdRuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CorridorThresholdRules.
+     */
+    cursor?: CorridorThresholdRuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CorridorThresholdRules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CorridorThresholdRules.
+     */
+    skip?: number
+    distinct?: CorridorThresholdRuleScalarFieldEnum | CorridorThresholdRuleScalarFieldEnum[]
+  }
+
+  /**
+   * CorridorThresholdRule create
+   */
+  export type CorridorThresholdRuleCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CorridorThresholdRule.
+     */
+    data: XOR<CorridorThresholdRuleCreateInput, CorridorThresholdRuleUncheckedCreateInput>
+  }
+
+  /**
+   * CorridorThresholdRule createMany
+   */
+  export type CorridorThresholdRuleCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CorridorThresholdRules.
+     */
+    data: CorridorThresholdRuleCreateManyInput | CorridorThresholdRuleCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CorridorThresholdRule createManyAndReturn
+   */
+  export type CorridorThresholdRuleCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * The data used to create many CorridorThresholdRules.
+     */
+    data: CorridorThresholdRuleCreateManyInput | CorridorThresholdRuleCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CorridorThresholdRule update
+   */
+  export type CorridorThresholdRuleUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CorridorThresholdRule.
+     */
+    data: XOR<CorridorThresholdRuleUpdateInput, CorridorThresholdRuleUncheckedUpdateInput>
+    /**
+     * Choose, which CorridorThresholdRule to update.
+     */
+    where: CorridorThresholdRuleWhereUniqueInput
+  }
+
+  /**
+   * CorridorThresholdRule updateMany
+   */
+  export type CorridorThresholdRuleUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CorridorThresholdRules.
+     */
+    data: XOR<CorridorThresholdRuleUpdateManyMutationInput, CorridorThresholdRuleUncheckedUpdateManyInput>
+    /**
+     * Filter which CorridorThresholdRules to update
+     */
+    where?: CorridorThresholdRuleWhereInput
+    /**
+     * Limit how many CorridorThresholdRules to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CorridorThresholdRule updateManyAndReturn
+   */
+  export type CorridorThresholdRuleUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * The data used to update CorridorThresholdRules.
+     */
+    data: XOR<CorridorThresholdRuleUpdateManyMutationInput, CorridorThresholdRuleUncheckedUpdateManyInput>
+    /**
+     * Filter which CorridorThresholdRules to update
+     */
+    where?: CorridorThresholdRuleWhereInput
+    /**
+     * Limit how many CorridorThresholdRules to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CorridorThresholdRule upsert
+   */
+  export type CorridorThresholdRuleUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CorridorThresholdRule to update in case it exists.
+     */
+    where: CorridorThresholdRuleWhereUniqueInput
+    /**
+     * In case the CorridorThresholdRule found by the `where` argument doesn't exist, create a new CorridorThresholdRule with this data.
+     */
+    create: XOR<CorridorThresholdRuleCreateInput, CorridorThresholdRuleUncheckedCreateInput>
+    /**
+     * In case the CorridorThresholdRule was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CorridorThresholdRuleUpdateInput, CorridorThresholdRuleUncheckedUpdateInput>
+  }
+
+  /**
+   * CorridorThresholdRule delete
+   */
+  export type CorridorThresholdRuleDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
+    /**
+     * Filter which CorridorThresholdRule to delete.
+     */
+    where: CorridorThresholdRuleWhereUniqueInput
+  }
+
+  /**
+   * CorridorThresholdRule deleteMany
+   */
+  export type CorridorThresholdRuleDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CorridorThresholdRules to delete
+     */
+    where?: CorridorThresholdRuleWhereInput
+    /**
+     * Limit how many CorridorThresholdRules to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CorridorThresholdRule without action
+   */
+  export type CorridorThresholdRuleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CorridorThresholdRule
+     */
+    select?: CorridorThresholdRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CorridorThresholdRule
+     */
+    omit?: CorridorThresholdRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CorridorThresholdRuleInclude<ExtArgs> | null
   }
 
 
@@ -47985,6 +49767,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     stealthPayments?: boolean | StealthMetaAddress$stealthPaymentsArgs<ExtArgs>
+    accounts?: boolean | StealthMetaAddress$accountsArgs<ExtArgs>
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     _count?: boolean | StealthMetaAddressCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["stealthMetaAddress"]>
@@ -48036,6 +49819,7 @@ export namespace Prisma {
   export type StealthMetaAddressOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "institutionClientId" | "label" | "scanPublicKey" | "spendPublicKey" | "encryptedScanKey" | "encryptedSpendKey" | "viewingKeyShared" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["stealthMetaAddress"]>
   export type StealthMetaAddressInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     stealthPayments?: boolean | StealthMetaAddress$stealthPaymentsArgs<ExtArgs>
+    accounts?: boolean | StealthMetaAddress$accountsArgs<ExtArgs>
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     _count?: boolean | StealthMetaAddressCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -48050,6 +49834,7 @@ export namespace Prisma {
     name: "StealthMetaAddress"
     objects: {
       stealthPayments: Prisma.$StealthPaymentPayload<ExtArgs>[]
+      accounts: Prisma.$InstitutionAccountPayload<ExtArgs>[]
       client: Prisma.$InstitutionClientPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -48459,6 +50244,7 @@ export namespace Prisma {
   export interface Prisma__StealthMetaAddressClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     stealthPayments<T extends StealthMetaAddress$stealthPaymentsArgs<ExtArgs> = {}>(args?: Subset<T, StealthMetaAddress$stealthPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StealthPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    accounts<T extends StealthMetaAddress$accountsArgs<ExtArgs> = {}>(args?: Subset<T, StealthMetaAddress$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     client<T extends InstitutionClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionClientDefaultArgs<ExtArgs>>): Prisma__InstitutionClientClient<$Result.GetResult<Prisma.$InstitutionClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -48917,6 +50703,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: StealthPaymentScalarFieldEnum | StealthPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * StealthMetaAddress.accounts
+   */
+  export type StealthMetaAddress$accountsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstitutionAccount
+     */
+    select?: InstitutionAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstitutionAccount
+     */
+    omit?: InstitutionAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InstitutionAccountInclude<ExtArgs> | null
+    where?: InstitutionAccountWhereInput
+    orderBy?: InstitutionAccountOrderByWithRelationInput | InstitutionAccountOrderByWithRelationInput[]
+    cursor?: InstitutionAccountWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InstitutionAccountScalarFieldEnum | InstitutionAccountScalarFieldEnum[]
   }
 
   /**
@@ -50596,8 +52406,10 @@ export namespace Prisma {
     notifyOnEscrowFunded: 'notifyOnEscrowFunded',
     notifyOnEscrowReleased: 'notifyOnEscrowReleased',
     notifyOnComplianceAlert: 'notifyOnComplianceAlert',
+    defaultCurrency: 'defaultCurrency',
     isDefault: 'isDefault',
     isActive: 'isActive',
+    stealthMetaAddressId: 'stealthMetaAddressId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     branchId: 'branchId'
@@ -50631,6 +52443,7 @@ export namespace Prisma {
 
   export const DirectPaymentScalarFieldEnum: {
     id: 'id',
+    paymentCode: 'paymentCode',
     clientId: 'clientId',
     sender: 'sender',
     senderCountry: 'senderCountry',
@@ -50687,6 +52500,14 @@ export namespace Prisma {
     riskTolerance: 'riskTolerance',
     defaultToken: 'defaultToken',
     emailNotifications: 'emailNotifications',
+    language: 'language',
+    theme: 'theme',
+    twoFactorEnabled: 'twoFactorEnabled',
+    aiRecommendations: 'aiRecommendations',
+    feeBps: 'feeBps',
+    minFeeUsdc: 'minFeeUsdc',
+    maxFeeUsdc: 'maxFeeUsdc',
+    notificationPreferences: 'notificationPreferences',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -50725,11 +52546,17 @@ export namespace Prisma {
     status: 'status',
     settlementAuthority: 'settlementAuthority',
     riskScore: 'riskScore',
+    settlementMode: 'settlementMode',
+    releaseMode: 'releaseMode',
+    approvalParties: 'approvalParties',
+    releaseConditions: 'releaseConditions',
+    approvalInstructions: 'approvalInstructions',
     privacyLevel: 'privacyLevel',
     stealthPaymentId: 'stealthPaymentId',
     escrowPda: 'escrowPda',
     vaultPda: 'vaultPda',
     nonceAccount: 'nonceAccount',
+    initTxSignature: 'initTxSignature',
     depositTxSignature: 'depositTxSignature',
     releaseTxSignature: 'releaseTxSignature',
     cancelTxSignature: 'cancelTxSignature',
@@ -50794,6 +52621,13 @@ export namespace Prisma {
     sourceCountry: 'sourceCountry',
     destCountry: 'destCountry',
     code: 'code',
+    name: 'name',
+    compliance: 'compliance',
+    description: 'description',
+    riskReason: 'riskReason',
+    travelRuleThreshold: 'travelRuleThreshold',
+    eddThreshold: 'eddThreshold',
+    reportingThreshold: 'reportingThreshold',
     minAmount: 'minAmount',
     maxAmount: 'maxAmount',
     dailyLimit: 'dailyLimit',
@@ -50806,6 +52640,26 @@ export namespace Prisma {
   };
 
   export type InstitutionCorridorScalarFieldEnum = (typeof InstitutionCorridorScalarFieldEnum)[keyof typeof InstitutionCorridorScalarFieldEnum]
+
+
+  export const CorridorThresholdRuleScalarFieldEnum: {
+    id: 'id',
+    corridorCode: 'corridorCode',
+    ruleId: 'ruleId',
+    label: 'label',
+    riskLevel: 'riskLevel',
+    thresholdAmount: 'thresholdAmount',
+    thresholdType: 'thresholdType',
+    thresholdMax: 'thresholdMax',
+    currency: 'currency',
+    detailTemplate: 'detailTemplate',
+    regulationRef: 'regulationRef',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CorridorThresholdRuleScalarFieldEnum = (typeof CorridorThresholdRuleScalarFieldEnum)[keyof typeof CorridorThresholdRuleScalarFieldEnum]
 
 
   export const InstitutionApprovedTokenScalarFieldEnum: {
@@ -51466,6 +53320,20 @@ export namespace Prisma {
    * Reference to a field of type 'InstitutionEscrowStatus[]'
    */
   export type ListEnumInstitutionEscrowStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionEscrowStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PrivacyLevel'
+   */
+  export type EnumPrivacyLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PrivacyLevel'>
+    
+
+
+  /**
+   * Reference to a field of type 'PrivacyLevel[]'
+   */
+  export type ListEnumPrivacyLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PrivacyLevel[]'>
     
 
 
@@ -53806,13 +55674,16 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    stealthMetaAddressId?: StringNullableFilter<"InstitutionAccount"> | string | null
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
     branch?: XOR<InstitutionBranchNullableScalarRelationFilter, InstitutionBranchWhereInput> | null
+    stealthMetaAddress?: XOR<StealthMetaAddressNullableScalarRelationFilter, StealthMetaAddressWhereInput> | null
   }
 
   export type InstitutionAccountOrderByWithRelationInput = {
@@ -53845,17 +55716,21 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    stealthMetaAddressId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     branchId?: SortOrderInput | SortOrder
     client?: InstitutionClientOrderByWithRelationInput
     branch?: InstitutionBranchOrderByWithRelationInput
+    stealthMetaAddress?: StealthMetaAddressOrderByWithRelationInput
   }
 
   export type InstitutionAccountWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    stealthMetaAddressId?: string
     clientId_name?: InstitutionAccountClientIdNameCompoundUniqueInput
     AND?: InstitutionAccountWhereInput | InstitutionAccountWhereInput[]
     OR?: InstitutionAccountWhereInput[]
@@ -53888,6 +55763,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
@@ -53895,7 +55771,8 @@ export namespace Prisma {
     branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
     branch?: XOR<InstitutionBranchNullableScalarRelationFilter, InstitutionBranchWhereInput> | null
-  }, "id" | "clientId_name">
+    stealthMetaAddress?: XOR<StealthMetaAddressNullableScalarRelationFilter, StealthMetaAddressWhereInput> | null
+  }, "id" | "stealthMetaAddressId" | "clientId_name">
 
   export type InstitutionAccountOrderByWithAggregationInput = {
     id?: SortOrder
@@ -53927,8 +55804,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    stealthMetaAddressId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     branchId?: SortOrderInput | SortOrder
@@ -53972,8 +55851,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     notifyOnEscrowReleased?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     notifyOnComplianceAlert?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    defaultCurrency?: StringWithAggregatesFilter<"InstitutionAccount"> | string
     isDefault?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     isActive?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    stealthMetaAddressId?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
     branchId?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
@@ -54104,6 +55985,7 @@ export namespace Prisma {
     OR?: DirectPaymentWhereInput[]
     NOT?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
     id?: StringFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableFilter<"DirectPayment"> | string | null
     clientId?: StringFilter<"DirectPayment"> | string
     sender?: StringFilter<"DirectPayment"> | string
     senderCountry?: StringFilter<"DirectPayment"> | string
@@ -54128,6 +56010,7 @@ export namespace Prisma {
 
   export type DirectPaymentOrderByWithRelationInput = {
     id?: SortOrder
+    paymentCode?: SortOrderInput | SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -54152,6 +56035,7 @@ export namespace Prisma {
 
   export type DirectPaymentWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    paymentCode?: string
     AND?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
     OR?: DirectPaymentWhereInput[]
     NOT?: DirectPaymentWhereInput | DirectPaymentWhereInput[]
@@ -54175,10 +56059,11 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"DirectPayment"> | Date | string
     updatedAt?: DateTimeFilter<"DirectPayment"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
-  }, "id">
+  }, "id" | "paymentCode">
 
   export type DirectPaymentOrderByWithAggregationInput = {
     id?: SortOrder
+    paymentCode?: SortOrderInput | SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -54210,6 +56095,7 @@ export namespace Prisma {
     OR?: DirectPaymentScalarWhereWithAggregatesInput[]
     NOT?: DirectPaymentScalarWhereWithAggregatesInput | DirectPaymentScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableWithAggregatesFilter<"DirectPayment"> | string | null
     clientId?: StringWithAggregatesFilter<"DirectPayment"> | string
     sender?: StringWithAggregatesFilter<"DirectPayment"> | string
     senderCountry?: StringWithAggregatesFilter<"DirectPayment"> | string
@@ -54322,6 +56208,14 @@ export namespace Prisma {
     riskTolerance?: StringFilter<"InstitutionClientSettings"> | string
     defaultToken?: StringFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolFilter<"InstitutionClientSettings"> | boolean
+    language?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    theme?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    twoFactorEnabled?: BoolFilter<"InstitutionClientSettings"> | boolean
+    aiRecommendations?: BoolFilter<"InstitutionClientSettings"> | boolean
+    feeBps?: IntFilter<"InstitutionClientSettings"> | number
+    minFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: JsonNullableFilter<"InstitutionClientSettings">
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -54345,6 +56239,14 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrderInput | SortOrder
+    theme?: SortOrderInput | SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
+    notificationPreferences?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     client?: InstitutionClientOrderByWithRelationInput
@@ -54371,6 +56273,14 @@ export namespace Prisma {
     riskTolerance?: StringFilter<"InstitutionClientSettings"> | string
     defaultToken?: StringFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolFilter<"InstitutionClientSettings"> | boolean
+    language?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    theme?: StringNullableFilter<"InstitutionClientSettings"> | string | null
+    twoFactorEnabled?: BoolFilter<"InstitutionClientSettings"> | boolean
+    aiRecommendations?: BoolFilter<"InstitutionClientSettings"> | boolean
+    feeBps?: IntFilter<"InstitutionClientSettings"> | number
+    minFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: JsonNullableFilter<"InstitutionClientSettings">
     createdAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionClientSettings"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -54394,6 +56304,14 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrderInput | SortOrder
+    theme?: SortOrderInput | SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
+    notificationPreferences?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: InstitutionClientSettingsCountOrderByAggregateInput
@@ -54424,6 +56342,14 @@ export namespace Prisma {
     riskTolerance?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
     defaultToken?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
+    language?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    theme?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
+    twoFactorEnabled?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
+    aiRecommendations?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
+    feeBps?: IntWithAggregatesFilter<"InstitutionClientSettings"> | number
+    minFeeUsdc?: DecimalWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalWithAggregatesFilter<"InstitutionClientSettings"> | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: JsonNullableWithAggregatesFilter<"InstitutionClientSettings">
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionClientSettings"> | Date | string
   }
@@ -54526,11 +56452,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
-    privacyLevel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    settlementMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    approvalParties?: StringNullableListFilter<"InstitutionEscrow">
+    releaseConditions?: StringNullableListFilter<"InstitutionEscrow">
+    approvalInstructions?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    privacyLevel?: EnumPrivacyLevelNullableFilter<"InstitutionEscrow"> | $Enums.PrivacyLevel | null
     stealthPaymentId?: StringNullableFilter<"InstitutionEscrow"> | string | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    initTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -54561,11 +56493,17 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrderInput | SortOrder
+    settlementMode?: SortOrderInput | SortOrder
+    releaseMode?: SortOrderInput | SortOrder
+    approvalParties?: SortOrder
+    releaseConditions?: SortOrder
+    approvalInstructions?: SortOrderInput | SortOrder
     privacyLevel?: SortOrderInput | SortOrder
     stealthPaymentId?: SortOrderInput | SortOrder
     escrowPda?: SortOrderInput | SortOrder
     vaultPda?: SortOrderInput | SortOrder
     nonceAccount?: SortOrderInput | SortOrder
+    initTxSignature?: SortOrderInput | SortOrder
     depositTxSignature?: SortOrderInput | SortOrder
     releaseTxSignature?: SortOrderInput | SortOrder
     cancelTxSignature?: SortOrderInput | SortOrder
@@ -54599,11 +56537,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
-    privacyLevel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    settlementMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    approvalParties?: StringNullableListFilter<"InstitutionEscrow">
+    releaseConditions?: StringNullableListFilter<"InstitutionEscrow">
+    approvalInstructions?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    privacyLevel?: EnumPrivacyLevelNullableFilter<"InstitutionEscrow"> | $Enums.PrivacyLevel | null
     stealthPaymentId?: StringNullableFilter<"InstitutionEscrow"> | string | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    initTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -54634,11 +56578,17 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrderInput | SortOrder
+    settlementMode?: SortOrderInput | SortOrder
+    releaseMode?: SortOrderInput | SortOrder
+    approvalParties?: SortOrder
+    releaseConditions?: SortOrder
+    approvalInstructions?: SortOrderInput | SortOrder
     privacyLevel?: SortOrderInput | SortOrder
     stealthPaymentId?: SortOrderInput | SortOrder
     escrowPda?: SortOrderInput | SortOrder
     vaultPda?: SortOrderInput | SortOrder
     nonceAccount?: SortOrderInput | SortOrder
+    initTxSignature?: SortOrderInput | SortOrder
     depositTxSignature?: SortOrderInput | SortOrder
     releaseTxSignature?: SortOrderInput | SortOrder
     cancelTxSignature?: SortOrderInput | SortOrder
@@ -54672,11 +56622,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusWithAggregatesFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableWithAggregatesFilter<"InstitutionEscrow"> | number | null
-    privacyLevel?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    settlementMode?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    releaseMode?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    approvalParties?: StringNullableListFilter<"InstitutionEscrow">
+    releaseConditions?: StringNullableListFilter<"InstitutionEscrow">
+    approvalInstructions?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    privacyLevel?: EnumPrivacyLevelNullableWithAggregatesFilter<"InstitutionEscrow"> | $Enums.PrivacyLevel | null
     stealthPaymentId?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     escrowPda?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     nonceAccount?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    initTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     depositTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
@@ -54935,6 +56891,13 @@ export namespace Prisma {
     sourceCountry?: StringFilter<"InstitutionCorridor"> | string
     destCountry?: StringFilter<"InstitutionCorridor"> | string
     code?: StringFilter<"InstitutionCorridor"> | string
+    name?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    compliance?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    description?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    riskReason?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    travelRuleThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
@@ -54944,6 +56907,7 @@ export namespace Prisma {
     status?: EnumCorridorStatusFilter<"InstitutionCorridor"> | $Enums.CorridorStatus
     createdAt?: DateTimeFilter<"InstitutionCorridor"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionCorridor"> | Date | string
+    thresholdRules?: CorridorThresholdRuleListRelationFilter
   }
 
   export type InstitutionCorridorOrderByWithRelationInput = {
@@ -54951,6 +56915,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrderInput | SortOrder
+    compliance?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    riskReason?: SortOrderInput | SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -54960,6 +56931,7 @@ export namespace Prisma {
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    thresholdRules?: CorridorThresholdRuleOrderByRelationAggregateInput
   }
 
   export type InstitutionCorridorWhereUniqueInput = Prisma.AtLeast<{
@@ -54970,6 +56942,13 @@ export namespace Prisma {
     NOT?: InstitutionCorridorWhereInput | InstitutionCorridorWhereInput[]
     sourceCountry?: StringFilter<"InstitutionCorridor"> | string
     destCountry?: StringFilter<"InstitutionCorridor"> | string
+    name?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    compliance?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    description?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    riskReason?: StringNullableFilter<"InstitutionCorridor"> | string | null
+    travelRuleThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
@@ -54979,6 +56958,7 @@ export namespace Prisma {
     status?: EnumCorridorStatusFilter<"InstitutionCorridor"> | $Enums.CorridorStatus
     createdAt?: DateTimeFilter<"InstitutionCorridor"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionCorridor"> | Date | string
+    thresholdRules?: CorridorThresholdRuleListRelationFilter
   }, "id" | "code">
 
   export type InstitutionCorridorOrderByWithAggregationInput = {
@@ -54986,6 +56966,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrderInput | SortOrder
+    compliance?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    riskReason?: SortOrderInput | SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -55010,6 +56997,13 @@ export namespace Prisma {
     sourceCountry?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
     destCountry?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
     code?: StringWithAggregatesFilter<"InstitutionCorridor"> | string
+    name?: StringNullableWithAggregatesFilter<"InstitutionCorridor"> | string | null
+    compliance?: StringNullableWithAggregatesFilter<"InstitutionCorridor"> | string | null
+    description?: StringNullableWithAggregatesFilter<"InstitutionCorridor"> | string | null
+    riskReason?: StringNullableWithAggregatesFilter<"InstitutionCorridor"> | string | null
+    travelRuleThreshold?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalWithAggregatesFilter<"InstitutionCorridor"> | Decimal | DecimalJsLike | number | string
@@ -55019,6 +57013,109 @@ export namespace Prisma {
     status?: EnumCorridorStatusWithAggregatesFilter<"InstitutionCorridor"> | $Enums.CorridorStatus
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionCorridor"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionCorridor"> | Date | string
+  }
+
+  export type CorridorThresholdRuleWhereInput = {
+    AND?: CorridorThresholdRuleWhereInput | CorridorThresholdRuleWhereInput[]
+    OR?: CorridorThresholdRuleWhereInput[]
+    NOT?: CorridorThresholdRuleWhereInput | CorridorThresholdRuleWhereInput[]
+    id?: StringFilter<"CorridorThresholdRule"> | string
+    corridorCode?: StringFilter<"CorridorThresholdRule"> | string
+    ruleId?: StringFilter<"CorridorThresholdRule"> | string
+    label?: StringFilter<"CorridorThresholdRule"> | string
+    riskLevel?: StringFilter<"CorridorThresholdRule"> | string
+    thresholdAmount?: DecimalNullableFilter<"CorridorThresholdRule"> | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFilter<"CorridorThresholdRule"> | string
+    thresholdMax?: DecimalNullableFilter<"CorridorThresholdRule"> | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFilter<"CorridorThresholdRule"> | string
+    detailTemplate?: StringFilter<"CorridorThresholdRule"> | string
+    regulationRef?: StringFilter<"CorridorThresholdRule"> | string
+    isActive?: BoolFilter<"CorridorThresholdRule"> | boolean
+    createdAt?: DateTimeFilter<"CorridorThresholdRule"> | Date | string
+    updatedAt?: DateTimeFilter<"CorridorThresholdRule"> | Date | string
+    corridor?: XOR<InstitutionCorridorScalarRelationFilter, InstitutionCorridorWhereInput>
+  }
+
+  export type CorridorThresholdRuleOrderByWithRelationInput = {
+    id?: SortOrder
+    corridorCode?: SortOrder
+    ruleId?: SortOrder
+    label?: SortOrder
+    riskLevel?: SortOrder
+    thresholdAmount?: SortOrderInput | SortOrder
+    thresholdType?: SortOrder
+    thresholdMax?: SortOrderInput | SortOrder
+    currency?: SortOrder
+    detailTemplate?: SortOrder
+    regulationRef?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    corridor?: InstitutionCorridorOrderByWithRelationInput
+  }
+
+  export type CorridorThresholdRuleWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    idx_corridor_rule_unique?: CorridorThresholdRuleIdx_corridor_rule_uniqueCompoundUniqueInput
+    AND?: CorridorThresholdRuleWhereInput | CorridorThresholdRuleWhereInput[]
+    OR?: CorridorThresholdRuleWhereInput[]
+    NOT?: CorridorThresholdRuleWhereInput | CorridorThresholdRuleWhereInput[]
+    corridorCode?: StringFilter<"CorridorThresholdRule"> | string
+    ruleId?: StringFilter<"CorridorThresholdRule"> | string
+    label?: StringFilter<"CorridorThresholdRule"> | string
+    riskLevel?: StringFilter<"CorridorThresholdRule"> | string
+    thresholdAmount?: DecimalNullableFilter<"CorridorThresholdRule"> | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFilter<"CorridorThresholdRule"> | string
+    thresholdMax?: DecimalNullableFilter<"CorridorThresholdRule"> | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFilter<"CorridorThresholdRule"> | string
+    detailTemplate?: StringFilter<"CorridorThresholdRule"> | string
+    regulationRef?: StringFilter<"CorridorThresholdRule"> | string
+    isActive?: BoolFilter<"CorridorThresholdRule"> | boolean
+    createdAt?: DateTimeFilter<"CorridorThresholdRule"> | Date | string
+    updatedAt?: DateTimeFilter<"CorridorThresholdRule"> | Date | string
+    corridor?: XOR<InstitutionCorridorScalarRelationFilter, InstitutionCorridorWhereInput>
+  }, "id" | "idx_corridor_rule_unique">
+
+  export type CorridorThresholdRuleOrderByWithAggregationInput = {
+    id?: SortOrder
+    corridorCode?: SortOrder
+    ruleId?: SortOrder
+    label?: SortOrder
+    riskLevel?: SortOrder
+    thresholdAmount?: SortOrderInput | SortOrder
+    thresholdType?: SortOrder
+    thresholdMax?: SortOrderInput | SortOrder
+    currency?: SortOrder
+    detailTemplate?: SortOrder
+    regulationRef?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CorridorThresholdRuleCountOrderByAggregateInput
+    _avg?: CorridorThresholdRuleAvgOrderByAggregateInput
+    _max?: CorridorThresholdRuleMaxOrderByAggregateInput
+    _min?: CorridorThresholdRuleMinOrderByAggregateInput
+    _sum?: CorridorThresholdRuleSumOrderByAggregateInput
+  }
+
+  export type CorridorThresholdRuleScalarWhereWithAggregatesInput = {
+    AND?: CorridorThresholdRuleScalarWhereWithAggregatesInput | CorridorThresholdRuleScalarWhereWithAggregatesInput[]
+    OR?: CorridorThresholdRuleScalarWhereWithAggregatesInput[]
+    NOT?: CorridorThresholdRuleScalarWhereWithAggregatesInput | CorridorThresholdRuleScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    corridorCode?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    ruleId?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    label?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    riskLevel?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    thresholdAmount?: DecimalNullableWithAggregatesFilter<"CorridorThresholdRule"> | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    thresholdMax?: DecimalNullableWithAggregatesFilter<"CorridorThresholdRule"> | Decimal | DecimalJsLike | number | string | null
+    currency?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    detailTemplate?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    regulationRef?: StringWithAggregatesFilter<"CorridorThresholdRule"> | string
+    isActive?: BoolWithAggregatesFilter<"CorridorThresholdRule"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"CorridorThresholdRule"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CorridorThresholdRule"> | Date | string
   }
 
   export type InstitutionApprovedTokenWhereInput = {
@@ -55483,6 +57580,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"StealthMetaAddress"> | Date | string
     updatedAt?: DateTimeFilter<"StealthMetaAddress"> | Date | string
     stealthPayments?: StealthPaymentListRelationFilter
+    accounts?: InstitutionAccountListRelationFilter
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
   }
 
@@ -55499,6 +57597,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     stealthPayments?: StealthPaymentOrderByRelationAggregateInput
+    accounts?: InstitutionAccountOrderByRelationAggregateInput
     client?: InstitutionClientOrderByWithRelationInput
   }
 
@@ -55519,6 +57618,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"StealthMetaAddress"> | Date | string
     updatedAt?: DateTimeFilter<"StealthMetaAddress"> | Date | string
     stealthPayments?: StealthPaymentListRelationFilter
+    accounts?: InstitutionAccountListRelationFilter
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
   }, "id" | "institutionClientId_label">
 
@@ -58338,12 +60438,14 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutAccountsInput
     branch?: InstitutionBranchCreateNestedOneWithoutAccountsInput
+    stealthMetaAddress?: StealthMetaAddressCreateNestedOneWithoutAccountsInput
   }
 
   export type InstitutionAccountUncheckedCreateInput = {
@@ -58376,8 +60478,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     branchId?: string | null
@@ -58412,12 +60516,14 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput
     branch?: InstitutionBranchUpdateOneWithoutAccountsNestedInput
+    stealthMetaAddress?: StealthMetaAddressUpdateOneWithoutAccountsNestedInput
   }
 
   export type InstitutionAccountUncheckedUpdateInput = {
@@ -58450,8 +60556,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     branchId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58487,8 +60595,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     branchId?: string | null
@@ -58523,6 +60633,7 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -58559,8 +60670,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     branchId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58711,6 +60824,7 @@ export namespace Prisma {
 
   export type DirectPaymentCreateInput = {
     id?: string
+    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -58734,6 +60848,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedCreateInput = {
     id?: string
+    paymentCode?: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -58757,6 +60872,7 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -58780,6 +60896,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     clientId?: StringFieldUpdateOperationsInput | string
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
@@ -58803,6 +60920,7 @@ export namespace Prisma {
 
   export type DirectPaymentCreateManyInput = {
     id?: string
+    paymentCode?: string | null
     clientId: string
     sender: string
     senderCountry: string
@@ -58826,6 +60944,7 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -58848,6 +60967,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     clientId?: StringFieldUpdateOperationsInput | string
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
@@ -58962,6 +61082,14 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutSettingsInput
@@ -58985,6 +61113,14 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -59006,6 +61142,14 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutSettingsNestedInput
@@ -59029,6 +61173,14 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -59051,6 +61203,14 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -59072,6 +61232,14 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -59094,6 +61262,14 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -59202,11 +61378,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -59237,11 +61419,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -59270,11 +61458,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -59305,11 +61499,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -59339,11 +61539,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -59368,11 +61574,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -59398,11 +61610,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -59672,6 +61890,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
     minAmount: Decimal | DecimalJsLike | number | string
     maxAmount: Decimal | DecimalJsLike | number | string
     dailyLimit: Decimal | DecimalJsLike | number | string
@@ -59681,6 +61906,7 @@ export namespace Prisma {
     status?: $Enums.CorridorStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    thresholdRules?: CorridorThresholdRuleCreateNestedManyWithoutCorridorInput
   }
 
   export type InstitutionCorridorUncheckedCreateInput = {
@@ -59688,6 +61914,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
     minAmount: Decimal | DecimalJsLike | number | string
     maxAmount: Decimal | DecimalJsLike | number | string
     dailyLimit: Decimal | DecimalJsLike | number | string
@@ -59697,6 +61930,7 @@ export namespace Prisma {
     status?: $Enums.CorridorStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    thresholdRules?: CorridorThresholdRuleUncheckedCreateNestedManyWithoutCorridorInput
   }
 
   export type InstitutionCorridorUpdateInput = {
@@ -59704,6 +61938,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -59713,6 +61954,7 @@ export namespace Prisma {
     status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    thresholdRules?: CorridorThresholdRuleUpdateManyWithoutCorridorNestedInput
   }
 
   export type InstitutionCorridorUncheckedUpdateInput = {
@@ -59720,6 +61962,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -59729,6 +61978,7 @@ export namespace Prisma {
     status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    thresholdRules?: CorridorThresholdRuleUncheckedUpdateManyWithoutCorridorNestedInput
   }
 
   export type InstitutionCorridorCreateManyInput = {
@@ -59736,6 +61986,13 @@ export namespace Prisma {
     sourceCountry: string
     destCountry: string
     code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
     minAmount: Decimal | DecimalJsLike | number | string
     maxAmount: Decimal | DecimalJsLike | number | string
     dailyLimit: Decimal | DecimalJsLike | number | string
@@ -59752,6 +62009,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -59768,6 +62032,13 @@ export namespace Prisma {
     sourceCountry?: StringFieldUpdateOperationsInput | string
     destCountry?: StringFieldUpdateOperationsInput | string
     code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -59775,6 +62046,124 @@ export namespace Prisma {
     requiredDocuments?: InstitutionCorridorUpdaterequiredDocumentsInput | string[]
     riskLevel?: StringFieldUpdateOperationsInput | string
     status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CorridorThresholdRuleCreateInput = {
+    id?: string
+    ruleId: string
+    label: string
+    riskLevel: string
+    thresholdAmount?: Decimal | DecimalJsLike | number | string | null
+    thresholdType: string
+    thresholdMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    detailTemplate: string
+    regulationRef: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    corridor: InstitutionCorridorCreateNestedOneWithoutThresholdRulesInput
+  }
+
+  export type CorridorThresholdRuleUncheckedCreateInput = {
+    id?: string
+    corridorCode: string
+    ruleId: string
+    label: string
+    riskLevel: string
+    thresholdAmount?: Decimal | DecimalJsLike | number | string | null
+    thresholdType: string
+    thresholdMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    detailTemplate: string
+    regulationRef: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CorridorThresholdRuleUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ruleId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    thresholdAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFieldUpdateOperationsInput | string
+    thresholdMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    detailTemplate?: StringFieldUpdateOperationsInput | string
+    regulationRef?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    corridor?: InstitutionCorridorUpdateOneRequiredWithoutThresholdRulesNestedInput
+  }
+
+  export type CorridorThresholdRuleUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    corridorCode?: StringFieldUpdateOperationsInput | string
+    ruleId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    thresholdAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFieldUpdateOperationsInput | string
+    thresholdMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    detailTemplate?: StringFieldUpdateOperationsInput | string
+    regulationRef?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CorridorThresholdRuleCreateManyInput = {
+    id?: string
+    corridorCode: string
+    ruleId: string
+    label: string
+    riskLevel: string
+    thresholdAmount?: Decimal | DecimalJsLike | number | string | null
+    thresholdType: string
+    thresholdMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    detailTemplate: string
+    regulationRef: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CorridorThresholdRuleUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ruleId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    thresholdAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFieldUpdateOperationsInput | string
+    thresholdMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    detailTemplate?: StringFieldUpdateOperationsInput | string
+    regulationRef?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CorridorThresholdRuleUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    corridorCode?: StringFieldUpdateOperationsInput | string
+    ruleId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    thresholdAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFieldUpdateOperationsInput | string
+    thresholdMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    detailTemplate?: StringFieldUpdateOperationsInput | string
+    regulationRef?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -60288,6 +62677,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     stealthPayments?: StealthPaymentCreateNestedManyWithoutMetaAddressInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutStealthMetaAddressInput
     client: InstitutionClientCreateNestedOneWithoutStealthMetaAddressesInput
   }
 
@@ -60304,6 +62694,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     stealthPayments?: StealthPaymentUncheckedCreateNestedManyWithoutMetaAddressInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutStealthMetaAddressInput
   }
 
   export type StealthMetaAddressUpdateInput = {
@@ -60318,6 +62709,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stealthPayments?: StealthPaymentUpdateManyWithoutMetaAddressNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutStealthMetaAddressNestedInput
     client?: InstitutionClientUpdateOneRequiredWithoutStealthMetaAddressesNestedInput
   }
 
@@ -60334,6 +62726,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stealthPayments?: StealthPaymentUncheckedUpdateManyWithoutMetaAddressNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutStealthMetaAddressNestedInput
   }
 
   export type StealthMetaAddressCreateManyInput = {
@@ -62839,6 +65232,11 @@ export namespace Prisma {
     isNot?: InstitutionBranchWhereInput | null
   }
 
+  export type StealthMetaAddressNullableScalarRelationFilter = {
+    is?: StealthMetaAddressWhereInput | null
+    isNot?: StealthMetaAddressWhereInput | null
+  }
+
   export type InstitutionAccountClientIdNameCompoundUniqueInput = {
     clientId: string
     name: string
@@ -62874,8 +65272,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    stealthMetaAddressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     branchId?: SortOrder
@@ -62920,8 +65320,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    stealthMetaAddressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     branchId?: SortOrder
@@ -62956,8 +65358,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: SortOrder
     notifyOnEscrowReleased?: SortOrder
     notifyOnComplianceAlert?: SortOrder
+    defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    stealthMetaAddressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     branchId?: SortOrder
@@ -63073,6 +65477,7 @@ export namespace Prisma {
 
   export type DirectPaymentCountOrderByAggregateInput = {
     id?: SortOrder
+    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -63102,6 +65507,7 @@ export namespace Prisma {
 
   export type DirectPaymentMaxOrderByAggregateInput = {
     id?: SortOrder
+    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -63125,6 +65531,7 @@ export namespace Prisma {
 
   export type DirectPaymentMinOrderByAggregateInput = {
     id?: SortOrder
+    paymentCode?: SortOrder
     clientId?: SortOrder
     sender?: SortOrder
     senderCountry?: SortOrder
@@ -63203,6 +65610,14 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrder
+    theme?: SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
+    notificationPreferences?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -63210,6 +65625,9 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgOrderByAggregateInput = {
     autoApproveThreshold?: SortOrder
     manualReviewThreshold?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
   }
 
   export type InstitutionClientSettingsMaxOrderByAggregateInput = {
@@ -63229,6 +65647,13 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrder
+    theme?: SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -63250,6 +65675,13 @@ export namespace Prisma {
     riskTolerance?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
+    language?: SortOrder
+    theme?: SortOrder
+    twoFactorEnabled?: SortOrder
+    aiRecommendations?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -63257,6 +65689,9 @@ export namespace Prisma {
   export type InstitutionClientSettingsSumOrderByAggregateInput = {
     autoApproveThreshold?: SortOrder
     manualReviewThreshold?: SortOrder
+    feeBps?: SortOrder
+    minFeeUsdc?: SortOrder
+    maxFeeUsdc?: SortOrder
   }
 
   export type InstitutionApiKeyCountOrderByAggregateInput = {
@@ -63310,6 +65745,13 @@ export namespace Prisma {
     not?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel> | $Enums.InstitutionEscrowStatus
   }
 
+  export type EnumPrivacyLevelNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.PrivacyLevel | EnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PrivacyLevel[] | ListEnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PrivacyLevel[] | ListEnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPrivacyLevelNullableFilter<$PrismaModel> | $Enums.PrivacyLevel | null
+  }
+
   export type InstitutionDepositListRelationFilter = {
     every?: InstitutionDepositWhereInput
     some?: InstitutionDepositWhereInput
@@ -63335,11 +65777,17 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    approvalParties?: SortOrder
+    releaseConditions?: SortOrder
+    approvalInstructions?: SortOrder
     privacyLevel?: SortOrder
     stealthPaymentId?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
     nonceAccount?: SortOrder
+    initTxSignature?: SortOrder
     depositTxSignature?: SortOrder
     releaseTxSignature?: SortOrder
     cancelTxSignature?: SortOrder
@@ -63371,11 +65819,15 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    approvalInstructions?: SortOrder
     privacyLevel?: SortOrder
     stealthPaymentId?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
     nonceAccount?: SortOrder
+    initTxSignature?: SortOrder
     depositTxSignature?: SortOrder
     releaseTxSignature?: SortOrder
     cancelTxSignature?: SortOrder
@@ -63401,11 +65853,15 @@ export namespace Prisma {
     status?: SortOrder
     settlementAuthority?: SortOrder
     riskScore?: SortOrder
+    settlementMode?: SortOrder
+    releaseMode?: SortOrder
+    approvalInstructions?: SortOrder
     privacyLevel?: SortOrder
     stealthPaymentId?: SortOrder
     escrowPda?: SortOrder
     vaultPda?: SortOrder
     nonceAccount?: SortOrder
+    initTxSignature?: SortOrder
     depositTxSignature?: SortOrder
     releaseTxSignature?: SortOrder
     cancelTxSignature?: SortOrder
@@ -63440,6 +65896,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
     _max?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
+  }
+
+  export type EnumPrivacyLevelNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PrivacyLevel | EnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PrivacyLevel[] | ListEnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PrivacyLevel[] | ListEnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPrivacyLevelNullableWithAggregatesFilter<$PrismaModel> | $Enums.PrivacyLevel | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumPrivacyLevelNullableFilter<$PrismaModel>
+    _max?: NestedEnumPrivacyLevelNullableFilter<$PrismaModel>
   }
 
   export type InstitutionEscrowScalarRelationFilter = {
@@ -63604,11 +66070,28 @@ export namespace Prisma {
     not?: NestedEnumCorridorStatusFilter<$PrismaModel> | $Enums.CorridorStatus
   }
 
+  export type CorridorThresholdRuleListRelationFilter = {
+    every?: CorridorThresholdRuleWhereInput
+    some?: CorridorThresholdRuleWhereInput
+    none?: CorridorThresholdRuleWhereInput
+  }
+
+  export type CorridorThresholdRuleOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type InstitutionCorridorCountOrderByAggregateInput = {
     id?: SortOrder
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrder
+    compliance?: SortOrder
+    description?: SortOrder
+    riskReason?: SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -63621,6 +66104,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorAvgOrderByAggregateInput = {
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -63632,6 +66118,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrder
+    compliance?: SortOrder
+    description?: SortOrder
+    riskReason?: SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -63647,6 +66140,13 @@ export namespace Prisma {
     sourceCountry?: SortOrder
     destCountry?: SortOrder
     code?: SortOrder
+    name?: SortOrder
+    compliance?: SortOrder
+    description?: SortOrder
+    riskReason?: SortOrder
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -63658,6 +66158,9 @@ export namespace Prisma {
   }
 
   export type InstitutionCorridorSumOrderByAggregateInput = {
+    travelRuleThreshold?: SortOrder
+    eddThreshold?: SortOrder
+    reportingThreshold?: SortOrder
     minAmount?: SortOrder
     maxAmount?: SortOrder
     dailyLimit?: SortOrder
@@ -63672,6 +66175,77 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCorridorStatusFilter<$PrismaModel>
     _max?: NestedEnumCorridorStatusFilter<$PrismaModel>
+  }
+
+  export type InstitutionCorridorScalarRelationFilter = {
+    is?: InstitutionCorridorWhereInput
+    isNot?: InstitutionCorridorWhereInput
+  }
+
+  export type CorridorThresholdRuleIdx_corridor_rule_uniqueCompoundUniqueInput = {
+    corridorCode: string
+    ruleId: string
+  }
+
+  export type CorridorThresholdRuleCountOrderByAggregateInput = {
+    id?: SortOrder
+    corridorCode?: SortOrder
+    ruleId?: SortOrder
+    label?: SortOrder
+    riskLevel?: SortOrder
+    thresholdAmount?: SortOrder
+    thresholdType?: SortOrder
+    thresholdMax?: SortOrder
+    currency?: SortOrder
+    detailTemplate?: SortOrder
+    regulationRef?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CorridorThresholdRuleAvgOrderByAggregateInput = {
+    thresholdAmount?: SortOrder
+    thresholdMax?: SortOrder
+  }
+
+  export type CorridorThresholdRuleMaxOrderByAggregateInput = {
+    id?: SortOrder
+    corridorCode?: SortOrder
+    ruleId?: SortOrder
+    label?: SortOrder
+    riskLevel?: SortOrder
+    thresholdAmount?: SortOrder
+    thresholdType?: SortOrder
+    thresholdMax?: SortOrder
+    currency?: SortOrder
+    detailTemplate?: SortOrder
+    regulationRef?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CorridorThresholdRuleMinOrderByAggregateInput = {
+    id?: SortOrder
+    corridorCode?: SortOrder
+    ruleId?: SortOrder
+    label?: SortOrder
+    riskLevel?: SortOrder
+    thresholdAmount?: SortOrder
+    thresholdType?: SortOrder
+    thresholdMax?: SortOrder
+    currency?: SortOrder
+    detailTemplate?: SortOrder
+    regulationRef?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CorridorThresholdRuleSumOrderByAggregateInput = {
+    thresholdAmount?: SortOrder
+    thresholdMax?: SortOrder
   }
 
   export type InstitutionApprovedTokenCountOrderByAggregateInput = {
@@ -65659,6 +68233,12 @@ export namespace Prisma {
     connect?: InstitutionBranchWhereUniqueInput
   }
 
+  export type StealthMetaAddressCreateNestedOneWithoutAccountsInput = {
+    create?: XOR<StealthMetaAddressCreateWithoutAccountsInput, StealthMetaAddressUncheckedCreateWithoutAccountsInput>
+    connectOrCreate?: StealthMetaAddressCreateOrConnectWithoutAccountsInput
+    connect?: StealthMetaAddressWhereUniqueInput
+  }
+
   export type EnumInstitutionAccountTypeFieldUpdateOperationsInput = {
     set?: $Enums.InstitutionAccountType
   }
@@ -65692,6 +68272,16 @@ export namespace Prisma {
     delete?: InstitutionBranchWhereInput | boolean
     connect?: InstitutionBranchWhereUniqueInput
     update?: XOR<XOR<InstitutionBranchUpdateToOneWithWhereWithoutAccountsInput, InstitutionBranchUpdateWithoutAccountsInput>, InstitutionBranchUncheckedUpdateWithoutAccountsInput>
+  }
+
+  export type StealthMetaAddressUpdateOneWithoutAccountsNestedInput = {
+    create?: XOR<StealthMetaAddressCreateWithoutAccountsInput, StealthMetaAddressUncheckedCreateWithoutAccountsInput>
+    connectOrCreate?: StealthMetaAddressCreateOrConnectWithoutAccountsInput
+    upsert?: StealthMetaAddressUpsertWithoutAccountsInput
+    disconnect?: StealthMetaAddressWhereInput | boolean
+    delete?: StealthMetaAddressWhereInput | boolean
+    connect?: StealthMetaAddressWhereUniqueInput
+    update?: XOR<XOR<StealthMetaAddressUpdateToOneWithWhereWithoutAccountsInput, StealthMetaAddressUpdateWithoutAccountsInput>, StealthMetaAddressUncheckedUpdateWithoutAccountsInput>
   }
 
   export type InstitutionClientCreateNestedOneWithoutBranchesInput = {
@@ -65824,6 +68414,14 @@ export namespace Prisma {
     update?: XOR<XOR<InstitutionClientUpdateToOneWithWhereWithoutApiKeysInput, InstitutionClientUpdateWithoutApiKeysInput>, InstitutionClientUncheckedUpdateWithoutApiKeysInput>
   }
 
+  export type InstitutionEscrowCreateapprovalPartiesInput = {
+    set: string[]
+  }
+
+  export type InstitutionEscrowCreatereleaseConditionsInput = {
+    set: string[]
+  }
+
   export type InstitutionClientCreateNestedOneWithoutEscrowsInput = {
     create?: XOR<InstitutionClientCreateWithoutEscrowsInput, InstitutionClientUncheckedCreateWithoutEscrowsInput>
     connectOrCreate?: InstitutionClientCreateOrConnectWithoutEscrowsInput
@@ -65892,6 +68490,20 @@ export namespace Prisma {
 
   export type EnumInstitutionEscrowStatusFieldUpdateOperationsInput = {
     set?: $Enums.InstitutionEscrowStatus
+  }
+
+  export type InstitutionEscrowUpdateapprovalPartiesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type InstitutionEscrowUpdatereleaseConditionsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type NullableEnumPrivacyLevelFieldUpdateOperationsInput = {
+    set?: $Enums.PrivacyLevel | null
   }
 
   export type InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput = {
@@ -66100,6 +68712,20 @@ export namespace Prisma {
     set: string[]
   }
 
+  export type CorridorThresholdRuleCreateNestedManyWithoutCorridorInput = {
+    create?: XOR<CorridorThresholdRuleCreateWithoutCorridorInput, CorridorThresholdRuleUncheckedCreateWithoutCorridorInput> | CorridorThresholdRuleCreateWithoutCorridorInput[] | CorridorThresholdRuleUncheckedCreateWithoutCorridorInput[]
+    connectOrCreate?: CorridorThresholdRuleCreateOrConnectWithoutCorridorInput | CorridorThresholdRuleCreateOrConnectWithoutCorridorInput[]
+    createMany?: CorridorThresholdRuleCreateManyCorridorInputEnvelope
+    connect?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+  }
+
+  export type CorridorThresholdRuleUncheckedCreateNestedManyWithoutCorridorInput = {
+    create?: XOR<CorridorThresholdRuleCreateWithoutCorridorInput, CorridorThresholdRuleUncheckedCreateWithoutCorridorInput> | CorridorThresholdRuleCreateWithoutCorridorInput[] | CorridorThresholdRuleUncheckedCreateWithoutCorridorInput[]
+    connectOrCreate?: CorridorThresholdRuleCreateOrConnectWithoutCorridorInput | CorridorThresholdRuleCreateOrConnectWithoutCorridorInput[]
+    createMany?: CorridorThresholdRuleCreateManyCorridorInputEnvelope
+    connect?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+  }
+
   export type InstitutionCorridorUpdaterequiredDocumentsInput = {
     set?: string[]
     push?: string | string[]
@@ -66107,6 +68733,48 @@ export namespace Prisma {
 
   export type EnumCorridorStatusFieldUpdateOperationsInput = {
     set?: $Enums.CorridorStatus
+  }
+
+  export type CorridorThresholdRuleUpdateManyWithoutCorridorNestedInput = {
+    create?: XOR<CorridorThresholdRuleCreateWithoutCorridorInput, CorridorThresholdRuleUncheckedCreateWithoutCorridorInput> | CorridorThresholdRuleCreateWithoutCorridorInput[] | CorridorThresholdRuleUncheckedCreateWithoutCorridorInput[]
+    connectOrCreate?: CorridorThresholdRuleCreateOrConnectWithoutCorridorInput | CorridorThresholdRuleCreateOrConnectWithoutCorridorInput[]
+    upsert?: CorridorThresholdRuleUpsertWithWhereUniqueWithoutCorridorInput | CorridorThresholdRuleUpsertWithWhereUniqueWithoutCorridorInput[]
+    createMany?: CorridorThresholdRuleCreateManyCorridorInputEnvelope
+    set?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+    disconnect?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+    delete?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+    connect?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+    update?: CorridorThresholdRuleUpdateWithWhereUniqueWithoutCorridorInput | CorridorThresholdRuleUpdateWithWhereUniqueWithoutCorridorInput[]
+    updateMany?: CorridorThresholdRuleUpdateManyWithWhereWithoutCorridorInput | CorridorThresholdRuleUpdateManyWithWhereWithoutCorridorInput[]
+    deleteMany?: CorridorThresholdRuleScalarWhereInput | CorridorThresholdRuleScalarWhereInput[]
+  }
+
+  export type CorridorThresholdRuleUncheckedUpdateManyWithoutCorridorNestedInput = {
+    create?: XOR<CorridorThresholdRuleCreateWithoutCorridorInput, CorridorThresholdRuleUncheckedCreateWithoutCorridorInput> | CorridorThresholdRuleCreateWithoutCorridorInput[] | CorridorThresholdRuleUncheckedCreateWithoutCorridorInput[]
+    connectOrCreate?: CorridorThresholdRuleCreateOrConnectWithoutCorridorInput | CorridorThresholdRuleCreateOrConnectWithoutCorridorInput[]
+    upsert?: CorridorThresholdRuleUpsertWithWhereUniqueWithoutCorridorInput | CorridorThresholdRuleUpsertWithWhereUniqueWithoutCorridorInput[]
+    createMany?: CorridorThresholdRuleCreateManyCorridorInputEnvelope
+    set?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+    disconnect?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+    delete?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+    connect?: CorridorThresholdRuleWhereUniqueInput | CorridorThresholdRuleWhereUniqueInput[]
+    update?: CorridorThresholdRuleUpdateWithWhereUniqueWithoutCorridorInput | CorridorThresholdRuleUpdateWithWhereUniqueWithoutCorridorInput[]
+    updateMany?: CorridorThresholdRuleUpdateManyWithWhereWithoutCorridorInput | CorridorThresholdRuleUpdateManyWithWhereWithoutCorridorInput[]
+    deleteMany?: CorridorThresholdRuleScalarWhereInput | CorridorThresholdRuleScalarWhereInput[]
+  }
+
+  export type InstitutionCorridorCreateNestedOneWithoutThresholdRulesInput = {
+    create?: XOR<InstitutionCorridorCreateWithoutThresholdRulesInput, InstitutionCorridorUncheckedCreateWithoutThresholdRulesInput>
+    connectOrCreate?: InstitutionCorridorCreateOrConnectWithoutThresholdRulesInput
+    connect?: InstitutionCorridorWhereUniqueInput
+  }
+
+  export type InstitutionCorridorUpdateOneRequiredWithoutThresholdRulesNestedInput = {
+    create?: XOR<InstitutionCorridorCreateWithoutThresholdRulesInput, InstitutionCorridorUncheckedCreateWithoutThresholdRulesInput>
+    connectOrCreate?: InstitutionCorridorCreateOrConnectWithoutThresholdRulesInput
+    upsert?: InstitutionCorridorUpsertWithoutThresholdRulesInput
+    connect?: InstitutionCorridorWhereUniqueInput
+    update?: XOR<XOR<InstitutionCorridorUpdateToOneWithWhereWithoutThresholdRulesInput, InstitutionCorridorUpdateWithoutThresholdRulesInput>, InstitutionCorridorUncheckedUpdateWithoutThresholdRulesInput>
   }
 
   export type AdminRefreshTokenCreateNestedManyWithoutAdminInput = {
@@ -66232,6 +68900,13 @@ export namespace Prisma {
     connect?: StealthPaymentWhereUniqueInput | StealthPaymentWhereUniqueInput[]
   }
 
+  export type InstitutionAccountCreateNestedManyWithoutStealthMetaAddressInput = {
+    create?: XOR<InstitutionAccountCreateWithoutStealthMetaAddressInput, InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput> | InstitutionAccountCreateWithoutStealthMetaAddressInput[] | InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput | InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput[]
+    createMany?: InstitutionAccountCreateManyStealthMetaAddressInputEnvelope
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+  }
+
   export type InstitutionClientCreateNestedOneWithoutStealthMetaAddressesInput = {
     create?: XOR<InstitutionClientCreateWithoutStealthMetaAddressesInput, InstitutionClientUncheckedCreateWithoutStealthMetaAddressesInput>
     connectOrCreate?: InstitutionClientCreateOrConnectWithoutStealthMetaAddressesInput
@@ -66243,6 +68918,13 @@ export namespace Prisma {
     connectOrCreate?: StealthPaymentCreateOrConnectWithoutMetaAddressInput | StealthPaymentCreateOrConnectWithoutMetaAddressInput[]
     createMany?: StealthPaymentCreateManyMetaAddressInputEnvelope
     connect?: StealthPaymentWhereUniqueInput | StealthPaymentWhereUniqueInput[]
+  }
+
+  export type InstitutionAccountUncheckedCreateNestedManyWithoutStealthMetaAddressInput = {
+    create?: XOR<InstitutionAccountCreateWithoutStealthMetaAddressInput, InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput> | InstitutionAccountCreateWithoutStealthMetaAddressInput[] | InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput | InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput[]
+    createMany?: InstitutionAccountCreateManyStealthMetaAddressInputEnvelope
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
   }
 
   export type StealthPaymentUpdateManyWithoutMetaAddressNestedInput = {
@@ -66257,6 +68939,20 @@ export namespace Prisma {
     update?: StealthPaymentUpdateWithWhereUniqueWithoutMetaAddressInput | StealthPaymentUpdateWithWhereUniqueWithoutMetaAddressInput[]
     updateMany?: StealthPaymentUpdateManyWithWhereWithoutMetaAddressInput | StealthPaymentUpdateManyWithWhereWithoutMetaAddressInput[]
     deleteMany?: StealthPaymentScalarWhereInput | StealthPaymentScalarWhereInput[]
+  }
+
+  export type InstitutionAccountUpdateManyWithoutStealthMetaAddressNestedInput = {
+    create?: XOR<InstitutionAccountCreateWithoutStealthMetaAddressInput, InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput> | InstitutionAccountCreateWithoutStealthMetaAddressInput[] | InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput | InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput[]
+    upsert?: InstitutionAccountUpsertWithWhereUniqueWithoutStealthMetaAddressInput | InstitutionAccountUpsertWithWhereUniqueWithoutStealthMetaAddressInput[]
+    createMany?: InstitutionAccountCreateManyStealthMetaAddressInputEnvelope
+    set?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    disconnect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    delete?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    update?: InstitutionAccountUpdateWithWhereUniqueWithoutStealthMetaAddressInput | InstitutionAccountUpdateWithWhereUniqueWithoutStealthMetaAddressInput[]
+    updateMany?: InstitutionAccountUpdateManyWithWhereWithoutStealthMetaAddressInput | InstitutionAccountUpdateManyWithWhereWithoutStealthMetaAddressInput[]
+    deleteMany?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
   }
 
   export type InstitutionClientUpdateOneRequiredWithoutStealthMetaAddressesNestedInput = {
@@ -66279,6 +68975,20 @@ export namespace Prisma {
     update?: StealthPaymentUpdateWithWhereUniqueWithoutMetaAddressInput | StealthPaymentUpdateWithWhereUniqueWithoutMetaAddressInput[]
     updateMany?: StealthPaymentUpdateManyWithWhereWithoutMetaAddressInput | StealthPaymentUpdateManyWithWhereWithoutMetaAddressInput[]
     deleteMany?: StealthPaymentScalarWhereInput | StealthPaymentScalarWhereInput[]
+  }
+
+  export type InstitutionAccountUncheckedUpdateManyWithoutStealthMetaAddressNestedInput = {
+    create?: XOR<InstitutionAccountCreateWithoutStealthMetaAddressInput, InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput> | InstitutionAccountCreateWithoutStealthMetaAddressInput[] | InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput[]
+    connectOrCreate?: InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput | InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput[]
+    upsert?: InstitutionAccountUpsertWithWhereUniqueWithoutStealthMetaAddressInput | InstitutionAccountUpsertWithWhereUniqueWithoutStealthMetaAddressInput[]
+    createMany?: InstitutionAccountCreateManyStealthMetaAddressInputEnvelope
+    set?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    disconnect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    delete?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    connect?: InstitutionAccountWhereUniqueInput | InstitutionAccountWhereUniqueInput[]
+    update?: InstitutionAccountUpdateWithWhereUniqueWithoutStealthMetaAddressInput | InstitutionAccountUpdateWithWhereUniqueWithoutStealthMetaAddressInput[]
+    updateMany?: InstitutionAccountUpdateManyWithWhereWithoutStealthMetaAddressInput | InstitutionAccountUpdateManyWithWhereWithoutStealthMetaAddressInput[]
+    deleteMany?: InstitutionAccountScalarWhereInput | InstitutionAccountScalarWhereInput[]
   }
 
   export type StealthMetaAddressCreateNestedOneWithoutStealthPaymentsInput = {
@@ -67119,6 +69829,13 @@ export namespace Prisma {
     not?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel> | $Enums.InstitutionEscrowStatus
   }
 
+  export type NestedEnumPrivacyLevelNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.PrivacyLevel | EnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PrivacyLevel[] | ListEnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PrivacyLevel[] | ListEnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPrivacyLevelNullableFilter<$PrismaModel> | $Enums.PrivacyLevel | null
+  }
+
   export type NestedEnumInstitutionConditionTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.InstitutionConditionType | EnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.InstitutionConditionType[] | ListEnumInstitutionConditionTypeFieldRefInput<$PrismaModel> | null
@@ -67137,6 +69854,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
     _max?: NestedEnumInstitutionEscrowStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPrivacyLevelNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PrivacyLevel | EnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PrivacyLevel[] | ListEnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PrivacyLevel[] | ListEnumPrivacyLevelFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPrivacyLevelNullableWithAggregatesFilter<$PrismaModel> | $Enums.PrivacyLevel | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumPrivacyLevelNullableFilter<$PrismaModel>
+    _max?: NestedEnumPrivacyLevelNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumAiAnalysisTypeFilter<$PrismaModel = never> = {
@@ -70444,6 +73171,14 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -70465,6 +73200,14 @@ export namespace Prisma {
     riskTolerance?: string
     defaultToken?: string
     emailNotifications?: boolean
+    language?: string | null
+    theme?: string | null
+    twoFactorEnabled?: boolean
+    aiRecommendations?: boolean
+    feeBps?: number
+    minFeeUsdc?: Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -70522,11 +73265,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -70555,11 +73304,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -70711,11 +73466,13 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     branch?: InstitutionBranchCreateNestedOneWithoutAccountsInput
+    stealthMetaAddress?: StealthMetaAddressCreateNestedOneWithoutAccountsInput
   }
 
   export type InstitutionAccountUncheckedCreateWithoutClientInput = {
@@ -70747,8 +73504,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     branchId?: string | null
@@ -70892,6 +73651,7 @@ export namespace Prisma {
 
   export type DirectPaymentCreateWithoutClientInput = {
     id?: string
+    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -70914,6 +73674,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedCreateWithoutClientInput = {
     id?: string
+    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -70956,6 +73717,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     stealthPayments?: StealthPaymentCreateNestedManyWithoutMetaAddressInput
+    accounts?: InstitutionAccountCreateNestedManyWithoutStealthMetaAddressInput
   }
 
   export type StealthMetaAddressUncheckedCreateWithoutClientInput = {
@@ -70970,6 +73732,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     stealthPayments?: StealthPaymentUncheckedCreateNestedManyWithoutMetaAddressInput
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutStealthMetaAddressInput
   }
 
   export type StealthMetaAddressCreateOrConnectWithoutClientInput = {
@@ -71040,6 +73803,14 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -71061,6 +73832,14 @@ export namespace Prisma {
     riskTolerance?: StringFieldUpdateOperationsInput | string
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
+    language?: NullableStringFieldUpdateOperationsInput | string | null
+    theme?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    aiRecommendations?: BoolFieldUpdateOperationsInput | boolean
+    feeBps?: IntFieldUpdateOperationsInput | number
+    minFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxFeeUsdc?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    notificationPreferences?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -71131,11 +73910,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFilter<"InstitutionEscrow"> | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFilter<"InstitutionEscrow"> | string
     riskScore?: IntNullableFilter<"InstitutionEscrow"> | number | null
-    privacyLevel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    settlementMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    releaseMode?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    approvalParties?: StringNullableListFilter<"InstitutionEscrow">
+    releaseConditions?: StringNullableListFilter<"InstitutionEscrow">
+    approvalInstructions?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    privacyLevel?: EnumPrivacyLevelNullableFilter<"InstitutionEscrow"> | $Enums.PrivacyLevel | null
     stealthPaymentId?: StringNullableFilter<"InstitutionEscrow"> | string | null
     escrowPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     vaultPda?: StringNullableFilter<"InstitutionEscrow"> | string | null
     nonceAccount?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    initTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     depositTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     releaseTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
     cancelTxSignature?: StringNullableFilter<"InstitutionEscrow"> | string | null
@@ -71289,8 +74074,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnEscrowReleased?: BoolFilter<"InstitutionAccount"> | boolean
     notifyOnComplianceAlert?: BoolFilter<"InstitutionAccount"> | boolean
+    defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    stealthMetaAddressId?: StringNullableFilter<"InstitutionAccount"> | string | null
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
@@ -71424,6 +74211,7 @@ export namespace Prisma {
     OR?: DirectPaymentScalarWhereInput[]
     NOT?: DirectPaymentScalarWhereInput | DirectPaymentScalarWhereInput[]
     id?: StringFilter<"DirectPayment"> | string
+    paymentCode?: StringNullableFilter<"DirectPayment"> | string | null
     clientId?: StringFilter<"DirectPayment"> | string
     sender?: StringFilter<"DirectPayment"> | string
     senderCountry?: StringFilter<"DirectPayment"> | string
@@ -72006,6 +74794,41 @@ export namespace Prisma {
     create: XOR<InstitutionBranchCreateWithoutAccountsInput, InstitutionBranchUncheckedCreateWithoutAccountsInput>
   }
 
+  export type StealthMetaAddressCreateWithoutAccountsInput = {
+    id?: string
+    label?: string | null
+    scanPublicKey: string
+    spendPublicKey: string
+    encryptedScanKey: string
+    encryptedSpendKey: string
+    viewingKeyShared?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    stealthPayments?: StealthPaymentCreateNestedManyWithoutMetaAddressInput
+    client: InstitutionClientCreateNestedOneWithoutStealthMetaAddressesInput
+  }
+
+  export type StealthMetaAddressUncheckedCreateWithoutAccountsInput = {
+    id?: string
+    institutionClientId: string
+    label?: string | null
+    scanPublicKey: string
+    spendPublicKey: string
+    encryptedScanKey: string
+    encryptedSpendKey: string
+    viewingKeyShared?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    stealthPayments?: StealthPaymentUncheckedCreateNestedManyWithoutMetaAddressInput
+  }
+
+  export type StealthMetaAddressCreateOrConnectWithoutAccountsInput = {
+    where: StealthMetaAddressWhereUniqueInput
+    create: XOR<StealthMetaAddressCreateWithoutAccountsInput, StealthMetaAddressUncheckedCreateWithoutAccountsInput>
+  }
+
   export type InstitutionClientUpsertWithoutAccountsInput = {
     update: XOR<InstitutionClientUpdateWithoutAccountsInput, InstitutionClientUncheckedUpdateWithoutAccountsInput>
     create: XOR<InstitutionClientCreateWithoutAccountsInput, InstitutionClientUncheckedCreateWithoutAccountsInput>
@@ -72222,6 +75045,47 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type StealthMetaAddressUpsertWithoutAccountsInput = {
+    update: XOR<StealthMetaAddressUpdateWithoutAccountsInput, StealthMetaAddressUncheckedUpdateWithoutAccountsInput>
+    create: XOR<StealthMetaAddressCreateWithoutAccountsInput, StealthMetaAddressUncheckedCreateWithoutAccountsInput>
+    where?: StealthMetaAddressWhereInput
+  }
+
+  export type StealthMetaAddressUpdateToOneWithWhereWithoutAccountsInput = {
+    where?: StealthMetaAddressWhereInput
+    data: XOR<StealthMetaAddressUpdateWithoutAccountsInput, StealthMetaAddressUncheckedUpdateWithoutAccountsInput>
+  }
+
+  export type StealthMetaAddressUpdateWithoutAccountsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    scanPublicKey?: StringFieldUpdateOperationsInput | string
+    spendPublicKey?: StringFieldUpdateOperationsInput | string
+    encryptedScanKey?: StringFieldUpdateOperationsInput | string
+    encryptedSpendKey?: StringFieldUpdateOperationsInput | string
+    viewingKeyShared?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    stealthPayments?: StealthPaymentUpdateManyWithoutMetaAddressNestedInput
+    client?: InstitutionClientUpdateOneRequiredWithoutStealthMetaAddressesNestedInput
+  }
+
+  export type StealthMetaAddressUncheckedUpdateWithoutAccountsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institutionClientId?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    scanPublicKey?: StringFieldUpdateOperationsInput | string
+    spendPublicKey?: StringFieldUpdateOperationsInput | string
+    encryptedScanKey?: StringFieldUpdateOperationsInput | string
+    encryptedSpendKey?: StringFieldUpdateOperationsInput | string
+    viewingKeyShared?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    stealthPayments?: StealthPaymentUncheckedUpdateManyWithoutMetaAddressNestedInput
+  }
+
   export type InstitutionClientCreateWithoutBranchesInput = {
     id?: string
     email: string
@@ -72410,11 +75274,13 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutAccountsInput
+    stealthMetaAddress?: StealthMetaAddressCreateNestedOneWithoutAccountsInput
   }
 
   export type InstitutionAccountUncheckedCreateWithoutBranchInput = {
@@ -72447,8 +75313,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -74485,11 +77353,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -74519,11 +77393,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -74567,11 +77447,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74601,11 +77487,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74633,11 +77525,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -74667,11 +77565,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -74874,11 +77778,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74908,11 +77818,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -75105,11 +78021,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -75139,11 +78061,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -75346,11 +78274,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -75380,11 +78314,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -75561,6 +78501,192 @@ export namespace Prisma {
     branches?: InstitutionBranchUncheckedUpdateManyWithoutClientNestedInput
     directPayments?: DirectPaymentUncheckedUpdateManyWithoutClientNestedInput
     stealthMetaAddresses?: StealthMetaAddressUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type CorridorThresholdRuleCreateWithoutCorridorInput = {
+    id?: string
+    ruleId: string
+    label: string
+    riskLevel: string
+    thresholdAmount?: Decimal | DecimalJsLike | number | string | null
+    thresholdType: string
+    thresholdMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    detailTemplate: string
+    regulationRef: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CorridorThresholdRuleUncheckedCreateWithoutCorridorInput = {
+    id?: string
+    ruleId: string
+    label: string
+    riskLevel: string
+    thresholdAmount?: Decimal | DecimalJsLike | number | string | null
+    thresholdType: string
+    thresholdMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    detailTemplate: string
+    regulationRef: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CorridorThresholdRuleCreateOrConnectWithoutCorridorInput = {
+    where: CorridorThresholdRuleWhereUniqueInput
+    create: XOR<CorridorThresholdRuleCreateWithoutCorridorInput, CorridorThresholdRuleUncheckedCreateWithoutCorridorInput>
+  }
+
+  export type CorridorThresholdRuleCreateManyCorridorInputEnvelope = {
+    data: CorridorThresholdRuleCreateManyCorridorInput | CorridorThresholdRuleCreateManyCorridorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CorridorThresholdRuleUpsertWithWhereUniqueWithoutCorridorInput = {
+    where: CorridorThresholdRuleWhereUniqueInput
+    update: XOR<CorridorThresholdRuleUpdateWithoutCorridorInput, CorridorThresholdRuleUncheckedUpdateWithoutCorridorInput>
+    create: XOR<CorridorThresholdRuleCreateWithoutCorridorInput, CorridorThresholdRuleUncheckedCreateWithoutCorridorInput>
+  }
+
+  export type CorridorThresholdRuleUpdateWithWhereUniqueWithoutCorridorInput = {
+    where: CorridorThresholdRuleWhereUniqueInput
+    data: XOR<CorridorThresholdRuleUpdateWithoutCorridorInput, CorridorThresholdRuleUncheckedUpdateWithoutCorridorInput>
+  }
+
+  export type CorridorThresholdRuleUpdateManyWithWhereWithoutCorridorInput = {
+    where: CorridorThresholdRuleScalarWhereInput
+    data: XOR<CorridorThresholdRuleUpdateManyMutationInput, CorridorThresholdRuleUncheckedUpdateManyWithoutCorridorInput>
+  }
+
+  export type CorridorThresholdRuleScalarWhereInput = {
+    AND?: CorridorThresholdRuleScalarWhereInput | CorridorThresholdRuleScalarWhereInput[]
+    OR?: CorridorThresholdRuleScalarWhereInput[]
+    NOT?: CorridorThresholdRuleScalarWhereInput | CorridorThresholdRuleScalarWhereInput[]
+    id?: StringFilter<"CorridorThresholdRule"> | string
+    corridorCode?: StringFilter<"CorridorThresholdRule"> | string
+    ruleId?: StringFilter<"CorridorThresholdRule"> | string
+    label?: StringFilter<"CorridorThresholdRule"> | string
+    riskLevel?: StringFilter<"CorridorThresholdRule"> | string
+    thresholdAmount?: DecimalNullableFilter<"CorridorThresholdRule"> | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFilter<"CorridorThresholdRule"> | string
+    thresholdMax?: DecimalNullableFilter<"CorridorThresholdRule"> | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFilter<"CorridorThresholdRule"> | string
+    detailTemplate?: StringFilter<"CorridorThresholdRule"> | string
+    regulationRef?: StringFilter<"CorridorThresholdRule"> | string
+    isActive?: BoolFilter<"CorridorThresholdRule"> | boolean
+    createdAt?: DateTimeFilter<"CorridorThresholdRule"> | Date | string
+    updatedAt?: DateTimeFilter<"CorridorThresholdRule"> | Date | string
+  }
+
+  export type InstitutionCorridorCreateWithoutThresholdRulesInput = {
+    id?: string
+    sourceCountry: string
+    destCountry: string
+    code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
+    minAmount: Decimal | DecimalJsLike | number | string
+    maxAmount: Decimal | DecimalJsLike | number | string
+    dailyLimit: Decimal | DecimalJsLike | number | string
+    monthlyLimit: Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorCreaterequiredDocumentsInput | string[]
+    riskLevel?: string
+    status?: $Enums.CorridorStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionCorridorUncheckedCreateWithoutThresholdRulesInput = {
+    id?: string
+    sourceCountry: string
+    destCountry: string
+    code: string
+    name?: string | null
+    compliance?: string | null
+    description?: string | null
+    riskReason?: string | null
+    travelRuleThreshold?: Decimal | DecimalJsLike | number | string
+    eddThreshold?: Decimal | DecimalJsLike | number | string
+    reportingThreshold?: Decimal | DecimalJsLike | number | string
+    minAmount: Decimal | DecimalJsLike | number | string
+    maxAmount: Decimal | DecimalJsLike | number | string
+    dailyLimit: Decimal | DecimalJsLike | number | string
+    monthlyLimit: Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorCreaterequiredDocumentsInput | string[]
+    riskLevel?: string
+    status?: $Enums.CorridorStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InstitutionCorridorCreateOrConnectWithoutThresholdRulesInput = {
+    where: InstitutionCorridorWhereUniqueInput
+    create: XOR<InstitutionCorridorCreateWithoutThresholdRulesInput, InstitutionCorridorUncheckedCreateWithoutThresholdRulesInput>
+  }
+
+  export type InstitutionCorridorUpsertWithoutThresholdRulesInput = {
+    update: XOR<InstitutionCorridorUpdateWithoutThresholdRulesInput, InstitutionCorridorUncheckedUpdateWithoutThresholdRulesInput>
+    create: XOR<InstitutionCorridorCreateWithoutThresholdRulesInput, InstitutionCorridorUncheckedCreateWithoutThresholdRulesInput>
+    where?: InstitutionCorridorWhereInput
+  }
+
+  export type InstitutionCorridorUpdateToOneWithWhereWithoutThresholdRulesInput = {
+    where?: InstitutionCorridorWhereInput
+    data: XOR<InstitutionCorridorUpdateWithoutThresholdRulesInput, InstitutionCorridorUncheckedUpdateWithoutThresholdRulesInput>
+  }
+
+  export type InstitutionCorridorUpdateWithoutThresholdRulesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    sourceCountry?: StringFieldUpdateOperationsInput | string
+    destCountry?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorUpdaterequiredDocumentsInput | string[]
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstitutionCorridorUncheckedUpdateWithoutThresholdRulesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    sourceCountry?: StringFieldUpdateOperationsInput | string
+    destCountry?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    compliance?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    riskReason?: NullableStringFieldUpdateOperationsInput | string | null
+    travelRuleThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    eddThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    reportingThreshold?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    minAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyLimit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    requiredDocuments?: InstitutionCorridorUpdaterequiredDocumentsInput | string[]
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    status?: EnumCorridorStatusFieldUpdateOperationsInput | $Enums.CorridorStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AdminRefreshTokenCreateWithoutAdminInput = {
@@ -75854,11 +78980,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -75888,11 +79020,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -76101,11 +79239,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -76135,11 +79279,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -76517,6 +79667,92 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type InstitutionAccountCreateWithoutStealthMetaAddressInput = {
+    id?: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: InstitutionClientCreateNestedOneWithoutAccountsInput
+    branch?: InstitutionBranchCreateNestedOneWithoutAccountsInput
+  }
+
+  export type InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput = {
+    id?: string
+    clientId: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    branchId?: string | null
+  }
+
+  export type InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput = {
+    where: InstitutionAccountWhereUniqueInput
+    create: XOR<InstitutionAccountCreateWithoutStealthMetaAddressInput, InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput>
+  }
+
+  export type InstitutionAccountCreateManyStealthMetaAddressInputEnvelope = {
+    data: InstitutionAccountCreateManyStealthMetaAddressInput | InstitutionAccountCreateManyStealthMetaAddressInput[]
+    skipDuplicates?: boolean
+  }
+
   export type InstitutionClientCreateWithoutStealthMetaAddressesInput = {
     id?: string
     email: string
@@ -76711,6 +79947,22 @@ export namespace Prisma {
     sweptAt?: DateTimeNullableFilter<"StealthPayment"> | Date | string | null
   }
 
+  export type InstitutionAccountUpsertWithWhereUniqueWithoutStealthMetaAddressInput = {
+    where: InstitutionAccountWhereUniqueInput
+    update: XOR<InstitutionAccountUpdateWithoutStealthMetaAddressInput, InstitutionAccountUncheckedUpdateWithoutStealthMetaAddressInput>
+    create: XOR<InstitutionAccountCreateWithoutStealthMetaAddressInput, InstitutionAccountUncheckedCreateWithoutStealthMetaAddressInput>
+  }
+
+  export type InstitutionAccountUpdateWithWhereUniqueWithoutStealthMetaAddressInput = {
+    where: InstitutionAccountWhereUniqueInput
+    data: XOR<InstitutionAccountUpdateWithoutStealthMetaAddressInput, InstitutionAccountUncheckedUpdateWithoutStealthMetaAddressInput>
+  }
+
+  export type InstitutionAccountUpdateManyWithWhereWithoutStealthMetaAddressInput = {
+    where: InstitutionAccountScalarWhereInput
+    data: XOR<InstitutionAccountUpdateManyMutationInput, InstitutionAccountUncheckedUpdateManyWithoutStealthMetaAddressInput>
+  }
+
   export type InstitutionClientUpsertWithoutStealthMetaAddressesInput = {
     update: XOR<InstitutionClientUpdateWithoutStealthMetaAddressesInput, InstitutionClientUncheckedUpdateWithoutStealthMetaAddressesInput>
     create: XOR<InstitutionClientCreateWithoutStealthMetaAddressesInput, InstitutionClientUncheckedCreateWithoutStealthMetaAddressesInput>
@@ -76887,6 +80139,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    accounts?: InstitutionAccountCreateNestedManyWithoutStealthMetaAddressInput
     client: InstitutionClientCreateNestedOneWithoutStealthMetaAddressesInput
   }
 
@@ -76902,6 +80155,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    accounts?: InstitutionAccountUncheckedCreateNestedManyWithoutStealthMetaAddressInput
   }
 
   export type StealthMetaAddressCreateOrConnectWithoutStealthPaymentsInput = {
@@ -76931,6 +80185,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: InstitutionAccountUpdateManyWithoutStealthMetaAddressNestedInput
     client?: InstitutionClientUpdateOneRequiredWithoutStealthMetaAddressesNestedInput
   }
 
@@ -76946,6 +80201,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutStealthMetaAddressNestedInput
   }
 
   export type DepositCreateManyAgreementInput = {
@@ -78129,11 +81385,17 @@ export namespace Prisma {
     status?: $Enums.InstitutionEscrowStatus
     settlementAuthority: string
     riskScore?: number | null
-    privacyLevel?: string | null
+    settlementMode?: string | null
+    releaseMode?: string | null
+    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
+    approvalInstructions?: string | null
+    privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
     escrowPda?: string | null
     vaultPda?: string | null
     nonceAccount?: string | null
+    initTxSignature?: string | null
     depositTxSignature?: string | null
     releaseTxSignature?: string | null
     cancelTxSignature?: string | null
@@ -78207,8 +81469,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     branchId?: string | null
@@ -78263,6 +81527,7 @@ export namespace Prisma {
 
   export type DirectPaymentCreateManyClientInput = {
     id?: string
+    paymentCode?: string | null
     sender: string
     senderCountry: string
     senderWallet: string
@@ -78376,11 +81641,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -78409,11 +81680,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -78442,11 +81719,17 @@ export namespace Prisma {
     status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
     settlementAuthority?: StringFieldUpdateOperationsInput | string
     riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    privacyLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
+    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
+    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
+    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
+    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
+    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
     escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
     vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
     nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
@@ -78588,11 +81871,13 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     branch?: InstitutionBranchUpdateOneWithoutAccountsNestedInput
+    stealthMetaAddress?: StealthMetaAddressUpdateOneWithoutAccountsNestedInput
   }
 
   export type InstitutionAccountUncheckedUpdateWithoutClientInput = {
@@ -78624,8 +81909,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     branchId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -78660,8 +81947,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     branchId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -78812,6 +82101,7 @@ export namespace Prisma {
 
   export type DirectPaymentUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -78834,6 +82124,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -78856,6 +82147,7 @@ export namespace Prisma {
 
   export type DirectPaymentUncheckedUpdateManyWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
+    paymentCode?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: StringFieldUpdateOperationsInput | string
     senderCountry?: StringFieldUpdateOperationsInput | string
     senderWallet?: StringFieldUpdateOperationsInput | string
@@ -78888,6 +82180,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stealthPayments?: StealthPaymentUpdateManyWithoutMetaAddressNestedInput
+    accounts?: InstitutionAccountUpdateManyWithoutStealthMetaAddressNestedInput
   }
 
   export type StealthMetaAddressUncheckedUpdateWithoutClientInput = {
@@ -78902,6 +82195,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stealthPayments?: StealthPaymentUncheckedUpdateManyWithoutMetaAddressNestedInput
+    accounts?: InstitutionAccountUncheckedUpdateManyWithoutStealthMetaAddressNestedInput
   }
 
   export type StealthMetaAddressUncheckedUpdateManyWithoutClientInput = {
@@ -78947,8 +82241,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: boolean
     notifyOnEscrowReleased?: boolean
     notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -78982,11 +82278,13 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput
+    stealthMetaAddress?: StealthMetaAddressUpdateOneWithoutAccountsNestedInput
   }
 
   export type InstitutionAccountUncheckedUpdateWithoutBranchInput = {
@@ -79019,8 +82317,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -79055,8 +82355,10 @@ export namespace Prisma {
     notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
     notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
     notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -79241,6 +82543,70 @@ export namespace Prisma {
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CorridorThresholdRuleCreateManyCorridorInput = {
+    id?: string
+    ruleId: string
+    label: string
+    riskLevel: string
+    thresholdAmount?: Decimal | DecimalJsLike | number | string | null
+    thresholdType: string
+    thresholdMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    detailTemplate: string
+    regulationRef: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CorridorThresholdRuleUpdateWithoutCorridorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ruleId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    thresholdAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFieldUpdateOperationsInput | string
+    thresholdMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    detailTemplate?: StringFieldUpdateOperationsInput | string
+    regulationRef?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CorridorThresholdRuleUncheckedUpdateWithoutCorridorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ruleId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    thresholdAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFieldUpdateOperationsInput | string
+    thresholdMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    detailTemplate?: StringFieldUpdateOperationsInput | string
+    regulationRef?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CorridorThresholdRuleUncheckedUpdateManyWithoutCorridorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ruleId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    riskLevel?: StringFieldUpdateOperationsInput | string
+    thresholdAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thresholdType?: StringFieldUpdateOperationsInput | string
+    thresholdMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    detailTemplate?: StringFieldUpdateOperationsInput | string
+    regulationRef?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type AdminRefreshTokenCreateManyAdminInput = {
     id?: string
     tokenHash: string
@@ -79288,6 +82654,44 @@ export namespace Prisma {
     sweptAt?: Date | string | null
   }
 
+  export type InstitutionAccountCreateManyStealthMetaAddressInput = {
+    id?: string
+    clientId: string
+    name: string
+    label?: string | null
+    accountType?: $Enums.InstitutionAccountType
+    description?: string | null
+    walletAddress: string
+    chain?: string
+    walletProvider?: string | null
+    custodyType?: $Enums.WalletCustodyType | null
+    verificationStatus?: $Enums.AccountVerificationStatus
+    verifiedAt?: Date | string | null
+    verificationNotes?: string | null
+    maxTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: number | null
+    monthlyTransactionCountLimit?: number | null
+    approvalMode?: $Enums.ApprovalMode
+    approvalThreshold?: Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountCreatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: boolean
+    notificationEmail?: string | null
+    webhookUrl?: string | null
+    notifyOnEscrowCreated?: boolean
+    notifyOnEscrowFunded?: boolean
+    notifyOnEscrowReleased?: boolean
+    notifyOnComplianceAlert?: boolean
+    defaultCurrency?: string
+    isDefault?: boolean
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    branchId?: string | null
+  }
+
   export type StealthPaymentUpdateWithoutMetaAddressInput = {
     id?: StringFieldUpdateOperationsInput | string
     stealthAddress?: StringFieldUpdateOperationsInput | string
@@ -79331,6 +82735,120 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     sweptAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type InstitutionAccountUpdateWithoutStealthMetaAddressInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: InstitutionClientUpdateOneRequiredWithoutAccountsNestedInput
+    branch?: InstitutionBranchUpdateOneWithoutAccountsNestedInput
+  }
+
+  export type InstitutionAccountUncheckedUpdateWithoutStealthMetaAddressInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type InstitutionAccountUncheckedUpdateManyWithoutStealthMetaAddressInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: EnumInstitutionAccountTypeFieldUpdateOperationsInput | $Enums.InstitutionAccountType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    chain?: StringFieldUpdateOperationsInput | string
+    walletProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    custodyType?: NullableEnumWalletCustodyTypeFieldUpdateOperationsInput | $Enums.WalletCustodyType | null
+    verificationStatus?: EnumAccountVerificationStatusFieldUpdateOperationsInput | $Enums.AccountVerificationStatus
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    maxTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    minTransactionAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyVolumeLimit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    dailyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    monthlyTransactionCountLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    approvalMode?: EnumApprovalModeFieldUpdateOperationsInput | $Enums.ApprovalMode
+    approvalThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    whitelistedAddresses?: InstitutionAccountUpdatewhitelistedAddressesInput | string[]
+    whitelistEnforced?: BoolFieldUpdateOperationsInput | boolean
+    notificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notifyOnEscrowCreated?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowFunded?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnEscrowReleased?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnComplianceAlert?: BoolFieldUpdateOperationsInput | boolean
+    defaultCurrency?: StringFieldUpdateOperationsInput | string
+    isDefault?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
 

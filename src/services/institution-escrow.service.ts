@@ -9,7 +9,7 @@
  * 5. List/get escrows (Redis cache + Prisma)
  */
 
-import { PrismaClient, InstitutionEscrowStatus } from '../generated/prisma';
+import { PrismaClient, InstitutionEscrowStatus, PrivacyLevel as PrismaPrivacyLevel } from '../generated/prisma';
 import { prisma } from '../config/database';
 import type { SettlementMode, ReleaseMode } from '../types/institution-escrow';
 import { redisClient } from '../config/redis';
@@ -1234,6 +1234,8 @@ export class InstitutionEscrowService {
     let releaseRecipient = escrow.recipientWallet!;
     let stealthPaymentId: string | undefined;
 
+    let actualPrivacyLevel = PrivacyLevel.NONE;
+
     if (isPrivacyEnabled() && effectivePrivacy.level === PrivacyLevel.STEALTH) {
       try {
         const privacyResult = await resolveReleaseDestination(
@@ -1246,8 +1248,9 @@ export class InstitutionEscrowService {
         );
         releaseRecipient = privacyResult.recipientAddress;
         stealthPaymentId = privacyResult.stealthPaymentId;
+        actualPrivacyLevel = privacyResult.privacyLevel;
         console.log(
-          `[InstitutionEscrow] Stealth release for ${escrowId}, stealth addr: ${releaseRecipient}`
+          `[InstitutionEscrow] Release for ${escrowId} with privacy=${actualPrivacyLevel}, addr: ${releaseRecipient}`
         );
       } catch (privacyError) {
         console.error('[InstitutionEscrow] Stealth address derivation failed:', privacyError);
@@ -1345,7 +1348,7 @@ export class InstitutionEscrowService {
         releaseTxSignature: releaseTxSig,
         resolvedAt: new Date(),
         ...(stealthPaymentId ? { stealthPaymentId } : {}),
-        ...(effectivePrivacy.level !== PrivacyLevel.NONE ? { privacyLevel: effectivePrivacy.level } : {}),
+        privacyLevel: actualPrivacyLevel as unknown as PrismaPrivacyLevel,
       },
     });
 
