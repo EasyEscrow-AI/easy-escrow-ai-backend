@@ -499,6 +499,12 @@ Interactive API docs are available at `/docs` on each environment:
 - **Staging**: https://staging-api.easyescrow.ai/docs
 - **Production**: https://api.easyescrow.ai/docs
 
+OpenAPI spec (JSON):
+
+- **Staging**: https://staging-api.easyescrow.ai/openapi.json
+- **Production**: https://api.easyescrow.ai/openapi.json
+- **Redoc version**: https://staging-api.easyescrow.ai/openapi-redoc.json
+
 ---
 
 ## Security
