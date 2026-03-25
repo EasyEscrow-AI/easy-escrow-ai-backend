@@ -93,6 +93,7 @@ router.post(
         approvalParties: req.body.approvalParties,
         releaseConditions: req.body.releaseConditions,
         approvalInstructions: req.body.approvalInstructions,
+        actorEmail: req.institutionClient!.email,
       });
 
       res.status(201).json({
@@ -137,6 +138,7 @@ router.post(
         approvalParties: req.body.approvalParties,
         releaseConditions: req.body.releaseConditions,
         approvalInstructions: req.body.approvalInstructions,
+        actorEmail: req.institutionClient!.email,
       });
 
       res.status(201).json({
@@ -179,6 +181,7 @@ router.put(
         approvalParties: req.body.approvalParties,
         releaseConditions: req.body.releaseConditions,
         approvalInstructions: req.body.approvalInstructions,
+        actorEmail: req.institutionClient!.email,
       });
 
       res.status(200).json({
@@ -211,7 +214,8 @@ router.post(
       const result = await service.submitDraft(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.expiryHours
+        req.body.expiryHours,
+        req.institutionClient!.email
       );
 
       res.status(200).json({
@@ -281,7 +285,8 @@ router.post(
       const result = await service.recordDeposit(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.txSignature
+        req.body.txSignature,
+        req.institutionClient!.email
       );
 
       res.status(200).json({
@@ -316,7 +321,8 @@ router.post(
       const result = await service.releaseFunds(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.notes
+        req.body.notes,
+        req.institutionClient!.email
       );
 
       res.status(200).json({
@@ -349,7 +355,8 @@ router.post(
       const result = await service.cancelEscrow(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.reason
+        req.body.reason,
+        req.institutionClient!.email
       );
 
       res.status(200).json({
