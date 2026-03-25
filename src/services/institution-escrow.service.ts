@@ -100,6 +100,7 @@ export interface CreateEscrowParams {
   releaseConditions?: string[];
   /** Free-text instructions for manual reviewers */
   approvalInstructions?: string;
+  actorEmail?: string;
 }
 
 export interface SaveDraftParams {
@@ -116,6 +117,7 @@ export interface SaveDraftParams {
   approvalParties?: string[];
   releaseConditions?: string[];
   approvalInstructions?: string;
+  actorEmail?: string;
 }
 
 export interface UpdateDraftParams {
@@ -131,6 +133,7 @@ export interface UpdateDraftParams {
   approvalParties?: string[];
   releaseConditions?: string[];
   approvalInstructions?: string;
+  actorEmail?: string;
 }
 
 export interface CreateEscrowResult {
@@ -243,6 +246,7 @@ export class InstitutionEscrowService {
       approvalParties,
       releaseConditions,
       approvalInstructions,
+      actorEmail,
     } = params;
 
     // 1. Validate client is verified
@@ -423,7 +427,7 @@ export class InstitutionEscrowService {
     });
 
     // 12. Create KYT-enriched audit logs
-    await this.createKytAuditLog(escrow, 'ESCROW_CREATED', client.companyName, {
+    await this.createKytAuditLog(escrow, 'ESCROW_CREATED', actorEmail || client.companyName, {
       initTxSignature,
       conditionType,
       releaseMode,
@@ -508,6 +512,7 @@ export class InstitutionEscrowService {
       approvalParties,
       releaseConditions,
       approvalInstructions,
+      actorEmail,
     } = params;
 
     // Validate client exists and is active
@@ -558,7 +563,7 @@ export class InstitutionEscrowService {
       },
     });
 
-    await this.createAuditLog(escrowId, clientId, 'DRAFT_SAVED', client.companyName, {
+    await this.createAuditLog(escrowId, clientId, 'DRAFT_SAVED', actorEmail || client.companyName, {
       amount: resolvedAmount,
       corridor: corridor || null,
     });
@@ -629,7 +634,7 @@ export class InstitutionEscrowService {
       escrowId,
       clientId,
       'DRAFT_UPDATED',
-      await this.resolveActorName(clientId),
+      params.actorEmail || (await this.resolveActorName(clientId)),
       {
         updatedFields: Object.keys(updateData),
       }
@@ -648,7 +653,8 @@ export class InstitutionEscrowService {
   async submitDraft(
     clientId: string,
     idOrCode: string,
-    expiryHours = 72
+    expiryHours = 72,
+    actorEmail?: string
   ): Promise<CreateEscrowResult> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -795,7 +801,7 @@ export class InstitutionEscrowService {
       },
     });
 
-    await this.createKytAuditLog(updated, 'DRAFT_SUBMITTED', client.companyName, {
+    await this.createKytAuditLog(updated, 'DRAFT_SUBMITTED', actorEmail || client.companyName, {
       conditionType: escrow.conditionType,
       message: `Draft submitted for ${Number(escrow.amount)} USDC on corridor ${escrow.corridor}`,
     });
@@ -870,7 +876,8 @@ export class InstitutionEscrowService {
   async recordDeposit(
     clientId: string,
     idOrCode: string,
-    txSignature: string
+    txSignature: string,
+    actorEmail?: string
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -951,7 +958,7 @@ export class InstitutionEscrowService {
     await this.createKytAuditLog(
       escrow,
       'DEPOSIT_CONFIRMED',
-      await this.resolveActorName(escrow.clientId),
+      actorEmail || (await this.resolveActorName(escrow.clientId)),
       {
         txSignature,
         message: `${Number(escrow.amount)} USDC deposited to PDA`,
@@ -1130,7 +1137,8 @@ export class InstitutionEscrowService {
   async releaseFunds(
     clientId: string,
     idOrCode: string,
-    notes?: string
+    notes?: string,
+    actorEmail?: string
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1277,7 +1285,7 @@ export class InstitutionEscrowService {
     }
 
     const releaseActor =
-      escrow.releaseMode === 'ai' ? 'AI Orchestrator' : escrow.settlementAuthority;
+      escrow.releaseMode === 'ai' ? 'AI Orchestrator' : actorEmail || escrow.settlementAuthority;
     await this.createKytAuditLog(escrow, 'FUNDS_RELEASED', releaseActor, {
       releaseTxSignature: releaseTxSig,
       releaseMode: escrow.releaseMode || 'manual',
@@ -1335,7 +1343,8 @@ export class InstitutionEscrowService {
   async cancelEscrow(
     clientId: string,
     idOrCode: string,
-    reason?: string
+    reason?: string,
+    actorEmail?: string
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1417,7 +1426,7 @@ export class InstitutionEscrowService {
     await this.createKytAuditLog(
       escrow,
       'ESCROW_CANCELLED',
-      await this.resolveActorName(escrow.clientId),
+      actorEmail || (await this.resolveActorName(escrow.clientId)),
       {
         reason,
         previousStatus: escrow.status,
