@@ -334,10 +334,6 @@ describe('InstitutionAuthService', () => {
       };
 
       mockPrisma.institutionRefreshToken.findUnique.resolves(storedToken);
-      mockPrisma.institutionRefreshToken.update.resolves({
-        ...storedToken,
-        revokedAt: new Date(),
-      });
       mockPrisma.institutionRefreshToken.create.resolves({
         id: 'rt-2',
         tokenHash: 'new-hash',
@@ -351,6 +347,9 @@ describe('InstitutionAuthService', () => {
 
       expect(result).to.have.property('accessToken');
       expect(result).to.have.property('refreshToken');
+
+      // Should NOT rewrite revokedAt — preserves original timestamp for fixed grace window
+      expect(mockPrisma.institutionRefreshToken.update.called).to.be.false;
     });
 
     it('should reject an expired refresh token', async () => {

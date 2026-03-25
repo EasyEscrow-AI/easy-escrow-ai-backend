@@ -188,11 +188,14 @@ export class InstitutionAuthService {
       throw new Error('Refresh token has expired');
     }
 
-    // Revoke old refresh token
-    await this.prisma.institutionRefreshToken.update({
-      where: { id: storedToken.id },
-      data: { revokedAt: new Date() },
-    });
+    // Revoke old refresh token (skip if already revoked during grace period
+    // to preserve the original revokedAt timestamp and keep the window fixed)
+    if (!storedToken.revokedAt) {
+      await this.prisma.institutionRefreshToken.update({
+        where: { id: storedToken.id },
+        data: { revokedAt: new Date() },
+      });
+    }
 
     // Generate new token pair
     const tokens = await this.generateTokens(
