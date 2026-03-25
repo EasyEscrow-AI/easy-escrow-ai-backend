@@ -7,7 +7,7 @@ import crypto from 'crypto';
 // Set env for tests before importing service modules
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
-process.env.JWT_ACCESS_TOKEN_EXPIRY = '15m';
+process.env.JWT_ACCESS_TOKEN_EXPIRY = '1h';
 process.env.JWT_REFRESH_TOKEN_EXPIRY = '7d';
 
 import {
@@ -81,6 +81,7 @@ describe('InstitutionAuthService', () => {
       expect(result.tokens).to.have.property('accessToken');
       expect(result.tokens).to.have.property('refreshToken');
       expect(result.tokens).to.have.property('expiresIn');
+      expect(result.tokens).to.have.property('refreshExpiresIn');
 
       // Verify findUnique was called with normalized email
       expect(mockPrisma.institutionClient.findUnique.calledOnce).to.be.true;
@@ -308,9 +309,47 @@ describe('InstitutionAuthService', () => {
       expect(result).to.have.property('accessToken');
       expect(result).to.have.property('refreshToken');
       expect(result).to.have.property('expiresIn');
+      expect(result).to.have.property('refreshExpiresIn');
 
       // Old token should be revoked
       expect(mockPrisma.institutionRefreshToken.update.calledOnce).to.be.true;
+    });
+
+    it('should allow a recently-revoked token within 30s grace period', async () => {
+      const rawRefreshToken = crypto.randomBytes(64).toString('hex');
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawRefreshToken)
+        .digest('hex');
+
+      const testClient = createTestClient();
+      const storedToken = {
+        id: 'rt-1',
+        tokenHash,
+        clientId: testClient.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
+        revokedAt: new Date(Date.now() - 5_000), // revoked 5 seconds ago (within grace period)
+        createdAt: new Date(),
+        client: testClient,
+      };
+
+      mockPrisma.institutionRefreshToken.findUnique.resolves(storedToken);
+      mockPrisma.institutionRefreshToken.create.resolves({
+        id: 'rt-2',
+        tokenHash: 'new-hash',
+        clientId: testClient.id,
+        expiresAt: new Date(),
+        revokedAt: null,
+        createdAt: new Date(),
+      });
+
+      const result = await authService.refreshToken(rawRefreshToken);
+
+      expect(result).to.have.property('accessToken');
+      expect(result).to.have.property('refreshToken');
+
+      // Should NOT rewrite revokedAt — preserves original timestamp for fixed grace window
+      expect(mockPrisma.institutionRefreshToken.update.called).to.be.false;
     });
 
     it('should reject an expired refresh token', async () => {
@@ -340,7 +379,7 @@ describe('InstitutionAuthService', () => {
       }
     });
 
-    it('should reject a revoked refresh token', async () => {
+    it('should reject a revoked refresh token (past grace period)', async () => {
       const rawRefreshToken = crypto.randomBytes(64).toString('hex');
       const tokenHash = crypto
         .createHash('sha256')
@@ -352,7 +391,7 @@ describe('InstitutionAuthService', () => {
         tokenHash,
         clientId: 'test-client-id',
         expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
-        revokedAt: new Date(), // already revoked
+        revokedAt: new Date(Date.now() - 60_000), // revoked 60s ago (past 30s grace period)
         createdAt: new Date(),
         client: createTestClient(),
       };
