@@ -1662,10 +1662,10 @@ export class InstitutionEscrowService {
     // Counterparty requests get the base format (no AI analyses, audit logs)
     const isOwner = escrow.clientId === clientId;
     if (isOwner) {
-      return this.formatEscrowEnriched(escrow);
+      return this.formatEscrowEnriched(escrow, clientId);
     }
     const partyNames = await this.resolvePartyNames([escrow as any], escrow.clientId);
-    return this.formatEscrow(escrow, partyNames[0]);
+    return this.formatEscrow(escrow, partyNames[0], clientId);
   }
 
   /**
@@ -1696,7 +1696,7 @@ export class InstitutionEscrowService {
     const partyNamesArr = await this.resolvePartyNames(escrows as any[], clientId);
 
     return {
-      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i])),
+      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i], clientId)),
       total,
       limit,
       offset,
@@ -1763,6 +1763,8 @@ export class InstitutionEscrowService {
    * audit entry is self-contained for compliance / Travel Rule purposes.
    */
   private async buildKytContext(escrow: any): Promise<Record<string, unknown>> {
+    const isStealth = escrow.privacyLevel === 'STEALTH';
+
     const [originatorClient, beneficiaryClient] = await Promise.all([
       this.prisma.institutionClient.findUnique({
         where: { id: escrow.clientId },
@@ -1774,7 +1776,7 @@ export class InstitutionEscrowService {
           lei: true,
         },
       }),
-      escrow.recipientWallet
+      escrow.recipientWallet && !isStealth
         ? this.prisma.institutionClient.findFirst({
             where: {
               OR: [
@@ -1802,6 +1804,7 @@ export class InstitutionEscrowService {
         cryptoChain: 'solana',
         corridor: escrow.corridor,
         escrowPda: escrow.escrowPda || null,
+        privacyLevel: escrow.privacyLevel || 'NONE',
         originator: {
           name: originatorClient?.companyName || null,
           legalName: originatorClient?.legalName || null,
@@ -1810,14 +1813,16 @@ export class InstitutionEscrowService {
           registrationCountry: originatorClient?.registrationCountry || null,
           lei: originatorClient?.lei || null,
         },
-        beneficiary: {
-          name: beneficiaryClient?.companyName || null,
-          legalName: beneficiaryClient?.legalName || null,
-          wallet: escrow.recipientWallet || null,
-          country: beneficiaryClient?.country || null,
-          registrationCountry: beneficiaryClient?.registrationCountry || null,
-          lei: beneficiaryClient?.lei || null,
-        },
+        beneficiary: isStealth
+          ? { name: 'Stealth Recipient', wallet: null, country: null }
+          : {
+              name: beneficiaryClient?.companyName || null,
+              legalName: beneficiaryClient?.legalName || null,
+              wallet: escrow.recipientWallet || null,
+              country: beneficiaryClient?.country || null,
+              registrationCountry: beneficiaryClient?.registrationCountry || null,
+              lei: beneficiaryClient?.lei || null,
+            },
       },
     };
   }
@@ -2057,9 +2062,18 @@ export class InstitutionEscrowService {
 
   private formatEscrow(
     escrow: Record<string, unknown>,
-    partyNames?: PartyNames
+    partyNames?: PartyNames,
+    callerClientId?: string
   ): Record<string, unknown> {
     const e = escrow as any;
+
+    // Privacy-aware masking: hide recipientWallet for non-owners when STEALTH
+    const privacyLevel = e.privacyLevel || 'NONE';
+    const isOwner = !callerClientId || callerClientId === e.clientId;
+    const isRecipient =
+      callerClientId && partyNames?.counterpartyId === callerClientId;
+    const shouldMask = privacyLevel === 'STEALTH' && !isOwner && !isRecipient;
+
     return {
       escrowId: e.escrowCode,
       internalId: e.escrowId,
@@ -2076,10 +2090,12 @@ export class InstitutionEscrowService {
         wallet: e.payerWallet,
       },
       to: {
-        clientId: partyNames?.counterpartyId ?? null,
-        name: partyNames?.recipientName ?? (e.recipientWallet ? 'External Wallet' : null),
-        accountLabel: partyNames?.recipientAccountLabel ?? null,
-        wallet: e.recipientWallet,
+        clientId: shouldMask ? null : (partyNames?.counterpartyId ?? null),
+        name: shouldMask
+          ? 'Stealth Recipient'
+          : (partyNames?.recipientName ?? (e.recipientWallet ? 'External Wallet' : null)),
+        accountLabel: shouldMask ? null : (partyNames?.recipientAccountLabel ?? null),
+        wallet: shouldMask ? null : e.recipientWallet,
       },
       settlement: {
         mode: e.settlementMode || 'escrow',
@@ -2120,7 +2136,8 @@ export class InstitutionEscrowService {
   }
 
   private async formatEscrowEnriched(
-    escrow: Record<string, unknown>
+    escrow: Record<string, unknown>,
+    callerClientId?: string
   ): Promise<Record<string, unknown>> {
     const e = escrow as any;
 
@@ -2150,12 +2167,21 @@ export class InstitutionEscrowService {
       }),
     ]);
 
-    const base = this.formatEscrow(escrow, partyNamesArr[0]);
+    const base = this.formatEscrow(escrow, partyNamesArr[0], callerClientId);
+
+    // Privacy-aware masking check (same logic as formatEscrow)
+    const privacyLevel = e.privacyLevel || 'NONE';
+    const isOwner = !callerClientId || callerClientId === e.clientId;
+    const isRecipient =
+      callerClientId && partyNamesArr[0]?.counterpartyId === callerClientId;
+    const shouldMask = privacyLevel === 'STEALTH' && !isOwner && !isRecipient;
 
     // Enrich from/to with country
     (base.from as any).country = client?.country || null;
 
-    if (partyNamesArr[0]?.counterpartyId) {
+    if (shouldMask) {
+      (base.to as any).country = null;
+    } else if (partyNamesArr[0]?.counterpartyId) {
       const rclient = await this.prisma.institutionClient.findUnique({
         where: { id: partyNamesArr[0].counterpartyId },
         select: { country: true },
