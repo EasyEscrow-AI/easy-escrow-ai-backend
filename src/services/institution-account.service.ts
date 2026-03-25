@@ -98,6 +98,8 @@ interface ListAccountsFilters {
   accountType?: InstitutionAccountType;
   verificationStatus?: AccountVerificationStatus;
   isActive?: boolean;
+  branchId?: string;
+  includeBalances?: boolean;
 }
 
 interface TokenBalance {
@@ -217,13 +219,20 @@ export class InstitutionAccountService {
     if (filters?.isActive !== undefined) {
       where.isActive = filters.isActive;
     }
+    if (filters?.branchId) {
+      where.branchId = filters.branchId;
+    }
 
     const accounts = await this.prisma.institutionAccount.findMany({
       where,
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
     });
 
-    // Fetch balances for all accounts in parallel
+    // Only fetch balances when explicitly requested (expensive: N RPC calls)
+    if (!filters?.includeBalances) {
+      return accounts;
+    }
+
     const accountsWithBalances = await Promise.all(
       accounts.map(async (account) => {
         try {
