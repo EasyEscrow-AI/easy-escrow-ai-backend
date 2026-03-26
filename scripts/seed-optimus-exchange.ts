@@ -780,6 +780,31 @@ async function main() {
       yearEstablished: 2016,
     },
     {
+      email: 'finance@satoshi-bridge.io',
+      companyName: 'Satoshi Bridge Labs Inc',
+      legalName: 'Satoshi Bridge Labs Inc',
+      jurisdiction: 'US',
+      country: 'US',
+      city: 'San Francisco',
+      industry: 'Fintech',
+      kycStatus: 'VERIFIED',
+      status: 'ACTIVE' as const,
+      sanctionsStatus: 'CLEAR' as const,
+      walletSeed: 'satoshi-bridge-us',
+      hardcodedWallet: '59Xet5qZ6b6NbpS9a2JD1maamfYKMYEwbvfbFPR92jHx',
+      addressLine1: '548 Market Street, Suite 35000',
+      postalCode: '94104',
+      contactFirstName: 'Alex',
+      contactLastName: 'Chen',
+      contactEmail: 'alex.chen@satoshi-bridge.io',
+      contactPhone: '+1-415-555-1012',
+      contactTitle: 'Head of Treasury',
+      entityType: 'CORPORATION' as const,
+      registrationNumber: 'C4567890',
+      registrationCountry: 'US',
+      yearEstablished: 2019,
+    },
+    {
       email: 'rep@moscow-trade.ru',
       companyName: 'Moscow Representative Office',
       legalName: 'Moscow Representative Office LLC',
@@ -809,7 +834,7 @@ async function main() {
   const counterpartyMap = new Map<string, { id: string; wallet: string }>();
 
   for (const cp of counterpartyDefs) {
-    const wallet = fakeWallet(cp.walletSeed);
+    const wallet = (cp as any).hardcodedWallet || fakeWallet(cp.walletSeed);
     const data: any = {
       email: cp.email,
       passwordHash: demoPassword,
@@ -855,6 +880,56 @@ async function main() {
     });
 
     counterpartyMap.set(cp.companyName, { id: client.id, wallet });
+
+    // Ensure each counterparty has a default branch (named after the company)
+    const existingBranch = await prisma.institutionBranch.findFirst({
+      where: { clientId: client.id },
+    });
+    if (!existingBranch) {
+      await prisma.institutionBranch.create({
+        data: {
+          clientId: client.id,
+          name: cp.companyName,
+          city: cp.city,
+          country: cp.country || cp.jurisdiction,
+          countryCode: cp.jurisdiction,
+          address: cp.addressLine1,
+          timezone: 'UTC',
+          riskScore: cp.sanctionsStatus === 'FLAGGED' ? 85 : 10,
+          complianceStatus: cp.sanctionsStatus === 'FLAGGED' ? 'BLOCKED' : 'COMPLIANT',
+          isSanctioned: cp.sanctionsStatus === 'FLAGGED',
+          isActive: cp.status === 'ACTIVE',
+        },
+      });
+    }
+    const branch = await prisma.institutionBranch.findFirst({
+      where: { clientId: client.id },
+    });
+
+    // Ensure each counterparty has a "Primary Receiving" account
+    const existingAccount = await prisma.institutionAccount.findFirst({
+      where: { clientId: client.id },
+    });
+    if (!existingAccount) {
+      await prisma.institutionAccount.create({
+        data: {
+          clientId: client.id,
+          name: 'Primary Receiving',
+          label: 'Primary Receiving',
+          accountType: 'OPERATIONS',
+          walletAddress: wallet,
+          chain: 'solana',
+          walletProvider: 'Self-Custody',
+          custodyType: 'SELF_CUSTODY',
+          verificationStatus: cp.kycStatus === 'VERIFIED' ? 'VERIFIED' : 'PENDING',
+          isDefault: true,
+          isActive: cp.status === 'ACTIVE',
+          branchId: branch?.id,
+          description: `${cp.city} Office`,
+        },
+      });
+    }
+
     console.log(`   [OK] ${cp.companyName} (${cp.jurisdiction}, ${cp.status}, KYC: ${cp.kycStatus})`);
   }
 
