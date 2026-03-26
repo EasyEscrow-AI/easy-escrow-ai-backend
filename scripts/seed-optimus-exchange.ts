@@ -465,6 +465,20 @@ async function main() {
       approvalMode: 'MULTI_APPROVAL' as const,
     },
     {
+      name: 'Operations Account',
+      label: 'Operations Account',
+      accountType: 'OPERATIONS' as const,
+      hardcodedWallet: 'F9CBP5fRjqizYDSryop8aVqGUD3ykWcqJBLZAHKRb6ut',
+      branchCountryCode: 'CH',
+      isDefault: false,
+      description: 'Day-to-day operations for Zurich Branch HQ',
+      walletProvider: 'Fireblocks',
+      custodyType: 'MPC' as const,
+      maxTransactionAmount: 1_000_000,
+      dailyVolumeLimit: 5_000_000,
+      approvalMode: 'SINGLE_APPROVAL' as const,
+    },
+    {
       name: 'Americas Treasury',
       label: 'Americas Treasury',
       accountType: 'TREASURY' as const,
@@ -540,7 +554,7 @@ async function main() {
   const accountWalletMap = new Map<string, string>();
 
   for (const a of accountDefs) {
-    const walletAddress = fakeWallet(a.walletSeed);
+    const walletAddress = (a as any).hardcodedWallet || fakeWallet((a as any).walletSeed);
     const branchId = branchMap.get(a.branchCountryCode) || null;
 
     const data = {
@@ -936,7 +950,8 @@ async function main() {
 
     counterpartyMap.set(cp.companyName, { id: client.id, wallet });
 
-    // Ensure each counterparty has a default branch (named after the company)
+    // Ensure each counterparty has a default branch
+    const branchName = `${cp.city} Office`;
     const existingBranch = await prisma.institutionBranch.findFirst({
       where: { clientId: client.id },
     });
@@ -944,7 +959,8 @@ async function main() {
       await prisma.institutionBranch.create({
         data: {
           clientId: client.id,
-          name: cp.companyName,
+          name: branchName,
+          label: branchName,
           city: cp.city,
           country: cp.country || cp.jurisdiction,
           countryCode: cp.jurisdiction,
@@ -953,13 +969,18 @@ async function main() {
           riskScore: cp.sanctionsStatus === 'FLAGGED' ? 85 : 10,
           complianceStatus: cp.sanctionsStatus === 'FLAGGED' ? 'BLOCKED' : 'COMPLIANT',
           isSanctioned: cp.sanctionsStatus === 'FLAGGED',
+          isHeadquarters: true,
           isActive: cp.status === 'ACTIVE',
         },
       });
+    } else if (existingBranch.name === cp.companyName) {
+      // Migrate old company-name branches to city-based names
+      await prisma.institutionBranch.update({
+        where: { id: existingBranch.id },
+        data: { name: branchName, label: branchName, isHeadquarters: true },
+      });
     }
-    const branch = await prisma.institutionBranch.findFirst({
-      where: { clientId: client.id },
-    });
+    const branch = await prisma.institutionBranch.findFirst({ where: { clientId: client.id } });
 
     // Ensure each counterparty has a "Primary Receiving" account
     const existingAccount = await prisma.institutionAccount.findFirst({
@@ -1421,6 +1442,7 @@ async function main() {
   const walletDefs = [
     { name: 'Main Treasury',        address: accountWalletMap.get('Main Treasury')!,        provider: 'Fireblocks',   isPrimary: true,  isSettlement: false, description: 'Primary treasury wallet for institutional operations' },
     { name: 'FINMA Settlement',     address: accountWalletMap.get('FINMA Settlement')!,     provider: 'Self-Custody', isPrimary: false, isSettlement: true,  description: 'Zurich HQ settlement wallet' },
+    { name: 'Operations Account',  address: accountWalletMap.get('Operations Account')!,  provider: 'Fireblocks',   isPrimary: false, isSettlement: false, description: 'Zurich HQ daily operations wallet' },
     { name: 'Americas Treasury',    address: accountWalletMap.get('Americas Treasury')!,    provider: 'Fireblocks',   isPrimary: false, isSettlement: false, description: 'New York Americas treasury' },
     { name: 'Americas Operations',  address: accountWalletMap.get('Americas Operations')!,  provider: 'Self-Custody', isPrimary: false, isSettlement: false, description: 'US daily operations wallet' },
     { name: 'APAC Treasury',        address: accountWalletMap.get('APAC Treasury')!,        provider: 'Fireblocks',   isPrimary: false, isSettlement: false, description: 'Singapore APAC treasury' },
