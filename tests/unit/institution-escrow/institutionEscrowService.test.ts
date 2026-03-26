@@ -537,12 +537,14 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
-      const escrow = result.escrows[0];
-      expect(escrow).to.have.property('payerName');
-      expect(escrow).to.have.property('payerAccountLabel');
-      expect(escrow).to.have.property('recipientName');
-      expect(escrow).to.have.property('recipientAccountLabel');
-      expect(escrow).to.have.property('counterpartyId');
+      const escrow = result.escrows[0] as any;
+      expect(escrow.from).to.have.property('name');
+      expect(escrow.from).to.have.property('accountLabel');
+      expect(escrow.from).to.have.property('branchName');
+      expect(escrow.to).to.have.property('name');
+      expect(escrow.to).to.have.property('accountLabel');
+      expect(escrow.to).to.have.property('branchName');
+      expect(escrow.to).to.have.property('clientId');
     });
 
     it('should resolve payerName from client companyName', async () => {
@@ -554,7 +556,7 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
-      expect(result.escrows[0].payerName).to.equal('Optimus Exchange AG');
+      expect((result.escrows[0] as any).from.name).to.equal('Optimus Exchange AG');
     });
 
     it('should resolve payerAccountLabel from matching account', async () => {
@@ -570,7 +572,7 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
-      expect(result.escrows[0].payerAccountLabel).to.equal('Operating Account');
+      expect((result.escrows[0] as any).from.accountLabel).to.equal('Operating Account');
     });
 
     it('should resolve recipientName from account client relation', async () => {
@@ -593,9 +595,9 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
-      expect(result.escrows[0].recipientName).to.equal('Satoshi Industries');
-      expect(result.escrows[0].recipientAccountLabel).to.equal('Treasury');
-      expect(result.escrows[0].counterpartyId).to.equal('recipient-client-id');
+      expect((result.escrows[0] as any).to.name).to.equal('Satoshi Industries');
+      expect((result.escrows[0] as any).to.accountLabel).to.equal('Treasury');
+      expect((result.escrows[0] as any).to.clientId).to.equal('recipient-client-id');
     });
 
     it('should resolve recipientName from client primaryWallet', async () => {
@@ -616,9 +618,9 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
-      expect(result.escrows[0].recipientName).to.equal('Recipient Corp');
-      expect(result.escrows[0].recipientAccountLabel).to.be.null;
-      expect(result.escrows[0].counterpartyId).to.equal('recipient-client-id');
+      expect((result.escrows[0] as any).to.name).to.equal('Recipient Corp');
+      expect((result.escrows[0] as any).to.accountLabel).to.be.null;
+      expect((result.escrows[0] as any).to.clientId).to.equal('recipient-client-id');
     });
 
     it('should return null fields when no matches found', async () => {
@@ -631,9 +633,9 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.listEscrows({ clientId: CLIENT_ID });
 
-      expect(result.escrows[0].recipientName).to.be.null;
-      expect(result.escrows[0].recipientAccountLabel).to.be.null;
-      expect(result.escrows[0].counterpartyId).to.be.null;
+      expect((result.escrows[0] as any).to.name).to.equal('External Wallet');
+      expect((result.escrows[0] as any).to.accountLabel).to.be.null;
+      expect((result.escrows[0] as any).to.clientId).to.be.null;
     });
 
     it('should include party name fields in counterparty getEscrow', async () => {
@@ -649,11 +651,14 @@ describe('InstitutionEscrowService', () => {
 
       const result = await service.getEscrow(CLIENT_ID, ESCROW_ID);
 
-      expect(result).to.have.property('payerName');
-      expect(result).to.have.property('payerAccountLabel');
-      expect(result).to.have.property('recipientName');
-      expect(result).to.have.property('recipientAccountLabel');
-      expect(result).to.have.property('counterpartyId');
+      const r = result as any;
+      expect(r.from).to.have.property('name');
+      expect(r.from).to.have.property('accountLabel');
+      expect(r.from).to.have.property('branchName');
+      expect(r.to).to.have.property('name');
+      expect(r.to).to.have.property('accountLabel');
+      expect(r.to).to.have.property('branchName');
+      expect(r.to).to.have.property('clientId');
     });
   });
 });

@@ -69,8 +69,10 @@ describe('Privacy-Aware Wallet Masking', () => {
   const makePartyNames = (overrides: Record<string, unknown> = {}) => ({
     payerName: 'Test Corp',
     payerAccountLabel: 'Primary',
+    payerBranchName: 'Zürich HQ',
     recipientName: 'Recipient Corp',
     recipientAccountLabel: 'Settlement',
+    recipientBranchName: 'Singapore Office',
     counterpartyId: RECIPIENT_CLIENT_ID,
     ...overrides,
   });
@@ -125,6 +127,7 @@ describe('Privacy-Aware Wallet Masking', () => {
       expect((result.to as any).name).to.equal('Stealth Recipient');
       expect((result.to as any).clientId).to.be.null;
       expect((result.to as any).accountLabel).to.be.null;
+      expect((result.to as any).branchName).to.be.null;
     });
 
     it('should show recipientWallet to everyone when NONE', () => {

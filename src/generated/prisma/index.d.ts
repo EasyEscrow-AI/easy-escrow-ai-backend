@@ -1290,8 +1290,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.17.1
-   * Query Engine version: 272a37d34178c2894197e17273bf937f25acdeac
+   * Prisma Client JS version: 6.19.2
+   * Query Engine version: c2990dca591cba766e3b7ef5d9e8a84796e47ab7
    */
   export type PrismaVersion = {
     client: string
@@ -1304,6 +1304,7 @@ export namespace Prisma {
    */
 
 
+  export import Bytes = runtime.Bytes
   export import JsonObject = runtime.JsonObject
   export import JsonArray = runtime.JsonArray
   export import JsonValue = runtime.JsonValue
@@ -35368,6 +35369,12 @@ export namespace Prisma {
     clientId: string | null
     payerWallet: string | null
     recipientWallet: string | null
+    payerName: string | null
+    payerAccountLabel: string | null
+    payerBranchName: string | null
+    recipientName: string | null
+    recipientAccountLabel: string | null
+    recipientBranchName: string | null
     usdcMint: string | null
     amount: Decimal | null
     platformFee: Decimal | null
@@ -35402,6 +35409,12 @@ export namespace Prisma {
     clientId: string | null
     payerWallet: string | null
     recipientWallet: string | null
+    payerName: string | null
+    payerAccountLabel: string | null
+    payerBranchName: string | null
+    recipientName: string | null
+    recipientAccountLabel: string | null
+    recipientBranchName: string | null
     usdcMint: string | null
     amount: Decimal | null
     platformFee: Decimal | null
@@ -35436,6 +35449,12 @@ export namespace Prisma {
     clientId: number
     payerWallet: number
     recipientWallet: number
+    payerName: number
+    payerAccountLabel: number
+    payerBranchName: number
+    recipientName: number
+    recipientAccountLabel: number
+    recipientBranchName: number
     usdcMint: number
     amount: number
     platformFee: number
@@ -35486,6 +35505,12 @@ export namespace Prisma {
     clientId?: true
     payerWallet?: true
     recipientWallet?: true
+    payerName?: true
+    payerAccountLabel?: true
+    payerBranchName?: true
+    recipientName?: true
+    recipientAccountLabel?: true
+    recipientBranchName?: true
     usdcMint?: true
     amount?: true
     platformFee?: true
@@ -35520,6 +35545,12 @@ export namespace Prisma {
     clientId?: true
     payerWallet?: true
     recipientWallet?: true
+    payerName?: true
+    payerAccountLabel?: true
+    payerBranchName?: true
+    recipientName?: true
+    recipientAccountLabel?: true
+    recipientBranchName?: true
     usdcMint?: true
     amount?: true
     platformFee?: true
@@ -35554,6 +35585,12 @@ export namespace Prisma {
     clientId?: true
     payerWallet?: true
     recipientWallet?: true
+    payerName?: true
+    payerAccountLabel?: true
+    payerBranchName?: true
+    recipientName?: true
+    recipientAccountLabel?: true
+    recipientBranchName?: true
     usdcMint?: true
     amount?: true
     platformFee?: true
@@ -35677,6 +35714,12 @@ export namespace Prisma {
     clientId: string
     payerWallet: string
     recipientWallet: string | null
+    payerName: string | null
+    payerAccountLabel: string | null
+    payerBranchName: string | null
+    recipientName: string | null
+    recipientAccountLabel: string | null
+    recipientBranchName: string | null
     usdcMint: string
     amount: Decimal
     platformFee: Decimal
@@ -35732,6 +35775,12 @@ export namespace Prisma {
     clientId?: boolean
     payerWallet?: boolean
     recipientWallet?: boolean
+    payerName?: boolean
+    payerAccountLabel?: boolean
+    payerBranchName?: boolean
+    recipientName?: boolean
+    recipientAccountLabel?: boolean
+    recipientBranchName?: boolean
     usdcMint?: boolean
     amount?: boolean
     platformFee?: boolean
@@ -35774,6 +35823,12 @@ export namespace Prisma {
     clientId?: boolean
     payerWallet?: boolean
     recipientWallet?: boolean
+    payerName?: boolean
+    payerAccountLabel?: boolean
+    payerBranchName?: boolean
+    recipientName?: boolean
+    recipientAccountLabel?: boolean
+    recipientBranchName?: boolean
     usdcMint?: boolean
     amount?: boolean
     platformFee?: boolean
@@ -35811,6 +35866,12 @@ export namespace Prisma {
     clientId?: boolean
     payerWallet?: boolean
     recipientWallet?: boolean
+    payerName?: boolean
+    payerAccountLabel?: boolean
+    payerBranchName?: boolean
+    recipientName?: boolean
+    recipientAccountLabel?: boolean
+    recipientBranchName?: boolean
     usdcMint?: boolean
     amount?: boolean
     platformFee?: boolean
@@ -35848,6 +35909,12 @@ export namespace Prisma {
     clientId?: boolean
     payerWallet?: boolean
     recipientWallet?: boolean
+    payerName?: boolean
+    payerAccountLabel?: boolean
+    payerBranchName?: boolean
+    recipientName?: boolean
+    recipientAccountLabel?: boolean
+    recipientBranchName?: boolean
     usdcMint?: boolean
     amount?: boolean
     platformFee?: boolean
@@ -35877,7 +35944,7 @@ export namespace Prisma {
     fundedAt?: boolean
   }
 
-  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "settlementMode" | "releaseMode" | "approvalParties" | "releaseConditions" | "approvalInstructions" | "privacyLevel" | "stealthPaymentId" | "escrowPda" | "vaultPda" | "nonceAccount" | "initTxSignature" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
+  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "payerName" | "payerAccountLabel" | "payerBranchName" | "recipientName" | "recipientAccountLabel" | "recipientBranchName" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "settlementMode" | "releaseMode" | "approvalParties" | "releaseConditions" | "approvalInstructions" | "privacyLevel" | "stealthPaymentId" | "escrowPda" | "vaultPda" | "nonceAccount" | "initTxSignature" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
   export type InstitutionEscrowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
@@ -35909,6 +35976,12 @@ export namespace Prisma {
       clientId: string
       payerWallet: string
       recipientWallet: string | null
+      payerName: string | null
+      payerAccountLabel: string | null
+      payerBranchName: string | null
+      recipientName: string | null
+      recipientAccountLabel: string | null
+      recipientBranchName: string | null
       usdcMint: string
       amount: Prisma.Decimal
       platformFee: Prisma.Decimal
@@ -36370,6 +36443,12 @@ export namespace Prisma {
     readonly clientId: FieldRef<"InstitutionEscrow", 'String'>
     readonly payerWallet: FieldRef<"InstitutionEscrow", 'String'>
     readonly recipientWallet: FieldRef<"InstitutionEscrow", 'String'>
+    readonly payerName: FieldRef<"InstitutionEscrow", 'String'>
+    readonly payerAccountLabel: FieldRef<"InstitutionEscrow", 'String'>
+    readonly payerBranchName: FieldRef<"InstitutionEscrow", 'String'>
+    readonly recipientName: FieldRef<"InstitutionEscrow", 'String'>
+    readonly recipientAccountLabel: FieldRef<"InstitutionEscrow", 'String'>
+    readonly recipientBranchName: FieldRef<"InstitutionEscrow", 'String'>
     readonly usdcMint: FieldRef<"InstitutionEscrow", 'String'>
     readonly amount: FieldRef<"InstitutionEscrow", 'Decimal'>
     readonly platformFee: FieldRef<"InstitutionEscrow", 'Decimal'>
@@ -52538,6 +52617,12 @@ export namespace Prisma {
     clientId: 'clientId',
     payerWallet: 'payerWallet',
     recipientWallet: 'recipientWallet',
+    payerName: 'payerName',
+    payerAccountLabel: 'payerAccountLabel',
+    payerBranchName: 'payerBranchName',
+    recipientName: 'recipientName',
+    recipientAccountLabel: 'recipientAccountLabel',
+    recipientBranchName: 'recipientBranchName',
     usdcMint: 'usdcMint',
     amount: 'amount',
     platformFee: 'platformFee',
@@ -56444,6 +56529,12 @@ export namespace Prisma {
     clientId?: StringFilter<"InstitutionEscrow"> | string
     payerWallet?: StringFilter<"InstitutionEscrow"> | string
     recipientWallet?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerAccountLabel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerBranchName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientAccountLabel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientBranchName?: StringNullableFilter<"InstitutionEscrow"> | string | null
     usdcMint?: StringFilter<"InstitutionEscrow"> | string
     amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
@@ -56485,6 +56576,12 @@ export namespace Prisma {
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrderInput | SortOrder
+    payerName?: SortOrderInput | SortOrder
+    payerAccountLabel?: SortOrderInput | SortOrder
+    payerBranchName?: SortOrderInput | SortOrder
+    recipientName?: SortOrderInput | SortOrder
+    recipientAccountLabel?: SortOrderInput | SortOrder
+    recipientBranchName?: SortOrderInput | SortOrder
     usdcMint?: SortOrder
     amount?: SortOrder
     platformFee?: SortOrder
@@ -56529,6 +56626,12 @@ export namespace Prisma {
     clientId?: StringFilter<"InstitutionEscrow"> | string
     payerWallet?: StringFilter<"InstitutionEscrow"> | string
     recipientWallet?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerAccountLabel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerBranchName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientAccountLabel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientBranchName?: StringNullableFilter<"InstitutionEscrow"> | string | null
     usdcMint?: StringFilter<"InstitutionEscrow"> | string
     amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
@@ -56570,6 +56673,12 @@ export namespace Prisma {
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrderInput | SortOrder
+    payerName?: SortOrderInput | SortOrder
+    payerAccountLabel?: SortOrderInput | SortOrder
+    payerBranchName?: SortOrderInput | SortOrder
+    recipientName?: SortOrderInput | SortOrder
+    recipientAccountLabel?: SortOrderInput | SortOrder
+    recipientBranchName?: SortOrderInput | SortOrder
     usdcMint?: SortOrder
     amount?: SortOrder
     platformFee?: SortOrder
@@ -56614,6 +56723,12 @@ export namespace Prisma {
     clientId?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     payerWallet?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     recipientWallet?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    payerName?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    payerAccountLabel?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    payerBranchName?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    recipientName?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    recipientAccountLabel?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
+    recipientBranchName?: StringNullableWithAggregatesFilter<"InstitutionEscrow"> | string | null
     usdcMint?: StringWithAggregatesFilter<"InstitutionEscrow"> | string
     amount?: DecimalWithAggregatesFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalWithAggregatesFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
@@ -61370,6 +61485,12 @@ export namespace Prisma {
     escrowCode: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -61411,6 +61532,12 @@ export namespace Prisma {
     clientId: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -61450,6 +61577,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -61491,6 +61624,12 @@ export namespace Prisma {
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -61531,6 +61670,12 @@ export namespace Prisma {
     clientId: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -61566,6 +61711,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -61602,6 +61753,12 @@ export namespace Prisma {
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -65769,6 +65926,12 @@ export namespace Prisma {
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrder
+    payerName?: SortOrder
+    payerAccountLabel?: SortOrder
+    payerBranchName?: SortOrder
+    recipientName?: SortOrder
+    recipientAccountLabel?: SortOrder
+    recipientBranchName?: SortOrder
     usdcMint?: SortOrder
     amount?: SortOrder
     platformFee?: SortOrder
@@ -65811,6 +65974,12 @@ export namespace Prisma {
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrder
+    payerName?: SortOrder
+    payerAccountLabel?: SortOrder
+    payerBranchName?: SortOrder
+    recipientName?: SortOrder
+    recipientAccountLabel?: SortOrder
+    recipientBranchName?: SortOrder
     usdcMint?: SortOrder
     amount?: SortOrder
     platformFee?: SortOrder
@@ -65845,6 +66014,12 @@ export namespace Prisma {
     clientId?: SortOrder
     payerWallet?: SortOrder
     recipientWallet?: SortOrder
+    payerName?: SortOrder
+    payerAccountLabel?: SortOrder
+    payerBranchName?: SortOrder
+    recipientName?: SortOrder
+    recipientAccountLabel?: SortOrder
+    recipientBranchName?: SortOrder
     usdcMint?: SortOrder
     amount?: SortOrder
     platformFee?: SortOrder
@@ -73257,6 +73432,12 @@ export namespace Prisma {
     escrowCode: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -73296,6 +73477,12 @@ export namespace Prisma {
     escrowCode: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -73902,6 +74089,12 @@ export namespace Prisma {
     clientId?: StringFilter<"InstitutionEscrow"> | string
     payerWallet?: StringFilter<"InstitutionEscrow"> | string
     recipientWallet?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerAccountLabel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    payerBranchName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientName?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientAccountLabel?: StringNullableFilter<"InstitutionEscrow"> | string | null
+    recipientBranchName?: StringNullableFilter<"InstitutionEscrow"> | string | null
     usdcMint?: StringFilter<"InstitutionEscrow"> | string
     amount?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFilter<"InstitutionEscrow"> | Decimal | DecimalJsLike | number | string
@@ -77345,6 +77538,12 @@ export namespace Prisma {
     escrowCode: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -77385,6 +77584,12 @@ export namespace Prisma {
     clientId: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -77439,6 +77644,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -77479,6 +77690,12 @@ export namespace Prisma {
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -77517,6 +77734,12 @@ export namespace Prisma {
     escrowCode: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -77557,6 +77780,12 @@ export namespace Prisma {
     clientId: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -77770,6 +77999,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -77810,6 +78045,12 @@ export namespace Prisma {
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -78013,6 +78254,12 @@ export namespace Prisma {
     escrowCode: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -78053,6 +78300,12 @@ export namespace Prisma {
     clientId: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -78266,6 +78519,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -78306,6 +78565,12 @@ export namespace Prisma {
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -78972,6 +79237,12 @@ export namespace Prisma {
     escrowCode: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -79012,6 +79283,12 @@ export namespace Prisma {
     clientId: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -79231,6 +79508,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -79271,6 +79554,12 @@ export namespace Prisma {
     clientId?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -81377,6 +81666,12 @@ export namespace Prisma {
     escrowCode: string
     payerWallet: string
     recipientWallet?: string | null
+    payerName?: string | null
+    payerAccountLabel?: string | null
+    payerBranchName?: string | null
+    recipientName?: string | null
+    recipientAccountLabel?: string | null
+    recipientBranchName?: string | null
     usdcMint: string
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -81633,6 +81928,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -81672,6 +81973,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -81711,6 +82018,12 @@ export namespace Prisma {
     escrowCode?: StringFieldUpdateOperationsInput | string
     payerWallet?: StringFieldUpdateOperationsInput | string
     recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    payerName?: NullableStringFieldUpdateOperationsInput | string | null
+    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
     usdcMint?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
