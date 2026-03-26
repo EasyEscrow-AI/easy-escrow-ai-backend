@@ -36,7 +36,7 @@ export class InstitutionDirectPaymentService {
   }
 
   async getById(clientId: string, paymentId: string) {
-    const isCode = paymentId.startsWith('EE-');
+    const isCode = paymentId.startsWith('EE-') || paymentId.startsWith('DP-');
     const payment = await this.prisma.directPayment.findFirst({
       where: isCode ? { paymentCode: paymentId, clientId } : { id: paymentId, clientId },
     });
