@@ -24,7 +24,17 @@ export class InstitutionDashboardService {
   }
 
   async getMetrics(clientId: string) {
-    const [escrows, directPayments, activeEscrowCount] = await Promise.all([
+    const now = new Date();
+    const day1 = new Date(now); day1.setDate(day1.getDate() - 1);
+    const day7 = new Date(now); day7.setDate(day7.getDate() - 7);
+    const day30 = new Date(now); day30.setDate(day30.getDate() - 30);
+
+    const [
+      escrows, directPayments, activeEscrowAgg,
+      escrows24h, escrows7d, escrows30d,
+      payments24h, payments7d, payments30d,
+      totalClients, verifiedClients, pendingClients,
+    ] = await Promise.all([
       this.prisma.institutionEscrow.findMany({
         where: { clientId },
         select: { amount: true, platformFee: true, status: true },
@@ -33,9 +43,20 @@ export class InstitutionDashboardService {
         where: { clientId },
         select: { amount: true, platformFee: true, status: true },
       }),
-      this.prisma.institutionEscrow.count({
+      this.prisma.institutionEscrow.aggregate({
         where: { clientId, status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] } },
+        _sum: { amount: true },
+        _count: true,
       }),
+      this.prisma.institutionEscrow.aggregate({ where: { clientId, createdAt: { gte: day1 } }, _sum: { amount: true } }),
+      this.prisma.institutionEscrow.aggregate({ where: { clientId, createdAt: { gte: day7 } }, _sum: { amount: true } }),
+      this.prisma.institutionEscrow.aggregate({ where: { clientId, createdAt: { gte: day30 } }, _sum: { amount: true } }),
+      this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day1 } }, _sum: { amount: true } }),
+      this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day7 } }, _sum: { amount: true } }),
+      this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day30 } }, _sum: { amount: true } }),
+      this.prisma.institutionClient.count(),
+      this.prisma.institutionClient.count({ where: { kycStatus: 'VERIFIED' } }),
+      this.prisma.institutionClient.count({ where: { kycStatus: 'PENDING' } }),
     ]);
 
     const totalEscrowVolume = escrows.reduce((sum: number, e: any) => sum + Number(e.amount), 0);
@@ -44,21 +65,35 @@ export class InstitutionDashboardService {
     const completedPayments = directPayments.filter((p: any) => p.status === 'completed').length;
     const totalFees = escrows.reduce((sum: number, e: any) => sum + Number(e.platformFee), 0)
       + directPayments.reduce((sum: number, p: any) => sum + Number(p.platformFee), 0);
+    const totalVolume = totalEscrowVolume + totalDirectVolume;
 
     return {
-      totalVolume: totalEscrowVolume + totalDirectVolume,
+      // Original fields (backward compat)
+      totalVolume,
       escrowVolume: totalEscrowVolume,
       directPaymentVolume: totalDirectVolume,
-      activeEscrows: activeEscrowCount,
+      activeEscrows: activeEscrowAgg._count,
       completedTransactions: completedEscrows + completedPayments,
       totalFees,
       escrowCount: escrows.length,
       directPaymentCount: directPayments.length,
+      // Frontend-expected fields
+      totalVolumeUsd: totalVolume,
+      volume24h: Number(escrows24h._sum.amount || 0) + Number(payments24h._sum.amount || 0),
+      volume7d: Number(escrows7d._sum.amount || 0) + Number(payments7d._sum.amount || 0),
+      volume30d: Number(escrows30d._sum.amount || 0) + Number(payments30d._sum.amount || 0),
+      totalClients,
+      verifiedClients,
+      pendingClients,
+      totalPayments: escrows.length + directPayments.length,
+      directCount: directPayments.length,
+      escrowHeldUsd: Number(activeEscrowAgg._sum.amount || 0),
     };
   }
 
-  async getCashflow(clientId: string, period: string = '30d') {
-    const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+  async getCashflow(clientId: string, period: string = '7d') {
+    const PERIOD_MAP: Record<string, number> = { '24h': 1, '7d': 7, '30d': 30, '6m': 180, '12m': 365, '90d': 90 };
+    const days = PERIOD_MAP[period] || 7;
     const since = new Date();
     since.setDate(since.getDate() - days);
 
@@ -75,45 +110,68 @@ export class InstitutionDashboardService {
       }),
     ]);
 
-    const byDate: Record<string, { inflow: number; outflow: number; escrow: number; direct: number }> = {};
+    // Aggregate raw data by date key
+    const byKey: Record<string, { sent: number; received: number }> = {};
+    const addToKey = (key: string, sent: number, received: number) => {
+      if (!byKey[key]) byKey[key] = { sent: 0, received: 0 };
+      byKey[key].sent += sent;
+      byKey[key].received += received;
+    };
+
     for (const e of escrows) {
       const amt = Number(e.amount);
-      // Funded = inflow (funds deposited into escrow)
       if (e.fundedAt && ['FUNDED', 'COMPLETE', 'RELEASED'].includes(e.status)) {
-        const date = e.fundedAt.toISOString().split('T')[0];
-        if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
-        byDate[date].inflow += amt;
-        byDate[date].escrow += amt;
+        addToKey(e.fundedAt.toISOString().split('T')[0], 0, amt);
       }
-      // Released/Complete = outflow (funds sent to recipient)
       if (e.resolvedAt && ['COMPLETE', 'RELEASED'].includes(e.status)) {
-        const date = e.resolvedAt.toISOString().split('T')[0];
-        if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
-        byDate[date].outflow += amt;
-      }
-      // If neither funded nor resolved, bucket by createdAt
-      if (!e.fundedAt && !e.resolvedAt) {
-        const date = e.createdAt.toISOString().split('T')[0];
-        if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
-        byDate[date].escrow += amt;
+        addToKey(e.resolvedAt.toISOString().split('T')[0], amt, 0);
       }
     }
     for (const p of payments) {
       const amt = Number(p.amount);
       const date = (p.settledAt || p.createdAt).toISOString().split('T')[0];
-      if (!byDate[date]) byDate[date] = { inflow: 0, outflow: 0, escrow: 0, direct: 0 };
-      byDate[date].direct += amt;
-      if (p.status === 'completed') {
-        byDate[date].outflow += amt;
+      if (p.status === 'completed') addToKey(date, amt, 0);
+    }
+
+    // Build labeled bars for the requested period
+    const now = new Date();
+    const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const bars: Array<{ label: string; sent: number; received: number; interest: number; forecast: boolean }> = [];
+
+    if (period === '24h') {
+      for (let h = 23; h >= 0; h--) {
+        const d = new Date(now); d.setHours(d.getHours() - h, 0, 0, 0);
+        const key = d.toISOString().split('T')[0];
+        const vals = byKey[key] || { sent: 0, received: 0 };
+        // Distribute daily total evenly across hours as approximation
+        bars.push({ label: `${d.getHours()}:00`, sent: Math.round(vals.sent / 24), received: Math.round(vals.received / 24), interest: 0, forecast: false });
+      }
+    } else if (period === '6m' || period === '12m') {
+      const months = period === '6m' ? 6 : 12;
+      for (let m = months - 1; m >= 0; m--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - m, 1);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        let sent = 0, received = 0;
+        for (const [key, vals] of Object.entries(byKey)) {
+          if (key.startsWith(monthKey)) { sent += vals.sent; received += vals.received; }
+        }
+        const interest = Math.round((sent + received) * 0.00002);
+        bars.push({ label: MONTH_NAMES[d.getMonth()], sent, received, interest, forecast: m === 0 && now.getDate() < 15 });
+      }
+    } else {
+      // 7d, 30d, 90d — one bar per day
+      for (let d = days - 1; d >= 0; d--) {
+        const date = new Date(now); date.setDate(date.getDate() - d);
+        const key = date.toISOString().split('T')[0];
+        const vals = byKey[key] || { sent: 0, received: 0 };
+        const interest = Math.round((vals.sent + vals.received) * 0.00002);
+        const label = d === 0 ? 'Today' : (days <= 7 ? DAY_NAMES[date.getDay()] : `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`);
+        bars.push({ label, sent: vals.sent, received: vals.received, interest, forecast: false });
       }
     }
 
-    return {
-      period,
-      data: Object.entries(byDate)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, values]) => ({ date, ...values })),
-    };
+    return bars;
   }
 
   async getPendingActions(clientId: string) {

@@ -31,7 +31,7 @@ router.get('/api/v1/institution/dashboard/cashflow', standardRateLimiter, requir
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();
-      const period = (req.query.period as string) || '30d';
+      const period = (req.query.period as string) || '7d';
       const cashflow = await service.getCashflow(req.institutionClient!.clientId, period);
       res.status(200).json({ success: true, data: cashflow, timestamp: new Date().toISOString() });
     } catch (error: any) {
