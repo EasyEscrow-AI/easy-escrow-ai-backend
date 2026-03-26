@@ -2,10 +2,12 @@ openapi: 3.0.3
 info:
   title: EasyEscrow.ai API
   version: 1.2.0
+  description: |
+    Full OpenAPI spec (JSON): [/openapi.json](/openapi.json)
   contact:
     name: EasyEscrow.ai Support
     email: support@easyescrow.ai
-    
+
 servers:
   - url: http://localhost:3000
     description: Local development
