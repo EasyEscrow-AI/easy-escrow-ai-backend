@@ -8,6 +8,7 @@
  * GET    /api/v1/institution-escrow/:id/deposit-tx → getDepositTransaction
  * POST   /api/v1/institution-escrow/:id/deposit  → recordDeposit
  * POST   /api/v1/institution-escrow/:id/fulfill  → fulfillEscrow (FUNDED → PENDING_RELEASE)
+ * POST   /api/v1/institution-escrow/:id/notify-recipient → notifyRecipient
  * POST   /api/v1/institution-escrow/:id/release  → releaseFunds
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
  * GET    /api/v1/institution-escrow/:id          → getEscrow
@@ -330,6 +331,7 @@ router.post(
   '/api/v1/institution-escrow/:id/fulfill',
   standardRateLimiter,
   requireInstitutionAuth,
+  requireNotPaused,
   param('id').notEmpty().withMessage('Escrow ID or code is required'),
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
@@ -339,7 +341,7 @@ router.post(
       const result = await service.fulfillEscrow(
         req.institutionClient!.clientId,
         req.params.id,
-        req.body.notes,
+        { fileId: req.body.fileId, notes: req.body.notes },
         req.institutionClient!.email
       );
 
@@ -349,9 +351,51 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('not found') ? 404 : 400;
+      const status = error.message.includes('not found')
+        ? 404
+        : error.message.includes('Access denied')
+          ? 403
+          : 400;
       res.status(status).json({
-        error: 'Fulfillment Failed',
+        error: 'Fulfill Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// POST /api/v1/institution-escrow/:id/notify-recipient
+router.post(
+  '/api/v1/institution-escrow/:id/notify-recipient',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  param('id').notEmpty().withMessage('Escrow ID or code is required'),
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
+    try {
+      const service = getInstitutionEscrowService();
+      const result = await service.notifyRecipient(
+        req.institutionClient!.clientId,
+        req.params.id,
+        req.body.message,
+        req.institutionClient!.email
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('not found')
+        ? 404
+        : error.message.includes('Access denied')
+          ? 403
+          : 400;
+      res.status(status).json({
+        error: 'Notify Recipient Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });

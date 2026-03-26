@@ -2454,11 +2454,16 @@ paths:
     post:
       tags:
         - Institution Escrow
-      summary: Mark escrow as fulfilled
+      summary: Submit proof of delivery
       description: |
-        Transitions escrow from FUNDED → PENDING_RELEASE after sender uploads proof of delivery.
-        Requires at least one supporting document attached to the escrow.
-        Both parties will see the escrow is awaiting release approval.
+        Transitions escrow from FUNDED → PENDING_RELEASE after proof of delivery is submitted.
+        Optionally pass a `fileId` to link a specific uploaded file; otherwise the most
+        recent file attached to this escrow is used. Requires at least one document attached.
+
+        If the escrow's `releaseMode` is `ai`, an AI release check is triggered automatically
+        (results recorded in the audit log). Release still requires an explicit `/release` call.
+
+        **Rate Limited**: 30 requests per minute.
       security:
         - InstitutionBearerAuth: []
       parameters:
@@ -2469,17 +2474,26 @@ paths:
           schema:
             type: string
       requestBody:
+        required: false
         content:
           application/json:
             schema:
               type: object
               properties:
+                fileId:
+                  type: string
+                  format: uuid
+                  description: ID of an uploaded file to use as proof document. If omitted, the most recent file on this escrow is used.
                 notes:
                   type: string
-                  description: Optional notes about the fulfillment
+                  maxLength: 500
+                  description: Optional notes about the proof submission
+            example:
+              fileId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              notes: "Bill of lading attached"
       responses:
         '200':
-          description: Escrow marked as fulfilled
+          description: Proof submitted, escrow moved to PENDING_RELEASE
           content:
             application/json:
               schema:
@@ -2494,7 +2508,7 @@ paths:
                     type: string
                     format: date-time
         '400':
-          description: Invalid state transition or no documents attached
+          description: Invalid state transition, no documents attached, or file not found
           content:
             application/json:
               schema:
@@ -2505,6 +2519,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution-escrow/{id}/notify-recipient:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Notify recipient to upload proof
+      description: |
+        Send a notification to the counterparty (recipient) asking them to upload
+        proof of delivery for this escrow. The recipient must have a registered
+        institution account linked to the escrow's recipient wallet.
+
+        Only escrows in `FUNDED` status can trigger recipient notifications.
+
+        **Rate Limited**: 30 requests per minute.
+      security:
+        - InstitutionBearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Escrow ID (UUID) or escrow code (EE-XXX-XXX)
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 1000
+                  description: Optional message to include in the notification
+            example:
+              message: "Please upload the signed bill of lading"
+      responses:
+        '200':
+          description: Notification sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      sent:
+                        type: boolean
+                        example: true
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid state or recipient not registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
 
   /api/v1/institution-escrow/{id}/release:
     post:
