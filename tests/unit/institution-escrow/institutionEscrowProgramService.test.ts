@@ -403,10 +403,13 @@ describe('InstitutionEscrowProgramService', () => {
 
   describe('buildDepositTransaction', () => {
     it('should return a Transaction with deposit instruction', async () => {
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
+
       const result = await service.buildDepositTransaction({
         escrowId: TEST_UUID,
         payer: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
+        feeCollector: PAYER_PUBKEY,
       });
 
       expect(result).to.be.instanceOf(Transaction);
@@ -414,10 +417,13 @@ describe('InstitutionEscrowProgramService', () => {
     });
 
     it('should pass escrow ID array as arg', async () => {
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
+
       await service.buildDepositTransaction({
         escrowId: TEST_UUID,
         payer: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
+        feeCollector: PAYER_PUBKEY,
       });
 
       const args = programMethodsStub.depositInstitutionEscrow.firstCall.args;
@@ -435,7 +441,6 @@ describe('InstitutionEscrowProgramService', () => {
         escrowId: TEST_UUID,
         authority: PAYER_PUBKEY,
         recipientWallet: RECIPIENT_PUBKEY,
-        feeCollector: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
       });
 
@@ -443,29 +448,27 @@ describe('InstitutionEscrowProgramService', () => {
       expect(programMethodsStub.releaseInstitutionEscrow.calledOnce).to.be.true;
     });
 
-    it('should add ATA creation instructions when ATAs do not exist', async () => {
+    it('should add ATA creation instruction when recipient ATA does not exist', async () => {
       connectionStub.getAccountInfo.resolves(null);
 
       const result = await service.buildReleaseTransaction({
         escrowId: TEST_UUID,
         authority: PAYER_PUBKEY,
         recipientWallet: RECIPIENT_PUBKEY,
-        feeCollector: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
       });
 
-      // 2 ATA create instructions + 1 release instruction
-      expect(result.instructions.length).to.equal(3);
+      // 1 ATA create instruction + 1 release instruction (no fee collector ATA needed)
+      expect(result.instructions.length).to.equal(2);
     });
 
-    it('should skip ATA creation instructions when ATAs already exist', async () => {
+    it('should skip ATA creation instruction when recipient ATA already exists', async () => {
       connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
 
       const result = await service.buildReleaseTransaction({
         escrowId: TEST_UUID,
         authority: PAYER_PUBKEY,
         recipientWallet: RECIPIENT_PUBKEY,
-        feeCollector: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
       });
 
@@ -619,7 +622,6 @@ describe('InstitutionEscrowProgramService', () => {
       const result = await service.releaseEscrowOnChain({
         escrowId: TEST_UUID,
         recipientWallet: RECIPIENT_PUBKEY,
-        feeCollector: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
       });
 
@@ -686,7 +688,6 @@ describe('InstitutionEscrowProgramService', () => {
         await service.releaseEscrowOnChain({
           escrowId: TEST_UUID,
           recipientWallet: RECIPIENT_PUBKEY,
-          feeCollector: PAYER_PUBKEY,
           usdcMint: USDC_MINT,
         });
         expect.fail('Should have thrown');

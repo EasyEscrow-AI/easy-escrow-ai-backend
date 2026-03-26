@@ -33,12 +33,16 @@ const INST_VAULT_SEED = Buffer.from('inst_vault');
 /**
  * Safely convert a decimal USDC amount to micro-USDC integer string
  * without floating-point multiplication.
- * E.g. 1000.50 → "1000500000", 0.123456 → "123456"
+ * Uses toFixed(6) as the rounding boundary to eliminate float drift,
+ * then BigInt string math for exact conversion.
+ * E.g. 599.99 → "599990000", 1000.50 → "1000500000", 0.123456 → "123456"
  */
 function decimalToMicroUsdc(amount: number): string {
-  const str = amount.toFixed(6);
+  if (amount < 0) throw new Error('Amount cannot be negative');
+  const str = amount.toFixed(6); // rounds to 6 decimal places (USDC precision)
   const [whole, frac] = str.split('.');
-  return (BigInt(whole) * BigInt(1_000_000) + BigInt(frac)).toString();
+  const fracPadded = (frac || '0').padEnd(6, '0').slice(0, 6);
+  return (BigInt(whole) * BigInt(1_000_000) + BigInt(fracPadded)).toString();
 }
 
 // Map condition type strings to Anchor enum variants
@@ -250,12 +254,14 @@ export class InstitutionEscrowProgramService {
   }
 
   /**
-   * Build deposit transaction (signed by payer, not admin)
+   * Build deposit transaction (signed by payer, not admin).
+   * Fee is collected at deposit time: escrow amount goes to vault, platform fee goes to fee collector.
    */
   async buildDepositTransaction(params: {
     escrowId: string;
     payer: PublicKey;
     usdcMint: PublicKey;
+    feeCollector: PublicKey;
     memo?: string;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
@@ -265,6 +271,18 @@ export class InstitutionEscrowProgramService {
 
     const payerAta = await getAssociatedTokenAddress(params.usdcMint, params.payer);
 
+    const transaction = new Transaction();
+
+    // Ensure fee collector ATA exists (payer pays for ATA creation if needed)
+    const feeCollectorAta = await this.getOrCreateAta(
+      params.usdcMint,
+      params.feeCollector,
+      params.payer
+    );
+    if (feeCollectorAta.instruction) {
+      transaction.add(feeCollectorAta.instruction);
+    }
+
     const ix = await (this.program.methods as any)
       .depositInstitutionEscrow(escrowIdArray)
       .accounts({
@@ -272,11 +290,12 @@ export class InstitutionEscrowProgramService {
         payerTokenAccount: payerAta,
         escrowState: escrowPda,
         tokenVault: vaultPda,
+        feeCollectorTokenAccount: feeCollectorAta.address,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
 
-    const transaction = new Transaction().add(ix);
+    transaction.add(ix);
     if (params.memo) {
       transaction.add(createMemoInstruction(params.memo, params.payer));
     }
@@ -284,13 +303,13 @@ export class InstitutionEscrowProgramService {
   }
 
   /**
-   * Build release transaction
+   * Build release transaction.
+   * Fee was already collected at deposit time — release just sends vault balance to recipient.
    */
   async buildReleaseTransaction(params: {
     escrowId: string;
     authority: PublicKey;
     recipientWallet: PublicKey;
-    feeCollector: PublicKey;
     usdcMint: PublicKey;
     memo?: string;
   }): Promise<Transaction> {
@@ -301,7 +320,7 @@ export class InstitutionEscrowProgramService {
 
     const transaction = new Transaction();
 
-    // Ensure recipient and fee collector ATAs exist
+    // Ensure recipient ATA exists
     const recipientAta = await this.getOrCreateAta(
       params.usdcMint,
       params.recipientWallet,
@@ -311,14 +330,7 @@ export class InstitutionEscrowProgramService {
       transaction.add(recipientAta.instruction);
     }
 
-    const feeCollectorAta = await this.getOrCreateAta(
-      params.usdcMint,
-      params.feeCollector,
-      params.authority
-    );
-    if (feeCollectorAta.instruction) {
-      transaction.add(feeCollectorAta.instruction);
-    }
+    // No fee collector ATA needed — fee was collected at deposit time
 
     const ix = await (this.program.methods as any)
       .releaseInstitutionEscrow(escrowIdArray)
@@ -327,7 +339,6 @@ export class InstitutionEscrowProgramService {
         escrowState: escrowPda,
         tokenVault: vaultPda,
         recipientTokenAccount: recipientAta.address,
-        feeCollectorTokenAccount: feeCollectorAta.address,
         rentReceiver: params.authority,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
@@ -469,12 +480,12 @@ export class InstitutionEscrowProgramService {
   }
 
   /**
-   * Release escrow on-chain: build, sign, and submit release transaction
+   * Release escrow on-chain: build, sign, and submit release transaction.
+   * Fee was already collected at deposit time — release just sends vault balance to recipient.
    */
   async releaseEscrowOnChain(params: {
     escrowId: string;
     recipientWallet: PublicKey;
-    feeCollector: PublicKey;
     usdcMint: PublicKey;
     escrowCode?: string;
     aiDigest?: string;
