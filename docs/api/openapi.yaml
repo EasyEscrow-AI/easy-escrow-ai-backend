@@ -7277,6 +7277,36 @@ components:
         approvalInstructions:
           type: string
           description: Free-text instructions for manual reviewers (max 2000 chars)
+        payerName:
+          type: string
+          maxLength: 200
+          description: Display name of the payer (e.g., company name)
+          example: "Optimus Exchange AG"
+        payerAccountLabel:
+          type: string
+          maxLength: 200
+          description: Label for the payer's account
+          example: "Operating Account"
+        payerBranchName:
+          type: string
+          maxLength: 200
+          description: Payer's branch or office name
+          example: "Zürich HQ"
+        recipientName:
+          type: string
+          maxLength: 200
+          description: Display name of the recipient (e.g., company name)
+          example: "Satoshi Bridge Labs Inc"
+        recipientAccountLabel:
+          type: string
+          maxLength: 200
+          description: Label for the recipient's account
+          example: "Primary Receiving"
+        recipientBranchName:
+          type: string
+          maxLength: 200
+          description: Recipient's branch or office name
+          example: "Singapore Office"
 
     InstitutionEscrowDetail:
       type: object
@@ -7548,6 +7578,30 @@ components:
         tokenMint:
           type: string
           description: Optional SPL token mint address (defaults to USDC)
+        payerName:
+          type: string
+          maxLength: 200
+          description: Display name of the payer (e.g., company name)
+        payerAccountLabel:
+          type: string
+          maxLength: 200
+          description: Label for the payer's account
+        payerBranchName:
+          type: string
+          maxLength: 200
+          description: Payer's branch or office name
+        recipientName:
+          type: string
+          maxLength: 200
+          description: Display name of the recipient
+        recipientAccountLabel:
+          type: string
+          maxLength: 200
+          description: Label for the recipient's account
+        recipientBranchName:
+          type: string
+          maxLength: 200
+          description: Recipient's branch or office name
 
     InstitutionEscrowDraftUpdateRequest:
       type: object
@@ -7577,6 +7631,30 @@ components:
         tokenMint:
           type: string
           description: SPL token mint address
+        payerName:
+          type: string
+          maxLength: 200
+          description: Display name of the payer
+        payerAccountLabel:
+          type: string
+          maxLength: 200
+          description: Label for the payer's account
+        payerBranchName:
+          type: string
+          maxLength: 200
+          description: Payer's branch or office name
+        recipientName:
+          type: string
+          maxLength: 200
+          description: Display name of the recipient
+        recipientAccountLabel:
+          type: string
+          maxLength: 200
+          description: Label for the recipient's account
+        recipientBranchName:
+          type: string
+          maxLength: 200
+          description: Recipient's branch or office name
 
     # ── AI Analysis Schemas ─────────────────────────────────────────────
 

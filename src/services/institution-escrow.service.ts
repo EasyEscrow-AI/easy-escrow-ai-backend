@@ -71,8 +71,10 @@ const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
 interface PartyNames {
   payerName: string | null;
   payerAccountLabel: string | null;
+  payerBranchName: string | null;
   recipientName: string | null;
   recipientAccountLabel: string | null;
+  recipientBranchName: string | null;
   counterpartyId: string | null;
 }
 
@@ -107,6 +109,13 @@ export interface CreateEscrowParams {
   /** Free-text instructions for manual reviewers */
   approvalInstructions?: string;
   actorEmail?: string;
+  /** Party display names for receipts, audit log, and detail views */
+  payerName?: string;
+  payerAccountLabel?: string;
+  payerBranchName?: string;
+  recipientName?: string;
+  recipientAccountLabel?: string;
+  recipientBranchName?: string;
 }
 
 export interface SaveDraftParams {
@@ -124,6 +133,12 @@ export interface SaveDraftParams {
   releaseConditions?: string[];
   approvalInstructions?: string;
   actorEmail?: string;
+  payerName?: string;
+  payerAccountLabel?: string;
+  payerBranchName?: string;
+  recipientName?: string;
+  recipientAccountLabel?: string;
+  recipientBranchName?: string;
 }
 
 export interface UpdateDraftParams {
@@ -140,6 +155,12 @@ export interface UpdateDraftParams {
   releaseConditions?: string[];
   approvalInstructions?: string;
   actorEmail?: string;
+  payerName?: string;
+  payerAccountLabel?: string;
+  payerBranchName?: string;
+  recipientName?: string;
+  recipientAccountLabel?: string;
+  recipientBranchName?: string;
 }
 
 export interface CreateEscrowResult {
@@ -433,6 +454,12 @@ export class InstitutionEscrowService {
         releaseConditions: releaseConditions || [],
         approvalInstructions,
         initTxSignature,
+        payerName: params.payerName || null,
+        payerAccountLabel: params.payerAccountLabel || null,
+        payerBranchName: params.payerBranchName || null,
+        recipientName: params.recipientName || null,
+        recipientAccountLabel: params.recipientAccountLabel || null,
+        recipientBranchName: params.recipientBranchName || null,
       },
     });
 
@@ -574,6 +601,12 @@ export class InstitutionEscrowService {
         approvalParties: approvalParties || [],
         releaseConditions: releaseConditions || [],
         approvalInstructions: approvalInstructions || null,
+        payerName: params.payerName || null,
+        payerAccountLabel: params.payerAccountLabel || null,
+        payerBranchName: params.payerBranchName || null,
+        recipientName: params.recipientName || null,
+        recipientAccountLabel: params.recipientAccountLabel || null,
+        recipientBranchName: params.recipientBranchName || null,
       },
     });
 
@@ -631,6 +664,15 @@ export class InstitutionEscrowService {
       updateData.releaseConditions = params.releaseConditions;
     if (params.approvalInstructions !== undefined)
       updateData.approvalInstructions = params.approvalInstructions;
+
+    if (params.payerName !== undefined) updateData.payerName = params.payerName;
+    if (params.payerAccountLabel !== undefined) updateData.payerAccountLabel = params.payerAccountLabel;
+    if (params.payerBranchName !== undefined) updateData.payerBranchName = params.payerBranchName;
+    if (params.recipientName !== undefined) updateData.recipientName = params.recipientName;
+    if (params.recipientAccountLabel !== undefined)
+      updateData.recipientAccountLabel = params.recipientAccountLabel;
+    if (params.recipientBranchName !== undefined)
+      updateData.recipientBranchName = params.recipientBranchName;
 
     // Post-merge check: ensure payer !== recipient after partial update
     const mergedPayerWallet = (updateData.payerWallet as string) || escrow.payerWallet;
@@ -2085,10 +2127,15 @@ export class InstitutionEscrowService {
       const esc = e as any;
       const recipient = esc.recipientWallet ? recipientMap.get(esc.recipientWallet) : null;
       return {
-        payerName: payerClient?.companyName || null,
-        payerAccountLabel: esc.payerWallet ? payerAccountMap.get(esc.payerWallet) || null : null,
-        recipientName: recipient?.companyName || null,
-        recipientAccountLabel: recipient?.accountLabel || null,
+        // Prefer stored display names over DB-resolved names
+        payerName: esc.payerName || payerClient?.companyName || null,
+        payerAccountLabel:
+          esc.payerAccountLabel ||
+          (esc.payerWallet ? payerAccountMap.get(esc.payerWallet) || null : null),
+        payerBranchName: esc.payerBranchName || null,
+        recipientName: esc.recipientName || recipient?.companyName || null,
+        recipientAccountLabel: esc.recipientAccountLabel || recipient?.accountLabel || null,
+        recipientBranchName: esc.recipientBranchName || null,
         counterpartyId: recipient?.clientId || null,
       };
     });
@@ -2121,6 +2168,7 @@ export class InstitutionEscrowService {
         clientId: e.clientId,
         name: partyNames?.payerName ?? null,
         accountLabel: partyNames?.payerAccountLabel ?? null,
+        branchName: partyNames?.payerBranchName ?? null,
         wallet: e.payerWallet,
       },
       to: {
@@ -2129,6 +2177,7 @@ export class InstitutionEscrowService {
           ? 'Stealth Recipient'
           : (partyNames?.recipientName ?? (e.recipientWallet ? 'External Wallet' : null)),
         accountLabel: shouldMask ? null : (partyNames?.recipientAccountLabel ?? null),
+        branchName: shouldMask ? null : (partyNames?.recipientBranchName ?? null),
         wallet: shouldMask ? null : e.recipientWallet,
       },
       settlement: {
