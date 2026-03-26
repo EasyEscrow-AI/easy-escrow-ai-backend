@@ -5,6 +5,7 @@
  * POST   /api/v1/institution/accounts                     -> Create account
  * GET    /api/v1/institution/accounts                     -> List accounts (?branchId=&includeBalances=true)
  * GET    /api/v1/institution/accounts/:id                 -> Get account + balance
+ * GET    /api/v1/institution/accounts/:id/transactions   -> Transaction history
  * PUT    /api/v1/institution/accounts/:id                 -> Update account
  * DELETE /api/v1/institution/accounts/:id                 -> Deactivate account
  * PUT    /api/v1/institution/accounts/:id/default         -> Set as default
@@ -265,6 +266,43 @@ router.put(
       logger.error('Set default account failed', { error: message });
       res.status(status).json({
         error: status === 404 ? 'Not Found' : 'Update Failed',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// GET /api/v1/institution/accounts/:id/transactions — Transaction history for this account
+router.get(
+  '/api/v1/institution/accounts/:id/transactions',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const service = getInstitutionAccountService();
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+      const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
+      const transactions = await service.getAccountTransactions(
+        req.institutionClient!.clientId,
+        req.params.id,
+        limit,
+        offset
+      );
+
+      res.status(200).json({
+        success: true,
+        data: transactions,
+        total: transactions.length,
+        limit,
+        offset,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message === 'Account not found' ? 404 : 500;
+      logger.error('Account transactions fetch failed', { error: message });
+      res.status(status).json({
+        error: status === 404 ? 'Not Found' : 'Internal Error',
         timestamp: new Date().toISOString(),
       });
     }

@@ -265,6 +265,7 @@
     "seed:admin": "ts-node scripts/seed-admin.ts",
     "seed:portal": "ts-node scripts/seed-institution-portal.ts",
     "seed:staging:all": "ts-node scripts/seed-staging-all.ts --staging",
+    "seed:optimus": "ts-node scripts/seed-optimus-exchange.ts",
     "test:unit:admin": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/admin/*.test.ts' --timeout 10000 --exit",
     "prepare": "husky"
   },
