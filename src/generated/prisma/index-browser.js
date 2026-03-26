@@ -531,6 +531,7 @@ exports.Prisma.InstitutionBranchScalarFieldEnum = {
   id: 'id',
   clientId: 'clientId',
   name: 'name',
+  label: 'label',
   city: 'city',
   country: 'country',
   countryCode: 'countryCode',
@@ -542,6 +543,7 @@ exports.Prisma.InstitutionBranchScalarFieldEnum = {
   regulatoryBody: 'regulatoryBody',
   isSanctioned: 'isSanctioned',
   sanctionReason: 'sanctionReason',
+  isHeadquarters: 'isHeadquarters',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -68,6 +68,11 @@ const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
   document_signature_verified: 'Document signature is verified (via DocuSign)',
 };
 
+function truncateWallet(wallet: string | null | undefined): string | null {
+  if (!wallet || wallet.length < 8) return wallet || null;
+  return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
+}
+
 interface PartyNames {
   payerName: string | null;
   payerAccountLabel: string | null;
@@ -2063,7 +2068,7 @@ export class InstitutionEscrowService {
       payerWallets.length > 0
         ? this.prisma.institutionAccount.findMany({
             where: { clientId: payerClientId, walletAddress: { in: payerWallets } },
-            select: { walletAddress: true, label: true, name: true },
+            select: { walletAddress: true, label: true, name: true, branch: { select: { name: true } } },
           })
         : Promise.resolve([]),
       recipientWallets.length > 0
@@ -2074,6 +2079,7 @@ export class InstitutionEscrowService {
               label: true,
               name: true,
               client: { select: { id: true, companyName: true } },
+              branch: { select: { name: true } },
             },
           })
         : Promise.resolve([]),
@@ -2090,13 +2096,16 @@ export class InstitutionEscrowService {
         : Promise.resolve([]),
     ]);
 
-    // Payer account label lookup: wallet → label
-    const payerAccountMap = new Map(payerAccounts.map((a) => [a.walletAddress, a.label || a.name]));
+    // Payer account lookup: wallet → { label, branchName }
+    const payerAccountMap = new Map(payerAccounts.map((a) => [
+      a.walletAddress,
+      { label: a.label || a.name, branchName: (a as any).branch?.name || null },
+    ]));
 
-    // Recipient lookup: wallet → { clientId, companyName, accountLabel }
+    // Recipient lookup: wallet → { clientId, companyName, accountLabel, branchName }
     const recipientMap = new Map<
       string,
-      { clientId: string; companyName: string; accountLabel: string | null }
+      { clientId: string; companyName: string; accountLabel: string | null; branchName: string | null }
     >();
 
     // Accounts give us both client identity and account label
@@ -2107,6 +2116,7 @@ export class InstitutionEscrowService {
           clientId: acctClient.id,
           companyName: acctClient.companyName,
           accountLabel: acct.label || acct.name,
+          branchName: (acct as any).branch?.name || null,
         });
       }
     }
@@ -2118,24 +2128,23 @@ export class InstitutionEscrowService {
       if (c.settledWallets) wallets.push(...c.settledWallets);
       for (const w of wallets) {
         if (recipientWallets.includes(w) && !recipientMap.has(w)) {
-          recipientMap.set(w, { clientId: c.id, companyName: c.companyName, accountLabel: null });
+          recipientMap.set(w, { clientId: c.id, companyName: c.companyName, accountLabel: null, branchName: null });
         }
       }
     }
 
     return escrows.map((e) => {
       const esc = e as any;
+      const payerAcct = esc.payerWallet ? payerAccountMap.get(esc.payerWallet) : null;
       const recipient = esc.recipientWallet ? recipientMap.get(esc.recipientWallet) : null;
       return {
-        // Prefer stored display names over DB-resolved names
+        // Prefer stored display names, then DB-resolved, then null
         payerName: esc.payerName || payerClient?.companyName || null,
-        payerAccountLabel:
-          esc.payerAccountLabel ||
-          (esc.payerWallet ? payerAccountMap.get(esc.payerWallet) || null : null),
-        payerBranchName: esc.payerBranchName || null,
+        payerAccountLabel: esc.payerAccountLabel || payerAcct?.label || null,
+        payerBranchName: esc.payerBranchName || payerAcct?.branchName || null,
         recipientName: esc.recipientName || recipient?.companyName || null,
         recipientAccountLabel: esc.recipientAccountLabel || recipient?.accountLabel || null,
-        recipientBranchName: esc.recipientBranchName || null,
+        recipientBranchName: esc.recipientBranchName || recipient?.branchName || null,
         counterpartyId: recipient?.clientId || null,
       };
     });
@@ -2166,7 +2175,7 @@ export class InstitutionEscrowService {
       riskScore: e.riskScore,
       from: {
         clientId: e.clientId,
-        name: partyNames?.payerName ?? null,
+        name: partyNames?.payerName ?? truncateWallet(e.payerWallet),
         accountLabel: partyNames?.payerAccountLabel ?? null,
         branchName: partyNames?.payerBranchName ?? null,
         wallet: e.payerWallet,
@@ -2175,7 +2184,7 @@ export class InstitutionEscrowService {
         clientId: shouldMask ? null : (partyNames?.counterpartyId ?? null),
         name: shouldMask
           ? 'Stealth Recipient'
-          : (partyNames?.recipientName ?? (e.recipientWallet ? 'External Wallet' : null)),
+          : (partyNames?.recipientName ?? truncateWallet(e.recipientWallet)),
         accountLabel: shouldMask ? null : (partyNames?.recipientAccountLabel ?? null),
         branchName: shouldMask ? null : (partyNames?.recipientBranchName ?? null),
         wallet: shouldMask ? null : e.recipientWallet,

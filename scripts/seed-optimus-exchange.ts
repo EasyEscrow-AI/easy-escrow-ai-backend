@@ -1,5 +1,5 @@
 /**
- * Seed Optimus Exchange AG — Comprehensive Staging Demo Data
+ * Seed Optimus Exchange AG — Comprehensive Staging Demo Data (v2 — 2026-03-26)
  *
  * Creates a complete demo dataset for the "Optimus Exchange AG" institution:
  *   1. Institution client (Optimus Exchange AG)
@@ -10,6 +10,11 @@
  *   6. Six direct payments
  *   7. Twenty audit log entries
  *   8. Twelve payment corridors
+ *   9. Three approved tokens (USDC, USDT, EURC)
+ *  10. Seven institution wallets
+ *  11. Institution deposits for funded escrows
+ *  12. AI compliance analyses for funded/hold/released escrows
+ *  13. Fifteen in-app notifications
  *
  * Usage:
  *   npx ts-node scripts/seed-optimus-exchange.ts
@@ -24,7 +29,7 @@ import { Keypair } from '@solana/web3.js';
 
 const prisma = new PrismaClient();
 
-const SEED_VERSION = 'optimus-v1';
+const SEED_VERSION = 'optimus-v2';
 const SEED_MARKER_ACTION = 'OPTIMUS_EXCHANGE_SEED';
 
 // ---------------------------------------------------------------------------
@@ -127,8 +132,14 @@ async function restore() {
   console.log(`Client ID: ${optimusId}\n`);
 
   // Delete in reverse dependency order
+  const notifDel = await prisma.institutionNotification.deleteMany({ where: { clientId: optimusId } });
+  console.log(`   Deleted ${notifDel.count} notifications`);
+
   const auditDel = await prisma.institutionAuditLog.deleteMany({ where: { clientId: optimusId } });
   console.log(`   Deleted ${auditDel.count} audit logs`);
+
+  const aiDel = await prisma.institutionAiAnalysis.deleteMany({ where: { clientId: optimusId } });
+  console.log(`   Deleted ${aiDel.count} AI analyses`);
 
   const paymentDel = await prisma.directPayment.deleteMany({ where: { clientId: optimusId } });
   console.log(`   Deleted ${paymentDel.count} direct payments`);
@@ -140,6 +151,9 @@ async function restore() {
 
   const escrowDel = await prisma.institutionEscrow.deleteMany({ where: { clientId: optimusId } });
   console.log(`   Deleted ${escrowDel.count} escrows`);
+
+  const walletDel = await prisma.institutionWallet.deleteMany({ where: { clientId: optimusId } });
+  console.log(`   Deleted ${walletDel.count} wallets`);
 
   const accountDel = await prisma.institutionAccount.deleteMany({ where: { clientId: optimusId } });
   console.log(`   Deleted ${accountDel.count} accounts`);
@@ -231,7 +245,7 @@ async function main() {
     isTestAccount: true,
     // Legal entity
     legalName: 'Optimus Exchange AG',
-    tradingName: 'Optimus Exchange',
+    tradingName: 'Zurich Branch',
     registrationNumber: 'CHE-456.789.012',
     registrationCountry: 'CH',
     entityType: 'CORPORATION' as const,
@@ -299,6 +313,7 @@ async function main() {
   const branchDefs = [
     {
       name: 'Zurich Branch HQ',
+      label: 'Zurich HQ',
       city: 'Zurich',
       country: 'Switzerland',
       countryCode: 'CH',
@@ -307,9 +322,11 @@ async function main() {
       riskScore: 5,
       complianceStatus: 'COMPLIANT',
       regulatoryBody: 'FINMA',
+      isHeadquarters: true,
     },
     {
       name: 'NY Americas',
+      label: 'NY Americas',
       city: 'New York',
       country: 'United States',
       countryCode: 'US',
@@ -318,9 +335,11 @@ async function main() {
       riskScore: 10,
       complianceStatus: 'ACTIVE',
       regulatoryBody: 'FinCEN',
+      isHeadquarters: false,
     },
     {
       name: 'Singapore APAC',
+      label: 'Singapore APAC',
       city: 'Singapore',
       country: 'Singapore',
       countryCode: 'SG',
@@ -329,9 +348,11 @@ async function main() {
       riskScore: 8,
       complianceStatus: 'ACTIVE',
       regulatoryBody: 'MAS',
+      isHeadquarters: false,
     },
     {
       name: 'London Trading',
+      label: 'London Trading',
       city: 'London',
       country: 'United Kingdom',
       countryCode: 'GB',
@@ -340,9 +361,11 @@ async function main() {
       riskScore: 7,
       complianceStatus: 'ACTIVE',
       regulatoryBody: 'FCA',
+      isHeadquarters: false,
     },
     {
       name: 'Dubai MENA',
+      label: 'Dubai MENA',
       city: 'Dubai',
       country: 'United Arab Emirates',
       countryCode: 'AE',
@@ -351,6 +374,7 @@ async function main() {
       riskScore: 20,
       complianceStatus: 'UNDER_REVIEW',
       regulatoryBody: 'DFSA',
+      isHeadquarters: false,
     },
   ];
 
@@ -368,6 +392,7 @@ async function main() {
       branch = await prisma.institutionBranch.update({
         where: { id: existing.id },
         data: {
+          label: b.label,
           city: b.city,
           country: b.country,
           countryCode: b.countryCode,
@@ -376,6 +401,7 @@ async function main() {
           riskScore: b.riskScore,
           complianceStatus: b.complianceStatus,
           regulatoryBody: b.regulatoryBody,
+          isHeadquarters: b.isHeadquarters,
           isActive: true,
         },
       });
@@ -384,6 +410,7 @@ async function main() {
         data: {
           clientId: optimusId,
           name: b.name,
+          label: b.label,
           city: b.city,
           country: b.country,
           countryCode: b.countryCode,
@@ -392,6 +419,7 @@ async function main() {
           riskScore: b.riskScore,
           complianceStatus: b.complianceStatus,
           regulatoryBody: b.regulatoryBody,
+          isHeadquarters: b.isHeadquarters,
           isActive: true,
         },
       });
@@ -414,7 +442,7 @@ async function main() {
       accountType: 'TREASURY' as const,
       walletSeed: 'optimus-ch-treasury',
       branchCountryCode: 'CH',
-      isDefault: true,
+      isDefault: false,
       description: 'Primary treasury account for Zurich Branch HQ',
       walletProvider: 'Fireblocks',
       custodyType: 'MPC' as const,
@@ -437,12 +465,26 @@ async function main() {
       approvalMode: 'MULTI_APPROVAL' as const,
     },
     {
+      name: 'Operations Account',
+      label: 'Operations Account',
+      accountType: 'OPERATIONS' as const,
+      hardcodedWallet: 'F9CBP5fRjqizYDSryop8aVqGUD3ykWcqJBLZAHKRb6ut',
+      branchCountryCode: 'CH',
+      isDefault: true,
+      description: 'Day-to-day operations for Zurich Branch HQ',
+      walletProvider: 'Self-Custody',
+      custodyType: 'SELF_CUSTODY' as const,
+      maxTransactionAmount: 1_000_000,
+      dailyVolumeLimit: 5_000_000,
+      approvalMode: 'SINGLE_APPROVAL' as const,
+    },
+    {
       name: 'Americas Treasury',
       label: 'Americas Treasury',
       accountType: 'TREASURY' as const,
       walletSeed: 'optimus-us-treasury-main',
       branchCountryCode: 'US',
-      isDefault: true,
+      isDefault: false,
       description: 'Primary treasury for NY Americas branch',
       walletProvider: 'Fireblocks',
       custodyType: 'MPC' as const,
@@ -470,7 +512,7 @@ async function main() {
       accountType: 'TREASURY' as const,
       walletSeed: 'optimus-sg-treasury-main',
       branchCountryCode: 'SG',
-      isDefault: true,
+      isDefault: false,
       description: 'Primary treasury for Singapore APAC branch',
       walletProvider: 'Fireblocks',
       custodyType: 'MPC' as const,
@@ -484,7 +526,7 @@ async function main() {
       accountType: 'SETTLEMENT' as const,
       walletSeed: 'optimus-gb-settlement-main',
       branchCountryCode: 'GB',
-      isDefault: true,
+      isDefault: false,
       description: 'FCA-regulated settlement for London Trading branch',
       walletProvider: 'BitGo',
       custodyType: 'THIRD_PARTY' as const,
@@ -498,7 +540,7 @@ async function main() {
       accountType: 'OPERATIONS' as const,
       walletSeed: 'optimus-ae-ops-main',
       branchCountryCode: 'AE',
-      isDefault: true,
+      isDefault: false,
       description: 'Operations account for Dubai MENA branch',
       walletProvider: 'Self-Custody',
       custodyType: 'SELF_CUSTODY' as const,
@@ -512,7 +554,7 @@ async function main() {
   const accountWalletMap = new Map<string, string>();
 
   for (const a of accountDefs) {
-    const walletAddress = fakeWallet(a.walletSeed);
+    const walletAddress = (a as any).hardcodedWallet || fakeWallet((a as any).walletSeed);
     const branchId = branchMap.get(a.branchCountryCode) || null;
 
     const data = {
@@ -908,7 +950,8 @@ async function main() {
 
     counterpartyMap.set(cp.companyName, { id: client.id, wallet });
 
-    // Ensure each counterparty has a default branch (named after the company)
+    // Ensure each counterparty has a default branch
+    const branchName = `${cp.city} Office`;
     const existingBranch = await prisma.institutionBranch.findFirst({
       where: { clientId: client.id },
     });
@@ -916,7 +959,8 @@ async function main() {
       await prisma.institutionBranch.create({
         data: {
           clientId: client.id,
-          name: cp.companyName,
+          name: branchName,
+          label: branchName,
           city: cp.city,
           country: cp.country || cp.jurisdiction,
           countryCode: cp.jurisdiction,
@@ -925,13 +969,18 @@ async function main() {
           riskScore: cp.sanctionsStatus === 'FLAGGED' ? 85 : 10,
           complianceStatus: cp.sanctionsStatus === 'FLAGGED' ? 'BLOCKED' : 'COMPLIANT',
           isSanctioned: cp.sanctionsStatus === 'FLAGGED',
+          isHeadquarters: true,
           isActive: cp.status === 'ACTIVE',
         },
       });
+    } else if (existingBranch.name === cp.companyName) {
+      // Migrate old company-name branches to city-based names
+      await prisma.institutionBranch.update({
+        where: { id: existingBranch.id },
+        data: { name: branchName, label: branchName, isHeadquarters: true },
+      });
     }
-    const branch = await prisma.institutionBranch.findFirst({
-      where: { clientId: client.id },
-    });
+    const branch = await prisma.institutionBranch.findFirst({ where: { clientId: client.id } });
 
     // Ensure each counterparty has a "Primary Receiving" account
     const existingAccount = await prisma.institutionAccount.findFirst({
@@ -1337,11 +1386,251 @@ async function main() {
   console.log(`   [OK] Created ${auditCount} audit log entries`);
 
   // ═══════════════════════════════════════════════════════════════════════
-  // SUMMARY
+  // 9. APPROVED TOKENS (whitelist)
   // ═══════════════════════════════════════════════════════════════════════
 
+  console.log('\n9. Seeding approved tokens...');
+
+  const approvedTokenDefs = [
+    {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      mintAddress: USDC_MINT,
+      decimals: 6,
+      issuer: 'Circle',
+      jurisdiction: 'US',
+      isDefault: true,
+    },
+    {
+      symbol: 'USDT',
+      name: 'Tether USD',
+      mintAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+      decimals: 6,
+      issuer: 'Tether',
+      jurisdiction: 'VG',
+      isDefault: false,
+    },
+    {
+      symbol: 'EURC',
+      name: 'Euro Coin',
+      mintAddress: 'HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzKKUBu7evYAP3j',
+      decimals: 6,
+      issuer: 'Circle',
+      jurisdiction: 'EU',
+      isDefault: false,
+    },
+  ];
+
+  for (const t of approvedTokenDefs) {
+    await prisma.institutionApprovedToken.upsert({
+      where: { symbol: t.symbol },
+      create: t,
+      update: { name: t.name, mintAddress: t.mintAddress, issuer: t.issuer, jurisdiction: t.jurisdiction, isDefault: t.isDefault },
+    });
+    console.log(`   [OK] ${t.symbol} — ${t.name} (${t.issuer})${t.isDefault ? ' [default]' : ''}`);
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
-  // 9. SEED MARKER (for timestamped restore)
+  // 10. INSTITUTION WALLETS (dedicated wallet table)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  console.log('\n10. Seeding institution wallets...');
+
+  // Delete existing wallets for Optimus to avoid duplicates on re-run
+  await prisma.institutionWallet.deleteMany({ where: { clientId: optimusId } });
+
+  const walletDefs = [
+    { name: 'Main Treasury',        address: accountWalletMap.get('Main Treasury')!,        provider: 'Fireblocks',   isPrimary: true,  isSettlement: false, description: 'Primary treasury wallet for institutional operations' },
+    { name: 'FINMA Settlement',     address: accountWalletMap.get('FINMA Settlement')!,     provider: 'Self-Custody', isPrimary: false, isSettlement: true,  description: 'Zurich HQ settlement wallet' },
+    { name: 'Operations Account',  address: accountWalletMap.get('Operations Account')!,  provider: 'Fireblocks',   isPrimary: false, isSettlement: false, description: 'Zurich HQ daily operations wallet' },
+    { name: 'Americas Treasury',    address: accountWalletMap.get('Americas Treasury')!,    provider: 'Fireblocks',   isPrimary: false, isSettlement: false, description: 'New York Americas treasury' },
+    { name: 'Americas Operations',  address: accountWalletMap.get('Americas Operations')!,  provider: 'Self-Custody', isPrimary: false, isSettlement: false, description: 'US daily operations wallet' },
+    { name: 'APAC Treasury',        address: accountWalletMap.get('APAC Treasury')!,        provider: 'Fireblocks',   isPrimary: false, isSettlement: false, description: 'Singapore APAC treasury' },
+    { name: 'London Settlement',    address: accountWalletMap.get('London Settlement')!,    provider: 'BitGo',        isPrimary: false, isSettlement: false, description: 'London trading settlement wallet' },
+    { name: 'Dubai Operations',     address: accountWalletMap.get('Dubai Operations')!,     provider: 'Self-Custody', isPrimary: false, isSettlement: false, description: 'Dubai MENA operations wallet' },
+  ];
+
+  for (const w of walletDefs) {
+    await prisma.institutionWallet.create({
+      data: {
+        clientId: optimusId,
+        name: w.name,
+        address: w.address,
+        chain: 'solana',
+        description: w.description,
+        provider: w.provider,
+        isPrimary: w.isPrimary,
+        isSettlement: w.isSettlement,
+      },
+    });
+    console.log(`   [OK] ${w.name}${w.isPrimary ? ' [primary]' : ''}${w.isSettlement ? ' [settlement]' : ''}`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 11. INSTITUTION DEPOSITS (for funded/released escrows)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  console.log('\n11. Seeding institution deposits...');
+
+  // Delete existing deposits for these escrows to avoid duplicates on re-run
+  await prisma.institutionDeposit.deleteMany({
+    where: { escrowId: { in: Array.from(escrowIdMap.values()) } },
+  });
+
+  let depositCount = 0;
+  for (const e of escrowDefs) {
+    const isFunded = ['FUNDED', 'COMPLIANCE_HOLD', 'RELEASED'].includes(e.status);
+    if (!isFunded) continue;
+
+    const escrowId = escrowIdMap.get(e.escrowCode)!;
+    const createdAt = daysAgo(e.daysAgo);
+    const confirmedAt = new Date(createdAt.getTime() + 2 * 3600000 + 300000); // 2h5m after escrow creation
+
+    await prisma.institutionDeposit.create({
+      data: {
+        escrowId,
+        txSignature: fakeTxSig(`deposit-${e.escrowCode}`),
+        amount: e.amount,
+        confirmedAt,
+        blockHeight: BigInt(200_000_000 + depositCount * 1000),
+        createdAt: new Date(createdAt.getTime() + 2 * 3600000), // 2h after escrow creation
+      },
+    });
+    depositCount++;
+    console.log(`   [OK] Deposit for ${e.escrowCode} — $${(e.amount / 1000).toFixed(0)}k`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 12. AI COMPLIANCE ANALYSES (for funded/compliance_hold/released escrows)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  console.log('\n12. Seeding AI compliance analyses...');
+
+  // Delete existing analyses for these escrows to avoid duplicates on re-run
+  await prisma.institutionAiAnalysis.deleteMany({
+    where: { escrowId: { in: Array.from(escrowIdMap.values()) } },
+  });
+
+  let analysisCount = 0;
+  for (const e of escrowDefs) {
+    const hasAnalysis = ['FUNDED', 'COMPLIANCE_HOLD', 'RELEASED'].includes(e.status);
+    if (!hasAnalysis) continue;
+
+    const escrowId = escrowIdMap.get(e.escrowCode)!;
+    const createdAt = daysAgo(e.daysAgo);
+    const isHold = e.status === 'COMPLIANCE_HOLD';
+    const isReleased = e.status === 'RELEASED';
+
+    const riskScore = isHold ? 72 + Math.floor(Math.random() * 15) : // 72-86 for holds
+                      isReleased ? 8 + Math.floor(Math.random() * 15) : // 8-22 for released
+                      20 + Math.floor(Math.random() * 20); // 20-39 for funded
+    const recommendation = isHold ? 'REVIEW' :
+                           riskScore > 50 ? 'REVIEW' : 'APPROVE';
+
+    const factors = isHold ? [
+      { name: 'Counterparty jurisdiction risk', weight: 0.3, value: 85 },
+      { name: 'Transaction amount vs. corridor average', weight: 0.25, value: 70 },
+      { name: 'Source of funds documentation', weight: 0.2, value: 60 },
+      { name: 'Historical pattern analysis', weight: 0.15, value: 45 },
+      { name: 'Sanctions screening', weight: 0.1, value: 90 },
+    ] : [
+      { name: 'Counterparty jurisdiction risk', weight: 0.3, value: 15 },
+      { name: 'Transaction amount vs. corridor average', weight: 0.25, value: 20 },
+      { name: 'Source of funds documentation', weight: 0.2, value: 10 },
+      { name: 'Historical pattern analysis', weight: 0.15, value: 12 },
+      { name: 'Sanctions screening', weight: 0.1, value: 5 },
+    ];
+
+    const summary = isHold
+      ? `Elevated risk detected for ${e.corridor} corridor transaction of $${(e.amount / 1_000_000).toFixed(1)}M. Counterparty jurisdiction flagged for enhanced due diligence. Manual review recommended before release.`
+      : isReleased
+        ? `Transaction cleared. All compliance checks passed for ${e.corridor} corridor. Risk score within acceptable threshold. No sanctions matches found.`
+        : `Preliminary compliance check completed for ${e.corridor} corridor. Transaction amount within normal range for this corridor. Awaiting final verification.`;
+
+    await prisma.institutionAiAnalysis.create({
+      data: {
+        analysisType: 'ESCROW',
+        escrowId,
+        clientId: optimusId,
+        riskScore,
+        factors,
+        recommendation,
+        extractedFields: {
+          corridor: e.corridor,
+          amount: e.amount,
+          currency: 'USDC',
+          sourceCountry: e.corridor.split('-')[0],
+          destCountry: e.corridor.split('-')[1],
+        },
+        summary,
+        model: 'claude-sonnet-4-20250514',
+        createdAt: new Date(createdAt.getTime() + 2.5 * 3600000), // 2.5h after escrow creation
+      },
+    });
+    analysisCount++;
+    console.log(`   [OK] Analysis for ${e.escrowCode} — risk=${riskScore} — ${recommendation}`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 13. NOTIFICATIONS (in-app notification feed)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  console.log('\n13. Seeding notifications...');
+
+  // Delete existing seed notifications for Optimus to avoid duplicates
+  await prisma.institutionNotification.deleteMany({ where: { clientId: optimusId } });
+
+  const notificationDefs: Array<{
+    type: string;
+    priority: string;
+    title: string;
+    message: string;
+    escrowCode?: string;
+    isRead: boolean;
+    hoursAgo: number;
+  }> = [
+    // Recent unread
+    { type: 'ESCROW_FUNDED',           priority: 'MEDIUM', title: 'Escrow EE-A1B-C3D funded',                  message: 'Deposit of $2,500,000 USDC confirmed for CH-SG escrow.',                                      escrowCode: 'EE-A1B-C3D', isRead: false, hoursAgo: 2 },
+    { type: 'ESCROW_COMPLIANCE_HOLD',  priority: 'HIGH',   title: 'Compliance hold: EE-E5F-A7B',              message: 'SG-JP escrow of $1,800,000 flagged for enhanced due diligence. Manual review required.',       escrowCode: 'EE-E5F-A7B', isRead: false, hoursAgo: 5 },
+    { type: 'ESCROW_FUNDED',           priority: 'MEDIUM', title: 'Escrow EE-A3B-C5D funded',                  message: 'Deposit of $4,200,000 USDC confirmed for GB-CH escrow.',                                      escrowCode: 'EE-A3B-C5D', isRead: false, hoursAgo: 8 },
+    { type: 'ESCROW_COMPLIANCE_HOLD',  priority: 'HIGH',   title: 'Compliance hold: EE-A5B-C7D',              message: 'SG-CN escrow of $3,300,000 flagged for PBOC cross-border restrictions. Review before release.', escrowCode: 'EE-A5B-C7D', isRead: false, hoursAgo: 20 },
+    { type: 'DEPOSIT_CONFIRMED',       priority: 'LOW',    title: 'Deposit confirmed',                         message: 'USDC deposit of $890,000 confirmed for escrow EE-F3G-H5I.',                                   escrowCode: 'EE-F3G-H5I', isRead: false, hoursAgo: 26 },
+    // Older read
+    { type: 'ESCROW_RELEASED',         priority: 'MEDIUM', title: 'Escrow EE-C9D-E1F released',               message: 'Settlement of $950,000 USDC completed for US-DE corridor. Funds delivered to recipient.',       escrowCode: 'EE-C9D-E1F', isRead: true, hoursAgo: 36 },
+    { type: 'ESCROW_RELEASED',         priority: 'MEDIUM', title: 'Escrow EE-E7F-A9B released',               message: 'Settlement of $670,000 USDC completed for CH-IT corridor.',                                    escrowCode: 'EE-E7F-A9B', isRead: true, hoursAgo: 60 },
+    { type: 'COMPLIANCE_CHECK_PASSED', priority: 'LOW',    title: 'Compliance check passed',                   message: 'AI analysis cleared escrow EE-B2C-D4E (GB-HK, $1,750,000). All sanctions checks negative.',    escrowCode: 'EE-B2C-D4E', isRead: true, hoursAgo: 96 },
+    { type: 'ESCROW_RELEASED',         priority: 'MEDIUM', title: 'Escrow EE-B2C-D4E released',               message: 'Settlement of $1,750,000 USDC completed for GB-HK corridor.',                                  escrowCode: 'EE-B2C-D4E', isRead: true, hoursAgo: 100 },
+    { type: 'ESCROW_CANCELLED',        priority: 'MEDIUM', title: 'Escrow EE-E9F-A1B cancelled',              message: 'US-CH escrow of $520,000 cancelled by payer. Funds refunded.',                                  escrowCode: 'EE-E9F-A1B', isRead: true, hoursAgo: 80 },
+    { type: 'ESCROW_EXPIRED',          priority: 'LOW',    title: 'Escrow EE-A7B-C9D expired',                message: 'CH-CH escrow of $280,000 expired after 72 hours. Funds auto-refunded.',                         escrowCode: 'EE-A7B-C9D', isRead: true, hoursAgo: 120 },
+    { type: 'ESCROW_RELEASED',         priority: 'MEDIUM', title: 'Escrow EE-J6K-L8M released',               message: 'Settlement of $2,100,000 USDC completed for US-GB corridor.',                                  escrowCode: 'EE-J6K-L8M', isRead: true, hoursAgo: 168 },
+    { type: 'KYB_VERIFIED',            priority: 'LOW',    title: 'KYB verification complete',                 message: 'Your institution (Optimus Exchange AG) KYB status verified by compliance team.',                                           isRead: true, hoursAgo: 200 },
+    { type: 'ACCOUNT_VERIFIED',        priority: 'LOW',    title: 'Account verified: Main Treasury',           message: 'Your Main Treasury account has been verified and is ready for escrow operations.',                                        isRead: true, hoursAgo: 210 },
+    { type: 'SETTLEMENT_COMPLETE',     priority: 'MEDIUM', title: 'Daily settlement summary',                  message: '4 escrows settled today totaling $5,470,000 USDC across CH-SG, US-DE, CH-IT, GB-HK corridors.',                          isRead: true, hoursAgo: 130 },
+  ];
+
+  let notifCount = 0;
+  for (const n of notificationDefs) {
+    const escrowId = n.escrowCode ? escrowIdMap.get(n.escrowCode) : undefined;
+    await prisma.institutionNotification.create({
+      data: {
+        clientId: optimusId,
+        escrowId: escrowId || null,
+        type: n.type as any,
+        priority: n.priority as any,
+        title: n.title,
+        message: n.message,
+        metadata: n.escrowCode ? { escrowCode: n.escrowCode } : {},
+        isRead: n.isRead,
+        readAt: n.isRead ? hoursAgo(n.hoursAgo - 1) : null,
+        createdAt: hoursAgo(n.hoursAgo),
+      },
+    });
+    notifCount++;
+  }
+  console.log(`   [OK] Created ${notifCount} notifications (${notificationDefs.filter(n => !n.isRead).length} unread)`);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SEED MARKER (for timestamped restore)
   // ═══════════════════════════════════════════════════════════════════════
 
   const seededAt = new Date().toISOString();
@@ -1371,6 +1660,11 @@ async function main() {
           payments: paymentDefs.length,
           auditLogs: auditCount,
           corridors: corridorDefs.length,
+          approvedTokens: approvedTokenDefs.length,
+          wallets: walletDefs.length,
+          deposits: depositCount,
+          aiAnalyses: analysisCount,
+          notifications: notifCount,
         },
       },
       ipAddress: '127.0.0.1',
@@ -1383,10 +1677,15 @@ async function main() {
   console.log(`   Institution:  Optimus Exchange AG (${optimusId})`);
   console.log(`   Branches:     ${branchDefs.length}`);
   console.log(`   Accounts:     ${accountDefs.length}`);
+  console.log(`   Wallets:      ${walletDefs.length}`);
   console.log(`   Clients:      ${counterpartyDefs.length}`);
   console.log(`   Escrows:      ${escrowDefs.length}`);
+  console.log(`   Deposits:     ${depositCount}`);
+  console.log(`   AI Analyses:  ${analysisCount}`);
   console.log(`   Payments:     ${paymentDefs.length}`);
   console.log(`   Audit logs:   ${auditCount}`);
+  console.log(`   Notifications:${notifCount}`);
+  console.log(`   Tokens:       ${approvedTokenDefs.length}`);
   console.log(`   Corridors:    ${corridorDefs.length}`);
   console.log(`\n   To restore:   npx ts-node scripts/seed-optimus-exchange.ts --restore`);
 }
