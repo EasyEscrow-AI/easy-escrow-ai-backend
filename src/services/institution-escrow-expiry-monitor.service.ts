@@ -249,6 +249,7 @@ export class InstitutionEscrowExpiryMonitor {
               payerWallet: new PublicKey(escrow.payerWallet),
               usdcMint,
               escrowCode: escrow.escrowCode,
+              cancelReason: 'expired',
             });
 
             console.log(
