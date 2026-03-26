@@ -1280,6 +1280,7 @@ export class InstitutionEscrowService {
         const latestAnalysis = await this.prisma.institutionAiAnalysis.findFirst({
           where: { escrowId, analysisType: 'ESCROW' },
           orderBy: { createdAt: 'desc' },
+          select: { recommendation: true, riskScore: true, factors: true },
         });
         if (latestAnalysis) {
           aiAnalysisForMemo = {
@@ -1288,8 +1289,9 @@ export class InstitutionEscrowService {
             factors: latestAnalysis.factors,
           };
         }
-      } catch {
-        /* no analysis available — memo will use ai=NONE */
+      } catch (err) {
+        console.error('[InstitutionEscrow] Failed to fetch AI analysis for memo:', err);
+        throw new Error('AI analysis lookup failed — cannot build chain-of-custody memo');
       }
     }
 

@@ -73,7 +73,7 @@ export function buildAiDigest(analysis: AiMemoData | null): string {
   const hash = createHash('sha256')
     .update(JSON.stringify({ r: analysis.recommendation, l: riskLevel, f: analysis.factors }))
     .digest('hex')
-    .slice(0, 8);
+    .slice(0, 16);
   return `ai=${analysis.recommendation}:risk=${riskLevel}:sha=${hash}`;
 }
 
@@ -512,11 +512,20 @@ export class InstitutionEscrowProgramService {
     escrowCode?: string;
     cancelReason?: string;
   }): Promise<string> {
+    // Map free-text reason to a bounded code for on-chain memo
+    const REASON_CODES: Record<string, string> = {
+      expired: 'expired', dispute: 'dispute', compliance: 'compliance',
+      'client-request': 'client-request', fraud: 'fraud',
+    };
+    const reasonCode = params.cancelReason
+      ? REASON_CODES[params.cancelReason.toLowerCase()] || 'other'
+      : undefined;
+
     let memo: string | undefined;
     if (params.escrowCode) {
       memo = `EasyEscrow:cancel:${params.escrowCode}`;
-      if (params.cancelReason) {
-        memo += `:reason=${params.cancelReason}`;
+      if (reasonCode) {
+        memo += `:reason=${reasonCode}`;
       }
     }
 

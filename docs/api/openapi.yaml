@@ -3,7 +3,7 @@ info:
   title: EasyEscrow.ai API
   version: 1.2.0
   description: |
-    Full OpenAPI spec (JSON): [https://staging-api.easyescrow.ai/openapi.json](https://staging-api.easyescrow.ai/openapi.json)
+    Full OpenAPI spec (JSON): [/openapi.json](/openapi.json)
   contact:
     name: EasyEscrow.ai Support
     email: support@easyescrow.ai

@@ -74,7 +74,7 @@ describe('Chain-of-Custody Audit Trail', () => {
 
       const result = buildAiDigest(analysis);
 
-      expect(result).to.match(/^ai=APPROVE:risk=low-risk:sha=[0-9a-f]{8}$/);
+      expect(result).to.match(/^ai=APPROVE:risk=low-risk:sha=[0-9a-f]{16}$/);
     });
 
     it('should build digest with REVIEW recommendation and medium-risk', () => {
@@ -86,7 +86,7 @@ describe('Chain-of-Custody Audit Trail', () => {
 
       const result = buildAiDigest(analysis);
 
-      expect(result).to.match(/^ai=REVIEW:risk=medium-risk:sha=[0-9a-f]{8}$/);
+      expect(result).to.match(/^ai=REVIEW:risk=medium-risk:sha=[0-9a-f]{16}$/);
     });
 
     it('should build digest with REJECT recommendation and blocked', () => {
@@ -98,7 +98,7 @@ describe('Chain-of-Custody Audit Trail', () => {
 
       const result = buildAiDigest(analysis);
 
-      expect(result).to.match(/^ai=REJECT:risk=blocked:sha=[0-9a-f]{8}$/);
+      expect(result).to.match(/^ai=REJECT:risk=blocked:sha=[0-9a-f]{16}$/);
     });
 
     it('should produce a verifiable SHA-256 hash', () => {
@@ -116,7 +116,7 @@ describe('Chain-of-Custody Audit Trail', () => {
       const expectedHash = createHash('sha256')
         .update(JSON.stringify({ r: 'APPROVE', l: 'low-risk', f: factors }))
         .digest('hex')
-        .slice(0, 8);
+        .slice(0, 16);
 
       expect(shaFromDigest).to.equal(expectedHash);
     });

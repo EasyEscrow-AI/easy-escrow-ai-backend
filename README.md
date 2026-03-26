@@ -503,7 +503,8 @@ OpenAPI spec (JSON):
 
 - **Staging**: https://staging-api.easyescrow.ai/openapi.json
 - **Production**: https://api.easyescrow.ai/openapi.json
-- **Redoc version**: https://staging-api.easyescrow.ai/openapi-redoc.json
+- **Redoc (Staging)**: https://staging-api.easyescrow.ai/openapi-redoc.json
+- **Redoc (Production)**: https://api.easyescrow.ai/openapi-redoc.json
 
 ---
 
