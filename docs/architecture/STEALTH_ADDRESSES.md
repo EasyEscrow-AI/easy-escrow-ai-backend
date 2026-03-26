@@ -69,19 +69,22 @@ EasyEscrow.ai uses **Dual-Key Stealth Address Protocol (DKSAP)** to provide addr
        │                      │                       │
 ```
 
-## Account ↔ Stealth Meta-Address (1:1)
+## Account ↔ Stealth Meta-Address
 
-Each `InstitutionAccount` has a `stealthMetaAddressId` field linking to its dedicated `StealthMetaAddress`. This is auto-populated on account creation:
+Each `InstitutionAccount` has a `stealthMetaAddressId` field pointing to its **current/default** `StealthMetaAddress`. This is auto-populated on account creation. A client may register multiple meta-addresses (e.g., via rotation or different labels); `stealthMetaAddressId` identifies which one is used for new escrow releases.
 
 ```
-InstitutionAccount (wallet: 7xKX...)
-  └── StealthMetaAddress (scan_pk: ..., spend_pk: ...)
-        └── StealthPayment[] (one-time addresses)
+InstitutionClient
+  ├── StealthMetaAddress (label: "primary", active)   ← current default
+  ├── StealthMetaAddress (label: "old-key", inactive)  ← rotated, payments still sweepable
+  └── InstitutionAccount (wallet: 7xKX...)
+        └── stealthMetaAddressId → "primary" meta-address
+              └── StealthPayment[] (one-time addresses)
 ```
 
 On release, the system:
 1. Looks up the recipient wallet → finds the `InstitutionAccount`
-2. Reads `stealthMetaAddressId` → gets the meta-address
+2. Reads `stealthMetaAddressId` → gets the current default meta-address
 3. Derives a one-time stealth address → sends USDC there
 4. If no meta-address found → falls back to standard wallet
 
