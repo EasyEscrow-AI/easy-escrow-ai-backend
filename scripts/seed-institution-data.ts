@@ -1,9 +1,14 @@
 /**
- * Seed Institution Escrow Data
+ * Seed Institution Escrow Data (v2 — 2026-03-26)
  *
- * Seeds corridors, demo clients, allowlist, and settings for development/staging.
+ * Seeds corridors, demo clients, settings, and simulated payments for development/staging.
  *
  * Usage: npx ts-node scripts/seed-institution-data.ts
+ *
+ * Run order:
+ *   1. npx ts-node prisma/seeds/corridor-config-seed.ts   (49 corridors)
+ *   2. npx ts-node scripts/seed-institution-data.ts        (clients + payments)
+ *   3. npx ts-node scripts/seed-optimus-exchange.ts        (full demo dataset)
  */
 
 import { PrismaClient } from '../src/generated/prisma';

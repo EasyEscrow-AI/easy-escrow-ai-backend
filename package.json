@@ -261,11 +261,10 @@
     "test:staging:e2e:institution:auth": "mocha --no-config --require ts-node/register tests/staging/e2e/20-institution-auth-registration.test.ts --timeout 180000 --reporter spec --colors",
     "test:staging:e2e:institution:atomic-settlement": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/staging/e2e/27-institution-escrow-atomic-settlement.test.ts --timeout 180000 --reporter spec --colors",
     "test:staging:e2e:ai-chat": "mocha --no-config --require ts-node/register tests/staging/e2e/26-ai-chat-guardrails.test.ts --timeout 180000 --reporter spec --colors",
-    "seed:institution:enhanced": "ts-node scripts/seed-institution-staging-enhanced.ts --staging",
     "seed:admin": "ts-node scripts/seed-admin.ts",
-    "seed:portal": "ts-node scripts/seed-institution-portal.ts",
-    "seed:staging:all": "ts-node scripts/seed-staging-all.ts --staging",
     "seed:optimus": "ts-node scripts/seed-optimus-exchange.ts",
+    "seed:optimus:restore": "ts-node scripts/seed-optimus-exchange.ts --restore",
+    "seed:staging:refresh": "ts-node prisma/seeds/corridor-config-seed.ts && ts-node scripts/seed-institution-data.ts && ts-node scripts/seed-optimus-exchange.ts",
     "test:unit:admin": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/admin/*.test.ts' --timeout 10000 --exit",
     "prepare": "husky"
   },

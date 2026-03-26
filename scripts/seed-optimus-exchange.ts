@@ -1,5 +1,5 @@
 /**
- * Seed Optimus Exchange AG — Comprehensive Staging Demo Data
+ * Seed Optimus Exchange AG — Comprehensive Staging Demo Data (v2 — 2026-03-26)
  *
  * Creates a complete demo dataset for the "Optimus Exchange AG" institution:
  *   1. Institution client (Optimus Exchange AG)
@@ -29,7 +29,7 @@ import { Keypair } from '@solana/web3.js';
 
 const prisma = new PrismaClient();
 
-const SEED_VERSION = 'optimus-v1';
+const SEED_VERSION = 'optimus-v2';
 const SEED_MARKER_ACTION = 'OPTIMUS_EXCHANGE_SEED';
 
 // ---------------------------------------------------------------------------
