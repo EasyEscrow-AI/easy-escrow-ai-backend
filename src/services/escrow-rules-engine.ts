@@ -428,6 +428,16 @@ function evaluateThresholdRules(data: EscrowData): TriggeredRule[] {
           matches = true;
         }
         break;
+      case 'lt':
+        if (rule.thresholdAmount !== null && data.amount < rule.thresholdAmount) {
+          matches = true;
+        }
+        break;
+      case 'gt':
+        if (rule.thresholdAmount !== null && data.amount > rule.thresholdAmount) {
+          matches = true;
+        }
+        break;
       case 'pattern':
         // round_number: amount is a multiple of thresholdAmount and >= thresholdAmount
         if (
