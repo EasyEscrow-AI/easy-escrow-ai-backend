@@ -259,8 +259,15 @@ export class InstitutionEscrowService {
       // Fall back to defaults if settings lookup fails
     }
 
-    const rawFee = (amount * feeBps) / 10000;
-    return Math.min(maxFee, Math.max(minFee, rawFee));
+    // Use integer arithmetic to avoid floating-point rounding errors.
+    // Convert amount to micro-USDC (6 decimals), apply BPS, then convert back.
+    // E.g. 599.99 USDC * 20 bps: 599990000 * 20 / 10000 = 1199980 micro = 1.199980 USDC
+    const amountMicro = Math.round(amount * 1_000_000);
+    const feeMicro = Math.floor(amountMicro * feeBps / 10000);
+    const rawFee = feeMicro / 1_000_000;
+    // Round to 6 decimal places (USDC precision) to prevent float drift
+    const fee = Math.round(Math.min(maxFee, Math.max(minFee, rawFee)) * 1_000_000) / 1_000_000;
+    return fee;
   }
 
   /**

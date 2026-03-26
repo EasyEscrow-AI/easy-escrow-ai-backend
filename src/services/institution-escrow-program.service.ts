@@ -33,12 +33,16 @@ const INST_VAULT_SEED = Buffer.from('inst_vault');
 /**
  * Safely convert a decimal USDC amount to micro-USDC integer string
  * without floating-point multiplication.
- * E.g. 1000.50 → "1000500000", 0.123456 → "123456"
+ * Uses toFixed(6) as the rounding boundary to eliminate float drift,
+ * then BigInt string math for exact conversion.
+ * E.g. 599.99 → "599990000", 1000.50 → "1000500000", 0.123456 → "123456"
  */
 function decimalToMicroUsdc(amount: number): string {
-  const str = amount.toFixed(6);
+  if (amount < 0) throw new Error('Amount cannot be negative');
+  const str = amount.toFixed(6); // rounds to 6 decimal places (USDC precision)
   const [whole, frac] = str.split('.');
-  return (BigInt(whole) * BigInt(1_000_000) + BigInt(frac)).toString();
+  const fracPadded = (frac || '0').padEnd(6, '0').slice(0, 6);
+  return (BigInt(whole) * BigInt(1_000_000) + BigInt(fracPadded)).toString();
 }
 
 // Map condition type strings to Anchor enum variants
