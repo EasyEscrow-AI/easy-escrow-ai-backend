@@ -1230,7 +1230,8 @@ export class InstitutionEscrowService {
     opts?: { fileId?: string; notes?: string },
     actorEmail?: string
   ): Promise<Record<string, unknown>> {
-    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    // Allow both escrow creator and recipient to fulfill (upload proof of delivery)
+    const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
     const { escrowId } = escrow;
 
     if (escrow.status !== 'FUNDED') {
@@ -1239,11 +1240,12 @@ export class InstitutionEscrowService {
       );
     }
 
-    // Resolve proof document
+    // Resolve proof document — accept files uploaded by the caller (creator or recipient)
     let proofDocument: { id: string; fileName: string; documentType: string; uploadedAt: Date } | null = null;
 
     if (opts?.fileId) {
       // Explicit file — validate it exists and belongs to this escrow
+      // Accept files uploaded by the caller OR attached to the escrow
       const file = await this.prisma.institutionFile.findFirst({
         where: { id: opts.fileId, escrowId, clientId },
         select: { id: true, fileName: true, documentType: true, uploadedAt: true },
@@ -1253,7 +1255,7 @@ export class InstitutionEscrowService {
       }
       proofDocument = file;
     } else {
-      // Fallback: most recent file attached to escrow
+      // Fallback: most recent file attached to escrow by this caller
       const file = await this.prisma.institutionFile.findFirst({
         where: { escrowId, clientId },
         orderBy: { uploadedAt: 'desc' },
@@ -1288,7 +1290,7 @@ export class InstitutionEscrowService {
       }
     );
 
-    // Send notification
+    // Send notification to the caller (recipient who fulfilled)
     try {
       await getInstitutionNotificationService().notify({
         clientId,
@@ -1299,6 +1301,20 @@ export class InstitutionEscrowService {
         metadata: { escrowId, escrowCode: escrow.escrowCode, status: 'PENDING_RELEASE' },
       });
     } catch { /* non-critical */ }
+
+    // Also notify the escrow creator if the fulfiller is a counterparty
+    if (escrow.clientId !== clientId) {
+      try {
+        await getInstitutionNotificationService().notify({
+          clientId: escrow.clientId,
+          escrowId,
+          type: 'ESCROW_FUNDED',
+          title: 'Recipient Submitted Proof of Delivery',
+          message: auditMessage,
+          metadata: { escrowId, escrowCode: escrow.escrowCode, status: 'PENDING_RELEASE' },
+        });
+      } catch { /* non-critical */ }
+    }
 
     // Trigger AI release check if releaseMode is 'ai' (non-blocking — records result only)
     if (escrow.releaseMode === 'ai') {
@@ -1324,7 +1340,7 @@ export class InstitutionEscrowService {
       }
     }
 
-    const updated = await this.getEscrowInternal(clientId, idOrCode);
+    const updated = await this.getEscrowInternal(clientId, idOrCode, true);
     const partyNames = await this.resolvePartyNames([updated as any], clientId);
     return this.formatEscrow(updated, partyNames[0]);
   }
