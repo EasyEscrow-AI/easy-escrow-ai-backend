@@ -264,7 +264,8 @@
     "seed:admin": "ts-node scripts/seed-admin.ts",
     "seed:optimus": "ts-node scripts/seed-optimus-exchange.ts",
     "seed:optimus:restore": "ts-node scripts/seed-optimus-exchange.ts --restore",
-    "seed:staging:refresh": "ts-node prisma/seeds/corridor-config-seed.ts && ts-node scripts/seed-institution-data.ts && ts-node scripts/seed-optimus-exchange.ts",
+    "seed:staging:refresh": "ts-node prisma/seeds/corridor-config-seed.ts && ts-node scripts/seed-institution-data.ts && ts-node scripts/seed-optimus-exchange.ts && ts-node scripts/flush-redis-cache.ts",
+    "seed:flush-cache": "ts-node scripts/flush-redis-cache.ts",
     "test:unit:admin": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/admin/*.test.ts' --timeout 10000 --exit",
     "prepare": "husky"
   },
