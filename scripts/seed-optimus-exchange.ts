@@ -24,6 +24,9 @@ import { Keypair } from '@solana/web3.js';
 
 const prisma = new PrismaClient();
 
+const SEED_VERSION = 'optimus-v1';
+const SEED_MARKER_ACTION = 'OPTIMUS_EXCHANGE_SEED';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -79,7 +82,67 @@ const USDC_MINT = process.env.USDC_MINT_ADDRESS || '4zMMC9srt5Ri5X14GAgXhaHii3Gn
 // Main seeder
 // ---------------------------------------------------------------------------
 
+async function restore() {
+  console.log('=== Restoring: Removing Optimus Exchange seed data ===\n');
+
+  const marker = await prisma.institutionAuditLog.findFirst({
+    where: { action: SEED_MARKER_ACTION },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!marker) {
+    console.log('No seed marker found — nothing to restore.');
+    return;
+  }
+  const details = marker.details as any;
+  const optimusId = details?.clientId as string;
+  const seededAt = details?.seededAt as string;
+  console.log(`Found seed marker: version=${details?.version}, seeded at ${seededAt}`);
+  console.log(`Client ID: ${optimusId}\n`);
+
+  // Delete in reverse dependency order
+  const auditDel = await prisma.institutionAuditLog.deleteMany({ where: { clientId: optimusId } });
+  console.log(`   Deleted ${auditDel.count} audit logs`);
+
+  const paymentDel = await prisma.directPayment.deleteMany({ where: { clientId: optimusId } });
+  console.log(`   Deleted ${paymentDel.count} direct payments`);
+
+  const depositDel = await prisma.institutionDeposit.deleteMany({
+    where: { escrow: { clientId: optimusId } },
+  });
+  console.log(`   Deleted ${depositDel.count} deposits`);
+
+  const escrowDel = await prisma.institutionEscrow.deleteMany({ where: { clientId: optimusId } });
+  console.log(`   Deleted ${escrowDel.count} escrows`);
+
+  const accountDel = await prisma.institutionAccount.deleteMany({ where: { clientId: optimusId } });
+  console.log(`   Deleted ${accountDel.count} accounts`);
+
+  const branchDel = await prisma.institutionBranch.deleteMany({ where: { clientId: optimusId } });
+  console.log(`   Deleted ${branchDel.count} branches`);
+
+  // Delete counterparty clients seeded by this script (tagged by audit log)
+  const counterpartyIds = details?.counterpartyIds as string[] | undefined;
+  if (counterpartyIds && counterpartyIds.length > 0) {
+    // Clean up counterparty audit logs, escrows, etc. first
+    await prisma.institutionAuditLog.deleteMany({ where: { clientId: { in: counterpartyIds } } });
+    const cpDel = await prisma.institutionClient.deleteMany({ where: { id: { in: counterpartyIds } } });
+    console.log(`   Deleted ${cpDel.count} counterparty clients`);
+  }
+
+  // Delete the institution itself
+  await prisma.institutionClient.deleteMany({ where: { id: optimusId } });
+  console.log(`   Deleted Optimus Exchange AG (${optimusId})`);
+
+  console.log('\n=== Restore complete ===');
+}
+
 async function main() {
+  // Handle --restore flag
+  if (process.argv.includes('--restore')) {
+    await restore();
+    return;
+  }
+
   console.log('=== Optimus Exchange AG — Staging Demo Seeder ===\n');
 
   const demoPassword = await bcrypt.hash('StagingPass123!', 12);
@@ -208,7 +271,7 @@ async function main() {
 
   const branchDefs = [
     {
-      name: 'Optimus Exchange HQ',
+      name: 'Zurich Branch HQ',
       city: 'Zurich',
       country: 'Switzerland',
       countryCode: 'CH',
@@ -325,7 +388,7 @@ async function main() {
       walletSeed: 'optimus-ch-treasury',
       branchCountryCode: 'CH',
       isDefault: true,
-      description: 'Primary treasury account for Optimus Exchange HQ',
+      description: 'Primary treasury account for Zurich Branch HQ',
       walletProvider: 'Fireblocks',
       custodyType: 'MPC' as const,
       maxTransactionAmount: 10_000_000,
@@ -1175,7 +1238,46 @@ async function main() {
   // SUMMARY
   // ═══════════════════════════════════════════════════════════════════════
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // 9. SEED MARKER (for timestamped restore)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const seededAt = new Date().toISOString();
+  const counterpartyIds = counterpartyDefs.map((cp: any) => cp.id || deterministicUuid('optimus-cp-' + cp.email));
+
+  // Resolve actual counterparty IDs from DB
+  const cpRecords = await prisma.institutionClient.findMany({
+    where: { email: { in: counterpartyDefs.map((cp: any) => cp.email) } },
+    select: { id: true },
+  });
+
+  await prisma.institutionAuditLog.create({
+    data: {
+      clientId: optimusId,
+      action: SEED_MARKER_ACTION,
+      actor: 'seed-script',
+      details: {
+        version: SEED_VERSION,
+        seededAt,
+        clientId: optimusId,
+        counterpartyIds: cpRecords.map((r: any) => r.id),
+        counts: {
+          branches: branchDefs.length,
+          accounts: accountDefs.length,
+          clients: counterpartyDefs.length,
+          escrows: escrowDefs.length,
+          payments: paymentDefs.length,
+          auditLogs: auditCount,
+          corridors: corridorDefs.length,
+        },
+      },
+      ipAddress: '127.0.0.1',
+    },
+  });
+
   console.log('\n=== Seed Complete ===');
+  console.log(`   Timestamp:    ${seededAt}`);
+  console.log(`   Version:      ${SEED_VERSION}`);
   console.log(`   Institution:  Optimus Exchange AG (${optimusId})`);
   console.log(`   Branches:     ${branchDefs.length}`);
   console.log(`   Accounts:     ${accountDefs.length}`);
@@ -1184,6 +1286,7 @@ async function main() {
   console.log(`   Payments:     ${paymentDefs.length}`);
   console.log(`   Audit logs:   ${auditCount}`);
   console.log(`   Corridors:    ${corridorDefs.length}`);
+  console.log(`\n   To restore:   npx ts-node scripts/seed-optimus-exchange.ts --restore`);
 }
 
 main()
