@@ -4,7 +4,7 @@
  * Usage:
  *   npx ts-node scripts/seed-corridor-threshold-rules.ts
  *
- * Creates 6 rules per corridor with jurisdiction-specific thresholds.
+ * Creates up to 8 rules per corridor: corridor min/max limits + 6 jurisdiction-specific thresholds.
  */
 
 import { PrismaClient } from '../src/generated/prisma';
@@ -43,10 +43,52 @@ function getThresholds(corridorCode: string) {
   };
 }
 
-function buildRules(corridorCode: string) {
+function buildRules(corridorCode: string, minAmount?: number, maxAmount?: number) {
   const t = getThresholds(corridorCode);
 
-  return [
+  const rules: Array<{
+    ruleId: string;
+    label: string;
+    riskLevel: string;
+    thresholdType: string;
+    thresholdAmount: number | null;
+    thresholdMax: number | null;
+    currency: string;
+    detailTemplate: string;
+    regulationRef: string;
+  }> = [];
+
+  // Corridor minimum — blocked if amount is below this
+  if (minAmount && minAmount > 0) {
+    rules.push({
+      ruleId: 'corridor_minimum',
+      label: 'Corridor Minimum',
+      riskLevel: 'blocked',
+      thresholdType: 'lt',
+      thresholdAmount: minAmount,
+      thresholdMax: null,
+      currency: 'USD',
+      detailTemplate: `Amount below corridor minimum of $\{threshold} on the {corridor} corridor — transaction cannot proceed.`,
+      regulationRef: 'Platform Policy',
+    });
+  }
+
+  // Corridor maximum — blocked if amount exceeds this
+  if (maxAmount && maxAmount > 0) {
+    rules.push({
+      ruleId: 'corridor_maximum',
+      label: 'Corridor Maximum',
+      riskLevel: 'blocked',
+      thresholdType: 'gt',
+      thresholdAmount: maxAmount,
+      thresholdMax: null,
+      currency: 'USD',
+      detailTemplate: `Amount exceeds corridor maximum of $\{threshold} on the {corridor} corridor — transaction cannot proceed.`,
+      regulationRef: 'Platform Policy',
+    });
+  }
+
+  rules.push(
     {
       ruleId: 'travel_rule',
       label: 'Travel Rule Active',
@@ -116,13 +158,15 @@ function buildRules(corridorCode: string) {
         'Transaction ≥$100,000 — requires enhanced monitoring and potential CTR filing.',
       regulationRef: 'CTR Filing',
     },
-  ];
+  );
+
+  return rules;
 }
 
 async function main() {
   const corridors = await prisma.institutionCorridor.findMany({
     where: { status: 'ACTIVE' },
-    select: { code: true },
+    select: { code: true, minAmount: true, maxAmount: true },
   });
 
   console.log(`Found ${corridors.length} active corridors`);
@@ -131,7 +175,9 @@ async function main() {
   let skipped = 0;
 
   for (const corridor of corridors) {
-    const rules = buildRules(corridor.code);
+    const minAmount = Number(corridor.minAmount) || 0;
+    const maxAmount = Number(corridor.maxAmount) || 0;
+    const rules = buildRules(corridor.code, minAmount, maxAmount);
     for (const rule of rules) {
       try {
         await prisma.corridorThresholdRule.upsert({
@@ -161,7 +207,7 @@ async function main() {
         skipped++;
       }
     }
-    console.log(`  ${corridor.code}: 6 rules seeded`);
+    console.log(`  ${corridor.code}: ${rules.length} rules seeded`);
   }
 
   console.log(`\nDone: ${created} created/updated, ${skipped} skipped`);
