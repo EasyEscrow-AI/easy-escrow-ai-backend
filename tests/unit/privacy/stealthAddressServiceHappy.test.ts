@@ -115,6 +115,9 @@ describe('StealthAddressService — Happy Paths & Edge Cases', () => {
       '../../config': {
         config: { solana: { rpcUrl: 'http://localhost:8899' } },
       },
+      '../../utils/loadAdminKeypair': {
+        loadAdminKeypair: sandbox.stub().returns({ publicKey: 'mockAdminPubkey' }),
+      },
     });
 
     StealthAddressService = mod.StealthAddressService;

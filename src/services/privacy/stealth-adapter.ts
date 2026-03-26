@@ -198,6 +198,10 @@ export async function deriveSpendingKey(
  * Send tokens from a stealth address using the scalar key.
  * Derives the keypair from the scalar, creates an ATA for the destination if needed,
  * then transfers all tokens.
+ *
+ * The feePayer (admin/platform wallet) pays for transaction fees and ATA rent,
+ * since stealth addresses are ephemeral and have no SOL.
+ * The stealth keypair only signs as the token transfer authority.
  */
 export async function sendTokensFromStealth(params: {
   connection: Connection;
@@ -205,6 +209,7 @@ export async function sendTokensFromStealth(params: {
   tokenMint: PublicKey;
   destination: PublicKey;
   amount: number;
+  feePayer: Keypair;
 }): Promise<string> {
   const stealthKeypair = await scalarToKeypair(params.scalarKey);
   const stealthPubkey = stealthKeypair.publicKey;
@@ -216,14 +221,15 @@ export async function sendTokensFromStealth(params: {
   const destAta = await getAssociatedTokenAddress(params.tokenMint, params.destination);
 
   const tx = new Transaction();
+  tx.feePayer = params.feePayer.publicKey;
 
-  // Create destination ATA if it doesn't exist (stealth keypair pays for rent)
+  // Create destination ATA if it doesn't exist (feePayer pays for rent)
   try {
     await getAccount(params.connection, destAta);
   } catch {
     tx.add(
       createAssociatedTokenAccountInstruction(
-        stealthPubkey, // payer
+        params.feePayer.publicKey, // payer (admin wallet)
         destAta, // ATA to create
         params.destination, // owner
         params.tokenMint // mint
@@ -231,17 +237,21 @@ export async function sendTokensFromStealth(params: {
     );
   }
 
-  // Transfer tokens
+  // Transfer tokens (stealth keypair is the authority)
   tx.add(
     createTransferInstruction(
       sourceAta, // source
       destAta, // destination
-      stealthPubkey, // authority
+      stealthPubkey, // authority (stealth keypair signs)
       params.amount // amount
     )
   );
 
-  const signature = await sendAndConfirmTransaction(params.connection, tx, [stealthKeypair]);
+  // feePayer signs for fees, stealthKeypair signs for token authority
+  const signature = await sendAndConfirmTransaction(params.connection, tx, [
+    params.feePayer,
+    stealthKeypair,
+  ]);
   return signature;
 }
 
