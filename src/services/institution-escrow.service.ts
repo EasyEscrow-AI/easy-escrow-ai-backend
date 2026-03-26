@@ -59,6 +59,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   ON_CHAIN_INIT_FAILED: 'On-Chain Init Failed',
   ON_CHAIN_RELEASE_FAILED: 'On-Chain Release Failed',
   ON_CHAIN_CANCEL_FAILED: 'On-Chain Cancel Failed',
+  ESCROW_FULFILLED: 'Proof of Delivery',
 };
 
 const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
@@ -1218,24 +1219,32 @@ export class InstitutionEscrowService {
       );
     }
 
-    // Verify at least one supporting document is attached
-    const fileCount = await this.prisma.institutionFile.count({
+    // Fetch attached documents — require at least one
+    const files = await this.prisma.institutionFile.findMany({
       where: { escrowId },
+      orderBy: { uploadedAt: 'desc' },
+      select: { id: true, fileName: true, documentType: true, sizeBytes: true, uploadedAt: true },
     });
-    if (fileCount === 0) {
+    if (files.length === 0) {
       throw new Error(
         'Cannot fulfill: at least one supporting document must be uploaded before marking as fulfilled'
       );
     }
+
+    // Use the most recently uploaded document as the "proof" document
+    const proofDocument = files[0];
 
     await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: { status: 'PENDING_RELEASE' },
     });
 
+    const auditMessage = `Document ${proofDocument.fileName} uploaded for ${escrow.escrowCode}. Pending release approval.`;
+
     await this.prisma.institutionAuditLog.create({
       data: {
         clientId,
+        escrowId,
         action: 'ESCROW_FULFILLED',
         actor: actorEmail || 'system',
         details: {
@@ -1243,7 +1252,15 @@ export class InstitutionEscrowService {
           escrowCode: escrow.escrowCode,
           previousStatus: 'FUNDED',
           newStatus: 'PENDING_RELEASE',
-          fileCount,
+          message: auditMessage,
+          proofDocument: {
+            id: proofDocument.id,
+            fileName: proofDocument.fileName,
+            documentType: proofDocument.documentType,
+            uploadedAt: proofDocument.uploadedAt,
+          },
+          fileCount: files.length,
+          documents: files.map((f) => ({ id: f.id, fileName: f.fileName, documentType: f.documentType })),
           ...(notes && { notes }),
         },
       },
@@ -1256,7 +1273,7 @@ export class InstitutionEscrowService {
           clientId,
           type: 'ESCROW_FUNDED',
           title: 'Proof of Delivery Submitted',
-          message: `Escrow ${escrow.escrowCode} has been fulfilled — awaiting release approval.`,
+          message: auditMessage,
           metadata: { escrowId, escrowCode: escrow.escrowCode, status: 'PENDING_RELEASE' },
         },
       });
@@ -2304,7 +2321,7 @@ export class InstitutionEscrowService {
   ): Promise<Record<string, unknown>> {
     const e = escrow as any;
 
-    const [partyNamesArr, corridorRecord, client, recipientClient, aiAnalyses] = await Promise.all([
+    const [partyNamesArr, corridorRecord, client, recipientClient, aiAnalyses, files] = await Promise.all([
       this.resolvePartyNames([escrow], e.clientId),
       e.corridor
         ? this.prisma.institutionCorridor.findUnique({ where: { code: e.corridor } })
@@ -2326,6 +2343,18 @@ export class InstitutionEscrowService {
           summary: true,
           factors: true,
           createdAt: true,
+        },
+      }),
+      this.prisma.institutionFile.findMany({
+        where: { escrowId: e.escrowId },
+        orderBy: { uploadedAt: 'desc' },
+        select: {
+          id: true,
+          fileName: true,
+          documentType: true,
+          mimeType: true,
+          sizeBytes: true,
+          uploadedAt: true,
         },
       }),
     ]);
@@ -2377,6 +2406,32 @@ export class InstitutionEscrowService {
       factors: a.factors,
       createdAt: a.createdAt,
     }));
+
+    base.documents = files.map((f) => ({
+      id: f.id,
+      fileName: f.fileName,
+      documentType: f.documentType,
+      mimeType: f.mimeType,
+      sizeBytes: f.sizeBytes,
+      uploadedAt: f.uploadedAt,
+    }));
+
+    // Fulfillment info: present when escrow is PENDING_RELEASE or later and has documents
+    const fulfillmentLog = e.status !== 'DRAFT' && e.status !== 'CREATED' && e.status !== 'FUNDED'
+      ? await this.prisma.institutionAuditLog.findFirst({
+          where: { escrowId: e.escrowId, action: 'ESCROW_FULFILLED' },
+          orderBy: { createdAt: 'desc' },
+          select: { actor: true, details: true, createdAt: true },
+        })
+      : null;
+    base.fulfillment = fulfillmentLog
+      ? {
+          submittedBy: fulfillmentLog.actor,
+          submittedAt: fulfillmentLog.createdAt,
+          proofDocument: (fulfillmentLog.details as any)?.proofDocument || null,
+          documentCount: files.length,
+        }
+      : null;
 
     base.activityLog = (await this.getActivityLog(e.escrowId)).map((log) => {
       // Strip nested details.kyt to avoid data bloat — KYT fields are already flattened
