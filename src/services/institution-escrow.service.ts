@@ -1200,6 +1200,73 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Mark escrow as fulfilled (proof of delivery submitted).
+   * Transitions FUNDED → PENDING_RELEASE so both parties see the escrow is awaiting release.
+   */
+  async fulfillEscrow(
+    clientId: string,
+    idOrCode: string,
+    notes?: string,
+    actorEmail?: string
+  ): Promise<Record<string, unknown>> {
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
+
+    if (escrow.status !== 'FUNDED') {
+      throw new Error(
+        `Cannot fulfill: escrow status is ${escrow.status}, expected FUNDED`
+      );
+    }
+
+    // Verify at least one supporting document is attached
+    const fileCount = await this.prisma.institutionFile.count({
+      where: { escrowId },
+    });
+    if (fileCount === 0) {
+      throw new Error(
+        'Cannot fulfill: at least one supporting document must be uploaded before marking as fulfilled'
+      );
+    }
+
+    await this.prisma.institutionEscrow.update({
+      where: { escrowId },
+      data: { status: 'PENDING_RELEASE' },
+    });
+
+    await this.prisma.institutionAuditLog.create({
+      data: {
+        clientId,
+        action: 'ESCROW_FULFILLED',
+        actor: actorEmail || 'system',
+        details: {
+          escrowId,
+          escrowCode: escrow.escrowCode,
+          previousStatus: 'FUNDED',
+          newStatus: 'PENDING_RELEASE',
+          fileCount,
+          ...(notes && { notes }),
+        },
+      },
+    });
+
+    // Send notification
+    try {
+      await this.prisma.institutionNotification.create({
+        data: {
+          clientId,
+          type: 'ESCROW_FUNDED',
+          title: 'Proof of Delivery Submitted',
+          message: `Escrow ${escrow.escrowCode} has been fulfilled — awaiting release approval.`,
+          metadata: { escrowId, escrowCode: escrow.escrowCode, status: 'PENDING_RELEASE' },
+        },
+      });
+    } catch { /* non-critical */ }
+
+    const updated = await this.getEscrowInternal(clientId, idOrCode);
+    return this.formatEscrow(updated);
+  }
+
+  /**
    * Release funds from escrow to recipient
    */
   async releaseFunds(
@@ -1212,11 +1279,11 @@ export class InstitutionEscrowService {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
 
-    // Allow release from FUNDED or INSUFFICIENT_FUNDS (retry after funding)
-    const releasableStatuses: InstitutionEscrowStatus[] = ['FUNDED', 'INSUFFICIENT_FUNDS'];
+    // Allow release from FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS (retry after funding)
+    const releasableStatuses: InstitutionEscrowStatus[] = ['FUNDED', 'PENDING_RELEASE', 'INSUFFICIENT_FUNDS'];
     if (!releasableStatuses.includes(escrow.status)) {
       throw new Error(
-        `Cannot release: escrow status is ${escrow.status}, expected FUNDED or INSUFFICIENT_FUNDS`
+        `Cannot release: escrow status is ${escrow.status}, expected FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS`
       );
     }
 
@@ -1515,6 +1582,7 @@ export class InstitutionEscrowService {
       'DRAFT',
       'CREATED',
       'FUNDED',
+      'PENDING_RELEASE',
       'COMPLIANCE_HOLD',
       'INSUFFICIENT_FUNDS',
     ];
@@ -1530,7 +1598,7 @@ export class InstitutionEscrowService {
 
     // For funded escrows with on-chain PDA, execute on-chain cancel (refund USDC to payer)
     let cancelTxSignature: string | null = null;
-    if (escrow.status === 'FUNDED' && escrow.escrowPda) {
+    if ((escrow.status === 'FUNDED' || escrow.status === 'PENDING_RELEASE') && escrow.escrowPda) {
       const cancelProgramService = this.getProgramService();
       if (cancelProgramService) {
         try {
