@@ -2437,6 +2437,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/institution-escrow/{id}/fulfill:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Mark escrow as fulfilled
+      description: |
+        Transitions escrow from FUNDED → PENDING_RELEASE after sender uploads proof of delivery.
+        Requires at least one supporting document attached to the escrow.
+        Both parties will see the escrow is awaiting release approval.
+      security:
+        - InstitutionBearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Escrow ID (UUID) or escrow code (EE-XXX-XXX)
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: Optional notes about the fulfillment
+      responses:
+        '200':
+          description: Escrow marked as fulfilled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrow'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid state transition or no documents attached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/v1/institution-escrow/{id}/release:
     post:
       tags:

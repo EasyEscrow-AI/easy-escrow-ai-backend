@@ -7,6 +7,7 @@
  * POST   /api/v1/institution-escrow/:id/submit   → submitDraft
  * GET    /api/v1/institution-escrow/:id/deposit-tx → getDepositTransaction
  * POST   /api/v1/institution-escrow/:id/deposit  → recordDeposit
+ * POST   /api/v1/institution-escrow/:id/fulfill  → fulfillEscrow (FUNDED → PENDING_RELEASE)
  * POST   /api/v1/institution-escrow/:id/release  → releaseFunds
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
  * GET    /api/v1/institution-escrow/:id          → getEscrow
@@ -317,6 +318,40 @@ router.post(
       const status = error.message.includes('expired') ? 410 : 400;
       res.status(status).json({
         error: 'Deposit Recording Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// POST /api/v1/institution-escrow/:id/fulfill
+router.post(
+  '/api/v1/institution-escrow/:id/fulfill',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  param('id').notEmpty().withMessage('Escrow ID or code is required'),
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
+    try {
+      const service = getInstitutionEscrowService();
+      const result = await service.fulfillEscrow(
+        req.institutionClient!.clientId,
+        req.params.id,
+        req.body.notes,
+        req.institutionClient!.email
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('not found') ? 404 : 400;
+      res.status(status).json({
+        error: 'Fulfillment Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });

@@ -1098,6 +1098,7 @@ exports.InstitutionEscrowStatus = exports.$Enums.InstitutionEscrowStatus = {
   DRAFT: 'DRAFT',
   CREATED: 'CREATED',
   FUNDED: 'FUNDED',
+  PENDING_RELEASE: 'PENDING_RELEASE',
   COMPLIANCE_HOLD: 'COMPLIANCE_HOLD',
   RELEASING: 'RELEASING',
   RELEASED: 'RELEASED',

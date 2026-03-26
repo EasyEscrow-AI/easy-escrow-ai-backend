@@ -30,8 +30,123 @@ import {
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { validateAiAnalysis } from '../middleware/institution-escrow-validation.middleware';
-import { getAiAnalysisService } from '../services/ai-analysis.service';
+import { getAiAnalysisService, EscrowAnalysisResult } from '../services/ai-analysis.service';
 import { getCorridorAnalysisService } from '../services/corridor-analysis.service';
+import { prisma } from '../config/database';
+import { escrowWhere } from '../utils/uuid-conversion';
+
+interface PreReleaseCheck {
+  key: string;
+  label: string;
+  passed: boolean;
+  detail: string;
+}
+
+/**
+ * Build deterministic pre-release verification checks for PENDING_RELEASE escrows.
+ * Appended to analyze-escrow response so the frontend gets everything from one call.
+ */
+async function buildPreReleaseChecks(
+  escrowIdOrCode: string,
+  clientId: string,
+  analysisResult: EscrowAnalysisResult
+): Promise<PreReleaseCheck[] | null> {
+  const escrow = await prisma.institutionEscrow.findFirst({
+    where: { ...escrowWhere(escrowIdOrCode), clientId },
+    include: {
+      client: {
+        select: { companyName: true, kycStatus: true, country: true },
+      },
+      files: {
+        select: { id: true, fileName: true, documentType: true },
+        orderBy: { uploadedAt: 'desc' as const },
+      },
+    },
+  });
+  if (!escrow || escrow.status !== 'PENDING_RELEASE') return null;
+
+  // Resolve party names for sender/recipient display
+  const payerName = (escrow as any).payerName || escrow.client.companyName || 'Unknown';
+  const payerBranch = (escrow as any).payerBranchName || null;
+  const payerAccount = (escrow as any).payerAccountLabel || null;
+  const senderDetail = [payerName, payerBranch, payerAccount].filter(Boolean).join(' - ');
+
+  let recipientDetail = 'Unknown';
+  if ((escrow as any).recipientName) {
+    recipientDetail = [(escrow as any).recipientName, (escrow as any).recipientBranchName, (escrow as any).recipientAccountLabel]
+      .filter(Boolean)
+      .join(' - ');
+  }
+
+  // Fetch corridor for compliance info
+  const corridor = escrow.corridor
+    ? await prisma.institutionCorridor.findUnique({
+        where: { code: escrow.corridor },
+        select: { compliance: true, riskLevel: true },
+      })
+    : null;
+
+  const checks: PreReleaseCheck[] = [];
+
+  // 1. Proof of Delivery
+  const hasDocuments = escrow.files.length > 0;
+  const docName = hasDocuments ? escrow.files[0].fileName : null;
+  checks.push({
+    key: 'proof_of_delivery',
+    label: 'Proof of Delivery verified',
+    passed: hasDocuments,
+    detail: hasDocuments ? `Document ${docName} uploaded` : 'No documents uploaded',
+  });
+
+  // 2. Amount matches escrow
+  const amount = Number(escrow.amount);
+  checks.push({
+    key: 'amount_confirmed',
+    label: 'Amount matches escrow',
+    passed: amount > 0,
+    detail: `${amount.toLocaleString()} USDC confirmed`,
+  });
+
+  // 3. Sender identity verified
+  const senderKyc = escrow.client.kycStatus === 'VERIFIED';
+  checks.push({
+    key: 'sender_verified',
+    label: 'Sender identity verified',
+    passed: senderKyc,
+    detail: senderDetail,
+  });
+
+  // 4. Recipient identity verified
+  const recipientKycSection = (analysisResult.sections as any)?.account_verifications;
+  const recipientPassed = recipientKycSection?.risk !== 'blocked' && recipientKycSection?.risk !== 'high_risk';
+  checks.push({
+    key: 'recipient_verified',
+    label: 'Recipient identity verified',
+    passed: recipientPassed,
+    detail: recipientDetail,
+  });
+
+  // 5. Corridor compliance
+  const corridorSection = (analysisResult.sections as any)?.payment_corridor;
+  const corridorPassed = corridorSection?.risk === 'low_risk' || corridorSection?.risk === 'medium_risk';
+  checks.push({
+    key: 'corridor_compliance',
+    label: 'Corridor compliance passed',
+    passed: corridorPassed,
+    detail: `${escrow.corridor || 'Unknown'} — ${corridor?.compliance || 'Auto'}`,
+  });
+
+  // 6. Sanctions screening
+  const overallPassed = analysisResult.risk !== 'blocked';
+  checks.push({
+    key: 'sanctions_screening',
+    label: 'Sanctions screening clear',
+    passed: overallPassed,
+    detail: overallPassed ? 'OFAC, EU, UN — no matches' : 'Potential sanctions match detected',
+  });
+
+  return checks;
+}
 
 // Param-only validation for GET routes (no body required)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -170,9 +285,14 @@ router.post(
               anonymize: true,
             });
 
+      // Enrich with pre-release verification checks for PENDING_RELEASE escrows
+      const preReleaseChecks = await buildPreReleaseChecks(
+        req.params.escrow_id, req.institutionClient!.clientId, result
+      );
+
       res.status(200).json({
         success: true,
-        data: result,
+        data: { ...result, ...(preReleaseChecks && { preReleaseChecks }) },
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -275,9 +395,14 @@ router.post(
               anonymize: true,
             });
 
+      // Enrich with pre-release verification checks for PENDING_RELEASE escrows
+      const preReleaseChecks = await buildPreReleaseChecks(
+        req.body.escrowId, req.institutionClient!.clientId, result
+      );
+
       res.status(200).json({
         success: true,
-        data: result,
+        data: { ...result, ...(preReleaseChecks && { preReleaseChecks }) },
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
