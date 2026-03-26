@@ -1142,72 +1142,87 @@ async function main() {
 
   const paymentDefs = [
     {
-      paymentCode: 'DP-F7A8-B9C0',
+      paymentCode: 'EE-F7A-8B9',
       corridor: 'CH-CH',
       amount: 450_000,
       currency: 'USDC',
       status: 'completed',
       ageHours: 18,
+      senderName: 'Optimus Exchange AG — Zurich HQ',
       recipientName: 'Swiss Precision AG',
       senderCountry: 'CH',
       recipientCountry: 'CH',
     },
     {
-      paymentCode: 'DP-A1B2-C3D4',
+      paymentCode: 'EE-A1B-2C3',
       corridor: 'SG-JP',
       amount: 1_200_000,
       currency: 'USDC',
       status: 'completed',
       ageHours: 24,
+      senderName: 'Optimus Exchange AG — Singapore Branch',
       recipientName: 'Tokyo Digital Assets',
       senderCountry: 'SG',
       recipientCountry: 'JP',
     },
     {
-      paymentCode: 'DP-E5F6-G7H8',
+      paymentCode: 'EE-E5F-6G7',
       corridor: 'US-DE',
       amount: 380_000,
       currency: 'USDC',
       status: 'completed',
       ageHours: 48,
+      senderName: 'Optimus Exchange AG — United States Office',
       recipientName: 'Eurolink Trading GmbH',
       senderCountry: 'US',
       recipientCountry: 'DE',
     },
     {
-      paymentCode: 'DP-I9J0-K1L2',
+      paymentCode: 'EE-H8J-9K1',
       corridor: 'GB-CH',
       amount: 750_000,
       currency: 'USDC',
       status: 'processing',
       ageHours: 3,
+      senderName: 'Optimus Exchange AG — London Office',
       recipientName: 'Swiss Precision AG',
       senderCountry: 'GB',
       recipientCountry: 'CH',
     },
     {
-      paymentCode: 'DP-M3N4-O5P6',
+      paymentCode: 'EE-M3N-4P5',
       corridor: 'AE-SG',
       amount: 920_000,
       currency: 'USDC',
       status: 'completed',
       ageHours: 72,
+      senderName: 'Optimus Exchange AG — Dubai Office',
       recipientName: 'Pacific Rim Exports',
       senderCountry: 'AE',
       recipientCountry: 'SG',
     },
     {
-      paymentCode: 'DP-Q7R8-S9T0',
+      paymentCode: 'EE-Q7R-8S9',
       corridor: 'CH-IT',
       amount: 185_000,
       currency: 'USDC',
       status: 'failed',
       ageHours: 96,
+      senderName: 'Optimus Exchange AG — Zurich HQ',
       recipientName: 'Mediterranean Logistics',
       senderCountry: 'CH',
       recipientCountry: 'IT',
     },
   ];
+
+  // Clean up legacy DP- prefixed payment codes
+  const legacyDpCodes = ['DP-F7A8-B9C0', 'DP-A1B2-C3D4', 'DP-E5F6-G7H8', 'DP-I9J0-K1L2', 'DP-M3N4-O5P6', 'DP-Q7R8-S9T0'];
+  const dpDeleted = await prisma.directPayment.deleteMany({
+    where: { paymentCode: { in: legacyDpCodes } },
+  });
+  if (dpDeleted.count > 0) {
+    console.log(`   Cleaned up ${dpDeleted.count} legacy DP- prefixed payments`);
+  }
 
   for (const p of paymentDefs) {
     const recipientData = counterpartyMap.get(p.recipientName);
@@ -1226,7 +1241,7 @@ async function main() {
     const data = {
       paymentCode: p.paymentCode,
       clientId: optimusId,
-      sender: 'Optimus Exchange AG',
+      sender: p.senderName || 'Optimus Exchange AG',
       senderCountry: p.senderCountry,
       senderWallet,
       recipient: p.recipientName,
@@ -1246,8 +1261,16 @@ async function main() {
       await prisma.directPayment.update({
         where: { paymentCode: p.paymentCode },
         data: {
+          sender: data.sender,
+          senderCountry: data.senderCountry,
+          senderWallet: data.senderWallet,
+          recipient: data.recipient,
+          recipientCountry: data.recipientCountry,
+          recipientWallet: data.recipientWallet,
+          corridor: data.corridor,
           status: data.status,
           txHash: data.txHash,
+          platformFee: data.platformFee,
           settledAt: data.settledAt,
         },
       });
