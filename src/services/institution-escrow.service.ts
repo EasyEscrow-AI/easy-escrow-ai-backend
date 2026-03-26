@@ -1079,13 +1079,22 @@ export class InstitutionEscrowService {
       throw new Error('Program service not available');
     }
 
+    if (!config.platform.feeCollectorAddress) {
+      throw new Error('Platform feeCollectorAddress is not configured');
+    }
+
     const payerWallet = toPublicKey(escrow.payerWallet, 'payerWallet');
     const usdcMint = programService.getUsdcMintAddress();
+    const feeCollector = toPublicKey(
+      config.platform.feeCollectorAddress,
+      'feeCollectorAddress'
+    );
 
     const tx = await programService.buildDepositTransaction({
       escrowId,
       payer: payerWallet,
       usdcMint,
+      feeCollector,
       memo: escrow.escrowCode ? `EasyEscrow:deposit:${escrow.escrowCode}` : undefined,
     });
 
@@ -1545,23 +1554,16 @@ export class InstitutionEscrowService {
     }
 
     // Execute on-chain release (transfer USDC from vault to recipient)
+    // Fee was already collected at deposit time — release just sends vault balance to recipient
     let releaseTxSig: string | null = null;
     const releaseProgramService = this.getProgramService();
     if (releaseProgramService && escrow.escrowPda) {
       try {
-        if (!config.platform.feeCollectorAddress) {
-          throw new Error('Platform feeCollectorAddress is not configured');
-        }
-        const feeCollector = toPublicKey(
-          config.platform.feeCollectorAddress,
-          'feeCollectorAddress'
-        );
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         const aiDigest = buildAiDigest(aiAnalysisForMemo);
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
           recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
-          feeCollector,
           usdcMint,
           escrowCode: escrow.escrowCode,
           aiDigest,
