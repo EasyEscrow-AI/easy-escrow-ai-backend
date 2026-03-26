@@ -456,7 +456,7 @@ async function main() {
       accountType: 'TREASURY' as const,
       walletSeed: 'optimus-us-treasury-main',
       branchCountryCode: 'US',
-      isDefault: true,
+      isDefault: false,
       description: 'Primary treasury for NY Americas branch',
       walletProvider: 'Fireblocks',
       custodyType: 'MPC' as const,
@@ -484,7 +484,7 @@ async function main() {
       accountType: 'TREASURY' as const,
       walletSeed: 'optimus-sg-treasury-main',
       branchCountryCode: 'SG',
-      isDefault: true,
+      isDefault: false,
       description: 'Primary treasury for Singapore APAC branch',
       walletProvider: 'Fireblocks',
       custodyType: 'MPC' as const,
@@ -498,7 +498,7 @@ async function main() {
       accountType: 'SETTLEMENT' as const,
       walletSeed: 'optimus-gb-settlement-main',
       branchCountryCode: 'GB',
-      isDefault: true,
+      isDefault: false,
       description: 'FCA-regulated settlement for London Trading branch',
       walletProvider: 'BitGo',
       custodyType: 'THIRD_PARTY' as const,
@@ -512,7 +512,7 @@ async function main() {
       accountType: 'OPERATIONS' as const,
       walletSeed: 'optimus-ae-ops-main',
       branchCountryCode: 'AE',
-      isDefault: true,
+      isDefault: false,
       description: 'Operations account for Dubai MENA branch',
       walletProvider: 'Self-Custody',
       custodyType: 'SELF_CUSTODY' as const,
@@ -1405,13 +1405,13 @@ async function main() {
   await prisma.institutionWallet.deleteMany({ where: { clientId: optimusId } });
 
   const walletDefs = [
-    { name: 'Main Treasury',        address: accountWalletMap.get('Main Treasury')!,        provider: 'Fireblocks', isPrimary: true,  isSettlement: false, description: 'Primary treasury wallet for institutional operations' },
-    { name: 'CH Settlement',        address: accountWalletMap.get('CH Settlement')!,        provider: 'Fireblocks', isPrimary: false, isSettlement: true,  description: 'Zurich HQ settlement wallet' },
-    { name: 'US Treasury',          address: accountWalletMap.get('US Treasury')!,          provider: 'Fireblocks', isPrimary: false, isSettlement: false, description: 'New York Americas treasury' },
-    { name: 'US Operations',        address: accountWalletMap.get('US Operations')!,        provider: 'Fireblocks', isPrimary: false, isSettlement: false, description: 'US daily operations wallet' },
-    { name: 'SG Treasury',          address: accountWalletMap.get('SG Treasury')!,          provider: 'Fireblocks', isPrimary: false, isSettlement: false, description: 'Singapore APAC treasury' },
-    { name: 'GB Settlement',        address: accountWalletMap.get('GB Settlement')!,        provider: 'Fireblocks', isPrimary: false, isSettlement: true,  description: 'London trading settlement wallet' },
-    { name: 'AE Operations',        address: accountWalletMap.get('AE Operations')!,        provider: 'Self-Custody', isPrimary: false, isSettlement: false, description: 'Dubai MENA operations wallet' },
+    { name: 'Main Treasury',        address: accountWalletMap.get('Main Treasury')!,        provider: 'Fireblocks',   isPrimary: true,  isSettlement: false, description: 'Primary treasury wallet for institutional operations' },
+    { name: 'FINMA Settlement',     address: accountWalletMap.get('FINMA Settlement')!,     provider: 'Self-Custody', isPrimary: false, isSettlement: true,  description: 'Zurich HQ settlement wallet' },
+    { name: 'Americas Treasury',    address: accountWalletMap.get('Americas Treasury')!,    provider: 'Fireblocks',   isPrimary: false, isSettlement: false, description: 'New York Americas treasury' },
+    { name: 'Americas Operations',  address: accountWalletMap.get('Americas Operations')!,  provider: 'Self-Custody', isPrimary: false, isSettlement: false, description: 'US daily operations wallet' },
+    { name: 'APAC Treasury',        address: accountWalletMap.get('APAC Treasury')!,        provider: 'Fireblocks',   isPrimary: false, isSettlement: false, description: 'Singapore APAC treasury' },
+    { name: 'London Settlement',    address: accountWalletMap.get('London Settlement')!,    provider: 'BitGo',        isPrimary: false, isSettlement: false, description: 'London trading settlement wallet' },
+    { name: 'Dubai Operations',     address: accountWalletMap.get('Dubai Operations')!,     provider: 'Self-Custody', isPrimary: false, isSettlement: false, description: 'Dubai MENA operations wallet' },
   ];
 
   for (const w of walletDefs) {
