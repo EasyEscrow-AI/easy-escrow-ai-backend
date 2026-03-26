@@ -21,6 +21,8 @@ import { getAiAnalysisService, AiAnalysisResult } from './ai-analysis.service';
 import {
   getInstitutionEscrowProgramService,
   InstitutionEscrowProgramService,
+  buildAiDigest,
+  AiMemoData,
 } from './institution-escrow-program.service';
 import type { NoncePoolManager } from './noncePoolManager';
 import crypto from 'crypto';
@@ -1171,9 +1173,17 @@ export class InstitutionEscrowService {
       );
     }
 
+    // Track AI analysis for chain-of-custody memo digest
+    let aiAnalysisForMemo: AiMemoData | null = null;
+
     // Gate by releaseMode: if AI, run AI compliance checks before proceeding
     if (escrow.releaseMode === 'ai') {
       const aiResult = await this.performAiReleaseCheck(escrow, clientId);
+      aiAnalysisForMemo = {
+        recommendation: aiResult.aiAnalysis.recommendation,
+        riskScore: aiResult.aiAnalysis.riskScore,
+        factors: aiResult.aiAnalysis.factors,
+      };
 
       await this.createKytAuditLog(escrow, 'AI_RELEASE_CHECK', 'AI Orchestrator', {
         passed: aiResult.passed,
@@ -1264,6 +1274,25 @@ export class InstitutionEscrowService {
       }
     }
 
+    // Fetch latest AI analysis from DB for chain-of-custody memo (manual releases)
+    if (!aiAnalysisForMemo) {
+      try {
+        const latestAnalysis = await this.prisma.institutionAiAnalysis.findFirst({
+          where: { escrowId, analysisType: 'ESCROW' },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (latestAnalysis) {
+          aiAnalysisForMemo = {
+            recommendation: latestAnalysis.recommendation as string,
+            riskScore: latestAnalysis.riskScore,
+            factors: latestAnalysis.factors,
+          };
+        }
+      } catch {
+        /* no analysis available — memo will use ai=NONE */
+      }
+    }
+
     // Execute on-chain release (transfer USDC from vault to recipient)
     let releaseTxSig: string | null = null;
     const releaseProgramService = this.getProgramService();
@@ -1277,12 +1306,14 @@ export class InstitutionEscrowService {
           'feeCollectorAddress'
         );
         const usdcMint = releaseProgramService.getUsdcMintAddress();
+        const aiDigest = buildAiDigest(aiAnalysisForMemo);
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
           recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
           feeCollector,
           usdcMint,
           escrowCode: escrow.escrowCode,
+          aiDigest,
         });
         console.log(
           `[InstitutionEscrow] On-chain release success for ${escrowId}, tx: ${releaseTxSig}`
@@ -1460,6 +1491,7 @@ export class InstitutionEscrowService {
             payerWallet: toPublicKey(escrow.payerWallet, 'payerWallet'),
             usdcMint,
             escrowCode: escrow.escrowCode,
+            cancelReason: reason,
           });
           console.log(
             `[InstitutionEscrow] On-chain cancel success for ${escrowId}, tx: ${cancelTxSignature}`

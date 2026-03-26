@@ -21,6 +21,7 @@ import {
 } from '@solana/spl-token';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import { BN } from 'bn.js';
+import { createHash } from 'crypto';
 import { config } from '../config';
 import { getEscrowIdl } from '../utils/idl-loader';
 import { loadAdminKeypair } from '../utils/loadAdminKeypair';
@@ -49,6 +50,32 @@ const CONDITION_TYPE_MAP: Record<string, Record<string, Record<string, never>>> 
 
 // SPL Memo program — used to embed the human-readable escrow code (EE-XXX-XXX) in transactions
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+
+/** AI analysis data needed for chain-of-custody memo digest */
+export interface AiMemoData {
+  recommendation: string;
+  riskScore: number;
+  factors: unknown;
+}
+
+/** Map numeric risk score (0-100) to human-readable level for on-chain memos */
+export function riskScoreToMemoLevel(score: number): string {
+  if (score >= 76) return 'blocked';
+  if (score >= 51) return 'high-risk';
+  if (score >= 26) return 'medium-risk';
+  return 'low-risk';
+}
+
+/** Build compact AI decision fingerprint for SPL Memo (chain-of-custody audit trail) */
+export function buildAiDigest(analysis: AiMemoData | null): string {
+  if (!analysis) return 'ai=NONE';
+  const riskLevel = riskScoreToMemoLevel(analysis.riskScore);
+  const hash = createHash('sha256')
+    .update(JSON.stringify({ r: analysis.recommendation, l: riskLevel, f: analysis.factors }))
+    .digest('hex')
+    .slice(0, 8);
+  return `ai=${analysis.recommendation}:risk=${riskLevel}:sha=${hash}`;
+}
 
 function createMemoInstruction(text: string, signer?: PublicKey): TransactionInstruction {
   return new TransactionInstruction({
@@ -450,11 +477,20 @@ export class InstitutionEscrowProgramService {
     feeCollector: PublicKey;
     usdcMint: PublicKey;
     escrowCode?: string;
+    aiDigest?: string;
   }): Promise<string> {
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:release:${params.escrowCode}`;
+      if (params.aiDigest) {
+        memo += `:${params.aiDigest}`;
+      }
+    }
+
     const transaction = await this.buildReleaseTransaction({
       ...params,
       authority: this.adminKeypair.publicKey,
-      memo: params.escrowCode ? `EasyEscrow:release:${params.escrowCode}` : undefined,
+      memo,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
@@ -474,11 +510,20 @@ export class InstitutionEscrowProgramService {
     payerWallet: PublicKey;
     usdcMint: PublicKey;
     escrowCode?: string;
+    cancelReason?: string;
   }): Promise<string> {
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:cancel:${params.escrowCode}`;
+      if (params.cancelReason) {
+        memo += `:reason=${params.cancelReason}`;
+      }
+    }
+
     const transaction = await this.buildCancelTransaction({
       ...params,
       caller: this.adminKeypair.publicKey,
-      memo: params.escrowCode ? `EasyEscrow:cancel:${params.escrowCode}` : undefined,
+      memo,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
