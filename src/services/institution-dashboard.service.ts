@@ -30,7 +30,7 @@ export class InstitutionDashboardService {
     const day30 = new Date(now); day30.setDate(day30.getDate() - 30);
 
     const [
-      escrows, directPayments, activeEscrowAgg,
+      escrows, directPayments, heldEscrowAgg, activeEscrowCount,
       escrows24h, escrows7d, escrows30d,
       payments24h, payments7d, payments30d,
       totalClients, verifiedClients, pendingClients,
@@ -44,9 +44,11 @@ export class InstitutionDashboardService {
         select: { amount: true, platformFee: true, status: true },
       }),
       this.prisma.institutionEscrow.aggregate({
-        where: { clientId, status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] } },
+        where: { clientId, status: { in: ['FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] } },
         _sum: { amount: true },
-        _count: true,
+      }),
+      this.prisma.institutionEscrow.count({
+        where: { clientId, status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] } },
       }),
       this.prisma.institutionEscrow.aggregate({ where: { clientId, createdAt: { gte: day1 } }, _sum: { amount: true } }),
       this.prisma.institutionEscrow.aggregate({ where: { clientId, createdAt: { gte: day7 } }, _sum: { amount: true } }),
@@ -54,9 +56,17 @@ export class InstitutionDashboardService {
       this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day1 } }, _sum: { amount: true } }),
       this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day7 } }, _sum: { amount: true } }),
       this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day30 } }, _sum: { amount: true } }),
-      this.prisma.institutionClient.count(),
-      this.prisma.institutionClient.count({ where: { kycStatus: 'VERIFIED' } }),
-      this.prisma.institutionClient.count({ where: { kycStatus: 'PENDING' } }),
+      this.prisma.institutionEscrow.findMany({
+        where: { clientId }, select: { recipientWallet: true }, distinct: ['recipientWallet'],
+      }).then(rows => rows.length),
+      this.prisma.institutionEscrow.findMany({
+        where: { clientId, status: { in: ['COMPLETE', 'RELEASED'] } },
+        select: { recipientWallet: true }, distinct: ['recipientWallet'],
+      }).then(rows => rows.length),
+      this.prisma.institutionEscrow.findMany({
+        where: { clientId, status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD'] } },
+        select: { recipientWallet: true }, distinct: ['recipientWallet'],
+      }).then(rows => rows.length),
     ]);
 
     const totalEscrowVolume = escrows.reduce((sum: number, e: any) => sum + Number(e.amount), 0);
@@ -68,16 +78,14 @@ export class InstitutionDashboardService {
     const totalVolume = totalEscrowVolume + totalDirectVolume;
 
     return {
-      // Original fields (backward compat)
       totalVolume,
       escrowVolume: totalEscrowVolume,
       directPaymentVolume: totalDirectVolume,
-      activeEscrows: activeEscrowAgg._count,
+      activeEscrows: activeEscrowCount,
       completedTransactions: completedEscrows + completedPayments,
       totalFees,
       escrowCount: escrows.length,
       directPaymentCount: directPayments.length,
-      // Frontend-expected fields
       totalVolumeUsd: totalVolume,
       volume24h: Number(escrows24h._sum.amount || 0) + Number(payments24h._sum.amount || 0),
       volume7d: Number(escrows7d._sum.amount || 0) + Number(payments7d._sum.amount || 0),
@@ -87,7 +95,7 @@ export class InstitutionDashboardService {
       pendingClients,
       totalPayments: escrows.length + directPayments.length,
       directCount: directPayments.length,
-      escrowHeldUsd: Number(activeEscrowAgg._sum.amount || 0),
+      escrowHeldUsd: Number(heldEscrowAgg._sum.amount || 0),
     };
   }
 
@@ -97,43 +105,34 @@ export class InstitutionDashboardService {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const [escrows, payments] = await Promise.all([
+    const [fundedEscrows, resolvedEscrows, payments] = await Promise.all([
       this.prisma.institutionEscrow.findMany({
-        where: { clientId, createdAt: { gte: since } },
-        select: { amount: true, status: true, createdAt: true, fundedAt: true, resolvedAt: true, corridor: true },
-        orderBy: { createdAt: 'asc' },
+        where: { clientId, fundedAt: { gte: since }, status: { in: ['FUNDED', 'COMPLETE', 'RELEASED'] } },
+        select: { amount: true, fundedAt: true },
+      }),
+      this.prisma.institutionEscrow.findMany({
+        where: { clientId, resolvedAt: { gte: since }, status: { in: ['COMPLETE', 'RELEASED'] } },
+        select: { amount: true, resolvedAt: true },
       }),
       this.prisma.directPayment.findMany({
-        where: { clientId, createdAt: { gte: since } },
-        select: { amount: true, status: true, createdAt: true, settledAt: true, corridor: true },
-        orderBy: { createdAt: 'asc' },
+        where: { clientId, status: 'completed', OR: [{ settledAt: { gte: since } }, { settledAt: null, createdAt: { gte: since } }] },
+        select: { amount: true, settledAt: true, createdAt: true },
       }),
     ]);
 
-    // Aggregate raw data by date key
+    const useHourKeys = period === '24h';
     const byKey: Record<string, { sent: number; received: number }> = {};
+    const toKey = (d: Date) => useHourKeys ? d.toISOString().slice(0, 13) : d.toISOString().split('T')[0];
     const addToKey = (key: string, sent: number, received: number) => {
       if (!byKey[key]) byKey[key] = { sent: 0, received: 0 };
       byKey[key].sent += sent;
       byKey[key].received += received;
     };
 
-    for (const e of escrows) {
-      const amt = Number(e.amount);
-      if (e.fundedAt && ['FUNDED', 'COMPLETE', 'RELEASED'].includes(e.status)) {
-        addToKey(e.fundedAt.toISOString().split('T')[0], 0, amt);
-      }
-      if (e.resolvedAt && ['COMPLETE', 'RELEASED'].includes(e.status)) {
-        addToKey(e.resolvedAt.toISOString().split('T')[0], amt, 0);
-      }
-    }
-    for (const p of payments) {
-      const amt = Number(p.amount);
-      const date = (p.settledAt || p.createdAt).toISOString().split('T')[0];
-      if (p.status === 'completed') addToKey(date, amt, 0);
-    }
+    for (const e of fundedEscrows) addToKey(toKey(e.fundedAt!), 0, Number(e.amount));
+    for (const e of resolvedEscrows) addToKey(toKey(e.resolvedAt!), Number(e.amount), 0);
+    for (const p of payments) addToKey(toKey(p.settledAt || p.createdAt), Number(p.amount), 0);
 
-    // Build labeled bars for the requested period
     const now = new Date();
     const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -142,10 +141,9 @@ export class InstitutionDashboardService {
     if (period === '24h') {
       for (let h = 23; h >= 0; h--) {
         const d = new Date(now); d.setHours(d.getHours() - h, 0, 0, 0);
-        const key = d.toISOString().split('T')[0];
+        const key = d.toISOString().slice(0, 13);
         const vals = byKey[key] || { sent: 0, received: 0 };
-        // Distribute daily total evenly across hours as approximation
-        bars.push({ label: `${d.getHours()}:00`, sent: Math.round(vals.sent / 24), received: Math.round(vals.received / 24), interest: 0, forecast: false });
+        bars.push({ label: `${d.getHours()}:00`, sent: vals.sent, received: vals.received, interest: 0, forecast: false });
       }
     } else if (period === '6m' || period === '12m') {
       const months = period === '6m' ? 6 : 12;
@@ -160,7 +158,6 @@ export class InstitutionDashboardService {
         bars.push({ label: MONTH_NAMES[d.getMonth()], sent, received, interest, forecast: m === 0 && now.getDate() < 15 });
       }
     } else {
-      // 7d, 30d, 90d — one bar per day
       for (let d = days - 1; d >= 0; d--) {
         const date = new Date(now); date.setDate(date.getDate() - d);
         const key = date.toISOString().split('T')[0];

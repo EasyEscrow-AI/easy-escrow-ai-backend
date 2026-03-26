@@ -1345,7 +1345,6 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════
 
   const seededAt = new Date().toISOString();
-  const counterpartyIds = counterpartyDefs.map((cp: any) => cp.id || deterministicUuid('optimus-cp-' + cp.email));
 
   // Resolve actual counterparty IDs from DB
   const cpRecords = await prisma.institutionClient.findMany({

@@ -229,7 +229,8 @@ export class InstitutionAccountService {
           depositTxSignature: true, releaseTxSignature: true,
         },
         orderBy: { createdAt: 'desc' },
-        take: limit + offset,
+        skip: offset,
+        take: limit,
       }),
       this.prisma.directPayment.findMany({
         where: {
@@ -238,10 +239,12 @@ export class InstitutionAccountService {
         },
         select: {
           id: true, paymentCode: true, amount: true, currency: true, status: true,
-          sender: true, recipient: true, txHash: true, settledAt: true, createdAt: true,
+          sender: true, recipient: true, senderWallet: true, recipientWallet: true,
+          txHash: true, settledAt: true, createdAt: true,
         },
         orderBy: { createdAt: 'desc' },
-        take: limit + offset,
+        skip: offset,
+        take: limit,
       }),
     ]);
 
@@ -280,13 +283,14 @@ export class InstitutionAccountService {
     }
 
     for (const p of directPayments) {
+      const isSender = p.senderWallet === wallet;
       txs.push({
         id: p.paymentCode || p.id,
         type: 'direct',
         date: (p.settledAt || p.createdAt).toISOString(),
         amount: Number(p.amount),
         currency: p.currency || 'USDC',
-        counterparty: p.recipient || p.sender || '',
+        counterparty: isSender ? (p.recipient || '') : (p.sender || ''),
         txHash: p.txHash,
         status: p.status || 'completed',
       });
@@ -294,7 +298,7 @@ export class InstitutionAccountService {
 
     txs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    return txs.slice(offset, offset + limit);
+    return txs;
   }
 
   async listAccounts(clientId: string, filters?: ListAccountsFilters) {

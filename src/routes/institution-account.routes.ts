@@ -292,7 +292,7 @@ router.get(
       res.status(200).json({
         success: true,
         data: transactions,
-        total: transactions.length,
+        count: transactions.length,
         limit,
         offset,
         timestamp: new Date().toISOString(),
