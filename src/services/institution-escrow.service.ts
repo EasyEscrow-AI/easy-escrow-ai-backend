@@ -60,6 +60,8 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   ON_CHAIN_RELEASE_FAILED: 'On-Chain Release Failed',
   ON_CHAIN_CANCEL_FAILED: 'On-Chain Cancel Failed',
   ESCROW_FULFILLED: 'Proof of Delivery',
+  PROOF_SUBMITTED: 'Proof Submitted',
+  RECIPIENT_NOTIFIED: 'Recipient Notified',
 };
 
 const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
@@ -1203,11 +1205,13 @@ export class InstitutionEscrowService {
   /**
    * Mark escrow as fulfilled (proof of delivery submitted).
    * Transitions FUNDED → PENDING_RELEASE so both parties see the escrow is awaiting release.
+   * Accepts optional fileId to link a specific proof document; falls back to most-recent file.
+   * Triggers AI release check when releaseMode is 'ai' (non-blocking, result recorded in audit log).
    */
   async fulfillEscrow(
     clientId: string,
     idOrCode: string,
-    notes?: string,
+    opts?: { fileId?: string; notes?: string },
     actorEmail?: string
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
@@ -1219,68 +1223,182 @@ export class InstitutionEscrowService {
       );
     }
 
-    // Fetch attached documents — require at least one
-    const files = await this.prisma.institutionFile.findMany({
-      where: { escrowId },
-      orderBy: { uploadedAt: 'desc' },
-      select: { id: true, fileName: true, documentType: true, sizeBytes: true, uploadedAt: true },
-    });
-    if (files.length === 0) {
-      throw new Error(
-        'Cannot fulfill: at least one supporting document must be uploaded before marking as fulfilled'
-      );
+    // Resolve proof document
+    let proofDocument: { id: string; fileName: string; documentType: string; uploadedAt: Date } | null = null;
+
+    if (opts?.fileId) {
+      // Explicit file — validate it exists and belongs to this escrow
+      const file = await this.prisma.institutionFile.findFirst({
+        where: { id: opts.fileId, escrowId, clientId },
+        select: { id: true, fileName: true, documentType: true, uploadedAt: true },
+      });
+      if (!file) {
+        throw new Error('File not found or does not belong to this escrow');
+      }
+      proofDocument = file;
+    } else {
+      // Fallback: most recent file attached to escrow
+      const file = await this.prisma.institutionFile.findFirst({
+        where: { escrowId, clientId },
+        orderBy: { uploadedAt: 'desc' },
+        select: { id: true, fileName: true, documentType: true, uploadedAt: true },
+      });
+      if (!file) {
+        throw new Error('No proof document attached to this escrow. Upload a file first.');
+      }
+      proofDocument = file;
     }
 
-    // Use the most recently uploaded document as the "proof" document
-    const proofDocument = files[0];
-
+    // Transition to PENDING_RELEASE
     await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: { status: 'PENDING_RELEASE' },
     });
 
-    const auditMessage = `Document ${proofDocument.fileName} uploaded for ${escrow.escrowCode}. Pending release approval.`;
+    const auditMessage = `Proof of delivery submitted — ${proofDocument.fileName}`;
 
-    await this.prisma.institutionAuditLog.create({
-      data: {
-        clientId,
-        escrowId,
-        action: 'ESCROW_FULFILLED',
-        actor: actorEmail || 'system',
-        details: {
-          escrowId,
-          escrowCode: escrow.escrowCode,
-          previousStatus: 'FUNDED',
-          newStatus: 'PENDING_RELEASE',
-          message: auditMessage,
-          proofDocument: {
-            id: proofDocument.id,
-            fileName: proofDocument.fileName,
-            documentType: proofDocument.documentType,
-            uploadedAt: proofDocument.uploadedAt,
-          },
-          fileCount: files.length,
-          documents: files.map((f) => ({ id: f.id, fileName: f.fileName, documentType: f.documentType })),
-          ...(notes && { notes }),
-        },
-      },
-    });
+    await this.createKytAuditLog(
+      escrow,
+      'PROOF_SUBMITTED',
+      actorEmail || (await this.resolveActorName(clientId)),
+      {
+        previousStatus: 'FUNDED',
+        newStatus: 'PENDING_RELEASE',
+        message: auditMessage,
+        fileId: proofDocument.id,
+        fileName: proofDocument.fileName,
+        documentType: proofDocument.documentType,
+        ...(opts?.notes && { notes: opts.notes }),
+      }
+    );
 
     // Send notification
     try {
-      await this.prisma.institutionNotification.create({
-        data: {
-          clientId,
-          type: 'ESCROW_FUNDED',
-          title: 'Proof of Delivery Submitted',
-          message: auditMessage,
-          metadata: { escrowId, escrowCode: escrow.escrowCode, status: 'PENDING_RELEASE' },
-        },
+      await getInstitutionNotificationService().notify({
+        clientId,
+        escrowId,
+        type: 'ESCROW_FUNDED',
+        title: 'Proof of Delivery Submitted',
+        message: auditMessage,
+        metadata: { escrowId, escrowCode: escrow.escrowCode, status: 'PENDING_RELEASE' },
       });
     } catch { /* non-critical */ }
 
+    // Trigger AI release check if releaseMode is 'ai' (non-blocking — records result only)
+    if (escrow.releaseMode === 'ai') {
+      try {
+        const check = await this.performAiReleaseCheck(escrow, clientId);
+        await this.createKytAuditLog(escrow, 'AI_RELEASE_CHECK', 'AI Orchestrator', {
+          passed: check.passed,
+          releaseMode: 'ai',
+          triggeredBy: 'fulfill',
+          conditions: check.conditions,
+          riskScore: check.aiAnalysis.riskScore,
+          recommendation: check.aiAnalysis.recommendation,
+          summary: check.aiAnalysis.summary,
+          message: check.passed
+            ? `Risk score ${check.aiAnalysis.riskScore / 100} — recommended release`
+            : `AI release blocked — ${check.conditions
+                .filter((c) => !c.passed)
+                .map((c) => c.label)
+                .join(', ')}`,
+        });
+      } catch {
+        // AI check failure at fulfillment time is non-critical
+      }
+    }
+
     const updated = await this.getEscrowInternal(clientId, idOrCode);
-    return this.formatEscrow(updated);
+    const partyNames = await this.resolvePartyNames([updated as any], clientId);
+    return this.formatEscrow(updated, partyNames[0]);
+  }
+
+  /**
+   * Notify the counterparty (recipient) to upload proof of delivery.
+   */
+  async notifyRecipient(
+    clientId: string,
+    idOrCode: string,
+    message?: string,
+    actorEmail?: string
+  ): Promise<{ sent: boolean }> {
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
+
+    const validStatuses: InstitutionEscrowStatus[] = ['FUNDED'];
+    if (!validStatuses.includes(escrow.status)) {
+      throw new Error(
+        `Cannot notify recipient: escrow status is ${escrow.status}, expected FUNDED`
+      );
+    }
+
+    if (!escrow.recipientWallet) {
+      throw new Error('Escrow has no recipient wallet assigned');
+    }
+
+    // Resolve recipient to a registered institution client
+    const [recipientAccounts, recipientClients] = await Promise.all([
+      this.prisma.institutionAccount.findMany({
+        where: { walletAddress: escrow.recipientWallet, isActive: true },
+        select: { clientId: true, client: { select: { companyName: true } } },
+      }),
+      this.prisma.institutionClient.findMany({
+        where: {
+          OR: [
+            { primaryWallet: escrow.recipientWallet },
+            { settledWallets: { hasSome: [escrow.recipientWallet] } },
+          ],
+        },
+        select: { id: true, companyName: true },
+      }),
+    ]);
+
+    let recipientClientId: string | null = null;
+    if (recipientAccounts.length > 0) {
+      recipientClientId = (recipientAccounts[0] as any).clientId;
+    } else if (recipientClients.length > 0) {
+      recipientClientId = recipientClients[0].id;
+    }
+
+    if (!recipientClientId) {
+      throw new Error('Recipient has no registered institution account');
+    }
+
+    // Get payer company name for notification
+    const payerClient = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+      select: { companyName: true },
+    });
+    const payerCompanyName = payerClient?.companyName || 'The payer';
+    const amount = Number(escrow.amount);
+
+    await getInstitutionNotificationService().notify({
+      clientId: recipientClientId,
+      escrowId,
+      type: 'ESCROW_FUNDED',
+      title: `Proof of Delivery Requested — ${escrow.escrowCode}`,
+      message: `${payerCompanyName} has requested you upload proof of delivery for escrow ${escrow.escrowCode} ($${amount} USDC).${message ? `\n\nMessage: ${message}` : ''}`,
+      metadata: {
+        escrowId,
+        escrowCode: escrow.escrowCode,
+        requestedBy: payerCompanyName,
+        action: 'proof_requested',
+      },
+    });
+
+    await this.createKytAuditLog(
+      escrow,
+      'RECIPIENT_NOTIFIED',
+      actorEmail || (await this.resolveActorName(clientId)),
+      {
+        escrowCode: escrow.escrowCode,
+        recipientClientId,
+        ...(message && { message }),
+        message: `Recipient notified — proof of delivery requested`,
+      }
+    );
+
+    return { sent: true };
   }
 
   /**
