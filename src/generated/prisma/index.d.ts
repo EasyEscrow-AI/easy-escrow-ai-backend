@@ -29174,6 +29174,7 @@ export namespace Prisma {
     id: string | null
     clientId: string | null
     name: string | null
+    label: string | null
     city: string | null
     country: string | null
     countryCode: string | null
@@ -29185,6 +29186,7 @@ export namespace Prisma {
     regulatoryBody: string | null
     isSanctioned: boolean | null
     sanctionReason: string | null
+    isHeadquarters: boolean | null
     isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -29194,6 +29196,7 @@ export namespace Prisma {
     id: string | null
     clientId: string | null
     name: string | null
+    label: string | null
     city: string | null
     country: string | null
     countryCode: string | null
@@ -29205,6 +29208,7 @@ export namespace Prisma {
     regulatoryBody: string | null
     isSanctioned: boolean | null
     sanctionReason: string | null
+    isHeadquarters: boolean | null
     isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -29214,6 +29218,7 @@ export namespace Prisma {
     id: number
     clientId: number
     name: number
+    label: number
     city: number
     country: number
     countryCode: number
@@ -29225,6 +29230,7 @@ export namespace Prisma {
     regulatoryBody: number
     isSanctioned: number
     sanctionReason: number
+    isHeadquarters: number
     isActive: number
     createdAt: number
     updatedAt: number
@@ -29244,6 +29250,7 @@ export namespace Prisma {
     id?: true
     clientId?: true
     name?: true
+    label?: true
     city?: true
     country?: true
     countryCode?: true
@@ -29255,6 +29262,7 @@ export namespace Prisma {
     regulatoryBody?: true
     isSanctioned?: true
     sanctionReason?: true
+    isHeadquarters?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -29264,6 +29272,7 @@ export namespace Prisma {
     id?: true
     clientId?: true
     name?: true
+    label?: true
     city?: true
     country?: true
     countryCode?: true
@@ -29275,6 +29284,7 @@ export namespace Prisma {
     regulatoryBody?: true
     isSanctioned?: true
     sanctionReason?: true
+    isHeadquarters?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -29284,6 +29294,7 @@ export namespace Prisma {
     id?: true
     clientId?: true
     name?: true
+    label?: true
     city?: true
     country?: true
     countryCode?: true
@@ -29295,6 +29306,7 @@ export namespace Prisma {
     regulatoryBody?: true
     isSanctioned?: true
     sanctionReason?: true
+    isHeadquarters?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -29391,6 +29403,7 @@ export namespace Prisma {
     id: string
     clientId: string
     name: string
+    label: string | null
     city: string
     country: string
     countryCode: string
@@ -29402,6 +29415,7 @@ export namespace Prisma {
     regulatoryBody: string | null
     isSanctioned: boolean
     sanctionReason: string | null
+    isHeadquarters: boolean
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -29430,6 +29444,7 @@ export namespace Prisma {
     id?: boolean
     clientId?: boolean
     name?: boolean
+    label?: boolean
     city?: boolean
     country?: boolean
     countryCode?: boolean
@@ -29441,6 +29456,7 @@ export namespace Prisma {
     regulatoryBody?: boolean
     isSanctioned?: boolean
     sanctionReason?: boolean
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -29453,6 +29469,7 @@ export namespace Prisma {
     id?: boolean
     clientId?: boolean
     name?: boolean
+    label?: boolean
     city?: boolean
     country?: boolean
     countryCode?: boolean
@@ -29464,6 +29481,7 @@ export namespace Prisma {
     regulatoryBody?: boolean
     isSanctioned?: boolean
     sanctionReason?: boolean
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -29474,6 +29492,7 @@ export namespace Prisma {
     id?: boolean
     clientId?: boolean
     name?: boolean
+    label?: boolean
     city?: boolean
     country?: boolean
     countryCode?: boolean
@@ -29485,6 +29504,7 @@ export namespace Prisma {
     regulatoryBody?: boolean
     isSanctioned?: boolean
     sanctionReason?: boolean
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -29495,6 +29515,7 @@ export namespace Prisma {
     id?: boolean
     clientId?: boolean
     name?: boolean
+    label?: boolean
     city?: boolean
     country?: boolean
     countryCode?: boolean
@@ -29506,12 +29527,13 @@ export namespace Prisma {
     regulatoryBody?: boolean
     isSanctioned?: boolean
     sanctionReason?: boolean
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type InstitutionBranchOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "city" | "country" | "countryCode" | "address" | "timezone" | "riskScore" | "complianceStatus" | "complianceNote" | "regulatoryBody" | "isSanctioned" | "sanctionReason" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionBranch"]>
+  export type InstitutionBranchOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "city" | "country" | "countryCode" | "address" | "timezone" | "riskScore" | "complianceStatus" | "complianceNote" | "regulatoryBody" | "isSanctioned" | "sanctionReason" | "isHeadquarters" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionBranch"]>
   export type InstitutionBranchInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     accounts?: boolean | InstitutionBranch$accountsArgs<ExtArgs>
@@ -29534,6 +29556,7 @@ export namespace Prisma {
       id: string
       clientId: string
       name: string
+      label: string | null
       city: string
       country: string
       countryCode: string
@@ -29545,6 +29568,7 @@ export namespace Prisma {
       regulatoryBody: string | null
       isSanctioned: boolean
       sanctionReason: string | null
+      isHeadquarters: boolean
       isActive: boolean
       createdAt: Date
       updatedAt: Date
@@ -29976,6 +30000,7 @@ export namespace Prisma {
     readonly id: FieldRef<"InstitutionBranch", 'String'>
     readonly clientId: FieldRef<"InstitutionBranch", 'String'>
     readonly name: FieldRef<"InstitutionBranch", 'String'>
+    readonly label: FieldRef<"InstitutionBranch", 'String'>
     readonly city: FieldRef<"InstitutionBranch", 'String'>
     readonly country: FieldRef<"InstitutionBranch", 'String'>
     readonly countryCode: FieldRef<"InstitutionBranch", 'String'>
@@ -29987,6 +30012,7 @@ export namespace Prisma {
     readonly regulatoryBody: FieldRef<"InstitutionBranch", 'String'>
     readonly isSanctioned: FieldRef<"InstitutionBranch", 'Boolean'>
     readonly sanctionReason: FieldRef<"InstitutionBranch", 'String'>
+    readonly isHeadquarters: FieldRef<"InstitutionBranch", 'Boolean'>
     readonly isActive: FieldRef<"InstitutionBranch", 'Boolean'>
     readonly createdAt: FieldRef<"InstitutionBranch", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionBranch", 'DateTime'>
@@ -52501,6 +52527,7 @@ export namespace Prisma {
     id: 'id',
     clientId: 'clientId',
     name: 'name',
+    label: 'label',
     city: 'city',
     country: 'country',
     countryCode: 'countryCode',
@@ -52512,6 +52539,7 @@ export namespace Prisma {
     regulatoryBody: 'regulatoryBody',
     isSanctioned: 'isSanctioned',
     sanctionReason: 'sanctionReason',
+    isHeadquarters: 'isHeadquarters',
     isActive: 'isActive',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -55952,6 +55980,7 @@ export namespace Prisma {
     id?: StringFilter<"InstitutionBranch"> | string
     clientId?: StringFilter<"InstitutionBranch"> | string
     name?: StringFilter<"InstitutionBranch"> | string
+    label?: StringNullableFilter<"InstitutionBranch"> | string | null
     city?: StringFilter<"InstitutionBranch"> | string
     country?: StringFilter<"InstitutionBranch"> | string
     countryCode?: StringFilter<"InstitutionBranch"> | string
@@ -55963,6 +55992,7 @@ export namespace Prisma {
     regulatoryBody?: StringNullableFilter<"InstitutionBranch"> | string | null
     isSanctioned?: BoolFilter<"InstitutionBranch"> | boolean
     sanctionReason?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isHeadquarters?: BoolFilter<"InstitutionBranch"> | boolean
     isActive?: BoolFilter<"InstitutionBranch"> | boolean
     createdAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
@@ -55974,6 +56004,7 @@ export namespace Prisma {
     id?: SortOrder
     clientId?: SortOrder
     name?: SortOrder
+    label?: SortOrderInput | SortOrder
     city?: SortOrder
     country?: SortOrder
     countryCode?: SortOrder
@@ -55985,6 +56016,7 @@ export namespace Prisma {
     regulatoryBody?: SortOrderInput | SortOrder
     isSanctioned?: SortOrder
     sanctionReason?: SortOrderInput | SortOrder
+    isHeadquarters?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -55999,6 +56031,7 @@ export namespace Prisma {
     NOT?: InstitutionBranchWhereInput | InstitutionBranchWhereInput[]
     clientId?: StringFilter<"InstitutionBranch"> | string
     name?: StringFilter<"InstitutionBranch"> | string
+    label?: StringNullableFilter<"InstitutionBranch"> | string | null
     city?: StringFilter<"InstitutionBranch"> | string
     country?: StringFilter<"InstitutionBranch"> | string
     countryCode?: StringFilter<"InstitutionBranch"> | string
@@ -56010,6 +56043,7 @@ export namespace Prisma {
     regulatoryBody?: StringNullableFilter<"InstitutionBranch"> | string | null
     isSanctioned?: BoolFilter<"InstitutionBranch"> | boolean
     sanctionReason?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isHeadquarters?: BoolFilter<"InstitutionBranch"> | boolean
     isActive?: BoolFilter<"InstitutionBranch"> | boolean
     createdAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
@@ -56021,6 +56055,7 @@ export namespace Prisma {
     id?: SortOrder
     clientId?: SortOrder
     name?: SortOrder
+    label?: SortOrderInput | SortOrder
     city?: SortOrder
     country?: SortOrder
     countryCode?: SortOrder
@@ -56032,6 +56067,7 @@ export namespace Prisma {
     regulatoryBody?: SortOrderInput | SortOrder
     isSanctioned?: SortOrder
     sanctionReason?: SortOrderInput | SortOrder
+    isHeadquarters?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -56049,6 +56085,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"InstitutionBranch"> | string
     clientId?: StringWithAggregatesFilter<"InstitutionBranch"> | string
     name?: StringWithAggregatesFilter<"InstitutionBranch"> | string
+    label?: StringNullableWithAggregatesFilter<"InstitutionBranch"> | string | null
     city?: StringWithAggregatesFilter<"InstitutionBranch"> | string
     country?: StringWithAggregatesFilter<"InstitutionBranch"> | string
     countryCode?: StringWithAggregatesFilter<"InstitutionBranch"> | string
@@ -56060,6 +56097,7 @@ export namespace Prisma {
     regulatoryBody?: StringNullableWithAggregatesFilter<"InstitutionBranch"> | string | null
     isSanctioned?: BoolWithAggregatesFilter<"InstitutionBranch"> | boolean
     sanctionReason?: StringNullableWithAggregatesFilter<"InstitutionBranch"> | string | null
+    isHeadquarters?: BoolWithAggregatesFilter<"InstitutionBranch"> | boolean
     isActive?: BoolWithAggregatesFilter<"InstitutionBranch"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionBranch"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionBranch"> | Date | string
@@ -60797,6 +60835,7 @@ export namespace Prisma {
   export type InstitutionBranchCreateInput = {
     id?: string
     name: string
+    label?: string | null
     city: string
     country: string
     countryCode: string
@@ -60808,6 +60847,7 @@ export namespace Prisma {
     regulatoryBody?: string | null
     isSanctioned?: boolean
     sanctionReason?: string | null
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -60819,6 +60859,7 @@ export namespace Prisma {
     id?: string
     clientId: string
     name: string
+    label?: string | null
     city: string
     country: string
     countryCode: string
@@ -60830,6 +60871,7 @@ export namespace Prisma {
     regulatoryBody?: string | null
     isSanctioned?: boolean
     sanctionReason?: string | null
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -60839,6 +60881,7 @@ export namespace Prisma {
   export type InstitutionBranchUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -60850,6 +60893,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -60861,6 +60905,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -60872,6 +60917,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -60882,6 +60928,7 @@ export namespace Prisma {
     id?: string
     clientId: string
     name: string
+    label?: string | null
     city: string
     country: string
     countryCode: string
@@ -60893,6 +60940,7 @@ export namespace Prisma {
     regulatoryBody?: string | null
     isSanctioned?: boolean
     sanctionReason?: string | null
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -60901,6 +60949,7 @@ export namespace Prisma {
   export type InstitutionBranchUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -60912,6 +60961,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -60921,6 +60971,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -60932,6 +60983,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -65568,6 +65620,7 @@ export namespace Prisma {
     id?: SortOrder
     clientId?: SortOrder
     name?: SortOrder
+    label?: SortOrder
     city?: SortOrder
     country?: SortOrder
     countryCode?: SortOrder
@@ -65579,6 +65632,7 @@ export namespace Prisma {
     regulatoryBody?: SortOrder
     isSanctioned?: SortOrder
     sanctionReason?: SortOrder
+    isHeadquarters?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -65592,6 +65646,7 @@ export namespace Prisma {
     id?: SortOrder
     clientId?: SortOrder
     name?: SortOrder
+    label?: SortOrder
     city?: SortOrder
     country?: SortOrder
     countryCode?: SortOrder
@@ -65603,6 +65658,7 @@ export namespace Prisma {
     regulatoryBody?: SortOrder
     isSanctioned?: SortOrder
     sanctionReason?: SortOrder
+    isHeadquarters?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -65612,6 +65668,7 @@ export namespace Prisma {
     id?: SortOrder
     clientId?: SortOrder
     name?: SortOrder
+    label?: SortOrder
     city?: SortOrder
     country?: SortOrder
     countryCode?: SortOrder
@@ -65623,6 +65680,7 @@ export namespace Prisma {
     regulatoryBody?: SortOrder
     isSanctioned?: SortOrder
     sanctionReason?: SortOrder
+    isHeadquarters?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -73789,6 +73847,7 @@ export namespace Prisma {
   export type InstitutionBranchCreateWithoutClientInput = {
     id?: string
     name: string
+    label?: string | null
     city: string
     country: string
     countryCode: string
@@ -73800,6 +73859,7 @@ export namespace Prisma {
     regulatoryBody?: string | null
     isSanctioned?: boolean
     sanctionReason?: string | null
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -73809,6 +73869,7 @@ export namespace Prisma {
   export type InstitutionBranchUncheckedCreateWithoutClientInput = {
     id?: string
     name: string
+    label?: string | null
     city: string
     country: string
     countryCode: string
@@ -73820,6 +73881,7 @@ export namespace Prisma {
     regulatoryBody?: string | null
     isSanctioned?: boolean
     sanctionReason?: string | null
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -74367,6 +74429,7 @@ export namespace Prisma {
     id?: StringFilter<"InstitutionBranch"> | string
     clientId?: StringFilter<"InstitutionBranch"> | string
     name?: StringFilter<"InstitutionBranch"> | string
+    label?: StringNullableFilter<"InstitutionBranch"> | string | null
     city?: StringFilter<"InstitutionBranch"> | string
     country?: StringFilter<"InstitutionBranch"> | string
     countryCode?: StringFilter<"InstitutionBranch"> | string
@@ -74378,6 +74441,7 @@ export namespace Prisma {
     regulatoryBody?: StringNullableFilter<"InstitutionBranch"> | string | null
     isSanctioned?: BoolFilter<"InstitutionBranch"> | boolean
     sanctionReason?: StringNullableFilter<"InstitutionBranch"> | string | null
+    isHeadquarters?: BoolFilter<"InstitutionBranch"> | boolean
     isActive?: BoolFilter<"InstitutionBranch"> | boolean
     createdAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionBranch"> | Date | string
@@ -74945,6 +75009,7 @@ export namespace Prisma {
   export type InstitutionBranchCreateWithoutAccountsInput = {
     id?: string
     name: string
+    label?: string | null
     city: string
     country: string
     countryCode: string
@@ -74956,6 +75021,7 @@ export namespace Prisma {
     regulatoryBody?: string | null
     isSanctioned?: boolean
     sanctionReason?: string | null
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -74966,6 +75032,7 @@ export namespace Prisma {
     id?: string
     clientId: string
     name: string
+    label?: string | null
     city: string
     country: string
     countryCode: string
@@ -74977,6 +75044,7 @@ export namespace Prisma {
     regulatoryBody?: string | null
     isSanctioned?: boolean
     sanctionReason?: string | null
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -75201,6 +75269,7 @@ export namespace Prisma {
   export type InstitutionBranchUpdateWithoutAccountsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -75212,6 +75281,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75222,6 +75292,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -75233,6 +75304,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -81804,6 +81876,7 @@ export namespace Prisma {
   export type InstitutionBranchCreateManyClientInput = {
     id?: string
     name: string
+    label?: string | null
     city: string
     country: string
     countryCode: string
@@ -81815,6 +81888,7 @@ export namespace Prisma {
     regulatoryBody?: string | null
     isSanctioned?: boolean
     sanctionReason?: string | null
+    isHeadquarters?: boolean
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -82356,6 +82430,7 @@ export namespace Prisma {
   export type InstitutionBranchUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -82367,6 +82442,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -82376,6 +82452,7 @@ export namespace Prisma {
   export type InstitutionBranchUncheckedUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -82387,6 +82464,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -82396,6 +82474,7 @@ export namespace Prisma {
   export type InstitutionBranchUncheckedUpdateManyWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
     city?: StringFieldUpdateOperationsInput | string
     country?: StringFieldUpdateOperationsInput | string
     countryCode?: StringFieldUpdateOperationsInput | string
@@ -82407,6 +82486,7 @@ export namespace Prisma {
     regulatoryBody?: NullableStringFieldUpdateOperationsInput | string | null
     isSanctioned?: BoolFieldUpdateOperationsInput | boolean
     sanctionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    isHeadquarters?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

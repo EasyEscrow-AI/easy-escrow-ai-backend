@@ -313,6 +313,7 @@ async function main() {
   const branchDefs = [
     {
       name: 'Zurich Branch HQ',
+      label: 'Zurich HQ',
       city: 'Zurich',
       country: 'Switzerland',
       countryCode: 'CH',
@@ -321,9 +322,11 @@ async function main() {
       riskScore: 5,
       complianceStatus: 'COMPLIANT',
       regulatoryBody: 'FINMA',
+      isHeadquarters: true,
     },
     {
       name: 'NY Americas',
+      label: 'NY Americas',
       city: 'New York',
       country: 'United States',
       countryCode: 'US',
@@ -332,9 +335,11 @@ async function main() {
       riskScore: 10,
       complianceStatus: 'ACTIVE',
       regulatoryBody: 'FinCEN',
+      isHeadquarters: false,
     },
     {
       name: 'Singapore APAC',
+      label: 'Singapore APAC',
       city: 'Singapore',
       country: 'Singapore',
       countryCode: 'SG',
@@ -343,9 +348,11 @@ async function main() {
       riskScore: 8,
       complianceStatus: 'ACTIVE',
       regulatoryBody: 'MAS',
+      isHeadquarters: false,
     },
     {
       name: 'London Trading',
+      label: 'London Trading',
       city: 'London',
       country: 'United Kingdom',
       countryCode: 'GB',
@@ -354,9 +361,11 @@ async function main() {
       riskScore: 7,
       complianceStatus: 'ACTIVE',
       regulatoryBody: 'FCA',
+      isHeadquarters: false,
     },
     {
       name: 'Dubai MENA',
+      label: 'Dubai MENA',
       city: 'Dubai',
       country: 'United Arab Emirates',
       countryCode: 'AE',
@@ -365,6 +374,7 @@ async function main() {
       riskScore: 20,
       complianceStatus: 'UNDER_REVIEW',
       regulatoryBody: 'DFSA',
+      isHeadquarters: false,
     },
   ];
 
@@ -382,6 +392,7 @@ async function main() {
       branch = await prisma.institutionBranch.update({
         where: { id: existing.id },
         data: {
+          label: b.label,
           city: b.city,
           country: b.country,
           countryCode: b.countryCode,
@@ -390,6 +401,7 @@ async function main() {
           riskScore: b.riskScore,
           complianceStatus: b.complianceStatus,
           regulatoryBody: b.regulatoryBody,
+          isHeadquarters: b.isHeadquarters,
           isActive: true,
         },
       });
@@ -398,6 +410,7 @@ async function main() {
         data: {
           clientId: optimusId,
           name: b.name,
+          label: b.label,
           city: b.city,
           country: b.country,
           countryCode: b.countryCode,
@@ -406,6 +419,7 @@ async function main() {
           riskScore: b.riskScore,
           complianceStatus: b.complianceStatus,
           regulatoryBody: b.regulatoryBody,
+          isHeadquarters: b.isHeadquarters,
           isActive: true,
         },
       });
