@@ -1186,6 +1186,15 @@ model InstitutionEscrow {
   clientId              String                    @map("client_id")
   payerWallet           String                    @map("payer_wallet")
   recipientWallet       String?                   @map("recipient_wallet")
+
+  // Party display names (optional, set at creation for receipts/audit/detail views)
+  payerName             String?                   @map("payer_name")
+  payerAccountLabel     String?                   @map("payer_account_label")
+  payerBranchName       String?                   @map("payer_branch_name")
+  recipientName         String?                   @map("recipient_name")
+  recipientAccountLabel String?                   @map("recipient_account_label")
+  recipientBranchName   String?                   @map("recipient_branch_name")
+
   usdcMint              String                    @map("usdc_mint")
   amount                Decimal                   @db.Decimal(20, 6) // USDC amount (6 decimal precision)
   platformFee           Decimal                   @map("platform_fee") @db.Decimal(20, 6)

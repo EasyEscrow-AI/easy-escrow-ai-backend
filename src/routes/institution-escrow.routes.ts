@@ -95,6 +95,12 @@ router.post(
         releaseConditions: req.body.releaseConditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
+        payerName: req.body.payerName,
+        payerAccountLabel: req.body.payerAccountLabel,
+        payerBranchName: req.body.payerBranchName,
+        recipientName: req.body.recipientName,
+        recipientAccountLabel: req.body.recipientAccountLabel,
+        recipientBranchName: req.body.recipientBranchName,
       });
 
       res.status(201).json({
@@ -140,6 +146,12 @@ router.post(
         releaseConditions: req.body.releaseConditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
+        payerName: req.body.payerName,
+        payerAccountLabel: req.body.payerAccountLabel,
+        payerBranchName: req.body.payerBranchName,
+        recipientName: req.body.recipientName,
+        recipientAccountLabel: req.body.recipientAccountLabel,
+        recipientBranchName: req.body.recipientBranchName,
       });
 
       res.status(201).json({
@@ -183,6 +195,12 @@ router.put(
         releaseConditions: req.body.releaseConditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
+        payerName: req.body.payerName,
+        payerAccountLabel: req.body.payerAccountLabel,
+        payerBranchName: req.body.payerBranchName,
+        recipientName: req.body.recipientName,
+        recipientAccountLabel: req.body.recipientAccountLabel,
+        recipientBranchName: req.body.recipientBranchName,
       });
 
       res.status(200).json({

@@ -15,6 +15,40 @@ function isUuidOrEscrowCode(value: string) {
   if (UUID_REGEX.test(value) || ESCROW_CODE_REGEX.test(value)) return true;
   throw new Error('Must be a valid UUID or escrow code (EE-XXX-XXX)');
 }
+/** Reusable optional validators for party display name fields */
+const partyDisplayNameValidators = [
+  body('payerName')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('payerName must be 200 characters or less'),
+  body('payerAccountLabel')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('payerAccountLabel must be 200 characters or less'),
+  body('payerBranchName')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('payerBranchName must be 200 characters or less'),
+  body('recipientName')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('recipientName must be 200 characters or less'),
+  body('recipientAccountLabel')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('recipientAccountLabel must be 200 characters or less'),
+  body('recipientBranchName')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('recipientBranchName must be 200 characters or less'),
+];
+
 const CORRIDOR_REGEX = /^[A-Z]{2}-[A-Z]{2}$/;
 const CONDITION_TYPES = ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'];
 const SETTLEMENT_MODES = ['escrow', 'direct'];
@@ -102,6 +136,7 @@ export const validateCreateInstitutionEscrow = [
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  ...partyDisplayNameValidators,
 ];
 
 /**
@@ -182,6 +217,7 @@ export const validateSaveDraft = [
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  ...partyDisplayNameValidators,
 ];
 
 /**
@@ -264,6 +300,7 @@ export const validateUpdateDraft = [
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  ...partyDisplayNameValidators,
 ];
 
 /**
