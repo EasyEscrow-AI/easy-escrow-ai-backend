@@ -25,6 +25,7 @@ import {
   AiMemoData,
 } from './institution-escrow-program.service';
 import type { NoncePoolManager } from './noncePoolManager';
+import { PoolContext } from '../types/transaction-pool';
 import crypto from 'crypto';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { config } from '../config';
@@ -59,6 +60,8 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   ON_CHAIN_INIT_FAILED: 'On-Chain Init Failed',
   ON_CHAIN_RELEASE_FAILED: 'On-Chain Release Failed',
   ON_CHAIN_CANCEL_FAILED: 'On-Chain Cancel Failed',
+  PROOF_SUBMITTED: 'Proof Submitted',
+  RECIPIENT_NOTIFIED: 'Recipient Notified',
 };
 
 const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
@@ -1207,7 +1210,8 @@ export class InstitutionEscrowService {
     idOrCode: string,
     notes?: string,
     actorEmail?: string,
-    privacyPreferences?: PrivacyPreferences
+    privacyPreferences?: PrivacyPreferences,
+    poolContext?: PoolContext
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1218,6 +1222,11 @@ export class InstitutionEscrowService {
       throw new Error(
         `Cannot release: escrow status is ${escrow.status}, expected FUNDED or INSUFFICIENT_FUNDS`
       );
+    }
+
+    // Pool validation: pooled escrows must be released through pool settlement
+    if (escrow.poolId && !poolContext) {
+      throw new Error('Cannot release pooled escrow individually. Use pool settlement.');
     }
 
     // Track AI analysis for chain-of-custody memo digest
@@ -1342,6 +1351,30 @@ export class InstitutionEscrowService {
       }
     }
 
+    // Pool settlement: skip individual on-chain release — pool service handles batched release
+    if (poolContext?.skipOnChainRelease) {
+      await this.createKytAuditLog(escrow, 'FUNDS_RELEASED', 'Pool Settlement', {
+        releaseMode: escrow.releaseMode || 'manual',
+        releaseConditions: escrow.releaseConditions || [],
+        notes,
+        poolId: poolContext.poolId,
+        poolCode: poolContext.poolCode,
+        message: `Pooled release — on-chain settlement deferred to pool ${poolContext.poolCode}`,
+        privacyLevel: effectivePrivacy.level,
+        ...(stealthPaymentId ? { stealthPaymentId, stealthAddress: releaseRecipient } : {}),
+      });
+
+      return {
+        escrowId: escrow.escrowId,
+        escrowCode: escrow.escrowCode,
+        poolSettlement: true,
+        releaseRecipient,
+        stealthPaymentId: stealthPaymentId || null,
+        privacyLevel: actualPrivacyLevel,
+        aiAnalysis: aiAnalysisForMemo,
+      };
+    }
+
     // Execute on-chain release (transfer USDC from vault to recipient)
     let releaseTxSig: string | null = null;
     const releaseProgramService = this.getProgramService();
@@ -1446,7 +1479,7 @@ export class InstitutionEscrowService {
 
     const releaseActor =
       escrow.releaseMode === 'ai' ? 'AI Orchestrator' : actorEmail || escrow.settlementAuthority;
-    await this.createKytAuditLog(escrow, 'FUNDS_RELEASED', releaseActor, {
+    const releaseAuditDetails: Record<string, unknown> = {
       releaseTxSignature: releaseTxSig,
       releaseMode: escrow.releaseMode || 'manual',
       releaseConditions: escrow.releaseConditions || [],
@@ -1457,7 +1490,12 @@ export class InstitutionEscrowService {
           : `${Number(escrow.amount)} USDC released to recipient`,
       privacyLevel: effectivePrivacy.level,
       ...(stealthPaymentId ? { stealthPaymentId, stealthAddress: releaseRecipient } : {}),
-    });
+    };
+    if (poolContext) {
+      releaseAuditDetails.poolId = poolContext.poolId;
+      releaseAuditDetails.poolCode = poolContext.poolCode;
+    }
+    await this.createKytAuditLog(escrow, 'FUNDS_RELEASED', releaseActor, releaseAuditDetails);
 
     // Transition to COMPLETE: send notification and finalize
     try {
@@ -1497,6 +1535,178 @@ export class InstitutionEscrowService {
       const releasePartyNames = await this.resolvePartyNames([updated as any], clientId);
       return this.formatEscrow(updated, releasePartyNames[0]);
     }
+  }
+
+  /**
+   * Fulfill escrow — record proof-of-delivery document and optionally trigger AI release check.
+   * Escrow stays FUNDED; release still requires an explicit /release call.
+   */
+  async fulfillEscrow(
+    clientId: string,
+    idOrCode: string,
+    opts?: { fileId?: string; notes?: string },
+    actorEmail?: string
+  ): Promise<Record<string, unknown>> {
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
+
+    if (escrow.status !== 'FUNDED') {
+      throw new Error(`Cannot fulfill: escrow status is ${escrow.status}, expected FUNDED`);
+    }
+
+    // Resolve proof document
+    let proofFile: { id: string; fileName: string } | null = null;
+
+    if (opts?.fileId) {
+      // Explicit file — validate it exists and belongs to this escrow
+      const file = await this.prisma.institutionFile.findFirst({
+        where: { id: opts.fileId, escrowId, clientId },
+        select: { id: true, fileName: true },
+      });
+      if (!file) {
+        throw new Error('File not found or does not belong to this escrow');
+      }
+      proofFile = file;
+    } else {
+      // Fallback: most recent file attached to escrow
+      const file = await this.prisma.institutionFile.findFirst({
+        where: { escrowId, clientId },
+        orderBy: { uploadedAt: 'desc' },
+        select: { id: true, fileName: true },
+      });
+      if (!file) {
+        throw new Error('No proof document attached to this escrow. Upload a file first.');
+      }
+      proofFile = file;
+    }
+
+    // Record audit log for proof submission
+    await this.createKytAuditLog(
+      escrow,
+      'PROOF_SUBMITTED',
+      actorEmail || (await this.resolveActorName(clientId)),
+      {
+        fileId: proofFile.id,
+        fileName: proofFile.fileName,
+        ...(opts?.notes && { notes: opts.notes }),
+        message: `Proof of delivery submitted — ${proofFile.fileName}`,
+      }
+    );
+
+    // Trigger AI release check if releaseMode is 'ai' (non-blocking — records result only)
+    if (escrow.releaseMode === 'ai') {
+      try {
+        const check = await this.performAiReleaseCheck(escrow, clientId);
+        await this.createKytAuditLog(escrow, 'AI_RELEASE_CHECK', 'AI Orchestrator', {
+          passed: check.passed,
+          releaseMode: 'ai',
+          triggeredBy: 'fulfill',
+          conditions: check.conditions,
+          riskScore: check.aiAnalysis.riskScore,
+          recommendation: check.aiAnalysis.recommendation,
+          summary: check.aiAnalysis.summary,
+          message: check.passed
+            ? `Risk score ${check.aiAnalysis.riskScore / 100} — recommended release`
+            : `AI release blocked — ${check.conditions
+                .filter((c) => !c.passed)
+                .map((c) => c.label)
+                .join(', ')}`,
+        });
+      } catch {
+        // AI check failure at fulfillment time is non-critical
+      }
+    }
+
+    const partyNames = await this.resolvePartyNames([escrow as any], clientId);
+    return this.formatEscrow(escrow, partyNames[0]);
+  }
+
+  /**
+   * Notify the counterparty (recipient) to upload proof of delivery.
+   */
+  async notifyRecipient(
+    clientId: string,
+    idOrCode: string,
+    message?: string,
+    actorEmail?: string
+  ): Promise<{ sent: boolean }> {
+    const escrow = await this.getEscrowInternal(clientId, idOrCode);
+    const { escrowId } = escrow;
+
+    const validStatuses: InstitutionEscrowStatus[] = ['FUNDED'];
+    if (!validStatuses.includes(escrow.status)) {
+      throw new Error(
+        `Cannot notify recipient: escrow status is ${escrow.status}, expected FUNDED`
+      );
+    }
+
+    if (!escrow.recipientWallet) {
+      throw new Error('Escrow has no recipient wallet assigned');
+    }
+
+    // Resolve recipient to a registered institution client
+    const [recipientAccounts, recipientClients] = await Promise.all([
+      this.prisma.institutionAccount.findMany({
+        where: { walletAddress: escrow.recipientWallet, isActive: true },
+        select: { clientId: true, client: { select: { companyName: true } } },
+      }),
+      this.prisma.institutionClient.findMany({
+        where: {
+          OR: [
+            { primaryWallet: escrow.recipientWallet },
+            { settledWallets: { hasSome: [escrow.recipientWallet] } },
+          ],
+        },
+        select: { id: true, companyName: true },
+      }),
+    ]);
+
+    let recipientClientId: string | null = null;
+    if (recipientAccounts.length > 0) {
+      recipientClientId = (recipientAccounts[0] as any).clientId;
+    } else if (recipientClients.length > 0) {
+      recipientClientId = recipientClients[0].id;
+    }
+
+    if (!recipientClientId) {
+      throw new Error('Recipient has no registered institution account');
+    }
+
+    // Get payer company name for notification
+    const payerClient = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+      select: { companyName: true },
+    });
+    const payerCompanyName = payerClient?.companyName || 'The payer';
+    const amount = Number(escrow.amount);
+
+    await getInstitutionNotificationService().notify({
+      clientId: recipientClientId,
+      escrowId,
+      type: 'ESCROW_FUNDED',
+      title: `Proof of Delivery Requested — ${escrow.escrowCode}`,
+      message: `${payerCompanyName} has requested you upload proof of delivery for escrow ${escrow.escrowCode} ($${amount} USDC).${message ? `\n\nMessage: ${message}` : ''}`,
+      metadata: {
+        escrowId,
+        escrowCode: escrow.escrowCode,
+        requestedBy: payerCompanyName,
+        action: 'proof_requested',
+      },
+    });
+
+    await this.createKytAuditLog(
+      escrow,
+      'RECIPIENT_NOTIFIED',
+      actorEmail || (await this.resolveActorName(clientId)),
+      {
+        escrowCode: escrow.escrowCode,
+        recipientClientId,
+        ...(message && { message }),
+        message: `Recipient notified — proof of delivery requested`,
+      }
+    );
+
+    return { sent: true };
   }
 
   /**

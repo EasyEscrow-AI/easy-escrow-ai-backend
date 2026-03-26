@@ -7,6 +7,8 @@
  * POST   /api/v1/institution-escrow/:id/submit   → submitDraft
  * GET    /api/v1/institution-escrow/:id/deposit-tx → getDepositTransaction
  * POST   /api/v1/institution-escrow/:id/deposit  → recordDeposit
+ * POST   /api/v1/institution-escrow/:id/fulfill  → fulfillEscrow
+ * POST   /api/v1/institution-escrow/:id/notify-recipient → notifyRecipient
  * POST   /api/v1/institution-escrow/:id/release  → releaseFunds
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
  * GET    /api/v1/institution-escrow/:id          → getEscrow
@@ -317,6 +319,85 @@ router.post(
       const status = error.message.includes('expired') ? 410 : 400;
       res.status(status).json({
         error: 'Deposit Recording Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// POST /api/v1/institution-escrow/:id/fulfill
+router.post(
+  '/api/v1/institution-escrow/:id/fulfill',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  requireNotPaused,
+  param('id').notEmpty().withMessage('Escrow ID or code is required'),
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
+    try {
+      const service = getInstitutionEscrowService();
+      const result = await service.fulfillEscrow(
+        req.institutionClient!.clientId,
+        req.params.id,
+        { fileId: req.body.fileId, notes: req.body.notes },
+        req.institutionClient!.email
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('not found')
+        ? 404
+        : error.message.includes('Access denied')
+          ? 403
+          : 400;
+      res.status(status).json({
+        error: 'Fulfill Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// POST /api/v1/institution-escrow/:id/notify-recipient
+router.post(
+  '/api/v1/institution-escrow/:id/notify-recipient',
+  standardRateLimiter,
+  requireInstitutionAuth,
+  param('id').notEmpty().withMessage('Escrow ID or code is required'),
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
+    try {
+      const service = getInstitutionEscrowService();
+      const result = await service.notifyRecipient(
+        req.institutionClient!.clientId,
+        req.params.id,
+        req.body.message,
+        req.institutionClient!.email
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.message.includes('not found')
+        ? 404
+        : error.message.includes('Access denied')
+          ? 403
+          : error.message.includes('no registered')
+            ? 400
+            : 400;
+      res.status(status).json({
+        error: 'Notify Recipient Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });

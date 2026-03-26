@@ -410,6 +410,8 @@ tags:
       account → settings → client contactEmail → client email.
   - name: Institution Admin
     description: Admin operations for allowlist and corridor management
+  - name: Transaction Pools
+    description: Joint transaction pool management for batch settlement of institution escrows
 
 x-tagGroups:
   - name: Documentation
@@ -436,6 +438,7 @@ x-tagGroups:
       - AI Analysis
       - AI Chat
       - Institution Notifications
+      - Transaction Pools
       - Institution Admin
 
 paths:
@@ -2510,6 +2513,157 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Missing or invalid settlement authority key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution-escrow/{id}/fulfill:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Submit proof of delivery
+      description: |
+        Mark an escrow as fulfilled by attaching a proof-of-delivery document.
+        Optionally pass a `fileId` to link a specific uploaded file; otherwise the most
+        recent file attached to this escrow is used.
+
+        If the escrow's `releaseMode` is `ai`, an AI release check is triggered automatically
+        (results recorded in the audit log). The escrow stays in `FUNDED` status —
+        release still requires an explicit `/release` call.
+
+        **Rate Limited**: 30 requests per minute.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Escrow ID (UUID) or escrow code (EE-XXX-XXX)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileId:
+                  type: string
+                  format: uuid
+                  description: ID of an uploaded file to use as proof document. If omitted, the most recent file on this escrow is used.
+                notes:
+                  type: string
+                  maxLength: 500
+                  description: Optional notes about the proof submission
+            example:
+              fileId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              notes: "Bill of lading attached"
+      responses:
+        '200':
+          description: Proof submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow or file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution-escrow/{id}/notify-recipient:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Notify recipient to upload proof
+      description: |
+        Send a notification to the counterparty (recipient) asking them to upload
+        proof of delivery for this escrow. The recipient must have a registered
+        institution account linked to the escrow's recipient wallet.
+
+        Only escrows in `FUNDED` status can trigger recipient notifications.
+
+        **Rate Limited**: 30 requests per minute.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Escrow ID (UUID) or escrow code (EE-XXX-XXX)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 1000
+                  description: Optional message to include in the notification
+            example:
+              message: "Please upload the signed bill of lading"
+      responses:
+        '200':
+          description: Notification sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      sent:
+                        type: boolean
+                        example: true
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid state or recipient not registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escrow not found
           content:
             application/json:
               schema:
@@ -5320,6 +5474,326 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
+  # ── Transaction Pools ──────────────────────────────────────────────────
+  /api/v1/institution/pools:
+    post:
+      tags: [Transaction Pools]
+      summary: Create a transaction pool
+      description: Creates a new transaction pool for batch settlement of institution escrows
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                corridor:
+                  type: string
+                  pattern: '^[A-Z]{2}-[A-Z]{2}$'
+                  example: 'SG-CH'
+                settlementMode:
+                  type: string
+                  enum: [SEQUENTIAL, PARALLEL]
+                  default: SEQUENTIAL
+                expiryHours:
+                  type: integer
+                  minimum: 1
+                  maximum: 2160
+                  default: 24
+      responses:
+        '201':
+          description: Pool created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionPool'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+    get:
+      tags: [Transaction Pools]
+      summary: List transaction pools
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [OPEN, LOCKED, SETTLING, SETTLED, PARTIAL_FAIL, FAILED, CANCELLED]
+        - name: corridor
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of pools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pools:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransactionPool'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+
+  /api/v1/institution/pools/{poolId}:
+    get:
+      tags: [Transaction Pools]
+      summary: Get pool details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Pool UUID or pool code (TP-XXX-XXX)
+      responses:
+        '200':
+          description: Pool details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionPoolDetail'
+        '404':
+          description: Pool not found
+
+  /api/v1/institution/pools/{poolId}/members:
+    post:
+      tags: [Transaction Pools]
+      summary: Add escrow to pool
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [escrowIdOrCode]
+              properties:
+                escrowIdOrCode:
+                  type: string
+                  description: Escrow UUID or code (EE-XXX-XXX)
+      responses:
+        '200':
+          description: Member added
+        '400':
+          description: Validation error (not FUNDED, already pooled, corridor mismatch)
+
+    delete:
+      tags: [Transaction Pools]
+      summary: Remove escrow from pool
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [escrowIdOrCode]
+              properties:
+                escrowIdOrCode:
+                  type: string
+      responses:
+        '200':
+          description: Member removed
+
+  /api/v1/institution/pools/{poolId}/lock:
+    post:
+      tags: [Transaction Pools]
+      summary: Lock pool for settlement
+      description: Runs compliance check and locks the pool. No more members can be added/removed.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pool locked
+
+  /api/v1/institution/pools/{poolId}/settle:
+    post:
+      tags: [Transaction Pools]
+      summary: Settle pool (batch release)
+      description: Releases funds for all pool members. Requires settlement authority.
+      security:
+        - BearerAuth: []
+        - SettlementAuthority: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                privacyPreferences:
+                  type: object
+                  properties:
+                    useStealthAddresses:
+                      type: boolean
+      responses:
+        '200':
+          description: Settlement result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolSettlementResult'
+
+  /api/v1/institution/pools/{poolId}/retry:
+    post:
+      tags: [Transaction Pools]
+      summary: Retry failed members
+      security:
+        - BearerAuth: []
+        - SettlementAuthority: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Retry result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolSettlementResult'
+
+  /api/v1/institution/pools/{poolId}/cancel:
+    post:
+      tags: [Transaction Pools]
+      summary: Cancel pool
+      description: Refunds all pending members and cancels the pool.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pool cancelled
+
+  /api/v1/institution/pools/{poolId}/audit:
+    get:
+      tags: [Transaction Pools]
+      summary: Get pool audit log
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Audit log entries
+
+  /api/v1/institution/pools/{poolId}/sweep-status:
+    get:
+      tags: [Transaction Pools]
+      summary: Get pool settlement progress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Settlement progress
+
+  /api/v1/institution/pools/{poolId}/receipt/{escrowId}:
+    get:
+      tags: [Transaction Pools]
+      summary: Decrypt on-chain receipt
+      description: Fetches and decrypts the on-chain receipt PDA for a specific pool member.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poolId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: escrowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Decrypted receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolReceipt'
 
 components:
   parameters:
@@ -8180,6 +8654,161 @@ components:
         expiresAt:
           type: string
           format: date-time
+
+    # Transaction Pool schemas
+    TransactionPool:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        poolCode:
+          type: string
+          pattern: '^TP-[A-Z0-9]{3}-[A-Z0-9]{3}$'
+          example: 'TP-A1B-C2D'
+        clientId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [OPEN, LOCKED, SETTLING, SETTLED, PARTIAL_FAIL, FAILED, CANCELLED]
+        settlementMode:
+          type: string
+          enum: [SEQUENTIAL, PARALLEL]
+        corridor:
+          type: string
+        totalAmount:
+          type: string
+        totalFees:
+          type: string
+        memberCount:
+          type: integer
+        settledCount:
+          type: integer
+        failedCount:
+          type: integer
+        poolVaultPda:
+          type: string
+          nullable: true
+        compliancePassed:
+          type: boolean
+          nullable: true
+        poolRiskScore:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    TransactionPoolDetail:
+      allOf:
+        - $ref: '#/components/schemas/TransactionPool'
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/TransactionPoolMember'
+
+    TransactionPoolMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        escrowId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, SETTLING, SETTLED, FAILED, REMOVED]
+        amount:
+          type: string
+        platformFee:
+          type: string
+        corridor:
+          type: string
+          nullable: true
+        releaseTxSignature:
+          type: string
+          nullable: true
+        receiptPda:
+          type: string
+          nullable: true
+        sequenceNumber:
+          type: integer
+        addedAt:
+          type: string
+          format: date-time
+
+    PoolSettlementResult:
+      type: object
+      properties:
+        poolCode:
+          type: string
+        status:
+          type: string
+          enum: [SETTLED, PARTIAL_FAIL, FAILED]
+        totalMembers:
+          type: integer
+        settledCount:
+          type: integer
+        failedCount:
+          type: integer
+        totalReleased:
+          type: string
+        totalFees:
+          type: string
+        memberResults:
+          type: array
+          items:
+            type: object
+            properties:
+              escrowId:
+                type: string
+              status:
+                type: string
+              releaseTxSignature:
+                type: string
+                nullable: true
+              receiptPda:
+                type: string
+                nullable: true
+              error:
+                type: string
+                nullable: true
+
+    PoolReceipt:
+      type: object
+      properties:
+        receiptId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [Created, Settled, Failed]
+        parties:
+          type: object
+          properties:
+            payer:
+              type: string
+            recipient:
+              type: string
+        amount:
+          type: number
+        aiDigest:
+          type: string
+        riskLevel:
+          type: string
+        corridor:
+          type: string
+        commitmentHash:
+          type: string
 
   responses:
     BadRequest:
