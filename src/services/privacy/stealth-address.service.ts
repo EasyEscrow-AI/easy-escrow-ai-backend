@@ -19,6 +19,7 @@ import {
 } from './stealth-adapter';
 import { encryptKey, decryptKey } from './stealth-key-manager';
 import { isPrivacyEnabled } from '../../utils/featureFlags';
+import { loadAdminKeypair } from '../../utils/loadAdminKeypair';
 import {
   StealthMetaAddress,
   StealthPaymentResult,
@@ -448,9 +449,11 @@ export class StealthAddressService {
     );
 
     // Sweep tokens from stealth address to destination wallet
+    // Admin wallet pays tx fees — stealth addresses are ephemeral and have no SOL
     const connection = new Connection(config.solana.rpcUrl, 'confirmed');
     const tokenMint = new PublicKey(payment.tokenMint);
     const destination = new PublicKey(destinationWallet);
+    const feePayer = loadAdminKeypair('StealthSweep');
 
     const amount = Number(payment.amountRaw);
     if (!Number.isSafeInteger(amount)) {
@@ -462,6 +465,7 @@ export class StealthAddressService {
       tokenMint,
       destination,
       amount,
+      feePayer,
     });
 
     // Update payment record
