@@ -207,6 +207,96 @@ export class InstitutionAccountService {
     return { ...account, balance };
   }
 
+  async getAccountTransactions(clientId: string, accountId: string, limit: number = 20, offset: number = 0) {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { id: accountId, clientId },
+      select: { walletAddress: true },
+    });
+    if (!account) throw new Error('Account not found');
+
+    const wallet = account.walletAddress;
+
+    const [escrows, directPayments] = await Promise.all([
+      this.prisma.institutionEscrow.findMany({
+        where: {
+          clientId,
+          OR: [{ payerWallet: wallet }, { recipientWallet: wallet }],
+        },
+        select: {
+          escrowId: true, escrowCode: true, amount: true, status: true,
+          payerWallet: true, recipientWallet: true,
+          fundedAt: true, resolvedAt: true, createdAt: true,
+          depositTxSignature: true, releaseTxSignature: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit + offset,
+      }),
+      this.prisma.directPayment.findMany({
+        where: {
+          clientId,
+          OR: [{ senderWallet: wallet }, { recipientWallet: wallet }],
+        },
+        select: {
+          id: true, paymentCode: true, amount: true, currency: true, status: true,
+          sender: true, recipient: true, txHash: true, settledAt: true, createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit + offset,
+      }),
+    ]);
+
+    const txs: Array<{
+      id: string; type: string; date: string; amount: number;
+      currency: string; counterparty: string; txHash: string | null; status: string;
+    }> = [];
+
+    for (const e of escrows) {
+      const isDeposit = e.payerWallet === wallet && e.fundedAt;
+      const isRelease = e.recipientWallet === wallet && ['RELEASED', 'COMPLETE'].includes(e.status);
+      if (isDeposit) {
+        txs.push({
+          id: e.escrowCode || e.escrowId,
+          type: 'deposit',
+          date: (e.fundedAt || e.createdAt).toISOString(),
+          amount: Number(e.amount),
+          currency: 'USDC',
+          counterparty: e.recipientWallet || '',
+          txHash: e.depositTxSignature,
+          status: 'completed',
+        });
+      }
+      if (isRelease) {
+        txs.push({
+          id: e.escrowCode || e.escrowId,
+          type: 'release',
+          date: (e.resolvedAt || e.createdAt).toISOString(),
+          amount: Number(e.amount),
+          currency: 'USDC',
+          counterparty: e.payerWallet || '',
+          txHash: e.releaseTxSignature,
+          status: 'completed',
+        });
+      }
+    }
+
+    for (const p of directPayments) {
+      txs.push({
+        id: p.paymentCode || p.id,
+        type: 'direct',
+        date: (p.settledAt || p.createdAt).toISOString(),
+        amount: Number(p.amount),
+        currency: p.currency || 'USDC',
+        counterparty: p.recipient || p.sender || '',
+        txHash: p.txHash,
+        status: p.status || 'completed',
+      });
+    }
+
+    txs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return txs.slice(offset, offset + limit);
+  }
+
   async listAccounts(clientId: string, filters?: ListAccountsFilters) {
     const where: Prisma.InstitutionAccountWhereInput = { clientId };
 
