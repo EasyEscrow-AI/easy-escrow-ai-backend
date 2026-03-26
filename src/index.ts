@@ -40,6 +40,7 @@ import {
   institutionBootstrapRoutes,
   institutionSearchRoutes,
   privacyRoutes,
+  transactionPoolRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -60,6 +61,7 @@ import {
 } from './services/nonce-schedulers.service';
 import { OfferExpiryScheduler } from './services/offer-expiry-scheduler.service';
 import { getInstitutionEscrowExpiryMonitor } from './services/institution-escrow-expiry-monitor.service';
+import { getPoolExpiryMonitor } from './services/pool-expiry-monitor.service';
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
@@ -138,6 +140,17 @@ const staleOfferCleanupScheduler = StaleOfferCleanupScheduler.getInstance(
 const institutionEscrowExpiryMonitor =
   process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true'
     ? getInstitutionEscrowExpiryMonitor(prisma, {
+        schedule: '*/10 * * * *',
+        batchSize: 50,
+        timezone: process.env.TZ || 'America/Los_Angeles',
+      })
+    : null;
+
+// Initialize pool expiry monitor (gated by feature flags)
+const poolExpiryMonitor =
+  process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true' &&
+  process.env.TRANSACTION_POOLS_ENABLED === 'true'
+    ? getPoolExpiryMonitor(prisma, {
         schedule: '*/10 * * * *',
         batchSize: 50,
         timezone: process.env.TZ || 'America/Los_Angeles',
@@ -769,6 +782,13 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionBootstrapRoutes);
   app.use(institutionSearchRoutes);
   app.use(privacyRoutes);
+
+  // Transaction Pool routes (gated by TRANSACTION_POOLS_ENABLED)
+  if (process.env.TRANSACTION_POOLS_ENABLED === 'true') {
+    app.use(transactionPoolRoutes);
+    console.log('✅ Transaction pool routes enabled');
+  }
+
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled
@@ -848,6 +868,11 @@ const gracefulShutdown = async (signal: string) => {
       institutionEscrowExpiryMonitor.stop();
     }
 
+    // Stop pool expiry monitor
+    if (poolExpiryMonitor) {
+      poolExpiryMonitor.stop();
+    }
+
     // Disconnect Redis
     console.log('Disconnecting Redis...');
     await disconnectRedis();
@@ -906,6 +931,12 @@ const startServer = async () => {
           if (institutionEscrowExpiryMonitor) {
             institutionEscrowExpiryMonitor.start();
             console.log('✅ Institution escrow expiry monitor started (runs every 10 minutes)');
+          }
+
+          // Start pool expiry monitor (if enabled)
+          if (poolExpiryMonitor) {
+            poolExpiryMonitor.start();
+            console.log('✅ Pool expiry monitor started (runs every 10 minutes)');
           }
 
           // DISABLED for BETA launch - Backup scheduler

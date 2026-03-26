@@ -43,6 +43,7 @@ Cross-border stablecoin escrow payments for institutional clients.
 - ✅ Full blockchain audit of payment escrows and downloadable compliance & audit reports
 - ✅ Supports KYC/KYB compliance integrations (not activated for hackathon)
 - ✅ Supports AMINA Payment Network (APN) integrations (not activated for hackathon)
+- ✅ Transaction Pools: batch multiple escrow settlements into pooled operations with sequential/parallel settlement modes
 
 ### v1.0.0 — Atomic Swaps (October 2025)
 
@@ -80,6 +81,7 @@ Programmable cross-border stablecoin escrow payments, built for institutions com
 - **Token Support**: Primary support for USDC and AMINA-approved whitelist only tokens
 - **KYC/KYB Integrations**: Compliance integration support (not activated for hackathon)
 - **AMINA Payment Network**: APN integration support (not activated for hackathon)
+- **Transaction Pools**: Batch multiple escrow settlements into pooled operations with configurable settlement modes (sequential/parallel)
 
 ### Escrow Lifecycle
 

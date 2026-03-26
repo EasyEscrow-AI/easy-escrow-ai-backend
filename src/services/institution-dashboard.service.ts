@@ -34,6 +34,7 @@ export class InstitutionDashboardService {
       escrows24h, escrows7d, escrows30d,
       payments24h, payments7d, payments30d,
       totalClients, verifiedClients, pendingClients,
+      poolCount, poolOpenCount,
     ] = await Promise.all([
       this.prisma.institutionEscrow.findMany({
         where: { clientId },
@@ -57,6 +58,8 @@ export class InstitutionDashboardService {
       this.prisma.institutionClient.count(),
       this.prisma.institutionClient.count({ where: { kycStatus: 'VERIFIED' } }),
       this.prisma.institutionClient.count({ where: { kycStatus: 'PENDING' } }),
+      this.prisma.transactionPool.count({ where: { clientId } }),
+      this.prisma.transactionPool.count({ where: { clientId, status: 'OPEN' } }),
     ]);
 
     const totalEscrowVolume = escrows.reduce((sum: number, e: any) => sum + Number(e.amount), 0);
@@ -88,6 +91,8 @@ export class InstitutionDashboardService {
       totalPayments: escrows.length + directPayments.length,
       directCount: directPayments.length,
       escrowHeldUsd: Number(activeEscrowAgg._sum.amount || 0),
+      poolCount,
+      poolOpenCount,
     };
   }
 

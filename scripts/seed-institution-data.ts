@@ -341,6 +341,54 @@ async function main() {
   const statusCounts = shuffled.reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {} as Record<string, number>);
   console.log(`  📊 Status distribution: ${Object.entries(statusCounts).map(([k, v]) => `${k}=${v}`).join(', ')}`);
 
+  // 4. Seed transaction pools (if enabled)
+  if (process.env.TRANSACTION_POOLS_ENABLED === 'true') {
+    console.log('\n🏊 Seeding transaction pools...');
+
+    // Clean up existing seed pools
+    await prisma.transactionPoolAuditLog.deleteMany({
+      where: { pool: { poolCode: { startsWith: 'POOL-SEED' } } },
+    });
+    await prisma.transactionPoolMember.deleteMany({
+      where: { pool: { poolCode: { startsWith: 'POOL-SEED' } } },
+    });
+    await prisma.transactionPool.deleteMany({
+      where: { poolCode: { startsWith: 'POOL-SEED' } },
+    });
+
+    const enterpriseClient = seededClients.find((c) => c.email === 'demo-enterprise@bank.com');
+    if (enterpriseClient) {
+      const pool = await prisma.transactionPool.create({
+        data: {
+          poolCode: 'POOL-SEED-001',
+          clientId: enterpriseClient.id,
+          status: 'OPEN',
+          settlementMode: 'SEQUENTIAL',
+          corridor: 'SG-CH',
+          totalAmount: 0,
+          totalFees: 0,
+          memberCount: 0,
+          settledCount: 0,
+          failedCount: 0,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+
+      await prisma.transactionPoolAuditLog.create({
+        data: {
+          poolId: pool.id,
+          action: 'POOL_CREATED',
+          actor: 'seed-script',
+          details: { seeded: true } as any,
+        },
+      });
+
+      console.log(`  ✅ Pool ${pool.poolCode} created for ${enterpriseClient.companyName}`);
+    }
+  } else {
+    console.log('\n⏭️  Transaction pools disabled (TRANSACTION_POOLS_ENABLED !== true)');
+  }
+
   console.log('\n✅ Institution escrow seed data complete!');
   console.log(`   ${corridors.length} corridors configured`);
   console.log(`   ${clients.length} demo clients created`);

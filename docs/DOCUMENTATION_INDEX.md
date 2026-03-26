@@ -45,6 +45,10 @@
 - **[SECURITY_INCIDENT_CREDENTIAL_EXPOSURE.md](SECURITY_INCIDENT_CREDENTIAL_EXPOSURE.md)** - Security incident documentation
 - **[PRODUCTION_SECURITY_ROADMAP.md](deployment/PRODUCTION_SECURITY_ROADMAP.md)** - Security enhancement roadmap
 
+### Transaction Pools
+- **Transaction Pool API** - Batch escrow settlement endpoints (gated by `TRANSACTION_POOLS_ENABLED`)
+- **Pool Privacy** - Pool privacy integration documented in [PRIVACY_API.md](api/PRIVACY_API.md)
+
 ### Configuration Documentation
 - **[VERSION_VERIFICATION_COMPLETE.md](VERSION_VERIFICATION_COMPLETE.md)** - Version audit results
 - **[DEPLOYMENT_ARCHITECTURE_CLARIFICATION.md](DEPLOYMENT_ARCHITECTURE_CLARIFICATION.md)** - Architecture overview

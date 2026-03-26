@@ -37,6 +37,7 @@ import { resolveReleaseDestination } from './privacy/privacy-router.service';
 import { getStealthAddressService } from './privacy/stealth-address.service';
 import { PrivacyLevel, PrivacyPreferences } from './privacy/privacy.types';
 import { isPrivacyEnabled } from '../utils/featureFlags';
+import type { PoolContext } from '../types/transaction-pool';
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
 const ESCROW_CACHE_TTL = 300; // 5 minutes
@@ -1458,7 +1459,8 @@ export class InstitutionEscrowService {
     idOrCode: string,
     notes?: string,
     actorEmail?: string,
-    privacyPreferences?: PrivacyPreferences
+    privacyPreferences?: PrivacyPreferences,
+    poolContext?: PoolContext,
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1469,6 +1471,26 @@ export class InstitutionEscrowService {
       throw new Error(
         `Cannot release: escrow status is ${escrow.status}, expected FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS`
       );
+    }
+
+    // Pool context: validate pool membership if provided
+    if (poolContext?.poolId) {
+      const poolMember = await prisma.transactionPoolMember.findFirst({
+        where: { poolId: poolContext.poolId, escrowId },
+      });
+      if (!poolMember) {
+        throw new Error(`Escrow ${escrowId} is not a member of pool ${poolContext.poolId}`);
+      }
+    }
+
+    // Pool context: skip on-chain release when pool handles batched settlement
+    if (poolContext?.skipOnChainRelease) {
+      await this.createKytAuditLog(escrow, 'POOL_RELEASE_DEFERRED', actorEmail || 'system', {
+        poolId: poolContext.poolId,
+        memberId: poolContext.memberId,
+        message: 'On-chain release deferred to pool settlement',
+      });
+      return { escrowId, status: escrow.status, poolDeferral: true };
     }
 
     // Track AI analysis for chain-of-custody memo digest

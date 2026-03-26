@@ -131,6 +131,12 @@ Located in `/docs/api/`
 - **[Webhook Events](api/WEBHOOK_EVENTS.md)** - Webhook event types and payloads
 - **[Manual Trigger Endpoints](api/MANUAL_TRIGGER_ENDPOINTS.md)** - Manual trigger API reference
 - **[OpenAPI Specification](api/openapi.yaml)** - OpenAPI 3.0 specification
+- **[Privacy API](api/PRIVACY_API.md)** - Privacy and stealth address API reference
+
+### 🏊 Transaction Pools
+Located in `/docs/api/`
+
+- **Transaction Pool API** - Batch escrow settlement endpoints (see OpenAPI spec)
 
 ### ⚙️ Operations
 Located in `/docs/operations/`

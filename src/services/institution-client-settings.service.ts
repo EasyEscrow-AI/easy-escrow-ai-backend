@@ -28,6 +28,9 @@ const ALLOWED_SETTINGS_FIELDS = [
   'minFeeUsdc',
   'maxFeeUsdc',
   'notificationPreferences',
+  'poolDefaultSettlementMode',
+  'poolDefaultExpiryHours',
+  'poolMaxMembers',
 ] as const;
 
 const DEFAULT_NOTIFICATION_PREFERENCES = [

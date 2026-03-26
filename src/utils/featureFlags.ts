@@ -57,6 +57,14 @@ export function isPrivacyEnabled(): boolean {
 }
 
 /**
+ * Check if transaction pools are enabled.
+ * Gated by TRANSACTION_POOLS_ENABLED env var (requires INSTITUTION_ESCROW_ENABLED too).
+ */
+export function isTransactionPoolsEnabled(): boolean {
+  return process.env.TRANSACTION_POOLS_ENABLED === 'true';
+}
+
+/**
  * Log the current state of JITO bundles feature flag.
  * Useful for debugging and startup diagnostics.
  */
