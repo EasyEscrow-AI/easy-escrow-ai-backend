@@ -31,8 +31,9 @@ const SEED_MARKER_ACTION = 'OPTIMUS_EXCHANGE_SEED';
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Deterministic fake Solana address — derives a valid Ed25519 keypair from a seed string */
+/** Returns a real devnet wallet if mapped, otherwise derives a deterministic Ed25519 address */
 function fakeWallet(seed: string): string {
+  if (REAL_WALLETS[seed]) return REAL_WALLETS[seed];
   const hash = createHash('sha256').update(seed).digest();
   return Keypair.fromSeed(hash).publicKey.toBase58();
 }
@@ -77,6 +78,32 @@ function deterministicUuid(seed: string): string {
 
 // Staging USDC mint
 const USDC_MINT = process.env.USDC_MINT_ADDRESS || '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'; // devnet USDC default
+
+// Real devnet wallets with USDC balances (for realistic balance display)
+// Source: largest USDC token holders on devnet, resolved via getTokenLargestAccounts
+const REAL_WALLETS: Record<string, string> = {
+  // Optimus Exchange accounts
+  'optimus-primary':       'DBD8hAwLDRQkTsu6EqviaYNGKPnsAMmQonxf7AH8ZcFY',
+  'optimus-ch-treasury':   'E1bQJ8eMMn3zmeSewW3HQ8zmJr7KR75JonbwAtWx2bux',
+  'optimus-ch-settlement': '7wgr184vtmpXpXLoijuvNGznpSsdFUguRQKtxV6eMAJt',
+  'optimus-us-treasury':   'HzcTrHjkEhjFTHEsC6Dsv8DXCh21WgujD4s5M15Sm94g',
+  'optimus-us-ops':        '9RDLNDCUsr3BrwaMyKUGeKDtWFSdKk7FtVesSauBVphc',
+  'optimus-sg-treasury':   'FbafJHTK139tKFoaHiyDQZKCiuQQGUT7n5zoWTPvsw7d',
+  'optimus-gb-settlement': '3Qp3e2oBhq68a2JaKdooQKGffYwZ3KcCAwedgZ6Z329m',
+  'optimus-ae-ops':        '9XHMRErX7kEeB3hgbNG18p1phNp6Ea3zwzKxVT3L914i',
+  // Counterparty clients
+  'globaltrade-sg':        'HMG8N4y5thAb2Szn5h8pBYpMJKpxTMwzkhfC3qT8waqv',
+  'pacificrim-exports-sg': 'B9fmi8FKQiL4ConStaro2tZDD3V3vkVrXEwZJM5GsCwT',
+  'eurolink-de':           '8a9boee9Mry1Kgbp5dbdVca3FmCWgTY7Q25u8Apt6H3i',
+  'swiss-precision-ch':    'H2knp7o4asKD79eo1PSPAFcahqAXgk6eQUkCcmAExXFU',
+  'med-logistics-it':      '6B9tFQfQEDBmC6kpj77cUJ5roqyEJBcUZ4gbRUqXwjaj',
+  'tokyo-digital-jp':      '2xuXUonVks6zJFXH6D62nnLT5VRt8NLQ96c2xUnwdnKf',
+  'londonbridge-gb':       '2vcbNe6R2nf9RN2Cfo3cwEH9GroyCaTSEVkymQ1mAprf',
+  'gulftrade-ae':          '6EbhsCu7nDMRYGNXkBNBtcx1gubjrUfR8aQ2ZfPzg2Ur',
+  'nordic-se':             'H3sjyipQtXAJkvWNkXhDgped7k323kAba8QMwCLcV79w',
+  'sahara-ng':             'va1yPZsd2qieP5pE6gtxvAHkHKEW3qmtoZy3oN1GcBX',
+  'moscow-ru':             'CkUW7dZtrpdTAw72fsxQqFJ6YE74v7479uBwYXpfBBsB',
+};
 
 // ---------------------------------------------------------------------------
 // Main seeder
