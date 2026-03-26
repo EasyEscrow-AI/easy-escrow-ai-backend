@@ -25,6 +25,11 @@ interface CorridorSeed {
   eddThreshold: number;
   reportingThreshold: number;
   riskReason: string;
+  description?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  dailyLimit?: number;
+  monthlyLimit?: number;
 }
 
 const corridors: CorridorSeed[] = [
@@ -125,13 +130,16 @@ const corridors: CorridorSeed[] = [
     name: 'Switzerland \u2192 United States',
     sourceCountry: 'CH',
     destCountry: 'US',
-    compliance: 'FINMA + FinCEN',
+    compliance: 'FINMA + FinCEN/OCC',
     riskLevel: 'LOW',
     travelRuleThreshold: 1000,
     eddThreshold: 10000,
-    reportingThreshold: 15000,
+    reportingThreshold: 10000,
     riskReason:
-      'FinCEN BSA requirements \u2014 well-defined but strict AML/KYC obligations for US-bound transfers',
+      'FINMA Payment Instrument Institution license (CH) + OCC Permitted Payment Stablecoin Issuer (US). Strict AML/KYC under BSA. Foreign issuers prohibited in US until July 18 2028 unless OCC-registered.',
+    description:
+      'Institutional corridor under 2026 regulatory framework. CH: FINMA Payment Instrument Institution license (replaces Fintech license), no deposit cap (CHF 100M limit removed late 2025), 1:1 reserves in segregated bankruptcy-remote accounts, yield prohibited. US: OCC PPSI license, $10B issuance cap for state-regulated issuers, 1:1 reserves in fiat or HQLA, yield prohibited. Travel Rule: CHF 1,000 (CH) / $3,000 (US). Cross-border access via supervised custodians (CH); foreign issuers prohibited until July 18 2028 unless OCC-registered.',
+    minAmount: 500,
   },
   {
     code: 'CH-GB',
@@ -697,6 +705,11 @@ async function seed() {
         travelRuleThreshold: c.travelRuleThreshold,
         eddThreshold: c.eddThreshold,
         reportingThreshold: c.reportingThreshold,
+        ...(c.description !== undefined && { description: c.description }),
+        ...(c.minAmount !== undefined && { minAmount: c.minAmount }),
+        ...(c.maxAmount !== undefined && { maxAmount: c.maxAmount }),
+        ...(c.dailyLimit !== undefined && { dailyLimit: c.dailyLimit }),
+        ...(c.monthlyLimit !== undefined && { monthlyLimit: c.monthlyLimit }),
       },
       create: {
         code: c.code,
@@ -709,10 +722,11 @@ async function seed() {
         travelRuleThreshold: c.travelRuleThreshold,
         eddThreshold: c.eddThreshold,
         reportingThreshold: c.reportingThreshold,
-        minAmount: 10, // $10 minimum
-        maxAmount: 100000000, // $100M maximum
-        dailyLimit: 10000000, // $10M daily
-        monthlyLimit: 100000000, // $100M monthly
+        description: c.description || null,
+        minAmount: c.minAmount ?? 10, // $10 default minimum
+        maxAmount: c.maxAmount ?? 100000000, // $100M default maximum
+        dailyLimit: c.dailyLimit ?? 10000000, // $10M default daily
+        monthlyLimit: c.monthlyLimit ?? 100000000, // $100M default monthly
         status: 'ACTIVE',
       },
     });

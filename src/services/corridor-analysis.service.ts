@@ -34,7 +34,7 @@ const COUNTRY_REGULATORS: Record<string, string> = {
   IT: 'Banca d\'Italia',
   JP: 'FSA',
   SG: 'MAS',
-  US: 'FinCEN',
+  US: 'FinCEN/OCC',
 };
 
 const RISK_LEVEL_SCORES: Record<string, number> = {
@@ -134,20 +134,23 @@ export class CorridorAnalysisService {
         riskScore += 5;
       }
 
-      if (amount >= EDD_THRESHOLD) {
+      const corridorEdd = Number(corridor.eddThreshold) || EDD_THRESHOLD;
+      const corridorReporting = Number(corridor.reportingThreshold) || REPORTING_THRESHOLD;
+
+      if (amount >= corridorEdd) {
         factors.push({
           label: 'Enhanced due diligence threshold',
           impact: 'MEDIUM',
-          detail: `Amount of $${amount.toLocaleString()} triggers EDD requirements (threshold: $${EDD_THRESHOLD.toLocaleString()}).`,
+          detail: `Amount of $${amount.toLocaleString()} triggers EDD requirements (threshold: $${corridorEdd.toLocaleString()}).`,
         });
         riskScore += 5;
       }
 
-      if (amount >= REPORTING_THRESHOLD) {
+      if (amount >= corridorReporting) {
         factors.push({
           label: 'Reporting threshold',
           impact: 'MEDIUM',
-          detail: `Amount of $${amount.toLocaleString()} may trigger regulatory reporting requirements (threshold: $${REPORTING_THRESHOLD.toLocaleString()}).`,
+          detail: `Amount of $${amount.toLocaleString()} may trigger regulatory reporting requirements (threshold: $${corridorReporting.toLocaleString()}).`,
         });
         riskScore += 5;
       }
@@ -176,28 +179,39 @@ export class CorridorAnalysisService {
 
     const finalRiskLevel = riskScore <= 10 ? 'LOW' : riskScore <= 25 ? 'MEDIUM' : 'HIGH';
 
-    const description = riskLevel === 'LOW'
-      ? `Established ${fromName}–${toName} corridor`
-      : riskLevel === 'HIGH'
-        ? `Higher-risk ${fromName}–${toName} corridor requiring enhanced oversight`
-        : `Standard ${fromName}–${toName} corridor`;
+    // Use corridor DB values if available, fall back to env vars
+    const travelRuleThreshold = Number(corridor.travelRuleThreshold) || TRAVEL_RULE_THRESHOLD;
+    const eddThreshold = Number(corridor.eddThreshold) || EDD_THRESHOLD;
+    const reportingThreshold = Number(corridor.reportingThreshold) || REPORTING_THRESHOLD;
 
-    const riskReason = riskLevel === 'LOW'
-      ? 'Well-regulated outbound corridor'
-      : riskLevel === 'HIGH'
-        ? 'Elevated regulatory requirements between jurisdictions'
-        : 'Moderate regulatory environment';
+    // Use corridor DB description/riskReason if available, fall back to generated text
+    const description = corridor.description
+      || (riskLevel === 'LOW'
+        ? `Established ${fromName}–${toName} corridor`
+        : riskLevel === 'HIGH'
+          ? `Higher-risk ${fromName}–${toName} corridor requiring enhanced oversight`
+          : `Standard ${fromName}–${toName} corridor`);
+
+    const riskReason = corridor.riskReason
+      || (riskLevel === 'LOW'
+        ? 'Well-regulated outbound corridor'
+        : riskLevel === 'HIGH'
+          ? 'Elevated regulatory requirements between jurisdictions'
+          : 'Moderate regulatory environment');
+
+    // Use corridor DB compliance if available, fall back to generated
+    const compliance = corridor.compliance || `${fromRegulator} + ${toRegulator}`;
 
     return {
       corridorCode,
       corridorName: `${fromName} → ${toName}`,
-      compliance: `${fromRegulator} + ${toRegulator}`,
+      compliance,
       description,
       corridorRisk,
       riskReason,
-      travelRuleThreshold: TRAVEL_RULE_THRESHOLD,
-      eddThreshold: EDD_THRESHOLD,
-      reportingThreshold: REPORTING_THRESHOLD,
+      travelRuleThreshold,
+      eddThreshold,
+      reportingThreshold,
       riskScore,
       riskLevel: finalRiskLevel,
       factors,

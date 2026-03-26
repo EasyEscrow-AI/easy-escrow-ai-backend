@@ -59,7 +59,21 @@ async function flush() {
     }
     console.log(`   agreement:*                        → ${agreementKeys.length} keys cleared`);
 
-    const total = allowlistDel + metaKeys.length + balanceKeys.length + pauseDel + cacheKeys.length + agreementKeys.length;
+    // 7. AI analysis caches (stale after corridor/escrow reseed)
+    const aiKeys = await redis.keys('institution:ai:analysis:*');
+    if (aiKeys.length > 0) {
+      await redis.del(...aiKeys);
+    }
+    console.log(`   institution:ai:analysis:*          → ${aiKeys.length} keys cleared`);
+
+    // 8. AI rate limit counters
+    const aiRateLimitKeys = await redis.keys('institution:ai:ratelimit:*');
+    if (aiRateLimitKeys.length > 0) {
+      await redis.del(...aiRateLimitKeys);
+    }
+    console.log(`   institution:ai:ratelimit:*         → ${aiRateLimitKeys.length} keys cleared`);
+
+    const total = allowlistDel + metaKeys.length + balanceKeys.length + pauseDel + cacheKeys.length + agreementKeys.length + aiKeys.length + aiRateLimitKeys.length;
     console.log(`\n✅ Cache flush complete (${total} keys cleared)`);
   } catch (err: any) {
     console.error(`❌ Redis flush failed: ${err.message}`);
