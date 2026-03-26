@@ -1,6 +1,7 @@
 export const testCorridors = {
   sgCh: {
     code: 'SG-CH',
+    name: 'Singapore → Switzerland',
     minAmount: 100,
     maxAmount: 1000000,
     riskLevel: 'LOW',
@@ -13,6 +14,7 @@ export const testCorridors = {
   },
   usMx: {
     code: 'US-MX',
+    name: 'United States → Mexico',
     minAmount: 100,
     maxAmount: 500000,
     riskLevel: 'MEDIUM',
