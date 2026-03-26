@@ -259,8 +259,15 @@ export class InstitutionEscrowService {
       // Fall back to defaults if settings lookup fails
     }
 
-    const rawFee = (amount * feeBps) / 10000;
-    return Math.min(maxFee, Math.max(minFee, rawFee));
+    // Use integer arithmetic to avoid floating-point rounding errors.
+    // Convert amount to micro-USDC (6 decimals), apply BPS, then convert back.
+    // E.g. 599.99 USDC * 20 bps: 599990000 * 20 / 10000 = 1199980 micro = 1.199980 USDC
+    const amountMicro = Math.round(amount * 1_000_000);
+    const feeMicro = Math.floor(amountMicro * feeBps / 10000);
+    const rawFee = feeMicro / 1_000_000;
+    // Round to 6 decimal places (USDC precision) to prevent float drift
+    const fee = Math.round(Math.min(maxFee, Math.max(minFee, rawFee)) * 1_000_000) / 1_000_000;
+    return fee;
   }
 
   /**
@@ -1079,13 +1086,22 @@ export class InstitutionEscrowService {
       throw new Error('Program service not available');
     }
 
+    if (!config.platform.feeCollectorAddress) {
+      throw new Error('Platform feeCollectorAddress is not configured');
+    }
+
     const payerWallet = toPublicKey(escrow.payerWallet, 'payerWallet');
     const usdcMint = programService.getUsdcMintAddress();
+    const feeCollector = toPublicKey(
+      config.platform.feeCollectorAddress,
+      'feeCollectorAddress'
+    );
 
     const tx = await programService.buildDepositTransaction({
       escrowId,
       payer: payerWallet,
       usdcMint,
+      feeCollector,
       memo: escrow.escrowCode ? `EasyEscrow:deposit:${escrow.escrowCode}` : undefined,
     });
 
@@ -1545,23 +1561,16 @@ export class InstitutionEscrowService {
     }
 
     // Execute on-chain release (transfer USDC from vault to recipient)
+    // Fee was already collected at deposit time — release just sends vault balance to recipient
     let releaseTxSig: string | null = null;
     const releaseProgramService = this.getProgramService();
     if (releaseProgramService && escrow.escrowPda) {
       try {
-        if (!config.platform.feeCollectorAddress) {
-          throw new Error('Platform feeCollectorAddress is not configured');
-        }
-        const feeCollector = toPublicKey(
-          config.platform.feeCollectorAddress,
-          'feeCollectorAddress'
-        );
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         const aiDigest = buildAiDigest(aiAnalysisForMemo);
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
           recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
-          feeCollector,
           usdcMint,
           escrowCode: escrow.escrowCode,
           aiDigest,
