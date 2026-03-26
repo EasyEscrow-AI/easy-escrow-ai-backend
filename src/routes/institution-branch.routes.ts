@@ -1,7 +1,7 @@
 /**
  * Institution Branch Routes
  *
- * GET /api/v1/institution/branches -> List branches with accounts
+ * GET /api/v1/institution/branches -> List branches with optional filters
  */
 
 import { Router, Response } from 'express';
@@ -35,8 +35,29 @@ router.get(
   requireInstitutionAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
+      const { riskLevel, isHeadquarters, isActive } = req.query;
+
+      const where: any = { clientId: req.institutionClient!.clientId };
+
+      // Filter by risk level → map to riskScore range
+      if (typeof riskLevel === 'string') {
+        const level = riskLevel.toLowerCase();
+        if (level === 'low') where.riskScore = { lte: 20 };
+        else if (level === 'medium') where.riskScore = { gt: 20, lte: 50 };
+        else if (level === 'high') where.riskScore = { gt: 50 };
+        else if (level === 'blocked') where.complianceStatus = 'BLOCKED';
+      }
+
+      if (typeof isHeadquarters === 'string') {
+        where.isHeadquarters = isHeadquarters === 'true';
+      }
+
+      if (typeof isActive === 'string') {
+        where.isActive = isActive === 'true';
+      }
+
       const branches = await prisma.institutionBranch.findMany({
-        where: { clientId: req.institutionClient!.clientId },
+        where,
         include: {
           accounts: {
             where: { isActive: true },
@@ -52,13 +73,30 @@ router.get(
             },
           },
         },
-        orderBy: { createdAt: 'asc' },
+        orderBy: [{ isHeadquarters: 'desc' }, { createdAt: 'asc' }],
       });
 
-      const data = branches.map((branch, index) => ({
-        ...branch,
+      const data = branches.map((branch) => ({
+        id: branch.id,
+        clientId: branch.clientId,
+        name: branch.name,
+        label: branch.label ?? branch.name,
+        city: branch.city,
+        country: branch.country,
+        countryCode: branch.countryCode,
+        address: branch.address,
+        timezone: branch.timezone,
         riskLevel: riskScoreToLevel(branch.riskScore),
-        isHeadquarters: index === 0,
+        complianceStatus: branch.complianceStatus,
+        complianceNote: branch.complianceNote,
+        isSanctioned: branch.isSanctioned,
+        sanctionReason: branch.sanctionReason,
+        regulatoryBody: branch.regulatoryBody,
+        isHeadquarters: branch.isHeadquarters,
+        isActive: branch.isActive,
+        createdAt: branch.createdAt,
+        updatedAt: branch.updatedAt,
+        accounts: branch.accounts,
       }));
 
       res.status(200).json({
