@@ -544,6 +544,71 @@ RESPONSE FORMAT (valid JSON only, no other text):
       result = anonymizer.deanonymizeResult(result) as EscrowAnalysisResult;
     }
 
+    // Enforce deterministic rules engine verdicts over AI assessment.
+    // The AI may assign "high_risk" where the rules engine says "blocked"
+    // (e.g., amount below corridor minimum). Rules engine "blocked" always wins.
+    const escrowData: EscrowData = {
+      status: escrow.status,
+      amount: Number(escrow.amount),
+      platformFee: Number(escrow.platformFee),
+      tokenMint: escrow.usdcMint,
+      corridor: escrow.corridor,
+      conditionType: escrow.conditionType,
+      settlementAuthority: escrow.settlementAuthority,
+      riskScore: escrow.riskScore,
+      payerWallet: escrow.payerWallet,
+      recipientWallet: escrow.recipientWallet,
+      hasDeposit: escrow.deposits.length > 0,
+      depositCount: escrow.deposits.length,
+      fileCount: escrow.files.length,
+      expiresAt: escrow.expiresAt?.toISOString() ?? null,
+      depositTxSignature: escrow.depositTxSignature,
+      escrowPda: escrow.escrowPda,
+      nonceAccount: escrow.nonceAccount,
+      client: {
+        kycStatus: escrow.client.kycStatus,
+        kybStatus: (escrow.client as any).kybStatus,
+        riskRating: (escrow.client as any).riskRating,
+        country: escrow.client.country,
+        entityType: (escrow.client as any).entityType,
+        tier: escrow.client.tier,
+      },
+      availableCorridors: availableCorridors.length > 0 ? availableCorridors : null,
+    };
+    const rulesResult = evaluateEscrow(escrowData);
+
+    if (result.sections) {
+      const sectionKeys = [
+        'account_verifications',
+        'transaction_amount',
+        'payment_corridor',
+        'release_conditions',
+      ] as const;
+      for (const key of sectionKeys) {
+        const ruleSection = rulesResult.sections[key];
+        const aiSection = (result.sections as any)[key];
+        if (ruleSection?.risk === 'blocked' && aiSection && aiSection.risk !== 'blocked') {
+          aiSection.risk = 'blocked';
+          aiSection.finding = ruleSection.finding;
+        }
+      }
+      // Recalculate overall: if any section is blocked, overall must be blocked
+      const allSections = sectionKeys.map((k) => (result.sections as any)[k]).filter(Boolean);
+      if (allSections.some((s: any) => s.risk === 'blocked')) {
+        const blockedTitles = allSections
+          .filter((s: any) => s.risk === 'blocked')
+          .map((s: any) => s.title);
+        (result.sections as any).overall = {
+          risk: 'blocked',
+          title: 'Overall Compliance',
+          finding: `Cannot proceed — blocked by: ${blockedTitles.join(', ')}.`,
+        };
+        result.risk = 'blocked';
+        result.riskScore = 95;
+        result.recommendation = 'REJECT';
+      }
+    }
+
     // Store
     await this.prisma.institutionAiAnalysis.create({
       data: {

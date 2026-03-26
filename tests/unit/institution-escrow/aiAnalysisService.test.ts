@@ -723,6 +723,110 @@ describe('AiAnalysisService', () => {
 
       delete process.env.ANTHROPIC_API_KEY;
     });
+
+    it('should enforce rules engine blocked over AI high_risk for corridor minimum', async () => {
+      // Set up corridor with $500 minimum
+      prismaStub.institutionCorridor.findMany.resolves([
+        { code: 'SG-CH', riskLevel: 'LOW', minAmount: 500, maxAmount: 1000000 },
+      ]);
+
+      // Escrow amount is $100 — below corridor minimum of $500
+      prismaStub.institutionEscrow.findFirst.resolves({
+        escrowId: ESCROW_ID,
+        escrowCode: 'EE-TST-001',
+        clientId: CLIENT_ID,
+        amount: 100,
+        platformFee: 1,
+        usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+        corridor: 'SG-CH',
+        conditionType: 'ADMIN_RELEASE',
+        settlementAuthority: 'settlement-auth',
+        status: 'CREATED',
+        riskScore: 25,
+        payerWallet: 'payer-wallet-123',
+        recipientWallet: 'recipient-wallet-456',
+        depositTxSignature: null,
+        escrowPda: null,
+        nonceAccount: null,
+        expiresAt: new Date(Date.now() + 86400000),
+        createdAt: new Date(),
+        fundedAt: null,
+        resolvedAt: null,
+        deposits: [],
+        files: [],
+        client: {
+          companyName: 'Test Corp',
+          legalName: 'Test Corporation Ltd',
+          country: 'SG',
+          industry: 'Technology',
+          tier: 'STANDARD',
+          kycStatus: 'VERIFIED',
+          kybStatus: 'VERIFIED',
+          riskRating: 'LOW',
+          entityType: 'CORPORATION',
+        },
+      });
+      prismaStub.institutionAiAnalysis.findFirst.resolves(null);
+
+      // AI returns high_risk instead of blocked for corridor
+      const mockResponse = {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              risk: 'high_risk',
+              summary: 'Amount below corridor minimum.',
+              sections: {
+                overall: {
+                  risk: 'high_risk',
+                  title: 'Overall Compliance',
+                  finding: 'High risk due to corridor violation.',
+                },
+                account_verifications: {
+                  risk: 'low_risk',
+                  title: 'Account Verifications',
+                  finding: 'Both parties verified.',
+                },
+                transaction_amount: {
+                  risk: 'low_risk',
+                  title: 'Transaction Amount',
+                  finding: '$100 within auto-approval range.',
+                },
+                payment_corridor: {
+                  risk: 'high_risk',
+                  title: 'Payment Corridor',
+                  finding: 'Amount below corridor minimum.',
+                },
+                release_conditions: {
+                  risk: 'low_risk',
+                  title: 'Release Conditions',
+                  finding: 'ADMIN_RELEASE configured.',
+                },
+              },
+              extracted_fields: { escrow_status: 'CREATED', amount_usd: 100 },
+            }),
+          },
+        ],
+      };
+
+      const anthropicStub = {
+        messages: { create: sandbox.stub().resolves(mockResponse) },
+      };
+      (service as any).anthropic = anthropicStub;
+      process.env.ANTHROPIC_API_KEY = 'test-key';
+
+      const result = await service.analyzeEscrow(ESCROW_ID, CLIENT_ID);
+
+      // Rules engine should enforce "blocked" over AI's "high_risk"
+      expect(result.risk).to.equal('blocked');
+      expect(result.riskScore).to.equal(95);
+      expect(result.recommendation).to.equal('REJECT');
+      expect((result.sections as any).payment_corridor.risk).to.equal('blocked');
+      expect((result.sections as any).overall.risk).to.equal('blocked');
+      expect((result.sections as any).overall.finding).to.include('Payment Corridor');
+
+      delete process.env.ANTHROPIC_API_KEY;
+    });
   });
 
   // ─── getEscrowAnalysis ──────────────────────────────────────
