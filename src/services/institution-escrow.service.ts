@@ -2603,16 +2603,24 @@ export class InstitutionEscrowService {
         nonceAccount: e.nonceAccount,
         authority: e.settlementAuthority,
       },
-      release: {
-        mode: e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual'),
-        conditionType: e.conditionType,
-        approvalParties: e.approvalParties || [],
-        conditions: e.releaseConditions || [],
-        conditionLabels: (e.releaseConditions || []).map(
-          (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
-        ),
-        instructions: e.approvalInstructions || null,
-      },
+      release: (() => {
+        const mode = e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual');
+        const rawConditions: string[] = e.releaseConditions || [];
+        // For AI mode, legal_compliance is always required even if not explicitly in the array
+        const conditions = mode === 'ai' && !rawConditions.includes('legal_compliance')
+          ? ['legal_compliance', ...rawConditions]
+          : rawConditions;
+        return {
+          mode,
+          conditionType: e.conditionType,
+          approvalParties: e.approvalParties || [],
+          conditions,
+          conditionLabels: conditions.map(
+            (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
+          ),
+          instructions: e.approvalInstructions || null,
+        };
+      })(),
       privacy: {
         level: e.privacyLevel || 'NONE',
         stealthPaymentId: e.stealthPaymentId || null,
