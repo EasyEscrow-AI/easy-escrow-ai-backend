@@ -659,7 +659,11 @@ RESPONSE FORMAT (valid JSON only, no other text):
       }
     }
 
-    // Store
+    // Store — persist sections alongside extractedFields for the escrow detail endpoint
+    const storedExtractedFields = {
+      ...(result.extractedFields as Record<string, unknown>),
+      ...(result.sections && { _sections: result.sections }),
+    };
     await this.prisma.institutionAiAnalysis.create({
       data: {
         analysisType: 'ESCROW',
@@ -668,7 +672,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
         riskScore: result.riskScore,
         factors: result.factors,
         recommendation: result.recommendation,
-        extractedFields: result.extractedFields as any,
+        extractedFields: storedExtractedFields as any,
         summary: result.summary,
         model,
       },
