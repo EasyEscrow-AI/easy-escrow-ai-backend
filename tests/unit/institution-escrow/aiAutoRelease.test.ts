@@ -197,3 +197,182 @@ describe('AI Auto-Release Flow', () => {
     expect(releaseFundsStub.calledOnce).to.be.true;
   });
 });
+
+describe('AI Release Check — Document Verification', () => {
+  let sandbox: sinon.SinonSandbox;
+  let service: InstitutionEscrowService;
+  let prismaStub: any;
+  let aiServiceStub: any;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    prismaStub = {
+      institutionEscrow: {
+        findUnique: sandbox.stub(),
+        findFirst: sandbox.stub(),
+      },
+      institutionClient: {
+        findUnique: sandbox.stub().resolves({
+          id: CLIENT_ID,
+          companyName: 'Optimus Exchange AG',
+          legalName: 'Optimus Exchange AG',
+          country: 'CH',
+          primaryWallet: PAYER_WALLET,
+          settledWallets: [],
+        }),
+        findFirst: sandbox.stub().resolves(null),
+      },
+      institutionAccount: {
+        findFirst: sandbox.stub().resolves(null),
+        findMany: sandbox.stub().resolves([]),
+      },
+      institutionFile: {
+        findFirst: sandbox.stub().resolves({
+          id: 'file-invoice',
+          fileName: 'invoice001.pdf',
+          documentType: 'INVOICE',
+          clientId: CLIENT_ID,
+          uploadedAt: new Date(),
+        }),
+      },
+      institutionAuditLog: {
+        create: sandbox.stub().resolves({}),
+      },
+    };
+
+    service = new InstitutionEscrowService();
+    (service as any).prisma = prismaStub;
+
+    // Mock AI analysis service
+    aiServiceStub = {
+      analyzeEscrow: sandbox.stub().resolves({
+        riskScore: 15,
+        recommendation: 'APPROVE',
+        summary: 'Low risk transaction',
+        extractedFields: {},
+        factors: [],
+      }),
+      analyzeDocument: sandbox.stub(),
+    };
+
+    // Replace the module-level getter
+    const aiModule = require('../../../src/services/ai-analysis.service');
+    sandbox.stub(aiModule, 'getAiAnalysisService').returns(aiServiceStub);
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('should pass invoice_amount_match when document amount matches escrow', async () => {
+    const escrow = makeEscrow({
+      amount: 500,
+      releaseMode: 'ai',
+      releaseConditions: ['invoice_amount_match'],
+    });
+
+    aiServiceStub.analyzeDocument.resolves({
+      riskScore: 10,
+      recommendation: 'APPROVE',
+      extractedFields: { total_amount: 500, currency: 'USDC', counterparty_name: 'Satoshi Bridge Labs Inc' },
+      factors: [],
+    });
+
+    const result = await (service as any).performAiReleaseCheck(escrow, CLIENT_ID);
+
+    expect(result.passed).to.be.true;
+    const amountCheck = result.conditions.find((c: any) => c.condition === 'invoice_amount_match');
+    expect(amountCheck).to.exist;
+    expect(amountCheck.passed).to.be.true;
+    expect(amountCheck.detail).to.include('500');
+  });
+
+  it('should FAIL invoice_amount_match when document amount differs from escrow', async () => {
+    const escrow = makeEscrow({
+      amount: 500,
+      releaseMode: 'ai',
+      releaseConditions: ['invoice_amount_match'],
+    });
+
+    // Invoice says $750 but escrow is $500
+    aiServiceStub.analyzeDocument.resolves({
+      riskScore: 50,
+      recommendation: 'REVIEW',
+      extractedFields: { total_amount: 750, currency: 'USDC', counterparty_name: 'Wrong Corp' },
+      factors: [],
+    });
+
+    const result = await (service as any).performAiReleaseCheck(escrow, CLIENT_ID);
+
+    expect(result.passed).to.be.false;
+    const amountCheck = result.conditions.find((c: any) => c.condition === 'invoice_amount_match');
+    expect(amountCheck).to.exist;
+    expect(amountCheck.passed).to.be.false;
+    expect(amountCheck.detail).to.include('does not match');
+  });
+
+  it('should pass client_info_match when document sender and recipient match escrow parties', async () => {
+    const escrow = makeEscrow({
+      amount: 500,
+      releaseMode: 'ai',
+      releaseConditions: ['client_info_match'],
+    });
+
+    aiServiceStub.analyzeDocument.resolves({
+      riskScore: 10,
+      recommendation: 'APPROVE',
+      extractedFields: { total_amount: 500, sender_name: 'Optimus Exchange AG', recipient_name: 'Some Recipient' },
+      factors: [],
+    });
+
+    const result = await (service as any).performAiReleaseCheck(escrow, CLIENT_ID);
+
+    expect(result.passed).to.be.true;
+    const clientCheck = result.conditions.find((c: any) => c.condition === 'client_info_match');
+    expect(clientCheck).to.exist;
+    expect(clientCheck.passed).to.be.true;
+    expect(clientCheck.detail).to.include('Optimus Exchange AG');
+  });
+
+  it('should FAIL client_info_match when document sender does not match', async () => {
+    const escrow = makeEscrow({
+      amount: 500,
+      releaseMode: 'ai',
+      releaseConditions: ['client_info_match'],
+    });
+
+    aiServiceStub.analyzeDocument.resolves({
+      riskScore: 10,
+      recommendation: 'APPROVE',
+      extractedFields: { total_amount: 500, sender_name: 'Phantom Industries Ltd', recipient_name: 'Unknown Corp' },
+      factors: [],
+    });
+
+    const result = await (service as any).performAiReleaseCheck(escrow, CLIENT_ID);
+
+    expect(result.passed).to.be.false;
+    const clientCheck = result.conditions.find((c: any) => c.condition === 'client_info_match');
+    expect(clientCheck).to.exist;
+    expect(clientCheck.passed).to.be.false;
+    expect(clientCheck.detail).to.include('does not match');
+  });
+
+  it('should FAIL when no document is uploaded but document conditions are selected', async () => {
+    const escrow = makeEscrow({
+      amount: 500,
+      releaseMode: 'ai',
+      releaseConditions: ['invoice_amount_match', 'client_info_match'],
+    });
+
+    // No file found
+    prismaStub.institutionFile.findFirst.resolves(null);
+
+    const result = await (service as any).performAiReleaseCheck(escrow, CLIENT_ID);
+
+    expect(result.passed).to.be.false;
+    const amountCheck = result.conditions.find((c: any) => c.condition === 'invoice_amount_match');
+    expect(amountCheck.passed).to.be.false;
+    expect(amountCheck.detail).to.include('not found');
+  });
+});

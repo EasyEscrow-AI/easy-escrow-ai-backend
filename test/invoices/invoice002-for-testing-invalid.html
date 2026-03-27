@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice INV-2026-0099</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 40px auto; color: #1a1a2e; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+  .company { font-size: 24px; color: #e63946; font-weight: 600; }
+  .company-details { font-size: 12px; color: #666; margin-top: 4px; }
+  .invoice-title { text-align: right; }
+  .invoice-title h1 { font-size: 36px; color: #1a1a2e; margin: 0; }
+  .invoice-title p { font-size: 13px; color: #666; margin: 2px 0; }
+  .divider { height: 3px; background: #e63946; margin: 20px 0; }
+  .parties { display: flex; gap: 60px; margin: 30px 0; }
+  .party { flex: 1; }
+  .party-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #888; margin-bottom: 8px; }
+  .party-name { font-size: 16px; font-weight: 600; }
+  .party-detail { font-size: 13px; color: #555; margin-top: 2px; }
+  .meta-row { display: flex; gap: 40px; margin: 30px 0; }
+  .meta-box { flex: 1; }
+  .meta-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #888; }
+  .meta-value { font-size: 15px; font-weight: 500; margin-top: 4px; }
+  .badge { display: inline-block; padding: 3px 12px; background: #e63946; color: white; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+  th { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #888; text-align: left; padding: 10px 12px; border-bottom: 2px solid #ddd; }
+  th:last-child, td:last-child { text-align: right; }
+  td { padding: 14px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+  .totals { margin-left: auto; width: 300px; }
+  .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+  .totals-row.total { border-top: 2px solid #1a1a2e; padding-top: 10px; font-size: 18px; font-weight: 700; }
+  .settlement { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 30px 0; }
+  .settlement h3 { margin: 0 0 12px; font-size: 15px; }
+  .settlement-grid { display: flex; gap: 40px; }
+  .settlement-item { flex: 1; }
+  .settlement-label { font-size: 12px; color: #888; }
+  .settlement-value { font-size: 14px; font-weight: 500; margin-top: 2px; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #888; }
+  .footer strong { color: #555; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="company">Phantom Industries Ltd</div>
+    <div class="company-details">
+      Offshore Tower, Suite 1001<br>
+      George Town, Cayman Islands<br>
+      REG-999.888.777 | Unregulated
+    </div>
+  </div>
+  <div class="invoice-title">
+    <h1>INVOICE</h1>
+    <p>INV-2026-0099</p>
+    <p>Date: March 27, 2026</p>
+    <p>Due: Upon Receipt</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="parties">
+  <div class="party">
+    <div class="party-label">FROM</div>
+    <div class="party-name">Phantom Industries Ltd</div>
+    <div class="party-detail">Offshore Operations — Treasury Account</div>
+    <div class="party-detail">Wallet: 9xK3m...P7rT</div>
+    <div class="party-detail">Country: Cayman Islands (KY)</div>
+  </div>
+  <div class="party">
+    <div class="party-label">BILL TO</div>
+    <div class="party-name">Unknown Recipient Corp</div>
+    <div class="party-detail">Lagos Office — General Account</div>
+    <div class="party-detail">Wallet: 3kL7m...N9vT</div>
+    <div class="party-detail">Country: Nigeria (NG)</div>
+  </div>
+</div>
+
+<div class="meta-row">
+  <div class="meta-box">
+    <div class="meta-label">CORRIDOR</div>
+    <div class="meta-value">KY-NG (Cayman Islands &rarr; Nigeria)</div>
+  </div>
+  <div class="meta-box">
+    <div class="meta-label">CURRENCY</div>
+    <div class="meta-value">USDC (Solana)</div>
+  </div>
+  <div class="meta-box">
+    <div class="meta-label">STATUS</div>
+    <div class="meta-value"><span class="badge">DISPUTED</span></div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>DESCRIPTION</th>
+      <th>QTY</th>
+      <th>UNIT PRICE</th>
+      <th>AMOUNT</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        Cross-border transfer — unverified corridor<br>
+        <span style="font-size: 12px; color: #888;">KY-NG corridor — No regulatory oversight</span>
+      </td>
+      <td>1</td>
+      <td>$99,999.00 USDC</td>
+      <td>$99,999.00 USDC</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="totals">
+  <div class="totals-row">
+    <span>Escrow Amount</span>
+    <span>$99,999.00 USDC</span>
+  </div>
+  <div class="totals-row">
+    <span>Platform Fee (0.02%)</span>
+    <span>+ $20.00 USDC</span>
+  </div>
+  <div class="totals-row total">
+    <span>Total Due</span>
+    <span>$100,019.00 USDC</span>
+  </div>
+</div>
+
+<div class="settlement">
+  <h3>Settlement Details</h3>
+  <div class="settlement-grid">
+    <div class="settlement-item">
+      <div class="settlement-label">Settlement Mode</div>
+      <div class="settlement-value">Direct Transfer</div>
+    </div>
+    <div class="settlement-item">
+      <div class="settlement-label">Release Mode</div>
+      <div class="settlement-value">Manual Override</div>
+    </div>
+    <div class="settlement-item">
+      <div class="settlement-label">Expiry</div>
+      <div class="settlement-value">24 hours</div>
+    </div>
+    <div class="settlement-item">
+      <div class="settlement-label">Est. Settlement</div>
+      <div class="settlement-value">Immediate</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <strong>Phantom Industries Ltd</strong> &mdash; Offshore Tower, George Town, Cayman Islands | REG-999.888.777<br>
+  Payment facilitated by EasyEscrow.ai &mdash; Solana Blockchain Settlement
+</div>
+
+</body>
+</html>
