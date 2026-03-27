@@ -1587,6 +1587,7 @@ export class InstitutionEscrowService {
         releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
           escrowId,
           recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
+          feeCollector: toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress'),
           usdcMint,
           escrowCode: escrow.escrowCode,
           aiDigest,

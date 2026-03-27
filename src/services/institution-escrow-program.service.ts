@@ -304,12 +304,15 @@ export class InstitutionEscrowProgramService {
 
   /**
    * Build release transaction.
-   * Fee was already collected at deposit time — release just sends vault balance to recipient.
+   * Fee was collected at deposit time for new escrows, but release still passes
+   * fee_collector for backward compatibility — any remaining vault balance after
+   * the recipient transfer goes to fee collector (handles legacy escrows).
    */
   async buildReleaseTransaction(params: {
     escrowId: string;
     authority: PublicKey;
     recipientWallet: PublicKey;
+    feeCollector: PublicKey;
     usdcMint: PublicKey;
     memo?: string;
   }): Promise<Transaction> {
@@ -330,7 +333,15 @@ export class InstitutionEscrowProgramService {
       transaction.add(recipientAta.instruction);
     }
 
-    // No fee collector ATA needed — fee was collected at deposit time
+    // Ensure fee collector ATA exists (handles legacy escrows with fee still in vault)
+    const feeCollectorAta = await this.getOrCreateAta(
+      params.usdcMint,
+      params.feeCollector,
+      params.authority
+    );
+    if (feeCollectorAta.instruction) {
+      transaction.add(feeCollectorAta.instruction);
+    }
 
     const ix = await (this.program.methods as any)
       .releaseInstitutionEscrow(escrowIdArray)
@@ -339,6 +350,7 @@ export class InstitutionEscrowProgramService {
         escrowState: escrowPda,
         tokenVault: vaultPda,
         recipientTokenAccount: recipientAta.address,
+        feeCollectorTokenAccount: feeCollectorAta.address,
         rentReceiver: params.authority,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
@@ -481,11 +493,13 @@ export class InstitutionEscrowProgramService {
 
   /**
    * Release escrow on-chain: build, sign, and submit release transaction.
-   * Fee was already collected at deposit time — release just sends vault balance to recipient.
+   * For new escrows, fee was collected at deposit — vault only has recipient amount.
+   * For legacy escrows, any remaining vault balance after recipient transfer goes to fee collector.
    */
   async releaseEscrowOnChain(params: {
     escrowId: string;
     recipientWallet: PublicKey;
+    feeCollector: PublicKey;
     usdcMint: PublicKey;
     escrowCode?: string;
     aiDigest?: string;

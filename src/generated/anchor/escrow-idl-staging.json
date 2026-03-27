@@ -1469,11 +1469,11 @@
       "docs": [
         "Deposit USDC into an institution escrow vault",
         "",
-        "Payer deposits USDC (amount + platform_fee) to the token vault.",
+        "Payer deposits USDC: escrow amount goes to vault, platform fee goes to fee collector.",
         "Updates escrow status from Created to Funded.",
         "",
         "# Arguments",
-        "* `ctx` - Context with payer, token accounts, and escrow state",
+        "* `ctx` - Context with payer, token accounts, escrow state, and fee collector",
         "* `escrow_id` - The escrow identifier to deposit into"
       ],
       "discriminator": [
@@ -1562,6 +1562,13 @@
               }
             ]
           }
+        },
+        {
+          "name": "fee_collector_token_account",
+          "docs": [
+            "Fee collector's USDC token account (receives platform fee at deposit time)"
+          ],
+          "writable": true
         },
         {
           "name": "token_program",
