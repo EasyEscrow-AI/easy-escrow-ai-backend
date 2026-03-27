@@ -94,7 +94,7 @@ router.post(
         settlementMode: req.body.settlementMode,
         releaseMode: req.body.releaseMode,
         approvalParties: req.body.approvalParties,
-        releaseConditions: req.body.releaseConditions,
+        releaseConditions: req.body.releaseConditions || req.body.conditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
         payerName: req.body.payerName,
@@ -145,7 +145,7 @@ router.post(
         settlementMode: req.body.settlementMode,
         releaseMode: req.body.releaseMode,
         approvalParties: req.body.approvalParties,
-        releaseConditions: req.body.releaseConditions,
+        releaseConditions: req.body.releaseConditions || req.body.conditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
         payerName: req.body.payerName,
@@ -194,7 +194,7 @@ router.put(
         settlementMode: req.body.settlementMode,
         releaseMode: req.body.releaseMode,
         approvalParties: req.body.approvalParties,
-        releaseConditions: req.body.releaseConditions,
+        releaseConditions: req.body.releaseConditions || req.body.conditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
         payerName: req.body.payerName,
@@ -528,6 +528,7 @@ router.get(
         corridor: req.query.corridor as string | undefined,
         limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
         offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+        role: (req.query.role as 'payer' | 'recipient' | 'all') || undefined,
       });
 
       res.status(200).json({
