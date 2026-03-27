@@ -94,11 +94,22 @@ export class CdpSettlementService {
 
   /**
    * Check if the CDP service is reachable and the account is accessible.
+   * Bypasses the in-memory cache to exercise the remote CDP endpoint.
    */
   async isHealthy(): Promise<boolean> {
     try {
-      await this.getOrCreateAccount();
-      return true;
+      // Force a fresh remote call by temporarily clearing the cached account
+      const cachedAccount = this.account;
+      this.account = null;
+      try {
+        await this.getOrCreateAccount();
+        return true;
+      } catch (error) {
+        // Restore the previous cached account on failure so a transient
+        // health-check blip doesn't break subsequent signing calls
+        this.account = cachedAccount;
+        throw error;
+      }
     } catch (error) {
       console.warn('[CdpSettlementService] Health check failed:', error);
       return false;

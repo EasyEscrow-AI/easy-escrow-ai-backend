@@ -93,7 +93,7 @@ CDP wallet private keys are generated and stored inside a Trusted Execution Envi
 
 When the backend sends a partially-signed transaction to CDP, the policy engine evaluates it before signing. The policy can enforce constraints such as:
 
-- Allowed program IDs (only the EasyEscrow program)
+- Allowed program IDs — CDP-signed transactions may contain instructions for: the EasyEscrow program, the SPL Token program, the Associated Token Account (ATA) program, the System program, and the SPL Memo program. Operators must permit all of these in the CDP policy evaluation to avoid valid settlements failing.
 - Allowed instruction types (only release/cancel)
 - Transaction value limits
 - Rate limits on signing frequency
@@ -111,7 +111,7 @@ CDP settlement uses two independent gates that must both be satisfied:
 
 ### Gate 1: Environment Flag
 
-```
+```dotenv
 CDP_ENABLED=true
 ```
 

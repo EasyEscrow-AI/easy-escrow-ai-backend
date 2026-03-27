@@ -428,9 +428,11 @@ export class InstitutionEscrowService {
       const payerPk = toPublicKey(payerWallet, 'payerWallet');
       const recipientPk = toPublicKey(recipientWallet, 'recipientWallet');
 
-      // On-chain settlement authority must be the admin keypair (backend signs release tx).
-      // The DB stores the client's wallet as settlementAuthority for API authorization.
-      const onChainSettlementAuthority = programService.adminPublicKey;
+      // When CDP is enabled and cdp_policy_approval is selected, use the CDP wallet
+      // as on-chain settlement authority. Otherwise default to admin keypair.
+      const onChainSettlementAuthority = releaseConditions?.includes('cdp_policy_approval')
+        ? toPublicKey(resolvedSettlementAuthority, 'settlementAuthority')
+        : programService.adminPublicKey;
 
       try {
         const result = await programService.initEscrowOnChain({
@@ -868,8 +870,10 @@ export class InstitutionEscrowService {
       );
       const payerPk = toPublicKey(escrow.payerWallet, 'payerWallet');
       const recipientPk = toPublicKey(escrow.recipientWallet!, 'recipientWallet');
-      // On-chain settlement authority must be the admin keypair (backend signs release tx)
-      const onChainSettlementAuthority = programService.adminPublicKey;
+      const onChainSettlementAuthority = toPublicKey(
+        resolvedSettlementAuthority,
+        'settlementAuthority'
+      );
 
       try {
         const result = await programService.initEscrowOnChain({

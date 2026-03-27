@@ -67,6 +67,7 @@ describe('InstitutionEscrowProgramService', () => {
       }),
       sendRawTransaction: sandbox.stub().resolves('FakeTxSignature111111111111111111111111111111'),
       confirmTransaction: sandbox.stub().resolves({ value: { err: null } }),
+      getTransaction: sandbox.stub().resolves({ meta: { err: null } }),
     };
 
     // Create method chain stubs
@@ -879,6 +880,25 @@ describe('InstitutionEscrowProgramService', () => {
       expect(cdpServiceStub.signTransaction.calledOnce).to.be.true;
       expect(connectionStub.sendRawTransaction.calledOnce).to.be.true;
       expect(connectionStub.confirmTransaction.calledOnce).to.be.true;
+    });
+
+    it('should throw if CDP signing fails', async () => {
+      cdpServiceStub.signTransaction.rejects(new Error('CDP policy violation'));
+
+      try {
+        await service.cancelEscrowWithCdp({
+          escrowId: TEST_UUID,
+          cdpCallerPubkey: CDP_PUBKEY,
+          payerWallet: PAYER_PUBKEY,
+          usdcMint: USDC_MINT,
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('CDP policy violation');
+        // Verify downstream RPC methods were NOT called after signing failure
+        expect(connectionStub.sendRawTransaction.called).to.be.false;
+        expect(connectionStub.confirmTransaction.called).to.be.false;
+      }
     });
   });
 });

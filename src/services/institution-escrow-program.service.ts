@@ -316,6 +316,7 @@ export class InstitutionEscrowProgramService {
     feeCollector: PublicKey;
     usdcMint: PublicKey;
     memo?: string;
+    rentPayer?: PublicKey;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -324,11 +325,15 @@ export class InstitutionEscrowProgramService {
 
     const transaction = new Transaction();
 
+    // Use rentPayer for ATA creation (defaults to authority for backward compat).
+    // For CDP multi-sign, rentPayer is the admin so the CDP wallet doesn't pay rent.
+    const ataPayer = params.rentPayer ?? params.authority;
+
     // Ensure recipient ATA exists
     const recipientAta = await this.getOrCreateAta(
       params.usdcMint,
       params.recipientWallet,
-      params.authority
+      ataPayer
     );
     if (recipientAta.instruction) {
       transaction.add(recipientAta.instruction);
@@ -338,7 +343,7 @@ export class InstitutionEscrowProgramService {
     const feeCollectorAta = await this.getOrCreateAta(
       params.usdcMint,
       params.feeCollector,
-      params.authority
+      ataPayer
     );
     if (feeCollectorAta.instruction) {
       transaction.add(feeCollectorAta.instruction);
@@ -608,6 +613,7 @@ export class InstitutionEscrowProgramService {
     const transaction = await this.buildReleaseTransaction({
       ...params,
       authority: params.cdpAuthorityPubkey,
+      rentPayer: this.adminKeypair.publicKey,
       memo,
     });
 
@@ -637,6 +643,17 @@ export class InstitutionEscrowProgramService {
       { signature: txSignature, blockhash, lastValidBlockHeight },
       'confirmed'
     );
+
+    // Verify on-chain execution succeeded (confirmTransaction only waits for inclusion)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `CDP release transaction failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
 
     console.log(
       `[InstitutionEscrowProgramService] CDP release escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
@@ -705,6 +722,17 @@ export class InstitutionEscrowProgramService {
       { signature: txSignature, blockhash, lastValidBlockHeight },
       'confirmed'
     );
+
+    // Verify on-chain execution succeeded (confirmTransaction only waits for inclusion)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `CDP cancel transaction failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
 
     console.log(
       `[InstitutionEscrowProgramService] CDP cancel escrow on-chain: ${params.escrowId}, tx: ${txSignature}`

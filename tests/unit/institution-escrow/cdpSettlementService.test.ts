@@ -15,6 +15,17 @@ import sinon from 'sinon';
 import proxyquire from 'proxyquire';
 import { PublicKey } from '@solana/web3.js';
 
+// Capture original env values before overriding
+const originalEnv: Record<string, string | undefined> = {};
+const ENV_KEYS = [
+  'NODE_ENV', 'INSTITUTION_ESCROW_ENABLED', 'CDP_ENABLED',
+  'CDP_API_KEY_ID', 'CDP_API_KEY_SECRET', 'CDP_WALLET_SECRET',
+  'CDP_ACCOUNT_NAME', 'USDC_MINT_ADDRESS', 'JWT_SECRET',
+];
+for (const key of ENV_KEYS) {
+  originalEnv[key] = process.env[key];
+}
+
 // Set env before imports
 process.env.NODE_ENV = 'test';
 process.env.INSTITUTION_ESCROW_ENABLED = 'true';
@@ -72,6 +83,17 @@ describe('CdpSettlementService', () => {
     sandbox.restore();
     resetInstitutionEscrowConfig();
     if (resetCdpSettlementService) resetCdpSettlementService();
+  });
+
+  after(() => {
+    // Restore original env values so subsequent test suites aren't affected
+    for (const key of ENV_KEYS) {
+      if (originalEnv[key] === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = originalEnv[key];
+      }
+    }
   });
 
   // ─── getOrCreateAccount ────────────────────────────────────
@@ -178,6 +200,17 @@ describe('CdpSettlementService', () => {
     it('should return true when CDP account is accessible', async () => {
       const healthy = await service.isHealthy();
       expect(healthy).to.be.true;
+    });
+
+    it('should bypass cache and make a fresh remote call', async () => {
+      // Prime the cache
+      await service.getOrCreateAccount();
+      const client = MockCdpClient.firstCall.returnValue;
+      expect(client.solana.getOrCreateAccount.callCount).to.equal(1);
+
+      // isHealthy should clear cache and call again
+      await service.isHealthy();
+      expect(client.solana.getOrCreateAccount.callCount).to.equal(2);
     });
 
     it('should return false when CDP API fails', async () => {

@@ -330,11 +330,8 @@ describe('Chain-of-Custody Audit Trail', () => {
 
   describe('CDP_POLICY_CHECK audit action', () => {
     it('should be a recognized audit action label', () => {
-      // Verify CDP_POLICY_CHECK is in the AUDIT_ACTION_LABELS map
-      // We import and test the label constant indirectly through the service
-      const institutionEscrowService = require('../../../src/services/institution-escrow.service');
-      // The AUDIT_ACTION_LABELS is a module-level const, not exported directly.
-      // We verify the label via the formatEscrow conditionLabels instead.
+      // Verify cdp_policy_approval is in the AI_RELEASE_CONDITION_LABELS map.
+      // The map is a module-level const not exported directly, so we test it inline.
       const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
         legal_compliance: 'All legal compliance checks pass',
         invoice_amount_match: 'Invoice amount matches exactly',
