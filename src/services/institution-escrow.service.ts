@@ -1178,6 +1178,39 @@ export class InstitutionEscrowService {
     const results: Array<{ condition: string; label: string; passed: boolean; detail: string }> =
       [];
 
+    // Analyze the uploaded proof document(s) to extract invoice data
+    // This is needed for invoice_amount_match and client_info_match conditions
+    let docFields: Record<string, unknown> = {};
+    const needsDocAnalysis =
+      selectedConditions.includes('invoice_amount_match') ||
+      selectedConditions.includes('client_info_match') ||
+      selectedConditions.includes('document_signature_verified');
+
+    if (needsDocAnalysis) {
+      const latestFile = await this.prisma.institutionFile.findFirst({
+        where: { escrowId: escrow.escrowId },
+        orderBy: { uploadedAt: 'desc' },
+        select: { id: true, fileName: true, clientId: true },
+      });
+
+      if (latestFile) {
+        try {
+          const docAnalysis = await aiService.analyzeDocument({
+            escrowId: escrow.escrowId,
+            fileId: latestFile.id,
+            clientId: latestFile.clientId,
+            context: {
+              expectedAmount: Number(escrow.amount),
+              corridor: escrow.corridor,
+            },
+          });
+          docFields = docAnalysis.extractedFields || {};
+        } catch (err) {
+          console.warn('[InstitutionEscrow] Document analysis for release check failed:', err);
+        }
+      }
+    }
+
     // 1. Legal compliance (always required for AI mode)
     const compliancePassed = analysis.recommendation !== 'REJECT' && analysis.riskScore < 70;
     results.push({
@@ -1189,35 +1222,40 @@ export class InstitutionEscrowService {
         : `Failed: risk score ${analysis.riskScore}/100, recommendation: ${analysis.recommendation}`,
     });
 
-    // 2. Invoice amount match (if selected)
+    // 2. Invoice amount match (if selected) — uses document-extracted amount
     if (selectedConditions.includes('invoice_amount_match')) {
       const extractedAmount =
-        analysis.extractedFields?.invoiceAmount ?? analysis.extractedFields?.amount;
+        docFields.total_amount ?? docFields.invoiceAmount ?? docFields.amount;
       const escrowAmount = Number(escrow.amount);
       const amountMatches =
-        extractedAmount !== undefined && Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
+        extractedAmount !== undefined &&
+        extractedAmount !== null &&
+        Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
       results.push({
         condition: 'invoice_amount_match',
         label: 'Invoice amount matches exactly',
         passed: !!amountMatches,
         detail: amountMatches
-          ? `Invoice amount ${extractedAmount} matches escrow amount ${escrowAmount}`
+          ? `Invoice amount $${Number(extractedAmount).toLocaleString()} matches escrow amount $${escrowAmount.toLocaleString()}`
           : `Invoice amount ${
-              extractedAmount ?? 'not found'
-            } does not match escrow amount ${escrowAmount}`,
+              extractedAmount !== undefined && extractedAmount !== null
+                ? `$${Number(extractedAmount).toLocaleString()}`
+                : 'not found in document'
+            } does not match escrow amount $${escrowAmount.toLocaleString()}`,
       });
     }
 
-    // 3. Client information match (if selected)
+    // 3. Client information match (if selected) — uses document-extracted counterparty
     if (selectedConditions.includes('client_info_match')) {
       const client = await this.prisma.institutionClient.findUnique({
         where: { id: clientId },
         select: { companyName: true, legalName: true, country: true },
       });
       const extractedCompany =
-        analysis.extractedFields?.companyName ?? analysis.extractedFields?.clientName;
+        docFields.counterparty_name ?? docFields.companyName ?? docFields.clientName;
       const clientMatch =
         extractedCompany !== undefined &&
+        extractedCompany !== null &&
         client &&
         (String(extractedCompany)
           .toLowerCase()
@@ -1230,8 +1268,8 @@ export class InstitutionEscrowService {
         label: 'Client information matches exactly',
         passed: !!clientMatch,
         detail: clientMatch
-          ? `Extracted company "${extractedCompany}" matches client record`
-          : `Extracted company "${extractedCompany ?? 'not found'}" does not match client "${
+          ? `Document company "${extractedCompany}" matches client "${client?.companyName}"`
+          : `Document company "${extractedCompany ?? 'not found in document'}" does not match client "${
               client?.companyName
             }"`,
       });
@@ -1240,8 +1278,8 @@ export class InstitutionEscrowService {
     // 4. Document signature verified (if selected)
     if (selectedConditions.includes('document_signature_verified')) {
       const signatureVerified =
-        analysis.extractedFields?.signatureVerified === true ||
-        analysis.extractedFields?.docusignStatus === 'completed';
+        docFields.signatureVerified === true ||
+        docFields.docusignStatus === 'completed';
       results.push({
         condition: 'document_signature_verified',
         label: 'Document signature is verified (via DocuSign)',
