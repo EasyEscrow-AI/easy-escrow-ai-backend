@@ -326,11 +326,11 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     const escrow = data.escrow || data;
     expect(escrow.escrowId).to.be.a('string');
     expect(escrow.status).to.be.oneOf(['CREATED', 'COMPLIANCE_HOLD']);
-    expect(escrow.payerWallet).to.equal(buyerWallet);
-    expect(escrow.recipientWallet).to.equal(supplierWallet);
+    expect(escrow.from.wallet).to.equal(buyerWallet);
+    expect(escrow.to.wallet).to.equal(supplierWallet);
 
     escrowId = escrow.escrowId;
-    escrowCode = escrow.escrowCode || escrow.escrowId;
+    escrowCode = escrow.escrowId; // escrowId IS the EE-XXX-XXX code
     internalId = escrow.internalId || escrow.escrowId; // UUID for POST endpoints
 
     console.log(`      Escrow ID:    ${escrowId}`);
@@ -339,20 +339,20 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     console.log(`      Status:       ${escrow.status}`);
     console.log(`      Amount:       ${escrow.amount} USDC`);
     console.log(`      Corridor:     ${escrow.corridor}`);
-    console.log(`      Condition:    ${escrow.conditionType}`);
+    console.log(`      Condition:    ${escrow.release?.conditionType}`);
 
     // Capture nonce info if present in creation response
-    if (escrow.nonceAccount) {
-      nonceAccountAddress = escrow.nonceAccount;
+    if (escrow.settlement?.nonceAccount) {
+      nonceAccountAddress = escrow.settlement.nonceAccount;
       console.log(`      Nonce Acct:   ${nonceAccountAddress}`);
     }
 
     // Capture PDA info
-    if (escrow.escrowPda) {
-      console.log(`      Escrow PDA:   ${escrow.escrowPda}`);
+    if (escrow.settlement?.escrowPda) {
+      console.log(`      Escrow PDA:   ${escrow.settlement.escrowPda}`);
     }
-    if (escrow.vaultPda) {
-      console.log(`      Vault PDA:    ${escrow.vaultPda}`);
+    if (escrow.settlement?.vaultPda) {
+      console.log(`      Vault PDA:    ${escrow.settlement.vaultPda}`);
     }
 
     if (escrow.status === 'COMPLIANCE_HOLD') {
@@ -377,32 +377,32 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     expect(escrow.status).to.be.oneOf(['CREATED', 'COMPLIANCE_HOLD']);
     expect(escrow.escrowId).to.equal(escrowId);
     expect(escrow.amount).to.equal(ESCROW_AMOUNT_USDC);
-    expect(escrow.conditionType).to.equal('ADMIN_RELEASE');
-    expect(escrow.createdAt).to.be.a('string');
-    expect(escrow.expiresAt).to.be.a('string');
+    expect(escrow.release?.conditionType).to.equal('ADMIN_RELEASE');
+    expect(escrow.timestamps?.createdAt).to.be.a('string');
+    expect(escrow.timestamps?.expiresAt).to.be.a('string');
 
     // resolvedAt should not be set yet
-    if (escrow.resolvedAt !== undefined) {
-      expect(escrow.resolvedAt).to.be.null;
+    if (escrow.timestamps?.resolvedAt !== undefined) {
+      expect(escrow.timestamps.resolvedAt).to.be.null;
     }
 
-    // depositTxSignature should not be set yet
-    if (escrow.depositTxSignature !== undefined) {
-      expect(escrow.depositTxSignature).to.be.null;
+    // depositTx should not be set yet
+    if (escrow.transactions?.depositTx !== undefined) {
+      expect(escrow.transactions.depositTx).to.be.null;
     }
 
-    // releaseTxSignature should not be set yet
-    if (escrow.releaseTxSignature !== undefined) {
-      expect(escrow.releaseTxSignature).to.be.null;
+    // releaseTx should not be set yet
+    if (escrow.transactions?.releaseTx !== undefined) {
+      expect(escrow.transactions.releaseTx).to.be.null;
     }
 
     console.log(`      Status:           ${escrow.status}`);
-    console.log(`      Condition:        ${escrow.conditionType}`);
-    console.log(`      Created:          ${escrow.createdAt}`);
-    console.log(`      Expires:          ${escrow.expiresAt}`);
-    console.log(`      Deposit Tx:       ${escrow.depositTxSignature || 'null (expected)'}`);
-    console.log(`      Release Tx:       ${escrow.releaseTxSignature || 'null (expected)'}`);
-    console.log(`      Resolved:         ${escrow.resolvedAt || 'null (expected)'}`);
+    console.log(`      Condition:        ${escrow.release?.conditionType}`);
+    console.log(`      Created:          ${escrow.timestamps?.createdAt}`);
+    console.log(`      Expires:          ${escrow.timestamps?.expiresAt}`);
+    console.log(`      Deposit Tx:       ${escrow.transactions?.depositTx || 'null (expected)'}`);
+    console.log(`      Release Tx:       ${escrow.transactions?.releaseTx || 'null (expected)'}`);
+    console.log(`      Resolved:         ${escrow.timestamps?.resolvedAt || 'null (expected)'}`);
   });
 
   // ─────────────────────────────────────────────────────────────
@@ -522,11 +522,11 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
 
     const escrow = depositRes.data.data;
     expect(escrow.status).to.equal('FUNDED');
-    expect(escrow.depositTxSignature).to.equal(depositTxSignature);
+    expect(escrow.transactions?.depositTx).to.equal(depositTxSignature);
     depositRecorded = true;
 
     console.log(`      API status:     ${escrow.status}`);
-    console.log(`      Funded at:      ${escrow.fundedAt}`);
+    console.log(`      Funded at:      ${escrow.timestamps?.fundedAt}`);
   });
 
   // ─────────────────────────────────────────────────────────────
@@ -549,16 +549,16 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     const escrow = res.data.data;
 
     expect(escrow.status).to.equal('FUNDED');
-    expect(escrow.depositTxSignature).to.equal(depositTxSignature);
-    expect(escrow.fundedAt).to.be.a('string');
+    expect(escrow.transactions?.depositTx).to.equal(depositTxSignature);
+    expect(escrow.timestamps?.fundedAt).to.be.a('string');
     // Not yet resolved
-    if (escrow.resolvedAt !== undefined) {
-      expect(escrow.resolvedAt).to.be.null;
+    if (escrow.timestamps?.resolvedAt !== undefined) {
+      expect(escrow.timestamps.resolvedAt).to.be.null;
     }
 
     // If nonce account is exposed, record its value before release
-    if (escrow.nonceAccount) {
-      nonceAccountAddress = escrow.nonceAccount;
+    if (escrow.settlement?.nonceAccount) {
+      nonceAccountAddress = escrow.settlement.nonceAccount;
       nonceValueBeforeRelease = (await getNonceValue(nonceAccountAddress)) || '';
       console.log(`      Nonce Account:    ${nonceAccountAddress}`);
       console.log(`      Nonce Value:      ${nonceValueBeforeRelease || '(unable to read)'}`);
@@ -566,7 +566,7 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
 
     console.log(`      Status:           ${escrow.status}`);
     console.log(`      Deposit Tx:       ${depositTxSignature.substring(0, 20)}...`);
-    console.log(`      Funded at:        ${escrow.fundedAt}`);
+    console.log(`      Funded at:        ${escrow.timestamps?.fundedAt}`);
   });
 
   // ─────────────────────────────────────────────────────────────
@@ -669,14 +669,14 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     // Core status assertions — expect COMPLETE (or RELEASED if notification failed)
     expect(escrow.status).to.be.oneOf(['RELEASED', 'COMPLETE']);
     expect(escrow.escrowId).to.equal(escrowId);
-    expect(escrow.depositTxSignature).to.equal(depositTxSignature);
-    expect(escrow.resolvedAt).to.not.be.null;
-    expect(escrow.fundedAt).to.not.be.null;
+    expect(escrow.transactions?.depositTx).to.equal(depositTxSignature);
+    expect(escrow.timestamps?.resolvedAt).to.not.be.null;
+    expect(escrow.timestamps?.fundedAt).to.not.be.null;
 
     // Timeline integrity: created < funded < resolved
-    const createdAt = new Date(escrow.createdAt).getTime();
-    const fundedAt = new Date(escrow.fundedAt).getTime();
-    const resolvedAt = new Date(escrow.resolvedAt).getTime();
+    const createdAt = new Date(escrow.timestamps.createdAt).getTime();
+    const fundedAt = new Date(escrow.timestamps.fundedAt).getTime();
+    const resolvedAt = new Date(escrow.timestamps.resolvedAt).getTime();
     expect(fundedAt).to.be.gte(createdAt, 'fundedAt should be after createdAt');
     expect(resolvedAt).to.be.gte(fundedAt, 'resolvedAt should be after fundedAt');
 
@@ -684,10 +684,10 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     console.log(`      Amount:           ${escrow.amount} USDC`);
     console.log(`      Platform Fee:     ${escrow.platformFee} USDC`);
     console.log(`      Deposit Tx:       ${depositTxSignature.substring(0, 20)}...`);
-    console.log(`      Release Tx:       ${escrow.releaseTxSignature || '(API-only settlement)'}`);
-    console.log(`      Created:          ${escrow.createdAt}`);
-    console.log(`      Funded:           ${escrow.fundedAt}`);
-    console.log(`      Resolved:         ${escrow.resolvedAt}`);
+    console.log(`      Release Tx:       ${escrow.transactions?.releaseTx || '(API-only settlement)'}`);
+    console.log(`      Created:          ${escrow.timestamps?.createdAt}`);
+    console.log(`      Funded:           ${escrow.timestamps?.fundedAt}`);
+    console.log(`      Resolved:         ${escrow.timestamps?.resolvedAt}`);
     console.log(`      Timeline:         ${resolvedAt - createdAt}ms total lifecycle`);
   });
 
@@ -914,7 +914,7 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     );
 
     const escrow = res.data.data;
-    expect(escrow.recipientWallet).to.equal(supplierKeypair.publicKey.toBase58());
+    expect(escrow.to.wallet).to.equal(supplierKeypair.publicKey.toBase58());
 
     console.log(`      Status:           ${escrow.status}`);
     console.log(`      Supplier view:    accessible as counterparty`);
