@@ -423,6 +423,17 @@ export class InstitutionEscrowProgramService {
       'confirmed'
     );
 
+    // Verify the transaction actually succeeded (confirmTransaction only checks inclusion, not success)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `Transaction ${txSignature} confirmed but failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
+
     return txSignature;
   }
 
