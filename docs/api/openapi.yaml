@@ -2612,6 +2612,10 @@ paths:
         Release escrowed USDC to the recipient wallet. This endpoint requires **both**
         a valid JWT token and a settlement authority API key (`X-Settlement-Authority-Key` header).
 
+        When `cdp_policy_approval` is included in the escrow's release conditions, the release
+        transaction is routed through the CDP (Coinbase Developer Platform) wallet and must pass
+        the configured CDP policy validation before funds are transferred.
+
         **Rate Limited**: 10 requests per minute.
       security:
         - BearerAuth: []
@@ -7427,7 +7431,7 @@ components:
           type: array
           items:
             type: string
-            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified, cdp_policy_approval]
           description: |
             AI release conditions to evaluate when releaseMode is 'ai'.
             `legal_compliance` is always auto-included for AI mode.
@@ -7435,6 +7439,7 @@ components:
             - **invoice_amount_match**: Invoice amount matches escrow amount exactly
             - **client_info_match**: Client information matches exactly
             - **document_signature_verified**: Document signature is verified (via DocuSign)
+            - **cdp_policy_approval**: Release requires CDP (Coinbase Developer Platform) wallet policy approval
           example: ["legal_compliance", "invoice_amount_match"]
         conditions:
           type: array
@@ -7550,6 +7555,9 @@ components:
         settlementAuthority:
           type: string
           nullable: true
+        isCdpAuthority:
+          type: boolean
+          description: Whether the settlement authority is a CDP (Coinbase Developer Platform) wallet
         releaseMode:
           type: string
           enum: [manual, ai]
@@ -7558,7 +7566,7 @@ components:
           type: array
           items:
             type: string
-            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified, cdp_policy_approval]
           description: AI release conditions to evaluate (only used when releaseMode is 'ai')
         releaseConditionLabels:
           type: array

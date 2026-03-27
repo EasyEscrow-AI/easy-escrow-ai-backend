@@ -12,6 +12,7 @@ import { getNoncePoolConfig } from './noncePool.config';
 import {
   loadInstitutionEscrowConfig,
   type InstitutionEscrowConfig,
+  validateCdpConfig,
 } from './institution-escrow.config';
 import {
   loadPrivacyConfig,
@@ -216,12 +217,16 @@ export function validateInstitutionEscrowConfig(cfg?: InstitutionEscrowConfig): 
     );
   }
 
+  // CDP Settlement Authority: validate credentials when enabled
+  validateCdpConfig(escrowConfig);
+
   console.log('✅ Institution escrow configuration valid');
   console.log(`   USDC Mint: ${escrowConfig.usdcMintAddress}`);
   console.log(`   Limits: $${escrowConfig.minUsdc} - $${escrowConfig.maxUsdc} USDC`);
   console.log(`   Default expiry: ${escrowConfig.defaultExpiryHours} hours`);
   console.log(`   AI model: ${escrowConfig.ai.model}`);
   console.log(`   DO Spaces: ${spacesSet.length > 0 ? 'configured' : 'not configured'}`);
+  console.log(`   CDP Settlement: ${escrowConfig.cdp.enabled ? 'enabled' : 'disabled'}`);
 }
 
 /**

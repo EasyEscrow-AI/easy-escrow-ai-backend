@@ -37,6 +37,8 @@ import { resolveReleaseDestination } from './privacy/privacy-router.service';
 import { getStealthAddressService } from './privacy/stealth-address.service';
 import { PrivacyLevel, PrivacyPreferences } from './privacy/privacy.types';
 import { isPrivacyEnabled } from '../utils/featureFlags';
+import { getCdpSettlementService } from './cdp-settlement.service';
+import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 
 const ESCROW_CACHE_PREFIX = 'institution:escrow:';
 const ESCROW_CACHE_TTL = 300; // 5 minutes
@@ -63,6 +65,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   ESCROW_FULFILLED: 'Proof of Delivery',
   PROOF_SUBMITTED: 'Proof Submitted',
   RECIPIENT_NOTIFIED: 'Recipient Notified',
+  CDP_POLICY_CHECK: 'CDP Policy Check',
 };
 
 const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
@@ -70,6 +73,7 @@ const AI_RELEASE_CONDITION_LABELS: Record<string, string> = {
   invoice_amount_match: 'Invoice amount matches exactly',
   client_info_match: 'Client information matches exactly',
   document_signature_verified: 'Document signature is verified (via DocuSign)',
+  cdp_policy_approval: 'All policies passed by independent settlement authority',
 };
 
 function truncateWallet(wallet: string | null | undefined): string | null {
@@ -371,6 +375,16 @@ export class InstitutionEscrowService {
       } catch {
         // client.primaryWallet is not a valid Solana address (e.g. placeholder seed data)
       }
+    }
+
+    // 8b. Override settlement authority with CDP wallet when cdp_policy_approval is selected
+    if (releaseConditions?.includes('cdp_policy_approval')) {
+      const institutionConfig = getInstitutionEscrowConfig();
+      if (!institutionConfig.cdp.enabled) {
+        throw new Error('CDP settlement authority is not enabled. Set CDP_ENABLED=true to use cdp_policy_approval.');
+      }
+      const cdpService = getCdpSettlementService();
+      resolvedSettlementAuthority = (await cdpService.getPublicKey()).toBase58();
     }
 
     // 9. Assign durable nonce for atomic settlement (required for on-chain proof)
@@ -827,6 +841,19 @@ export class InstitutionEscrowService {
       if (!config.platform.feeCollectorAddress) {
         throw new Error('Platform feeCollectorAddress is not configured');
       }
+      let resolvedSettlementAuthority = escrow.settlementAuthority || escrow.payerWallet;
+
+      // Override with CDP wallet when cdp_policy_approval is selected
+      const draftReleaseConditions: string[] = (escrow.releaseConditions as string[]) || [];
+      if (draftReleaseConditions.includes('cdp_policy_approval')) {
+        const institutionConfig = getInstitutionEscrowConfig();
+        if (!institutionConfig.cdp.enabled) {
+          throw new Error('CDP settlement authority is not enabled. Set CDP_ENABLED=true to use cdp_policy_approval.');
+        }
+        const cdpService = getCdpSettlementService();
+        resolvedSettlementAuthority = (await cdpService.getPublicKey()).toBase58();
+      }
+
       const onChainMint = programService.getUsdcMintAddress();
       if (escrow.usdcMint !== onChainMint.toBase58()) {
         console.warn(
@@ -1350,6 +1377,24 @@ export class InstitutionEscrowService {
       });
     }
 
+    // 5. CDP policy approval (if selected)
+    if (selectedConditions.includes('cdp_policy_approval')) {
+      let cdpHealthy = false;
+      try {
+        cdpHealthy = await getCdpSettlementService().isHealthy();
+      } catch {
+        // CDP service not initialized — treat as unhealthy
+      }
+      results.push({
+        condition: 'cdp_policy_approval',
+        label: 'All policies passed by independent settlement authority',
+        passed: cdpHealthy,
+        detail: cdpHealthy
+          ? 'CDP settlement authority is active — policies enforced at signing'
+          : 'CDP settlement authority is unreachable',
+      });
+    }
+
     const allPassed = results.every((r) => r.passed);
 
     return { passed: allPassed, conditions: results, aiAnalysis: analysis };
@@ -1773,18 +1818,40 @@ export class InstitutionEscrowService {
     // Fee was already collected at deposit time — release just sends vault balance to recipient
     let releaseTxSig: string | null = null;
     const releaseProgramService = this.getProgramService();
+    const useCdpRelease = ((escrow.releaseConditions as string[]) || []).includes('cdp_policy_approval');
     if (releaseProgramService && escrow.escrowPda) {
       try {
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         const aiDigest = buildAiDigest(aiAnalysisForMemo);
-        releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
-          escrowId,
-          recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
-          feeCollector: toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress'),
-          usdcMint,
-          escrowCode: escrow.escrowCode,
-          aiDigest,
-        });
+
+        if (useCdpRelease) {
+          // CDP multi-sign path: admin as fee payer, CDP as settlement authority
+          const cdpPubkey = await getCdpSettlementService().getPublicKey();
+          releaseTxSig = await releaseProgramService.releaseEscrowWithCdp({
+            escrowId,
+            cdpAuthorityPubkey: cdpPubkey,
+            recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
+            feeCollector: toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress'),
+            usdcMint,
+            escrowCode: escrow.escrowCode,
+            aiDigest,
+          });
+          await this.createKytAuditLog(escrow, 'CDP_POLICY_CHECK', 'CDP Settlement Authority', {
+            passed: true,
+            message: 'CDP policy engine approved release transaction',
+            cdpWallet: cdpPubkey.toBase58(),
+          });
+        } else {
+          // Standard release: admin signs as both fee payer and authority
+          releaseTxSig = await releaseProgramService.releaseEscrowOnChain({
+            escrowId,
+            recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
+            feeCollector: toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress'),
+            usdcMint,
+            escrowCode: escrow.escrowCode,
+            aiDigest,
+          });
+        }
         console.log(
           `[InstitutionEscrow] On-chain release success for ${escrowId}, tx: ${releaseTxSig}`
         );
@@ -1981,18 +2048,33 @@ export class InstitutionEscrowService {
 
     // For funded escrows with on-chain PDA, execute on-chain cancel (refund USDC to payer)
     let cancelTxSignature: string | null = null;
+    const useCdpCancel = ((escrow.releaseConditions as string[]) || []).includes('cdp_policy_approval');
     if ((escrow.status === 'FUNDED' || escrow.status === 'PENDING_RELEASE') && escrow.escrowPda) {
       const cancelProgramService = this.getProgramService();
       if (cancelProgramService) {
         try {
           const usdcMint = cancelProgramService.getUsdcMintAddress();
-          cancelTxSignature = await cancelProgramService.cancelEscrowOnChain({
-            escrowId,
-            payerWallet: toPublicKey(escrow.payerWallet, 'payerWallet'),
-            usdcMint,
-            escrowCode: escrow.escrowCode,
-            cancelReason: reason,
-          });
+
+          if (useCdpCancel) {
+            // CDP multi-sign cancel: admin pays fees, CDP signs as caller (settlement authority)
+            const cdpPubkey = await getCdpSettlementService().getPublicKey();
+            cancelTxSignature = await cancelProgramService.cancelEscrowWithCdp({
+              escrowId,
+              cdpCallerPubkey: cdpPubkey,
+              payerWallet: toPublicKey(escrow.payerWallet, 'payerWallet'),
+              usdcMint,
+              escrowCode: escrow.escrowCode,
+              cancelReason: reason,
+            });
+          } else {
+            cancelTxSignature = await cancelProgramService.cancelEscrowOnChain({
+              escrowId,
+              payerWallet: toPublicKey(escrow.payerWallet, 'payerWallet'),
+              usdcMint,
+              escrowCode: escrow.escrowCode,
+              cancelReason: reason,
+            });
+          }
           console.log(
             `[InstitutionEscrow] On-chain cancel success for ${escrowId}, tx: ${cancelTxSignature}`
           );
@@ -2711,6 +2793,7 @@ export class InstitutionEscrowService {
         vaultPda: e.vaultPda,
         nonceAccount: e.nonceAccount,
         authority: e.settlementAuthority,
+        isCdpAuthority: ((e.releaseConditions as string[]) || []).includes('cdp_policy_approval'),
       },
       release: (() => {
         const mode = e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual');

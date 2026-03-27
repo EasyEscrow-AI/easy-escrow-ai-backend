@@ -25,6 +25,7 @@ import { createHash } from 'crypto';
 import { config } from '../config';
 import { getEscrowIdl } from '../utils/idl-loader';
 import { loadAdminKeypair } from '../utils/loadAdminKeypair';
+import { getCdpSettlementService } from './cdp-settlement.service';
 
 // PDA seeds matching the Rust program
 const INST_ESCROW_SEED = Buffer.from('inst_escrow');
@@ -575,6 +576,138 @@ export class InstitutionEscrowProgramService {
 
     console.log(
       `[InstitutionEscrowProgramService] Cancel escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
+    );
+
+    return txSignature;
+  }
+
+  /**
+   * Release escrow with CDP as the settlement authority (multi-sign pattern).
+   * 1. Build release tx with CDP pubkey as authority
+   * 2. Admin partially signs as fee payer
+   * 3. CDP signs as settlement authority (after policy check)
+   * 4. Submit fully-signed tx to Solana RPC
+   */
+  async releaseEscrowWithCdp(params: {
+    escrowId: string;
+    cdpAuthorityPubkey: PublicKey;
+    recipientWallet: PublicKey;
+    feeCollector: PublicKey;
+    usdcMint: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:release:${params.escrowCode}`;
+      if (params.aiDigest) {
+        memo += `:${params.aiDigest}`;
+      }
+    }
+
+    const transaction = await this.buildReleaseTransaction({
+      ...params,
+      authority: params.cdpAuthorityPubkey,
+      memo,
+    });
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash(
+      'confirmed'
+    );
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // Serialize with requireAllSignatures: false (CDP hasn't signed yet)
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+
+    // Send to CDP for authority signature
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit fully-signed transaction
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    console.log(
+      `[InstitutionEscrowProgramService] CDP release escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
+    );
+
+    return txSignature;
+  }
+
+  /**
+   * Cancel escrow with CDP as the settlement authority (multi-sign pattern).
+   * Same pattern as releaseEscrowWithCdp: admin pays fees, CDP signs as caller (authority).
+   */
+  async cancelEscrowWithCdp(params: {
+    escrowId: string;
+    cdpCallerPubkey: PublicKey;
+    payerWallet: PublicKey;
+    usdcMint: PublicKey;
+    escrowCode?: string;
+    cancelReason?: string;
+  }): Promise<string> {
+    const REASON_CODES: Record<string, string> = {
+      expired: 'expired', dispute: 'dispute', compliance: 'compliance',
+      'client-request': 'client-request', fraud: 'fraud',
+    };
+    const reasonCode = params.cancelReason
+      ? REASON_CODES[params.cancelReason.toLowerCase()] || 'other'
+      : undefined;
+
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:cancel:${params.escrowCode}`;
+      if (reasonCode) {
+        memo += `:reason=${reasonCode}`;
+      }
+    }
+
+    const transaction = await this.buildCancelTransaction({
+      ...params,
+      caller: params.cdpCallerPubkey,
+      memo,
+    });
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash(
+      'confirmed'
+    );
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // Serialize with requireAllSignatures: false
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+
+    // Send to CDP for authority signature
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit fully-signed transaction
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    console.log(
+      `[InstitutionEscrowProgramService] CDP cancel escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
     );
 
     return txSignature;
