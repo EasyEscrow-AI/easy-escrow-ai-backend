@@ -104,10 +104,12 @@ export const validateCreateInstitutionEscrow = [
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('tokenMint must be a valid Solana address (base58, 32-44 chars)'),
   body('settlementMode')
+    .optional()
     .isString()
     .isIn(SETTLEMENT_MODES)
     .withMessage(`settlementMode must be one of: ${SETTLEMENT_MODES.join(', ')}`),
   body('releaseMode')
+    .optional()
     .isString()
     .isIn(RELEASE_MODES)
     .withMessage(`releaseMode must be one of: ${RELEASE_MODES.join(', ')}`),
