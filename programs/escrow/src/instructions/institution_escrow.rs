@@ -109,7 +109,8 @@ pub struct DepositInstitutionEscrow<'info> {
 }
 
 /// Release USDC from institution escrow to recipient.
-/// Fee was already collected at deposit time, so vault only contains the recipient's amount.
+/// For new escrows (fee collected at deposit), vault contains only the escrow amount.
+/// For legacy escrows (fee in vault), vault contains amount + fee — excess sent to fee collector.
 #[derive(Accounts)]
 #[instruction(escrow_id: [u8; 32])]
 pub struct ReleaseInstitutionEscrow<'info> {
@@ -126,7 +127,7 @@ pub struct ReleaseInstitutionEscrow<'info> {
     )]
     pub escrow_state: Account<'info, InstitutionEscrow>,
 
-    /// SPL token vault PDA (contains only escrow amount, fee already collected)
+    /// SPL token vault PDA
     #[account(
         mut,
         seeds = [InstitutionEscrow::VAULT_SEED, escrow_id.as_ref()],
@@ -141,6 +142,14 @@ pub struct ReleaseInstitutionEscrow<'info> {
         constraint = recipient_token_account.owner == escrow_state.recipient @ EscrowError::InstitutionUnauthorized,
     )]
     pub recipient_token_account: Account<'info, TokenAccount>,
+
+    /// Fee collector's USDC token account (receives any remaining vault balance after recipient transfer)
+    #[account(
+        mut,
+        constraint = fee_collector_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
+        constraint = fee_collector_token_account.owner == escrow_state.fee_collector @ EscrowError::InstitutionUnauthorized,
+    )]
+    pub fee_collector_token_account: Account<'info, TokenAccount>,
 
     /// Authority to receive rent from closed vault account
     /// CHECK: Receives remaining lamports when vault is closed
@@ -321,7 +330,9 @@ pub fn deposit_institution_escrow(
 }
 
 /// Release USDC from institution escrow to recipient.
-/// Fee was already collected at deposit time — vault only contains the recipient's amount.
+/// Handles both flows:
+///   - New flow (fee collected at deposit): vault contains only `amount`
+///   - Legacy flow (fee in vault): vault contains `amount + fee`, excess goes to fee collector
 pub fn release_institution_escrow(
     ctx: Context<ReleaseInstitutionEscrow>,
     escrow_id: [u8; 32],
@@ -330,6 +341,7 @@ pub fn release_institution_escrow(
     let escrow_state = &ctx.accounts.escrow_state;
 
     let amount = escrow_state.amount;
+    let platform_fee = escrow_state.platform_fee;
 
     // Enforce condition type
     match escrow_state.condition_type {
@@ -357,7 +369,7 @@ pub fn release_institution_escrow(
         &[escrow_state.bump],
     ]];
 
-    // Transfer entire vault balance to recipient (fee already collected at deposit)
+    // Transfer escrow amount to recipient
     let recipient_transfer_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
         Transfer {
@@ -370,7 +382,25 @@ pub fn release_institution_escrow(
     token::transfer(recipient_transfer_ctx, amount)?;
     msg!("Released {} USDC to recipient", amount);
 
-    // No fee transfer needed — fee was collected at deposit time
+    // Transfer any remaining vault balance to fee collector.
+    // For new escrows (fee collected at deposit), vault is now empty.
+    // For legacy escrows (fee in vault), this sends the platform fee to fee collector.
+    // Using reload() to get the updated balance after the recipient transfer.
+    ctx.accounts.token_vault.reload()?;
+    let remaining = ctx.accounts.token_vault.amount;
+    if remaining > 0 {
+        let fee_transfer_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.token_vault.to_account_info(),
+                to: ctx.accounts.fee_collector_token_account.to_account_info(),
+                authority: ctx.accounts.escrow_state.to_account_info(),
+            },
+            signer_seeds,
+        );
+        token::transfer(fee_transfer_ctx, remaining)?;
+        msg!("Transferred {} USDC remaining balance to fee collector", remaining);
+    }
 
     // Close vault account to recover rent
     let close_ctx = CpiContext::new_with_signer(
