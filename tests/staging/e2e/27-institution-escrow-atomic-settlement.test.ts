@@ -659,13 +659,14 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     expect(escrow.status).to.be.oneOf(['RELEASED', 'COMPLETE']);
     expect(escrow.escrowId).to.equal(escrowId);
     expect(escrow.transactions?.depositTx).to.equal(depositTxSignature);
-    expect(escrow.timestamps?.resolvedAt).to.not.be.null;
-    expect(escrow.timestamps?.fundedAt).to.not.be.null;
+    expect(escrow.timestamps).to.exist;
+    expect(escrow.timestamps.resolvedAt).to.not.be.null;
+    expect(escrow.timestamps.fundedAt).to.not.be.null;
 
     // Timeline integrity: created < funded < resolved
-    const createdAt = new Date(escrow.timestamps.createdAt).getTime();
-    const fundedAt = new Date(escrow.timestamps.fundedAt).getTime();
-    const resolvedAt = new Date(escrow.timestamps.resolvedAt).getTime();
+    const createdAt = new Date(escrow.timestamps!.createdAt).getTime();
+    const fundedAt = new Date(escrow.timestamps!.fundedAt).getTime();
+    const resolvedAt = new Date(escrow.timestamps!.resolvedAt).getTime();
     expect(fundedAt).to.be.gte(createdAt, 'fundedAt should be after createdAt');
     expect(resolvedAt).to.be.gte(fundedAt, 'resolvedAt should be after fundedAt');
 
