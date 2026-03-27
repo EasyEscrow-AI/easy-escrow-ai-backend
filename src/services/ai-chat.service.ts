@@ -38,6 +38,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   message: string;
   history?: ChatMessage[];
+  escrowId?: string; // Escrow code (EE-XXX-XXX) or UUID — pre-fetches context into prompt
 }
 
 export interface ChatResponse {
@@ -222,8 +223,9 @@ export class AiChatService {
     await this.checkRateLimit(clientId);
 
     // FAQ fast-path: check for common questions that can be answered instantly
+    // Skip when escrowId is provided (user is asking about a specific escrow)
     // Skip if message requires live data (specific escrows, account details)
-    if (!requiresLiveData(request.message)) {
+    if (!request.escrowId && !requiresLiveData(request.message)) {
       // "Tell me more" follow-up: check if the last assistant message was a FAQ short answer
       if (request.history?.length && isTellMeMore(request.message)) {
         const lastFaqId = this.extractFaqId(request.history);
@@ -257,9 +259,26 @@ export class AiChatService {
     const anthropic = this.getAnthropicClient();
     const model = process.env.AI_CHAT_MODEL || process.env.AI_ANALYSIS_MODEL || CHAT_MODEL;
 
-    // Build anonymizer with client's known sensitive data
+    // Build anonymizer and optionally pre-fetch escrow context in parallel
     const anonymizer = new DataAnonymizer();
-    await this.buildClientTokenMap(anonymizer, clientId);
+    let escrowContextMessage: string | null = null;
+
+    if (request.escrowId) {
+      // Parallel: fetch escrow details + build client token map
+      const [escrowRecord] = await Promise.all([
+        this.fetchEscrowWithDetails(request.escrowId, clientId),
+        this.buildClientTokenMap(anonymizer, clientId),
+      ]);
+
+      if (escrowRecord) {
+        const details = this.formatEscrowDetails(escrowRecord, anonymizer);
+        escrowContextMessage = this.buildEscrowContextMessage(details);
+      } else {
+        escrowContextMessage = `[System context: The user referenced escrow "${request.escrowId}" but it was not found in their account. Let the user know and offer to help find the correct escrow.]`;
+      }
+    } else {
+      await this.buildClientTokenMap(anonymizer, clientId);
+    }
 
     // Anonymize conversation history and current message
     const messages: Anthropic.MessageParam[] = [];
@@ -273,9 +292,14 @@ export class AiChatService {
       }
     }
 
+    // If escrow context was pre-fetched, prepend it to the user message
+    const userContent = escrowContextMessage
+      ? `${escrowContextMessage}\n\n${anonymizer.anonymizeText(request.message)}`
+      : anonymizer.anonymizeText(request.message);
+
     messages.push({
       role: 'user',
-      content: anonymizer.anonymizeText(request.message),
+      content: userContent,
     });
 
     // Tool use loop — Claude may call tools, we execute them and feed results back
@@ -443,17 +467,19 @@ export class AiChatService {
     });
   }
 
-  private async toolGetEscrowDetails(
-    input: Record<string, unknown>,
-    clientId: string,
-    anonymizer: DataAnonymizer
-  ): Promise<string> {
-    const code = input.escrow_code as string;
-
-    const escrow = await this.prisma.institutionEscrow.findFirst({
+  /**
+   * Fetch an escrow with its relations by code/ID, scoped to the client.
+   * Shared by both the tool path and the pre-fetch context path.
+   */
+  private async fetchEscrowWithDetails(escrowIdentifier: string, clientId: string) {
+    return this.prisma.institutionEscrow.findFirst({
       where: {
         clientId,
-        OR: [{ escrowCode: code }, { escrowId: code }, { id: code }],
+        OR: [
+          { escrowCode: escrowIdentifier },
+          { escrowId: escrowIdentifier },
+          { id: escrowIdentifier },
+        ],
       },
       include: {
         deposits: {
@@ -486,14 +512,17 @@ export class AiChatService {
         },
       },
     });
+  }
 
-    if (!escrow) {
-      return JSON.stringify({
-        error: 'Escrow not found. Check the escrow code and try again.',
-      });
-    }
-
-    const result = {
+  /**
+   * Format a fetched escrow record into a structured object suitable for JSON
+   * serialization (used by both tool responses and system prompt context).
+   */
+  private formatEscrowDetails(
+    escrow: NonNullable<Awaited<ReturnType<typeof this.fetchEscrowWithDetails>>>,
+    anonymizer: DataAnonymizer
+  ) {
+    return {
       escrowCode: escrow.escrowCode,
       status: escrow.status,
       amount: `${escrow.amount} USDC`,
@@ -515,17 +544,35 @@ export class AiChatService {
       })),
       auditLog: escrow.auditLogs.map((a) => ({
         action: a.action,
-        details: a.details,
+        details: a.details
+          ? anonymizer.anonymizeText(
+              typeof a.details === 'string' ? a.details : JSON.stringify(a.details)
+            )
+          : null,
         at: a.createdAt.toISOString(),
       })),
       documents: escrow.files.map((f) => ({
-        name: f.fileName,
+        name: anonymizer.anonymizeText(f.fileName),
         type: f.documentType,
         uploadedAt: f.uploadedAt.toISOString(),
       })),
     };
+  }
 
-    return JSON.stringify(result);
+  private async toolGetEscrowDetails(
+    input: Record<string, unknown>,
+    clientId: string,
+    anonymizer: DataAnonymizer
+  ): Promise<string> {
+    const escrow = await this.fetchEscrowWithDetails(input.escrow_code as string, clientId);
+
+    if (!escrow) {
+      return JSON.stringify({
+        error: 'Escrow not found. Check the escrow code and try again.',
+      });
+    }
+
+    return JSON.stringify(this.formatEscrowDetails(escrow, anonymizer));
   }
 
   private async toolGetAccountSummary(
@@ -627,6 +674,56 @@ export class AiChatService {
     };
 
     return JSON.stringify(result);
+  }
+
+  /**
+   * Build a concise escrow context message for the user message layer.
+   * Includes only structured fields (no free-text audit details or filenames).
+   * Full details remain available via the get_escrow_details tool.
+   */
+  private buildEscrowContextMessage(details: ReturnType<typeof this.formatEscrowDetails>): string {
+    const lines = [
+      `[Escrow context for ${details.escrowCode}:`,
+      `Status: ${details.status} | Amount: ${details.amount} | Fee: ${details.platformFee}`,
+      `Corridor: ${details.corridor} | Condition: ${details.conditionType} | Risk: ${
+        details.riskScore ?? 'N/A'
+      }`,
+      `Created: ${details.createdAt} | Expires: ${details.expiresAt ?? 'none'} | Funded: ${
+        details.fundedAt ?? 'no'
+      } | Resolved: ${details.resolvedAt ?? 'no'}`,
+    ];
+
+    if (details.deposits.length > 0) {
+      lines.push(
+        `Deposits (${details.deposits.length}): ${details.deposits
+          .map((d) => `${d.amount} ${d.confirmed ? 'confirmed' : 'pending'}`)
+          .join(', ')}`
+      );
+    }
+
+    if (details.auditLog.length > 0) {
+      // Only include action types and timestamps — no free-text details
+      lines.push(
+        `Recent activity (${details.auditLog.length}): ${details.auditLog
+          .map((a) => `${a.action} at ${a.at}`)
+          .join(', ')}`
+      );
+    }
+
+    if (details.documents.length > 0) {
+      // Only include document types and count — no filenames
+      lines.push(
+        `Documents (${details.documents.length}): ${details.documents
+          .map((d) => d.type)
+          .join(', ')}`
+      );
+    }
+
+    lines.push(
+      'Use this context to answer questions about this escrow. Call get_escrow_details only for a DIFFERENT escrow.]'
+    );
+
+    return lines.join(' | ');
   }
 
   /**
