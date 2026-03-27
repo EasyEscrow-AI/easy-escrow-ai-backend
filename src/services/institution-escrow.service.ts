@@ -2503,6 +2503,7 @@ export class InstitutionEscrowService {
           recommendation: true,
           summary: true,
           factors: true,
+          extractedFields: true,
           createdAt: true,
         },
       }),
@@ -2558,15 +2559,22 @@ export class InstitutionEscrowService {
       };
     }
 
-    base.complianceChecks = aiAnalyses.map((a) => ({
-      id: a.id,
-      type: a.analysisType,
-      riskScore: a.riskScore,
-      recommendation: a.recommendation,
-      summary: a.summary,
-      factors: a.factors,
-      createdAt: a.createdAt,
-    }));
+    base.complianceChecks = aiAnalyses.map((a) => {
+      const extracted = (a.extractedFields as any) || {};
+      const sections = extracted._sections || null;
+      // Map numeric riskScore to human-readable risk level
+      const riskLevel =
+        a.riskScore <= 25 ? 'low_risk' : a.riskScore <= 50 ? 'medium_risk' : a.riskScore <= 80 ? 'high_risk' : 'blocked';
+      return {
+        id: a.id,
+        type: a.analysisType,
+        riskLevel,
+        recommendation: a.recommendation,
+        summary: a.summary,
+        sections,
+        createdAt: a.createdAt,
+      };
+    });
 
     base.documents = files.map((f) => ({
       id: f.id,
