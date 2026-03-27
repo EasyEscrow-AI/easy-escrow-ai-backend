@@ -50,9 +50,10 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   COMPLIANCE_HOLD: 'Compliance Hold',
   COMPLIANCE_WARNING: 'Compliance Warning',
   DEPOSIT_CONFIRMED: 'Escrow Funded',
-  AI_RELEASE_CHECK: 'AI Analysis',
+  AI_RELEASE_CHECK: 'AI Release Check',
+  AI_AUTO_RELEASE: 'AI Auto-Release',
   FUNDS_RELEASED: 'Funds Released',
-  ESCROW_COMPLETED: 'Settlement Complete',
+  ESCROW_COMPLETED: 'Escrow Complete',
   ESCROW_CANCELLED: 'Cancelled',
   ESCROW_EXPIRED: 'Expired',
   INSUFFICIENT_FUNDS: 'Insufficient Funds',
@@ -2785,6 +2786,7 @@ export class InstitutionEscrowService {
     base.activityLog = (await this.getActivityLog(e.escrowId)).map((log) => {
       // Strip nested details.kyt to avoid data bloat — KYT fields are already flattened
       const { details, ...rest } = log as any;
+      const isAiAction = rest.action === 'AI_RELEASE_CHECK' || rest.action === 'AI_AUTO_RELEASE';
       return {
         ...rest,
         details: details
@@ -2793,6 +2795,13 @@ export class InstitutionEscrowService {
               riskLevel: details.riskLevel || null,
               riskScore: details.riskScore || null,
               flags: details.flags || null,
+              // Preserve AI release check details for frontend display
+              ...(isAiAction && {
+                passed: details.passed ?? null,
+                recommendation: details.recommendation || null,
+                summary: details.summary || null,
+                conditions: details.conditions || null,
+              }),
             }
           : null,
       };
