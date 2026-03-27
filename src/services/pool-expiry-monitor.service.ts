@@ -217,9 +217,18 @@ export class PoolExpiryMonitor {
           totalDbOnly += updateResult.count;
           console.log(`${LOG_PREFIX}   DB-only expired: ${updateResult.count}`);
 
-          // Post-expiry actions for DB-only pools
-          for (const pool of dbOnly) {
-            await this.postExpireActions(pool);
+          // Post-expiry actions only for pools actually cancelled
+          if (updateResult.count > 0) {
+            // Re-fetch to find which pools were actually updated
+            const cancelledPools = await this.prisma.transactionPool.findMany({
+              where: {
+                id: { in: dbOnlyIds },
+                status: 'CANCELLED',
+              },
+            });
+            for (const pool of cancelledPools) {
+              await this.postExpireActions(pool);
+            }
           }
         }
 
@@ -232,6 +241,7 @@ export class PoolExpiryMonitor {
             });
 
             const programService = this.getProgramService();
+            let memberRefundErrors = 0;
 
             for (const member of members) {
               try {
@@ -240,24 +250,30 @@ export class PoolExpiryMonitor {
                   select: { payerWallet: true, escrowCode: true },
                 });
 
-                if (programService && escrow) {
-                  const usdcMint = programService.getUsdcMintAddress();
-                  const refundAmount = (Number(member.amount) + Number(member.platformFee)) * 1_000_000;
-                  await programService.cancelPoolMemberOnChain({
-                    poolId: pool.id,
-                    refundAmountMicroUsdc: Math.round(refundAmount).toString(),
-                    payerWallet: new PublicKey(escrow.payerWallet),
-                    usdcMint,
-                    poolCode: pool.poolCode,
-                    escrowCode: escrow.escrowCode,
-                  });
+                if (!programService || !escrow) {
+                  throw new Error(
+                    `Cannot refund on-chain: ${!programService ? 'program service unavailable' : 'escrow not found'}`
+                  );
                 }
 
+                const usdcMint = programService.getUsdcMintAddress();
+                const refundAmount = (Number(member.amount) + Number(member.platformFee)) * 1_000_000;
+                await programService.cancelPoolMemberOnChain({
+                  poolId: pool.id,
+                  refundAmountMicroUsdc: Math.round(refundAmount).toString(),
+                  payerWallet: new PublicKey(escrow.payerWallet),
+                  usdcMint,
+                  poolCode: pool.poolCode,
+                  escrowCode: escrow.escrowCode,
+                });
+
+                // Only mark REMOVED after successful on-chain refund
                 await this.prisma.transactionPoolMember.update({
                   where: { id: member.id },
                   data: { status: 'REMOVED' },
                 });
               } catch (memberErr) {
+                memberRefundErrors++;
                 console.error(
                   `${LOG_PREFIX}   Member refund failed for ${member.id}:`,
                   (memberErr as Error).message
@@ -277,6 +293,15 @@ export class PoolExpiryMonitor {
               if (this.config.onChainDelayMs > 0) {
                 await new Promise((resolve) => setTimeout(resolve, this.config.onChainDelayMs));
               }
+            }
+
+            // Skip CANCELLED status and post-actions if any on-chain refunds failed
+            if (memberRefundErrors > 0) {
+              console.warn(
+                `${LOG_PREFIX}   Skipping CANCELLED for pool ${pool.poolCode}: ${memberRefundErrors} member refund(s) failed`
+              );
+              totalOnChainFailures++;
+              continue;
             }
 
             // Close vault
@@ -352,7 +377,6 @@ export class PoolExpiryMonitor {
       this.totalExpired += totalDbOnly + totalOnChain;
       this.consecutiveErrors = 0;
 
-      this.isRunning = false;
       return {
         success: true,
         dbOnlyExpired: totalDbOnly,
@@ -385,7 +409,6 @@ export class PoolExpiryMonitor {
         );
       }
 
-      this.isRunning = false;
       return {
         success: false,
         dbOnlyExpired: 0,
@@ -393,6 +416,8 @@ export class PoolExpiryMonitor {
         onChainFailures: 0,
         error: error.message,
       };
+    } finally {
+      this.isRunning = false;
     }
   }
 

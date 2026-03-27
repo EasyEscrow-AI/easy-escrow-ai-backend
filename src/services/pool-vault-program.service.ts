@@ -28,9 +28,9 @@ import { getEscrowIdl } from '../utils/idl-loader';
 import { loadAdminKeypair } from '../utils/loadAdminKeypair';
 import type { ReceiptPlaintext } from '../types/transaction-pool';
 
-// PDA seeds matching the Rust program
-const POOL_STATE_SEED = Buffer.from('pool_state');
-const POOL_VAULT_SEED = Buffer.from('pool_vault');
+// PDA seeds matching the Rust program (pool_vault.rs constants)
+const POOL_STATE_SEED = Buffer.from('pool_vault');
+const POOL_VAULT_SEED = Buffer.from('pool_vault_token');
 const POOL_RECEIPT_SEED = Buffer.from('pool_receipt');
 
 // SPL Memo program for embedding pool codes in transactions
@@ -165,8 +165,8 @@ export class PoolVaultProgramService {
 
     // Load AES key for receipt encryption
     const aesKeyHex = process.env.POOL_RECEIPT_ENCRYPTION_KEY;
-    if (!aesKeyHex || aesKeyHex.length !== 64) {
-      throw new Error('POOL_RECEIPT_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)');
+    if (!aesKeyHex || !/^[0-9a-fA-F]{64}$/.test(aesKeyHex)) {
+      throw new Error('POOL_RECEIPT_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes)');
     }
     this.aesKey = Buffer.from(aesKeyHex, 'hex');
 
@@ -202,11 +202,11 @@ export class PoolVaultProgramService {
   }
 
   /**
-   * Derive the pool receipt PDA for a specific member
+   * Derive the pool receipt PDA for a specific escrow
    */
-  derivePoolReceiptPda(poolIdBytes: Buffer, memberIdBytes: Buffer): [PublicKey, number] {
+  derivePoolReceiptPda(poolIdBytes: Buffer, escrowIdBytes: Buffer): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [POOL_RECEIPT_SEED, poolIdBytes, memberIdBytes],
+      [POOL_RECEIPT_SEED, poolIdBytes, escrowIdBytes],
       this.programId
     );
   }
@@ -296,7 +296,10 @@ export class PoolVaultProgramService {
         timeoutMs
       )
     );
-    await Promise.race([confirmPromise, timeoutPromise]);
+    const result = await Promise.race([confirmPromise, timeoutPromise]);
+    if (result?.value?.err) {
+      throw new Error(`Transaction failed on-chain: ${JSON.stringify(result.value.err)}, tx: ${txSignature}`);
+    }
 
     return txSignature;
   }
@@ -415,7 +418,7 @@ export class PoolVaultProgramService {
    */
   async releasePoolMemberOnChain(params: {
     poolId: string;
-    memberId: string;
+    escrowId: string;
     recipientWallet: PublicKey;
     feeCollector: PublicKey;
     usdcMint: PublicKey;
@@ -427,13 +430,13 @@ export class PoolVaultProgramService {
     escrowCode?: string;
   }): Promise<{ txSignature: string; receiptPda: string }> {
     const poolIdBytes = this.uuidToBytes(params.poolId);
-    const memberIdBytes = this.uuidToBytes(params.memberId);
+    const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [poolStatePda] = this.derivePoolStatePda(poolIdBytes);
     const [vaultPda] = this.derivePoolVaultPda(poolIdBytes);
-    const [receiptPda] = this.derivePoolReceiptPda(poolIdBytes, memberIdBytes);
+    const [receiptPda] = this.derivePoolReceiptPda(poolIdBytes, escrowIdBytes);
 
     const poolIdArray = Array.from(poolIdBytes);
-    const memberIdArray = Array.from(memberIdBytes);
+    const escrowIdArray = Array.from(escrowIdBytes);
     const amountBN = new BN(params.amountMicroUsdc);
     const feeBN = new BN(params.feeMicroUsdc);
     const commitmentArray = Array.from(params.commitmentHash);
@@ -461,7 +464,7 @@ export class PoolVaultProgramService {
     }
 
     const ix = await (this.program.methods as any)
-      .releasePoolMember(poolIdArray, memberIdArray, amountBN, feeBN, commitmentArray, receiptArray)
+      .releasePoolMember(poolIdArray, escrowIdArray, amountBN, feeBN, commitmentArray, receiptArray)
       .accounts({
         authority: this.adminKeypair.publicKey,
         poolState: poolStatePda,
@@ -488,7 +491,7 @@ export class PoolVaultProgramService {
     const txSignature = await this.signAndSubmit(transaction);
 
     console.log(
-      `[PoolVaultProgramService] Release pool member on-chain: pool=${params.poolId}, member=${params.memberId}, tx: ${txSignature}`
+      `[PoolVaultProgramService] Release pool member on-chain: pool=${params.poolId}, escrow=${params.escrowId}, tx: ${txSignature}`
     );
 
     return {
@@ -649,15 +652,15 @@ export class PoolVaultProgramService {
   /**
    * Close a pool receipt PDA on-chain (reclaim rent)
    */
-  async closePoolReceiptOnChain(params: { poolId: string; memberId: string }): Promise<string> {
+  async closePoolReceiptOnChain(params: { poolId: string; escrowId: string }): Promise<string> {
     const poolIdBytes = this.uuidToBytes(params.poolId);
-    const memberIdBytes = this.uuidToBytes(params.memberId);
-    const [receiptPda] = this.derivePoolReceiptPda(poolIdBytes, memberIdBytes);
+    const escrowIdBytes = this.uuidToBytes(params.escrowId);
+    const [receiptPda] = this.derivePoolReceiptPda(poolIdBytes, escrowIdBytes);
     const poolIdArray = Array.from(poolIdBytes);
-    const memberIdArray = Array.from(memberIdBytes);
+    const escrowIdArray = Array.from(escrowIdBytes);
 
     const ix = await (this.program.methods as any)
-      .closePoolReceipt(poolIdArray, memberIdArray)
+      .closePoolReceipt(poolIdArray, escrowIdArray)
       .accounts({
         authority: this.adminKeypair.publicKey,
         poolReceipt: receiptPda,
@@ -669,7 +672,7 @@ export class PoolVaultProgramService {
     const txSignature = await this.signAndSubmit(transaction);
 
     console.log(
-      `[PoolVaultProgramService] Close pool receipt on-chain: pool=${params.poolId}, member=${params.memberId}, tx: ${txSignature}`
+      `[PoolVaultProgramService] Close pool receipt on-chain: pool=${params.poolId}, escrow=${params.escrowId}, tx: ${txSignature}`
     );
 
     return txSignature;
@@ -682,15 +685,15 @@ export class PoolVaultProgramService {
    */
   async fetchPoolReceipt(
     poolId: string,
-    memberId: string
+    escrowId: string
   ): Promise<{
     exists: boolean;
     commitmentHash?: string;
     encryptedPayload?: Buffer;
   }> {
     const poolIdBytes = this.uuidToBytes(poolId);
-    const memberIdBytes = this.uuidToBytes(memberId);
-    const [receiptPda] = this.derivePoolReceiptPda(poolIdBytes, memberIdBytes);
+    const escrowIdBytes = this.uuidToBytes(escrowId);
+    const [receiptPda] = this.derivePoolReceiptPda(poolIdBytes, escrowIdBytes);
 
     try {
       const decoded = await (this.program.account as any).poolReceipt.fetchNullable(receiptPda);

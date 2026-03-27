@@ -1483,20 +1483,11 @@ export class InstitutionEscrowService {
       }
     }
 
-    // Pool context: skip on-chain release when pool handles batched settlement
-    if (poolContext?.skipOnChainRelease) {
-      await this.createKytAuditLog(escrow, 'POOL_RELEASE_DEFERRED', actorEmail || 'system', {
-        poolId: poolContext.poolId,
-        memberId: poolContext.memberId,
-        message: 'On-chain release deferred to pool settlement',
-      });
-      return { escrowId, status: escrow.status, poolDeferral: true };
-    }
-
     // Track AI analysis for chain-of-custody memo digest
     let aiAnalysisForMemo: AiMemoData | null = null;
 
     // Gate by releaseMode: if AI, run AI compliance checks before proceeding
+    // Must run BEFORE pool deferral to ensure compliance even for batched settlements
     if (escrow.releaseMode === 'ai') {
       const aiResult = await this.performAiReleaseCheck(escrow, clientId);
       aiAnalysisForMemo = {
@@ -1544,6 +1535,16 @@ export class InstitutionEscrowService {
           `AI release check failed: ${failedConditions.map((c) => c.label).join('; ')}`
         );
       }
+    }
+
+    // Pool context: skip on-chain release when pool handles batched settlement
+    if (poolContext?.skipOnChainRelease) {
+      await this.createKytAuditLog(escrow, 'POOL_RELEASE_DEFERRED', actorEmail || 'system', {
+        poolId: poolContext.poolId,
+        memberId: poolContext.memberId,
+        message: 'On-chain release deferred to pool settlement',
+      });
+      return { escrowId, status: escrow.status, poolDeferral: true };
     }
 
     // Update status to RELEASING

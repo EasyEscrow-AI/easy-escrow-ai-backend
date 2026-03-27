@@ -224,9 +224,10 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('not found') ? 404 : 400;
+      const status = error.message?.includes('Access denied') ? 403
+        : error.message?.includes('not found') ? 404 : 400;
       res.status(status).json({
-        error: 'Add Member Failed',
+        error: status === 403 ? 'Forbidden' : status === 404 ? 'Not Found' : 'Add Member Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
@@ -260,9 +261,10 @@ router.delete(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('not found') ? 404 : 400;
+      const status = error.message?.includes('Access denied') ? 403
+        : error.message?.includes('not found') ? 404 : 400;
       res.status(status).json({
-        error: 'Remove Member Failed',
+        error: status === 403 ? 'Forbidden' : status === 404 ? 'Not Found' : 'Remove Member Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
@@ -295,8 +297,10 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      res.status(400).json({
-        error: 'Lock Pool Failed',
+      const status = error.message?.includes('Access denied') ? 403
+        : error.message?.includes('not found') ? 404 : 400;
+      res.status(status).json({
+        error: status === 403 ? 'Forbidden' : status === 404 ? 'Not Found' : 'Lock Pool Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
@@ -331,8 +335,10 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      res.status(400).json({
-        error: 'Settlement Failed',
+      const status = error.message?.includes('Access denied') ? 403
+        : error.message?.includes('not found') ? 404 : 400;
+      res.status(status).json({
+        error: status === 403 ? 'Forbidden' : status === 404 ? 'Not Found' : 'Settlement Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
@@ -366,8 +372,10 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      res.status(400).json({
-        error: 'Retry Failed',
+      const status = error.message?.includes('Access denied') ? 403
+        : error.message?.includes('not found') ? 404 : 400;
+      res.status(status).json({
+        error: status === 403 ? 'Forbidden' : status === 404 ? 'Not Found' : 'Retry Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
@@ -401,8 +409,10 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      res.status(400).json({
-        error: 'Cancellation Failed',
+      const status = error.message?.includes('Access denied') ? 403
+        : error.message?.includes('not found') ? 404 : 400;
+      res.status(status).json({
+        error: status === 403 ? 'Forbidden' : status === 404 ? 'Not Found' : 'Cancellation Failed',
         message: error.message,
         timestamp: new Date().toISOString(),
       });

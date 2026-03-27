@@ -15,8 +15,8 @@ datasource db {
 enum AgreementStatus {
   PENDING
   FUNDED
-  SOL_LOCKED  // Buyer's SOL deposited, waiting for NFT(s)
-  NFT_LOCKED  // NFT deposited, waiting for SOL
+  SOL_LOCKED // Buyer's SOL deposited, waiting for NFT(s)
+  NFT_LOCKED // NFT deposited, waiting for SOL
   BOTH_LOCKED // All deposits complete, ready for settlement
   SETTLED
   EXPIRED
@@ -82,7 +82,7 @@ model Agreement {
   honorRoyalties  Boolean         @default(false) @map("honor_royalties")
   status          AgreementStatus @default(PENDING)
   expiry          DateTime
-  nftDepositAddr  String?         @map("nft_deposit_addr")  // Seller's NFT (NFT A) deposit address
+  nftDepositAddr  String?         @map("nft_deposit_addr") // Seller's NFT (NFT A) deposit address
   nftBDepositAddr String?         @map("nft_b_deposit_addr") // Buyer's NFT (NFT B) deposit address (for NFT<>NFT swaps)
   initTxId        String?         @map("init_tx_id")
   settleTxId      String?         @map("settle_tx_id")
@@ -292,13 +292,13 @@ enum OfferType {
 
 // Enum for offer status
 enum OfferStatus {
-  ACTIVE    // Offer is open and can be accepted
-  ACCEPTED  // Offer has been accepted, transaction built and ready for signing
-  FILLED    // Swap has been executed successfully
+  ACTIVE // Offer is open and can be accepted
+  ACCEPTED // Offer has been accepted, transaction built and ready for signing
+  FILLED // Swap has been executed successfully
   CANCELLED // Offer was cancelled by maker
-  EXPIRED   // Offer expired based on expires_at timestamp
+  EXPIRED // Offer expired based on expires_at timestamp
   COUNTERED // Original offer received a counter-offer
-  REJECTED  // Offer was rejected by the target (owner of requested assets)
+  REJECTED // Offer was rejected by the target (owner of requested assets)
 }
 
 // Enum for swap transaction status
@@ -311,15 +311,15 @@ enum TransactionStatus {
 
 // Users table for atomic swap system
 model User {
-  id                      String   @id @default(uuid())
-  walletAddress           String   @unique @map("wallet_address")
-  nonceAccount            String?  @map("nonce_account")
-  isSubsidized            Boolean  @default(false) @map("is_subsidized")
-  totalSwapsCompleted     Int      @default(0) @map("total_swaps_completed")
-  totalFeesPaidLamports   BigInt   @default(0) @map("total_fees_paid_lamports")
-  swapStats               Json     @default("{}") @map("swap_stats")
-  createdAt               DateTime @default(now()) @map("created_at")
-  updatedAt               DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(uuid())
+  walletAddress         String   @unique @map("wallet_address")
+  nonceAccount          String?  @map("nonce_account")
+  isSubsidized          Boolean  @default(false) @map("is_subsidized")
+  totalSwapsCompleted   Int      @default(0) @map("total_swaps_completed")
+  totalFeesPaidLamports BigInt   @default(0) @map("total_fees_paid_lamports")
+  swapStats             Json     @default("{}") @map("swap_stats")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   // Relations
   makerOffers       SwapOffer[]       @relation("MakerOffers")
@@ -350,38 +350,38 @@ model NoncePool {
 
 // Swap offers table
 model SwapOffer {
-  id                     Int         @id @default(autoincrement())
-  makerWallet            String      @map("maker_wallet")
-  takerWallet            String?     @map("taker_wallet")
-  offerType              OfferType   @map("offer_type")
-  parentOfferId          Int?        @map("parent_offer_id")
-  offeredAssets          Json        @map("offered_assets")
-  requestedAssets        Json        @map("requested_assets")
-  offeredSolLamports     BigInt?     @map("offered_sol_lamports")
-  requestedSolLamports   BigInt?     @map("requested_sol_lamports")
-  platformFeeLamports    BigInt      @map("platform_fee_lamports")
-  status                 OfferStatus @default(ACTIVE)
-  expiresAt              DateTime    @map("expires_at")
-  nonceAccount           String      @map("nonce_account")
-  currentNonceValue      String?     @map("current_nonce_value")
-  serializedTransaction  String?     @map("serialized_transaction") @db.Text
-  transactionSignature   String?     @map("transaction_signature")
-  filledAt               DateTime?   @map("filled_at")
-  cancelledAt            DateTime?   @map("cancelled_at")
-  createdAt              DateTime    @default(now()) @map("created_at")
-  updatedAt              DateTime    @updatedAt @map("updated_at")
+  id                    Int         @id @default(autoincrement())
+  makerWallet           String      @map("maker_wallet")
+  takerWallet           String?     @map("taker_wallet")
+  offerType             OfferType   @map("offer_type")
+  parentOfferId         Int?        @map("parent_offer_id")
+  offeredAssets         Json        @map("offered_assets")
+  requestedAssets       Json        @map("requested_assets")
+  offeredSolLamports    BigInt?     @map("offered_sol_lamports")
+  requestedSolLamports  BigInt?     @map("requested_sol_lamports")
+  platformFeeLamports   BigInt      @map("platform_fee_lamports")
+  status                OfferStatus @default(ACTIVE)
+  expiresAt             DateTime    @map("expires_at")
+  nonceAccount          String      @map("nonce_account")
+  currentNonceValue     String?     @map("current_nonce_value")
+  serializedTransaction String?     @map("serialized_transaction") @db.Text
+  transactionSignature  String?     @map("transaction_signature")
+  filledAt              DateTime?   @map("filled_at")
+  cancelledAt           DateTime?   @map("cancelled_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
 
   // Bulk swap fields (for 3+ cNFT swaps using Jito bundles)
-  isBulkSwap             Boolean     @default(false) @map("is_bulk_swap")
-  bundleId               String?     @map("bundle_id") // Jito bundle ID for multi-transaction swaps
-  transactionCount       Int         @default(1) @map("transaction_count") // Number of transactions in bundle
-  bundleStatus           String?     @map("bundle_status") // Pending, Landed, Failed, Timeout
+  isBulkSwap       Boolean @default(false) @map("is_bulk_swap")
+  bundleId         String? @map("bundle_id") // Jito bundle ID for multi-transaction swaps
+  transactionCount Int     @default(1) @map("transaction_count") // Number of transactions in bundle
+  bundleStatus     String? @map("bundle_status") // Pending, Landed, Failed, Timeout
 
   // Enhanced offer management fields
-  cancelledBy            String?     @map("cancelled_by") // Wallet address that cancelled the offer
-  rejectedAt             DateTime?   @map("rejected_at") // When the offer was rejected
-  rejectedBy             String?     @map("rejected_by") // Wallet address that rejected the offer
-  updateCount            Int         @default(0) @map("update_count") // Number of times offer was modified
+  cancelledBy String?   @map("cancelled_by") // Wallet address that cancelled the offer
+  rejectedAt  DateTime? @map("rejected_at") // When the offer was rejected
+  rejectedBy  String?   @map("rejected_by") // Wallet address that rejected the offer
+  updateCount Int       @default(0) @map("update_count") // Number of times offer was modified
 
   // Relations
   maker               User              @relation("MakerOffers", fields: [makerWallet], references: [walletAddress], onDelete: Cascade)
@@ -406,28 +406,28 @@ model SwapOffer {
 
 // Swap transactions table
 model SwapTransaction {
-  id                             Int               @id @default(autoincrement())
-  offerId                        Int               @map("offer_id")
-  counterOfferId                 Int?              @map("counter_offer_id")
-  signature                      String            @unique
-  makerWallet                    String            @map("maker_wallet")
-  takerWallet                    String            @map("taker_wallet")
-  platformFeeCollectedLamports   BigInt            @map("platform_fee_collected_lamports")
-  totalValueLamports             BigInt            @map("total_value_lamports")
-  executedAt                     DateTime          @map("executed_at")
-  transactionSignature           String?           @map("transaction_signature")
-  status                         TransactionStatus @default(PENDING)
-  gasFee                         BigInt?           @map("gas_fee")
-  isSubsidized                   Boolean           @default(false) @map("is_subsidized")
-  errorMessage                   String?           @map("error_message")
-  confirmedAt                    DateTime?         @map("confirmed_at")
-  createdAt                      DateTime          @default(now()) @map("created_at")
-  updatedAt                      DateTime          @updatedAt @map("updated_at")
+  id                           Int               @id @default(autoincrement())
+  offerId                      Int               @map("offer_id")
+  counterOfferId               Int?              @map("counter_offer_id")
+  signature                    String            @unique
+  makerWallet                  String            @map("maker_wallet")
+  takerWallet                  String            @map("taker_wallet")
+  platformFeeCollectedLamports BigInt            @map("platform_fee_collected_lamports")
+  totalValueLamports           BigInt            @map("total_value_lamports")
+  executedAt                   DateTime          @map("executed_at")
+  transactionSignature         String?           @map("transaction_signature")
+  status                       TransactionStatus @default(PENDING)
+  gasFee                       BigInt?           @map("gas_fee")
+  isSubsidized                 Boolean           @default(false) @map("is_subsidized")
+  errorMessage                 String?           @map("error_message")
+  confirmedAt                  DateTime?         @map("confirmed_at")
+  createdAt                    DateTime          @default(now()) @map("created_at")
+  updatedAt                    DateTime          @updatedAt @map("updated_at")
 
   // Bulk swap / Jito bundle fields
-  bundleId                       String?           @map("bundle_id") // Jito bundle ID (shared across bundle transactions)
-  transactionIndex               Int               @default(0) @map("transaction_index") // Position in bundle (0, 1, 2...)
-  bundleSlot                     BigInt?           @map("bundle_slot") // Slot where bundle landed
+  bundleId         String? @map("bundle_id") // Jito bundle ID (shared across bundle transactions)
+  transactionIndex Int     @default(0) @map("transaction_index") // Position in bundle (0, 1, 2...)
+  bundleSlot       BigInt? @map("bundle_slot") // Slot where bundle landed
 
   // Relations
   offer        SwapOffer  @relation("OfferTransactions", fields: [offerId], references: [id], onDelete: Cascade)
@@ -452,17 +452,17 @@ model SwapTransaction {
 
 // Authorized apps table for zero-fee swap authorization
 model AuthorizedApp {
-  id               String   @id @default(uuid())
-  name             String // App or partner name
-  apiKey           String   @unique @map("api_key") // SHA256 hashed API key
-  description      String? // Optional description
-  active           Boolean  @default(true) // Can be disabled without deletion
-  zeroFeeEnabled   Boolean  @default(true) @map("zero_fee_enabled") // Zero-fee authorization
-  rateLimitPerDay  Int      @default(1000) @map("rate_limit_per_day") // Daily swap limit
-  totalSwaps       Int      @default(0) @map("total_swaps") // Total swaps executed
-  lastUsedAt       DateTime? @map("last_used_at") // Last time API key was used
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id              String    @id @default(uuid())
+  name            String // App or partner name
+  apiKey          String    @unique @map("api_key") // SHA256 hashed API key
+  description     String? // Optional description
+  active          Boolean   @default(true) // Can be disabled without deletion
+  zeroFeeEnabled  Boolean   @default(true) @map("zero_fee_enabled") // Zero-fee authorization
+  rateLimitPerDay Int       @default(1000) @map("rate_limit_per_day") // Daily swap limit
+  totalSwaps      Int       @default(0) @map("total_swaps") // Total swaps executed
+  lastUsedAt      DateTime? @map("last_used_at") // Last time API key was used
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   // Relations
   zeroFeeSwapLogs ZeroFeeSwapLog[]
@@ -505,74 +505,74 @@ model ZeroFeeSwapLog {
 
 // Enum for cNFT offer escrow status
 enum OfferEscrowStatus {
-  PENDING   // Offer created, awaiting SOL escrow confirmation
-  ACTIVE    // SOL escrowed, awaiting seller response
-  ACCEPTED  // Seller accepted the offer
+  PENDING // Offer created, awaiting SOL escrow confirmation
+  ACTIVE // SOL escrowed, awaiting seller response
+  ACCEPTED // Seller accepted the offer
   COUNTERED // Seller proposed different terms
   CANCELLED // Bidder cancelled the offer
-  EXPIRED   // Offer expired based on expiresAt
-  REJECTED  // Seller explicitly rejected the offer
+  EXPIRED // Offer expired based on expiresAt
+  REJECTED // Seller explicitly rejected the offer
 }
 
 // cNFT Offer table - offers on listed or unlisted cNFTs with SOL escrow
 model CnftOffer {
-  id              String             @id @default(uuid())
-  offerId         String             @unique @map("offer_id") // External-facing ID
+  id      String @id @default(uuid())
+  offerId String @unique @map("offer_id") // External-facing ID
 
   // Bidder info
-  bidderWallet    String             @map("bidder_wallet") // Offer creator wallet
+  bidderWallet String @map("bidder_wallet") // Offer creator wallet
 
   // Target cNFT details
-  targetAssetId   String             @map("target_asset_id") // cNFT asset ID being bid on
-  merkleTree      String?            @map("merkle_tree") // Cached merkle tree address
-  leafIndex       Int?               @map("leaf_index") // Cached leaf index
+  targetAssetId String  @map("target_asset_id") // cNFT asset ID being bid on
+  merkleTree    String? @map("merkle_tree") // Cached merkle tree address
+  leafIndex     Int?    @map("leaf_index") // Cached leaf index
 
   // cNFT owner (seller)
-  ownerWallet     String             @map("owner_wallet") // Current owner of the cNFT
+  ownerWallet String @map("owner_wallet") // Current owner of the cNFT
 
   // Offer amount (SOL only - no USDC)
-  offerLamports   BigInt             @map("offer_lamports") // Offer amount in lamports
+  offerLamports BigInt @map("offer_lamports") // Offer amount in lamports
 
   // Platform fee
-  feeLamports     BigInt             @map("fee_lamports") // Platform fee in lamports
-  feeBps          Int                @default(100) @map("fee_bps") // Fee basis points (100 = 1%)
+  feeLamports BigInt @map("fee_lamports") // Platform fee in lamports
+  feeBps      Int    @default(100) @map("fee_bps") // Fee basis points (100 = 1%)
 
   // Escrow PDA
-  escrowPda       String             @map("escrow_pda") // PDA holding bidder's SOL
-  escrowBump      Int                @map("escrow_bump") // PDA bump seed
+  escrowPda  String @map("escrow_pda") // PDA holding bidder's SOL
+  escrowBump Int    @map("escrow_bump") // PDA bump seed
 
   // Status and timing
-  status          OfferEscrowStatus  @default(PENDING)
-  expiresAt       DateTime           @map("expires_at")
+  status    OfferEscrowStatus @default(PENDING)
+  expiresAt DateTime          @map("expires_at")
 
   // Transaction references
-  escrowTxId      String?            @map("escrow_tx_id") // SOL escrow transaction
-  acceptTxId      String?            @map("accept_tx_id") // Accept transaction (cNFT + SOL transfer)
-  cancelTxId      String?            @map("cancel_tx_id") // Cancel/refund transaction
-  rejectTxId      String?            @map("reject_tx_id") // Rejection transaction
+  escrowTxId String? @map("escrow_tx_id") // SOL escrow transaction
+  acceptTxId String? @map("accept_tx_id") // Accept transaction (cNFT + SOL transfer)
+  cancelTxId String? @map("cancel_tx_id") // Cancel/refund transaction
+  rejectTxId String? @map("reject_tx_id") // Rejection transaction
 
   // Counter-offer chain
-  counterOfferId  String?            @map("counter_offer_id") // Reference to counter offer
-  parentOfferId   String?            @map("parent_offer_id") // If this is a counter, reference to original
+  counterOfferId String? @map("counter_offer_id") // Reference to counter offer
+  parentOfferId  String? @map("parent_offer_id") // If this is a counter, reference to original
 
   // Resolution timestamps
-  acceptedAt      DateTime?          @map("accepted_at")
-  cancelledAt     DateTime?          @map("cancelled_at")
-  rejectedAt      DateTime?          @map("rejected_at")
-  expiredAt       DateTime?          @map("expired_at")
+  acceptedAt  DateTime? @map("accepted_at")
+  cancelledAt DateTime? @map("cancelled_at")
+  rejectedAt  DateTime? @map("rejected_at")
+  expiredAt   DateTime? @map("expired_at")
 
   // Timestamps
-  createdAt       DateTime           @default(now()) @map("created_at")
-  updatedAt       DateTime           @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // cNFT metadata cache (optional, for display)
-  metadata        Json?              // Cached cNFT metadata (name, image, etc.)
+  metadata Json? // Cached cNFT metadata (name, image, etc.)
 
   // Relations - self-referential for counter-offers
-  counterOffer    CnftOffer?         @relation("CounterOffers", fields: [counterOfferId], references: [id])
-  counterOffers   CnftOffer[]        @relation("CounterOffers")
-  parentOffer     CnftOffer?         @relation("ParentOffers", fields: [parentOfferId], references: [id])
-  childOffers     CnftOffer[]        @relation("ParentOffers")
+  counterOffer  CnftOffer?  @relation("CounterOffers", fields: [counterOfferId], references: [id])
+  counterOffers CnftOffer[] @relation("CounterOffers")
+  parentOffer   CnftOffer?  @relation("ParentOffers", fields: [parentOfferId], references: [id])
+  childOffers   CnftOffer[] @relation("ParentOffers")
 
   @@index([offerId])
   @@index([bidderWallet])
@@ -592,79 +592,79 @@ model CnftOffer {
 // Enum for two-phase swap status
 // Supports bulk and cNFT swaps with lock → settle phases
 enum TwoPhaseSwapStatus {
-  CREATED         // Swap offer created, awaiting acceptance
-  ACCEPTED        // Both parties agreed, ready to lock
+  CREATED // Swap offer created, awaiting acceptance
+  ACCEPTED // Both parties agreed, ready to lock
   LOCKING_PARTY_A // Party A locking assets (delegation/escrow in progress)
-  PARTY_A_LOCKED  // Party A assets delegated/escrowed
+  PARTY_A_LOCKED // Party A assets delegated/escrowed
   LOCKING_PARTY_B // Party B locking assets
-  FULLY_LOCKED    // Both parties locked, ready to settle
-  SETTLING        // Transfers in progress
-  PARTIAL_SETTLE  // Some transfers complete, continuing
-  COMPLETED       // All transfers successful
-  FAILED          // Unrecoverable error, needs intervention
-  CANCELLED       // User cancelled before full lock
-  EXPIRED         // Timeout during lock phase
+  FULLY_LOCKED // Both parties locked, ready to settle
+  SETTLING // Transfers in progress
+  PARTIAL_SETTLE // Some transfers complete, continuing
+  COMPLETED // All transfers successful
+  FAILED // Unrecoverable error, needs intervention
+  CANCELLED // User cancelled before full lock
+  EXPIRED // Timeout during lock phase
 }
 
 // Two-phase swap state tracking for bulk and cNFT swaps
 model TwoPhaseSwap {
-  id              String              @id @default(uuid())
+  id String @id @default(uuid())
 
   // Status and timestamps
-  status          TwoPhaseSwapStatus  @default(CREATED)
-  createdAt       DateTime            @default(now()) @map("created_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
-  expiresAt       DateTime            @map("expires_at") // Timeout for lock phase
+  status    TwoPhaseSwapStatus @default(CREATED)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  expiresAt DateTime           @map("expires_at") // Timeout for lock phase
 
   // Party information
-  partyA          String              @map("party_a") // Initiator wallet address
-  partyB          String?             @map("party_b") // Counterparty wallet address (null for open swaps)
+  partyA String  @map("party_a") // Initiator wallet address
+  partyB String? @map("party_b") // Counterparty wallet address (null for open swaps)
 
   // Assets being swapped (stored as JSON arrays)
-  assetsA         Json                @map("assets_a") // Party A's assets to transfer
-  assetsB         Json                @map("assets_b") // Party B's assets to transfer
+  assetsA Json @map("assets_a") // Party A's assets to transfer
+  assetsB Json @map("assets_b") // Party B's assets to transfer
 
   // SOL amounts (in lamports)
-  solAmountA      BigInt?             @map("sol_amount_a") // SOL from Party A
-  solAmountB      BigInt?             @map("sol_amount_b") // SOL from Party B
+  solAmountA BigInt? @map("sol_amount_a") // SOL from Party A
+  solAmountB BigInt? @map("sol_amount_b") // SOL from Party B
 
   // Lock phase transaction signatures
-  lockTxA         String?             @map("lock_tx_a") // Party A lock transaction signature
-  lockTxB         String?             @map("lock_tx_b") // Party B lock transaction signature
-  lockConfirmedA  DateTime?           @map("lock_confirmed_a") // When Party A lock was confirmed
-  lockConfirmedB  DateTime?           @map("lock_confirmed_b") // When Party B lock was confirmed
+  lockTxA        String?   @map("lock_tx_a") // Party A lock transaction signature
+  lockTxB        String?   @map("lock_tx_b") // Party B lock transaction signature
+  lockConfirmedA DateTime? @map("lock_confirmed_a") // When Party A lock was confirmed
+  lockConfirmedB DateTime? @map("lock_confirmed_b") // When Party B lock was confirmed
 
   // Settlement phase tracking
-  settleTxs       Json                @default("[]") @map("settle_txs") // Array of settlement tx signatures
-  currentSettleIndex Int              @default(0) @map("current_settle_index") // Progress tracker for multi-tx settlement
-  totalSettleTxs  Int                 @default(1) @map("total_settle_txs") // Total number of settlement transactions
+  settleTxs          Json @default("[]") @map("settle_txs") // Array of settlement tx signatures
+  currentSettleIndex Int  @default(0) @map("current_settle_index") // Progress tracker for multi-tx settlement
+  totalSettleTxs     Int  @default(1) @map("total_settle_txs") // Total number of settlement transactions
 
   // Final settlement transaction (main atomic swap tx)
-  finalSettleTx   String?             @map("final_settle_tx") // Final settlement signature
-  settledAt       DateTime?           @map("settled_at") // When swap completed
+  finalSettleTx String?   @map("final_settle_tx") // Final settlement signature
+  settledAt     DateTime? @map("settled_at") // When swap completed
 
   // Error tracking
-  errorMessage    String?             @map("error_message") // Error details if FAILED
-  errorCode       String?             @map("error_code") // Error code for categorization
-  failedAt        DateTime?           @map("failed_at") // When swap failed
+  errorMessage String?   @map("error_message") // Error details if FAILED
+  errorCode    String?   @map("error_code") // Error code for categorization
+  failedAt     DateTime? @map("failed_at") // When swap failed
 
   // Cancellation tracking
-  cancelledBy     String?             @map("cancelled_by") // Wallet that cancelled
-  cancelledAt     DateTime?           @map("cancelled_at") // When cancelled
-  cancelReason    String?             @map("cancel_reason") // Reason for cancellation
+  cancelledBy  String?   @map("cancelled_by") // Wallet that cancelled
+  cancelledAt  DateTime? @map("cancelled_at") // When cancelled
+  cancelReason String?   @map("cancel_reason") // Reason for cancellation
 
   // Platform fee
-  platformFeeLamports BigInt          @map("platform_fee_lamports")
+  platformFeeLamports BigInt @map("platform_fee_lamports")
 
   // Reference to original swap offer (if created from offer)
-  swapOfferId     Int?                @unique @map("swap_offer_id")
-  swapOffer       SwapOffer?          @relation("TwoPhaseSwapOffer", fields: [swapOfferId], references: [id])
+  swapOfferId Int?       @unique @map("swap_offer_id")
+  swapOffer   SwapOffer? @relation("TwoPhaseSwapOffer", fields: [swapOfferId], references: [id])
 
   // Delegation tracking for cNFTs
-  delegationStatus Json               @default("{}") @map("delegation_status") // Per-asset delegation status
+  delegationStatus Json @default("{}") @map("delegation_status") // Per-asset delegation status
 
   // State transition history (audit trail)
-  stateHistory    Json                @default("[]") @map("state_history") // Array of {state, timestamp, reason}
+  stateHistory Json @default("[]") @map("state_history") // Array of {state, timestamp, reason}
 
   @@index([status])
   @@index([partyA])
@@ -830,100 +830,100 @@ enum AnnualRevenueRange {
 
 // Institution client account (email + password auth)
 model InstitutionClient {
-  id              String        @id @default(uuid())
-  email           String        @unique
-  passwordHash    String        @map("password_hash")
-  companyName     String        @map("company_name")
-  tier            ClientTier    @default(STANDARD)
-  status          ClientStatus  @default(PENDING_VERIFICATION)
-  kycStatus       String        @default("PENDING") @map("kyc_status")
-  jurisdiction    String?
-  primaryWallet   String?       @map("primary_wallet")
-  settledWallets  String[]      @default([]) @map("settled_wallets")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-  lastLoginAt     DateTime?     @map("last_login_at")
+  id             String       @id @default(uuid())
+  email          String       @unique
+  passwordHash   String       @map("password_hash")
+  companyName    String       @map("company_name")
+  tier           ClientTier   @default(STANDARD)
+  status         ClientStatus @default(PENDING_VERIFICATION)
+  kycStatus      String       @default("PENDING") @map("kyc_status")
+  jurisdiction   String?
+  primaryWallet  String?      @map("primary_wallet")
+  settledWallets String[]     @default([]) @map("settled_wallets")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  lastLoginAt    DateTime?    @map("last_login_at")
 
   // Legal Entity
-  legalName             String?          @map("legal_name")
-  tradingName           String?          @map("trading_name")
-  registrationNumber    String?          @map("registration_number")
-  registrationCountry   String?          @map("registration_country")
-  entityType            EntityType?      @map("entity_type")
-  lei                   String?          // Legal Entity Identifier
-  taxId                 String?          @map("tax_id")
-  taxCountry            String?          @map("tax_country")
+  legalName           String?     @map("legal_name")
+  tradingName         String?     @map("trading_name")
+  registrationNumber  String?     @map("registration_number")
+  registrationCountry String?     @map("registration_country")
+  entityType          EntityType? @map("entity_type")
+  lei                 String? // Legal Entity Identifier
+  taxId               String?     @map("tax_id")
+  taxCountry          String?     @map("tax_country")
 
   // Registered Address
-  addressLine1          String?          @map("address_line_1")
-  addressLine2          String?          @map("address_line_2")
-  city                  String?
-  state                 String?
-  postalCode            String?          @map("postal_code")
-  country               String?
+  addressLine1 String? @map("address_line_1")
+  addressLine2 String? @map("address_line_2")
+  city         String?
+  state        String?
+  postalCode   String? @map("postal_code")
+  country      String?
 
   // Primary Contact
-  contactFirstName      String?          @map("contact_first_name")
-  contactLastName       String?          @map("contact_last_name")
-  contactEmail          String?          @map("contact_email")
-  contactPhone          String?          @map("contact_phone")
-  contactTitle          String?          @map("contact_title")
+  contactFirstName String? @map("contact_first_name")
+  contactLastName  String? @map("contact_last_name")
+  contactEmail     String? @map("contact_email")
+  contactPhone     String? @map("contact_phone")
+  contactTitle     String? @map("contact_title")
 
   // Compliance
-  kybStatus             KybStatus?       @map("kyb_status")
-  kybVerifiedAt         DateTime?        @map("kyb_verified_at")
-  kybExpiresAt          DateTime?        @map("kyb_expires_at")
-  riskRating            RiskRating?      @map("risk_rating")
-  riskNotes             String?          @map("risk_notes")
-  sanctionsStatus       SanctionsStatus? @map("sanctions_status")
-  sourceOfFunds         String?          @map("source_of_funds")
+  kybStatus       KybStatus?       @map("kyb_status")
+  kybVerifiedAt   DateTime?        @map("kyb_verified_at")
+  kybExpiresAt    DateTime?        @map("kyb_expires_at")
+  riskRating      RiskRating?      @map("risk_rating")
+  riskNotes       String?          @map("risk_notes")
+  sanctionsStatus SanctionsStatus? @map("sanctions_status")
+  sourceOfFunds   String?          @map("source_of_funds")
 
   // Regulatory
-  isRegulatedEntity     Boolean?         @map("is_regulated_entity")
-  regulatoryStatus      RegulatoryStatus? @map("regulatory_status")
-  licenseType           String?          @map("license_type")
-  licenseNumber         String?          @map("license_number")
-  regulatoryBody        String?          @map("regulatory_body")
+  isRegulatedEntity Boolean?          @map("is_regulated_entity")
+  regulatoryStatus  RegulatoryStatus? @map("regulatory_status")
+  licenseType       String?           @map("license_type")
+  licenseNumber     String?           @map("license_number")
+  regulatoryBody    String?           @map("regulatory_body")
 
   // Business
   industry              String?
-  websiteUrl            String?          @map("website_url")
-  businessDescription   String?          @map("business_description")
-  yearEstablished       Int?             @map("year_established")
+  websiteUrl            String?             @map("website_url")
+  businessDescription   String?             @map("business_description")
+  yearEstablished       Int?                @map("year_established")
   employeeCountRange    EmployeeCountRange? @map("employee_count_range")
   annualRevenueRange    AnnualRevenueRange? @map("annual_revenue_range")
-  expectedMonthlyVolume Decimal?         @map("expected_monthly_volume") @db.Decimal(20, 6)
-  purposeOfAccount      String?          @map("purpose_of_account")
+  expectedMonthlyVolume Decimal?            @map("expected_monthly_volume") @db.Decimal(20, 6)
+  purposeOfAccount      String?             @map("purpose_of_account")
 
   // Crypto
-  walletCustodyType     WalletCustodyType? @map("wallet_custody_type")
-  custodianName         String?          @map("custodian_name")
-  preferredSettlementChain String?       @map("preferred_settlement_chain")
+  walletCustodyType        WalletCustodyType? @map("wallet_custody_type")
+  custodianName            String?            @map("custodian_name")
+  preferredSettlementChain String?            @map("preferred_settlement_chain")
 
   // Account Management
-  accountManagerName    String?          @map("account_manager_name")
-  accountManagerEmail   String?          @map("account_manager_email")
-  onboardingCompletedAt DateTime?        @map("onboarding_completed_at")
-  nextReviewDate        DateTime?        @map("next_review_date")
-  referralSource        String?          @map("referral_source")
-  isTestAccount         Boolean          @default(false) @map("is_test_account")
-  isArchived            Boolean          @default(false) @map("is_archived")
+  accountManagerName    String?   @map("account_manager_name")
+  accountManagerEmail   String?   @map("account_manager_email")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  nextReviewDate        DateTime? @map("next_review_date")
+  referralSource        String?   @map("referral_source")
+  isTestAccount         Boolean   @default(false) @map("is_test_account")
+  isArchived            Boolean   @default(false) @map("is_archived")
 
   // Relations
-  refreshTokens   InstitutionRefreshToken[]
-  settings        InstitutionClientSettings?
-  apiKeys         InstitutionApiKey[]
-  escrows         InstitutionEscrow[]
-  auditLogs       InstitutionAuditLog[]
-  files           InstitutionFile[]
-  wallets         InstitutionWallet[]
-  accounts        InstitutionAccount[]
-  aiAnalyses      InstitutionAiAnalysis[] @relation("ClientAiAnalyses")
-  notifications   InstitutionNotification[]
-  branches        InstitutionBranch[]
-  directPayments      DirectPayment[]
+  refreshTokens        InstitutionRefreshToken[]
+  settings             InstitutionClientSettings?
+  apiKeys              InstitutionApiKey[]
+  escrows              InstitutionEscrow[]
+  auditLogs            InstitutionAuditLog[]
+  files                InstitutionFile[]
+  wallets              InstitutionWallet[]
+  accounts             InstitutionAccount[]
+  aiAnalyses           InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
+  notifications        InstitutionNotification[]
+  branches             InstitutionBranch[]
+  directPayments       DirectPayment[]
   stealthMetaAddresses StealthMetaAddress[]
-  transactionPools    TransactionPool[]
+  transactionPools     TransactionPool[]
 
   @@index([email])
   @@index([status])
@@ -939,19 +939,19 @@ model InstitutionClient {
 
 // Institution wallet management (replaces flat primaryWallet/settledWallets)
 model InstitutionWallet {
-  id            String    @id @default(uuid())
-  clientId      String    @map("client_id")
-  name          String
-  address       String
-  chain         String    @default("solana")
-  description   String?
-  provider      String?
-  isPrimary     Boolean   @default(false) @map("is_primary")
-  isSettlement  Boolean   @default(false) @map("is_settlement")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  clientId     String   @map("client_id")
+  name         String
+  address      String
+  chain        String   @default("solana")
+  description  String?
+  provider     String?
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  isSettlement Boolean  @default(false) @map("is_settlement")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  client        InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
   @@index([address])
@@ -962,19 +962,19 @@ model InstitutionWallet {
 
 // Institution multi-account system (Treasury, Operations, Settlement, etc.)
 model InstitutionAccount {
-  id          String   @id @default(uuid())
-  clientId    String   @map("client_id")
+  id       String @id @default(uuid())
+  clientId String @map("client_id")
 
   // Identity
   name        String
   label       String?
-  accountType InstitutionAccountType       @default(GENERAL) @map("account_type")
+  accountType InstitutionAccountType @default(GENERAL) @map("account_type")
   description String?
 
   // Wallet
-  walletAddress  String  @map("wallet_address")
-  chain          String  @default("solana")
-  walletProvider String? @map("wallet_provider")
+  walletAddress  String             @map("wallet_address")
+  chain          String             @default("solana")
+  walletProvider String?            @map("wallet_provider")
   custodyType    WalletCustodyType? @map("custody_type")
 
   // Verification (per-account, separate from client KYB)
@@ -999,33 +999,33 @@ model InstitutionAccount {
   whitelistEnforced    Boolean  @default(false) @map("whitelist_enforced")
 
   // Notifications
-  notificationEmail       String?  @map("notification_email")
-  webhookUrl              String?  @map("webhook_url")
-  notifyOnEscrowCreated   Boolean  @default(true) @map("notify_on_escrow_created")
-  notifyOnEscrowFunded    Boolean  @default(true) @map("notify_on_escrow_funded")
-  notifyOnEscrowReleased  Boolean  @default(true) @map("notify_on_escrow_released")
-  notifyOnComplianceAlert Boolean  @default(true) @map("notify_on_compliance_alert")
+  notificationEmail       String? @map("notification_email")
+  webhookUrl              String? @map("webhook_url")
+  notifyOnEscrowCreated   Boolean @default(true) @map("notify_on_escrow_created")
+  notifyOnEscrowFunded    Boolean @default(true) @map("notify_on_escrow_funded")
+  notifyOnEscrowReleased  Boolean @default(true) @map("notify_on_escrow_released")
+  notifyOnComplianceAlert Boolean @default(true) @map("notify_on_compliance_alert")
 
   // Account preferences
   defaultCurrency String @default("USDC") @map("default_currency")
 
   // Status
   isDefault Boolean @default(false) @map("is_default")
-  isActive  Boolean @default(true)  @map("is_active")
+  isActive  Boolean @default(true) @map("is_active")
 
   // Stealth / Privacy
   stealthMetaAddressId String? @unique @map("stealth_meta_address_id")
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Branch association (optional)
   branchId String? @map("branch_id")
 
   // Relations
-  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  branch InstitutionBranch? @relation(fields: [branchId], references: [id])
+  client             InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  branch             InstitutionBranch?  @relation(fields: [branchId], references: [id])
   stealthMetaAddress StealthMetaAddress? @relation(fields: [stealthMetaAddressId], references: [id])
 
   @@unique([clientId, name])
@@ -1060,7 +1060,7 @@ model InstitutionBranch {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  client   InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client   InstitutionClient    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   accounts InstitutionAccount[]
 
   @@index([clientId])
@@ -1071,27 +1071,27 @@ model InstitutionBranch {
 
 // Direct payments (non-escrow transfers between institutions)
 model DirectPayment {
-  id                String    @id @default(uuid())
-  paymentCode       String?   @unique @map("payment_code") // Human-readable ID: EE-XXX-XXX
-  clientId          String    @map("client_id")
-  sender            String    // sender name/label
-  senderCountry     String    @map("sender_country")
-  senderWallet      String    @map("sender_wallet")
-  recipient         String    // recipient name
-  recipientCountry  String    @map("recipient_country")
-  recipientWallet   String    @map("recipient_wallet")
-  amount            Decimal   @db.Decimal(20, 6)
-  currency          String    @default("USDC")
-  corridor          String
-  status            String    @default("processing") // completed, processing, failed
-  txHash            String?   @map("tx_hash")
-  platformFee       Decimal   @default(0) @map("platform_fee") @db.Decimal(20, 6)
-  riskScore         Int?      @map("risk_score")
-  settlementMode    String    @default("direct") @map("settlement_mode")
-  releaseMode       String    @default("manual") @map("release_mode")
-  settledAt         DateTime? @map("settled_at")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  id               String    @id @default(uuid())
+  paymentCode      String?   @unique @map("payment_code") // Human-readable ID: EE-XXX-XXX
+  clientId         String    @map("client_id")
+  sender           String // sender name/label
+  senderCountry    String    @map("sender_country")
+  senderWallet     String    @map("sender_wallet")
+  recipient        String // recipient name
+  recipientCountry String    @map("recipient_country")
+  recipientWallet  String    @map("recipient_wallet")
+  amount           Decimal   @db.Decimal(20, 6)
+  currency         String    @default("USDC")
+  corridor         String
+  status           String    @default("processing") // completed, processing, failed
+  txHash           String?   @map("tx_hash")
+  platformFee      Decimal   @default(0) @map("platform_fee") @db.Decimal(20, 6)
+  riskScore        Int?      @map("risk_score")
+  settlementMode   String    @default("direct") @map("settlement_mode")
+  releaseMode      String    @default("manual") @map("release_mode")
+  settledAt        DateTime? @map("settled_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
@@ -1105,16 +1105,16 @@ model DirectPayment {
 
 // Refresh token storage (hashed)
 model InstitutionRefreshToken {
-  id          String    @id @default(uuid())
-  tokenHash   String    @unique @map("token_hash")
-  clientId    String    @map("client_id")
-  expiresAt   DateTime  @map("expires_at")
-  revokedAt   DateTime? @map("revoked_at")
-  deviceInfo  String?   @map("device_info")
-  ipAddress   String?   @map("ip_address")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique @map("token_hash")
+  clientId   String    @map("client_id")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  deviceInfo String?   @map("device_info")
+  ipAddress  String?   @map("ip_address")
+  createdAt  DateTime  @default(now()) @map("created_at")
 
-  client      InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
   @@index([expiresAt])
@@ -1124,38 +1124,38 @@ model InstitutionRefreshToken {
 
 // Per-client settings
 model InstitutionClientSettings {
-  id                        String    @id @default(uuid())
-  clientId                  String    @unique @map("client_id")
-  defaultCorridor           String?   @map("default_corridor")
-  defaultCurrency           String    @default("USDC") @map("default_currency")
-  notificationEmail         String?   @map("notification_email")
-  webhookUrl                String?   @map("webhook_url")
-  webhookSecret             String?   @map("webhook_secret")
-  settlementAuthorityWallet String?   @map("settlement_authority_wallet")
-  timezone                  String    @default("UTC")
-  autoApproveThreshold      Decimal?  @map("auto_approve_threshold") @db.Decimal(20, 6)
-  manualReviewThreshold     Decimal?  @map("manual_review_threshold") @db.Decimal(20, 6)
-  autoTravelRule            Boolean   @default(true) @map("auto_travel_rule")
-  activeSanctionsLists      String[]  @default(["OFAC SDN", "EU Consolidated", "UN Sanctions"]) @map("active_sanctions_lists")
-  aiAutoRelease             Boolean   @default(false) @map("ai_auto_release")
-  riskTolerance             String    @default("low") @map("risk_tolerance") // low, medium, high
-  defaultToken              String    @default("usdc") @map("default_token")
-  emailNotifications        Boolean   @default(true) @map("email_notifications")
-  language                  String?   // en, de, fr, ar, zh, es
-  theme                     String?   // light, dark, system
-  twoFactorEnabled          Boolean   @default(false) @map("two_factor_enabled")
-  aiRecommendations         Boolean   @default(true) @map("ai_recommendations")
-  feeBps                    Int       @default(20) @map("fee_bps")  // Fee in basis points (default 0.20%)
-  minFeeUsdc                Decimal   @default(0.20) @map("min_fee_usdc") @db.Decimal(20, 6)  // Minimum fee in USDC
-  maxFeeUsdc                Decimal   @default(20.00) @map("max_fee_usdc") @db.Decimal(20, 6)  // Maximum fee in USDC
-  notificationPreferences   Json?     @map("notification_preferences")  // Per-event notification prefs [{event, inApp, email, sms}]
-  poolMaxMembers            Int?      @map("pool_max_members")
+  id                        String              @id @default(uuid())
+  clientId                  String              @unique @map("client_id")
+  defaultCorridor           String?             @map("default_corridor")
+  defaultCurrency           String              @default("USDC") @map("default_currency")
+  notificationEmail         String?             @map("notification_email")
+  webhookUrl                String?             @map("webhook_url")
+  webhookSecret             String?             @map("webhook_secret")
+  settlementAuthorityWallet String?             @map("settlement_authority_wallet")
+  timezone                  String              @default("UTC")
+  autoApproveThreshold      Decimal?            @map("auto_approve_threshold") @db.Decimal(20, 6)
+  manualReviewThreshold     Decimal?            @map("manual_review_threshold") @db.Decimal(20, 6)
+  autoTravelRule            Boolean             @default(true) @map("auto_travel_rule")
+  activeSanctionsLists      String[]            @default(["OFAC SDN", "EU Consolidated", "UN Sanctions"]) @map("active_sanctions_lists")
+  aiAutoRelease             Boolean             @default(false) @map("ai_auto_release")
+  riskTolerance             String              @default("low") @map("risk_tolerance") // low, medium, high
+  defaultToken              String              @default("usdc") @map("default_token")
+  emailNotifications        Boolean             @default(true) @map("email_notifications")
+  language                  String? // en, de, fr, ar, zh, es
+  theme                     String? // light, dark, system
+  twoFactorEnabled          Boolean             @default(false) @map("two_factor_enabled")
+  aiRecommendations         Boolean             @default(true) @map("ai_recommendations")
+  feeBps                    Int                 @default(20) @map("fee_bps") // Fee in basis points (default 0.20%)
+  minFeeUsdc                Decimal             @default(0.20) @map("min_fee_usdc") @db.Decimal(20, 6) // Minimum fee in USDC
+  maxFeeUsdc                Decimal             @default(20.00) @map("max_fee_usdc") @db.Decimal(20, 6) // Maximum fee in USDC
+  notificationPreferences   Json?               @map("notification_preferences") // Per-event notification prefs [{event, inApp, email, sms}]
+  poolMaxMembers            Int?                @map("pool_max_members")
   poolDefaultSettlementMode PoolSettlementMode? @map("pool_default_settlement_mode")
-  poolDefaultExpiryHours    Int?      @map("pool_default_expiry_hours")
-  createdAt                 DateTime  @default(now()) @map("created_at")
-  updatedAt                 DateTime  @updatedAt @map("updated_at")
+  poolDefaultExpiryHours    Int?                @map("pool_default_expiry_hours")
+  createdAt                 DateTime            @default(now()) @map("created_at")
+  updatedAt                 DateTime            @updatedAt @map("updated_at")
 
-  client    InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("institution_client_settings")
 }
@@ -1173,7 +1173,7 @@ model InstitutionApiKey {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  client      InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
   @@index([keyHash])
@@ -1187,68 +1187,68 @@ model InstitutionApiKey {
 
 // Core institution escrow record
 model InstitutionEscrow {
-  id                    String                    @id @default(uuid())
-  escrowId              String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
-  escrowCode            String                    @unique @map("escrow_code") // Human-readable ID: EE-XXX-XXX
-  clientId              String                    @map("client_id")
-  payerWallet           String                    @map("payer_wallet")
-  recipientWallet       String?                   @map("recipient_wallet")
+  id              String  @id @default(uuid())
+  escrowId        String  @unique @map("escrow_id") // UUID for on-chain PDA derivation
+  escrowCode      String  @unique @map("escrow_code") // Human-readable ID: EE-XXX-XXX
+  clientId        String  @map("client_id")
+  payerWallet     String  @map("payer_wallet")
+  recipientWallet String? @map("recipient_wallet")
 
   // Party display names (optional, set at creation for receipts/audit/detail views)
-  payerName             String?                   @map("payer_name")
-  payerAccountLabel     String?                   @map("payer_account_label")
-  payerBranchName       String?                   @map("payer_branch_name")
-  recipientName         String?                   @map("recipient_name")
-  recipientAccountLabel String?                   @map("recipient_account_label")
-  recipientBranchName   String?                   @map("recipient_branch_name")
+  payerName             String? @map("payer_name")
+  payerAccountLabel     String? @map("payer_account_label")
+  payerBranchName       String? @map("payer_branch_name")
+  recipientName         String? @map("recipient_name")
+  recipientAccountLabel String? @map("recipient_account_label")
+  recipientBranchName   String? @map("recipient_branch_name")
 
-  usdcMint              String                    @map("usdc_mint")
-  amount                Decimal                   @db.Decimal(20, 6) // USDC amount (6 decimal precision)
-  platformFee           Decimal                   @map("platform_fee") @db.Decimal(20, 6)
-  corridor              String?                   // e.g. 'SG-CH'
-  conditionType         InstitutionConditionType? @map("condition_type")
-  status                InstitutionEscrowStatus   @default(CREATED)
-  settlementAuthority   String                    @map("settlement_authority")
-  riskScore             Int?                      @map("risk_score")
+  usdcMint            String                    @map("usdc_mint")
+  amount              Decimal                   @db.Decimal(20, 6) // USDC amount (6 decimal precision)
+  platformFee         Decimal                   @map("platform_fee") @db.Decimal(20, 6)
+  corridor            String? // e.g. 'SG-CH'
+  conditionType       InstitutionConditionType? @map("condition_type")
+  status              InstitutionEscrowStatus   @default(CREATED)
+  settlementAuthority String                    @map("settlement_authority")
+  riskScore           Int?                      @map("risk_score")
 
   // Settlement & release configuration
-  settlementMode        String?                   @map("settlement_mode") // "escrow" | "direct"
-  releaseMode           String?                   @map("release_mode") // "manual" | "ai"
-  approvalParties       String[]                  @default([]) @map("approval_parties")
-  releaseConditions     String[]                  @default([]) @map("release_conditions")
-  approvalInstructions  String?                   @map("approval_instructions")
+  settlementMode       String?  @map("settlement_mode") // "escrow" | "direct"
+  releaseMode          String?  @map("release_mode") // "manual" | "ai"
+  approvalParties      String[] @default([]) @map("approval_parties")
+  releaseConditions    String[] @default([]) @map("release_conditions")
+  approvalInstructions String?  @map("approval_instructions")
 
   // Privacy
-  privacyLevel          PrivacyLevel?              @default(STEALTH) @map("privacy_level")
-  stealthPaymentId      String?                   @map("stealth_payment_id")
+  privacyLevel     PrivacyLevel? @default(STEALTH) @map("privacy_level")
+  stealthPaymentId String?       @map("stealth_payment_id")
 
   // On-chain references
-  escrowPda             String?                   @map("escrow_pda")
-  vaultPda              String?                   @map("vault_pda")
-  nonceAccount          String?                   @map("nonce_account")
-  initTxSignature       String?                   @map("init_tx_signature")
-  depositTxSignature    String?                   @map("deposit_tx_signature")
-  releaseTxSignature    String?                   @map("release_tx_signature")
-  cancelTxSignature     String?                   @map("cancel_tx_signature")
+  escrowPda          String? @map("escrow_pda")
+  vaultPda           String? @map("vault_pda")
+  nonceAccount       String? @map("nonce_account")
+  initTxSignature    String? @map("init_tx_signature")
+  depositTxSignature String? @map("deposit_tx_signature")
+  releaseTxSignature String? @map("release_tx_signature")
+  cancelTxSignature  String? @map("cancel_tx_signature")
 
   // Timestamps
-  expiresAt             DateTime?                 @map("expires_at")
-  createdAt             DateTime                  @default(now()) @map("created_at")
-  updatedAt             DateTime                  @updatedAt @map("updated_at")
-  resolvedAt            DateTime?                 @map("resolved_at")
-  fundedAt              DateTime?                 @map("funded_at")
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  resolvedAt DateTime? @map("resolved_at")
+  fundedAt   DateTime? @map("funded_at")
 
   // Pool association (optional)
-  poolId                String?                   @map("pool_id")
+  poolId String? @map("pool_id")
 
   // Relations
-  client                InstitutionClient         @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  pool                  TransactionPool?          @relation(fields: [poolId], references: [id])
-  deposits              InstitutionDeposit[]
-  auditLogs             InstitutionAuditLog[]
-  aiAnalyses            InstitutionAiAnalysis[]
-  files                 InstitutionFile[]
-  poolMembers           TransactionPoolMember[]
+  client      InstitutionClient       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  pool        TransactionPool?        @relation(fields: [poolId], references: [id])
+  deposits    InstitutionDeposit[]
+  auditLogs   InstitutionAuditLog[]
+  aiAnalyses  InstitutionAiAnalysis[]
+  files       InstitutionFile[]
+  poolMembers TransactionPoolMember[]
 
   @@index([clientId])
   @@index([escrowId])
@@ -1267,15 +1267,15 @@ model InstitutionEscrow {
 
 // Deposit tracking
 model InstitutionDeposit {
-  id              String    @id @default(uuid())
-  escrowId        String    @map("escrow_id")
-  txSignature     String    @map("tx_signature")
-  amount          Decimal   @db.Decimal(20, 6)
-  confirmedAt     DateTime? @map("confirmed_at")
-  blockHeight     BigInt?   @map("block_height")
-  createdAt       DateTime  @default(now()) @map("created_at")
+  id          String    @id @default(uuid())
+  escrowId    String    @map("escrow_id")
+  txSignature String    @map("tx_signature")
+  amount      Decimal   @db.Decimal(20, 6)
+  confirmedAt DateTime? @map("confirmed_at")
+  blockHeight BigInt?   @map("block_height")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
-  escrow          InstitutionEscrow @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  escrow InstitutionEscrow @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
 
   @@index([escrowId])
   @@index([txSignature])
@@ -1284,17 +1284,17 @@ model InstitutionDeposit {
 
 // Audit trail
 model InstitutionAuditLog {
-  id          String    @id @default(uuid())
-  escrowId    String?   @map("escrow_id")
-  clientId    String?   @map("client_id")
-  action      String    // e.g. 'ESCROW_CREATED', 'DEPOSIT_CONFIRMED', 'FUNDS_RELEASED'
-  actor       String    // wallet or system identifier
-  details     Json      @default("{}")
-  ipAddress   String?   @map("ip_address")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  escrowId  String?  @map("escrow_id")
+  clientId  String?  @map("client_id")
+  action    String // e.g. 'ESCROW_CREATED', 'DEPOSIT_CONFIRMED', 'FUNDS_RELEASED'
+  actor     String // wallet or system identifier
+  details   Json     @default("{}")
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  escrow      InstitutionEscrow?  @relation(fields: [escrowId], references: [escrowId], onDelete: SetNull)
-  client      InstitutionClient?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  escrow InstitutionEscrow? @relation(fields: [escrowId], references: [escrowId], onDelete: SetNull)
+  client InstitutionClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
   @@index([escrowId])
   @@index([clientId])
@@ -1305,22 +1305,22 @@ model InstitutionAuditLog {
 
 // AI analysis results (document, escrow-level, and client-level)
 model InstitutionAiAnalysis {
-  id              String          @id @default(uuid())
-  analysisType    AiAnalysisType  @default(DOCUMENT) @map("analysis_type")
-  escrowId        String?         @map("escrow_id")
-  clientId        String?         @map("client_id")
-  fileId          String?         @map("file_id")
-  documentHash    String?         @map("document_hash")
-  riskScore       Int             @map("risk_score") // 0-100
-  factors         Json            @default("[]") // Array of {name, weight, value}
-  recommendation  String          // APPROVE, REVIEW, REJECT
-  extractedFields Json            @default("{}") @map("extracted_fields")
-  summary         String?         // Human-readable analysis summary
-  model           String          // AI model used
-  createdAt       DateTime        @default(now()) @map("created_at")
+  id              String         @id @default(uuid())
+  analysisType    AiAnalysisType @default(DOCUMENT) @map("analysis_type")
+  escrowId        String?        @map("escrow_id")
+  clientId        String?        @map("client_id")
+  fileId          String?        @map("file_id")
+  documentHash    String?        @map("document_hash")
+  riskScore       Int            @map("risk_score") // 0-100
+  factors         Json           @default("[]") // Array of {name, weight, value}
+  recommendation  String // APPROVE, REVIEW, REJECT
+  extractedFields Json           @default("{}") @map("extracted_fields")
+  summary         String? // Human-readable analysis summary
+  model           String // AI model used
+  createdAt       DateTime       @default(now()) @map("created_at")
 
-  escrow          InstitutionEscrow?  @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
-  client          InstitutionClient?  @relation("ClientAiAnalyses", fields: [clientId], references: [id], onDelete: Cascade)
+  escrow InstitutionEscrow? @relation(fields: [escrowId], references: [escrowId], onDelete: Cascade)
+  client InstitutionClient? @relation("ClientAiAnalyses", fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([analysisType])
   @@index([escrowId])
@@ -1339,26 +1339,26 @@ enum AiAnalysisType {
 
 // Corridor configuration
 model InstitutionCorridor {
-  id                   String          @id @default(uuid())
-  sourceCountry        String          @map("source_country")
-  destCountry          String          @map("dest_country")
-  code                 String          @unique // e.g. 'SG-CH'
-  name                 String?         // Display name e.g. 'Switzerland → Singapore'
-  compliance           String?         // Regulatory bodies e.g. 'FINMA + MAS'
-  description          String?         // Human-readable description
-  riskReason           String?         @map("risk_reason") // Explanation of risk classification
-  travelRuleThreshold  Decimal         @default(1000) @map("travel_rule_threshold") @db.Decimal(18, 2)
-  eddThreshold         Decimal         @default(10000) @map("edd_threshold") @db.Decimal(18, 2)
-  reportingThreshold   Decimal         @default(15000) @map("reporting_threshold") @db.Decimal(18, 2)
-  minAmount            Decimal         @map("min_amount") @db.Decimal(20, 6)
-  maxAmount            Decimal         @map("max_amount") @db.Decimal(20, 6)
-  dailyLimit           Decimal         @map("daily_limit") @db.Decimal(20, 6)
-  monthlyLimit         Decimal         @map("monthly_limit") @db.Decimal(20, 6)
-  requiredDocuments    String[]        @default([]) @map("required_documents")
-  riskLevel            String          @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
-  status               CorridorStatus  @default(ACTIVE)
-  createdAt            DateTime        @default(now()) @map("created_at")
-  updatedAt            DateTime        @updatedAt @map("updated_at")
+  id                  String         @id @default(uuid())
+  sourceCountry       String         @map("source_country")
+  destCountry         String         @map("dest_country")
+  code                String         @unique // e.g. 'SG-CH'
+  name                String? // Display name e.g. 'Switzerland → Singapore'
+  compliance          String? // Regulatory bodies e.g. 'FINMA + MAS'
+  description         String? // Human-readable description
+  riskReason          String?        @map("risk_reason") // Explanation of risk classification
+  travelRuleThreshold Decimal        @default(1000) @map("travel_rule_threshold") @db.Decimal(18, 2)
+  eddThreshold        Decimal        @default(10000) @map("edd_threshold") @db.Decimal(18, 2)
+  reportingThreshold  Decimal        @default(15000) @map("reporting_threshold") @db.Decimal(18, 2)
+  minAmount           Decimal        @map("min_amount") @db.Decimal(20, 6)
+  maxAmount           Decimal        @map("max_amount") @db.Decimal(20, 6)
+  dailyLimit          Decimal        @map("daily_limit") @db.Decimal(20, 6)
+  monthlyLimit        Decimal        @map("monthly_limit") @db.Decimal(20, 6)
+  requiredDocuments   String[]       @default([]) @map("required_documents")
+  riskLevel           String         @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
+  status              CorridorStatus @default(ACTIVE)
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
 
   thresholdRules CorridorThresholdRule[]
 
@@ -1373,7 +1373,7 @@ model CorridorThresholdRule {
   id              String   @id @default(uuid())
   corridorCode    String   @map("corridor_code")
   ruleId          String   @map("rule_id") // travel_rule, edd, reporting, round_number, structuring, large_transaction
-  label           String   // Display label
+  label           String // Display label
   riskLevel       String   @map("risk_level") // low, medium, high
   thresholdAmount Decimal? @map("threshold_amount") @db.Decimal(18, 2)
   thresholdType   String   @map("threshold_type") // gte, range, pattern
@@ -1398,19 +1398,19 @@ model CorridorThresholdRule {
 
 // AMINA-approved stablecoin tokens for institution escrow
 model InstitutionApprovedToken {
-  id              String    @id @default(uuid())
-  symbol          String    @unique // e.g. "USDC", "USDT", "EURC"
-  name            String    // e.g. "USD Coin"
-  mintAddress     String    @unique @map("mint_address") // Solana SPL token mint
-  decimals        Int       @default(6)
-  issuer          String    // e.g. "Circle", "Tether", "Ripple"
-  jurisdiction    String?   // e.g. "US", "EU", "SG"
-  chain           String    @default("solana")
-  isDefault       Boolean   @default(false) @map("is_default") // USDC = default
-  isActive        Boolean   @default(true) @map("is_active")
-  aminaApproved   Boolean   @default(true) @map("amina_approved")
-  addedAt         DateTime  @default(now()) @map("added_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id            String   @id @default(uuid())
+  symbol        String   @unique // e.g. "USDC", "USDT", "EURC"
+  name          String // e.g. "USD Coin"
+  mintAddress   String   @unique @map("mint_address") // Solana SPL token mint
+  decimals      Int      @default(6)
+  issuer        String // e.g. "Circle", "Tether", "Ripple"
+  jurisdiction  String? // e.g. "US", "EU", "SG"
+  chain         String   @default("solana")
+  isDefault     Boolean  @default(false) @map("is_default") // USDC = default
+  isActive      Boolean  @default(true) @map("is_active")
+  aminaApproved Boolean  @default(true) @map("amina_approved")
+  addedAt       DateTime @default(now()) @map("added_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@index([symbol])
   @@index([mintAddress])
@@ -1429,15 +1429,15 @@ enum AdminRole {
 
 // Admin user account (seed-only, no public registration)
 model AdminUser {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String    @map("password_hash")
-  name          String
-  role          AdminRole @default(SUPER_ADMIN)
-  isActive      Boolean   @default(true) @map("is_active")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  lastLoginAt   DateTime? @map("last_login_at")
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  role         AdminRole @default(SUPER_ADMIN)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  lastLoginAt  DateTime? @map("last_login_at")
 
   refreshTokens AdminRefreshToken[]
 
@@ -1448,14 +1448,14 @@ model AdminUser {
 
 // Admin refresh token storage (hashed)
 model AdminRefreshToken {
-  id          String    @id @default(uuid())
-  tokenHash   String    @unique @map("token_hash")
-  adminId     String    @map("admin_id")
-  expiresAt   DateTime  @map("expires_at")
-  revokedAt   DateTime? @map("revoked_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id        String    @id @default(uuid())
+  tokenHash String    @unique @map("token_hash")
+  adminId   String    @map("admin_id")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  admin       AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@index([adminId])
   @@index([expiresAt])
@@ -1469,18 +1469,18 @@ model AdminRefreshToken {
 
 // File uploads to DO Spaces
 model InstitutionFile {
-  id            String        @id @default(uuid())
-  clientId      String        @map("client_id")
-  escrowId      String?       @map("escrow_id")
-  fileName      String        @map("file_name")
-  fileKey       String        @map("file_key") // DO Spaces object key
-  mimeType      String        @map("mime_type")
-  sizeBytes     Int           @map("size_bytes")
-  documentType  DocumentType  @map("document_type")
-  uploadedAt    DateTime      @default(now()) @map("uploaded_at")
+  id           String       @id @default(uuid())
+  clientId     String       @map("client_id")
+  escrowId     String?      @map("escrow_id")
+  fileName     String       @map("file_name")
+  fileKey      String       @map("file_key") // DO Spaces object key
+  mimeType     String       @map("mime_type")
+  sizeBytes    Int          @map("size_bytes")
+  documentType DocumentType @map("document_type")
+  uploadedAt   DateTime     @default(now()) @map("uploaded_at")
 
-  client        InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  escrow        InstitutionEscrow?  @relation(fields: [escrowId], references: [escrowId], onDelete: SetNull)
+  client InstitutionClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  escrow InstitutionEscrow? @relation(fields: [escrowId], references: [escrowId], onDelete: SetNull)
 
   @@index([clientId])
   @@index([escrowId])
@@ -1536,19 +1536,19 @@ enum NotificationPriority {
 
 // Institution notifications (in-app notification center)
 model InstitutionNotification {
-  id          String                @id @default(uuid())
-  clientId    String                @map("client_id")
-  escrowId    String?               @map("escrow_id")
-  type        NotificationType
-  priority    NotificationPriority  @default(MEDIUM)
-  title       String
-  message     String
-  metadata    Json                  @default("{}")
-  isRead      Boolean               @default(false) @map("is_read")
-  readAt      DateTime?             @map("read_at")
-  createdAt   DateTime              @default(now()) @map("created_at")
+  id        String               @id @default(uuid())
+  clientId  String               @map("client_id")
+  escrowId  String?              @map("escrow_id")
+  type      NotificationType
+  priority  NotificationPriority @default(MEDIUM)
+  title     String
+  message   String
+  metadata  Json                 @default("{}")
+  isRead    Boolean              @default(false) @map("is_read")
+  readAt    DateTime?            @map("read_at")
+  createdAt DateTime             @default(now()) @map("created_at")
 
-  client      InstitutionClient     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
   @@index([clientId, isRead])
@@ -1595,9 +1595,9 @@ model StealthMetaAddress {
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
-  stealthPayments     StealthPayment[]
-  accounts            InstitutionAccount[]
-  client              InstitutionClient @relation(fields: [institutionClientId], references: [id])
+  stealthPayments StealthPayment[]
+  accounts        InstitutionAccount[]
+  client          InstitutionClient    @relation(fields: [institutionClientId], references: [id])
 
   @@unique([institutionClientId, label])
   @@index([institutionClientId])
@@ -1606,21 +1606,21 @@ model StealthMetaAddress {
 
 // Stealth payment tracking (one-time addresses derived from meta-addresses)
 model StealthPayment {
-  id                  String    @id @default(uuid())
-  metaAddressId       String    @map("meta_address_id")
-  stealthAddress      String    @map("stealth_address")
-  ephemeralPublicKey  String    @map("ephemeral_public_key")
-  escrowId            String?   @map("escrow_id")
-  tokenMint           String    @map("token_mint")
-  amountRaw           BigInt    @map("amount_raw")
-  status              String    @default("PENDING") // PENDING, CONFIRMED, SWEPT, FAILED
-  releaseTxSignature  String?   @map("release_tx_signature")
-  sweepTxSignature    String?   @map("sweep_tx_signature")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  confirmedAt         DateTime? @map("confirmed_at")
-  sweptAt             DateTime? @map("swept_at")
+  id                 String    @id @default(uuid())
+  metaAddressId      String    @map("meta_address_id")
+  stealthAddress     String    @map("stealth_address")
+  ephemeralPublicKey String    @map("ephemeral_public_key")
+  escrowId           String?   @map("escrow_id")
+  tokenMint          String    @map("token_mint")
+  amountRaw          BigInt    @map("amount_raw")
+  status             String    @default("PENDING") // PENDING, CONFIRMED, SWEPT, FAILED
+  releaseTxSignature String?   @map("release_tx_signature")
+  sweepTxSignature   String?   @map("sweep_tx_signature")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  confirmedAt        DateTime? @map("confirmed_at")
+  sweptAt            DateTime? @map("swept_at")
 
-  metaAddress         StealthMetaAddress @relation(fields: [metaAddressId], references: [id], onDelete: Cascade)
+  metaAddress StealthMetaAddress @relation(fields: [metaAddressId], references: [id], onDelete: Cascade)
 
   @@index([metaAddressId])
   @@index([stealthAddress])
@@ -1697,6 +1697,7 @@ model TransactionPool {
 
   @@index([clientId, status])
   @@index([status])
+  @@index([status, expiresAt])
   @@index([corridor])
   @@index([createdAt])
   @@map("transaction_pools")

@@ -109,6 +109,11 @@ export class InstitutionClientSettingsService {
       integration: {
         webhookUrl: settings.webhookUrl,
       },
+      pools: {
+        defaultSettlementMode: (settings as any).poolDefaultSettlementMode ?? 'SEQUENTIAL',
+        defaultExpiryHours: (settings as any).poolDefaultExpiryHours ?? 24,
+        maxMembers: (settings as any).poolMaxMembers ?? 50,
+      },
     };
   }
 

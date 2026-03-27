@@ -881,7 +881,7 @@ export class TransactionPoolService {
       throw new Error('Pool vault program service not available');
     }
 
-    const receiptData = await programService.fetchPoolReceipt(pool.id, member.id);
+    const receiptData = await programService.fetchPoolReceipt(pool.id, member.escrowId);
     if (!receiptData.exists || !receiptData.encryptedPayload) {
       throw new Error('On-chain receipt not found');
     }
@@ -1234,7 +1234,7 @@ export class TransactionPoolService {
 
           const receiptResult = await programService.releasePoolMemberOnChain({
             poolId: pool.id,
-            memberId: member.id,
+            escrowId: member.escrowId,
             recipientWallet: new PublicKey(escrow.recipientWallet!),
             feeCollector,
             usdcMint,

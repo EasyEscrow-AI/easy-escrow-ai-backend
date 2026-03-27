@@ -302,6 +302,10 @@ describe('TransactionPoolService', function () {
         process.env[key] = value;
       }
     }
+
+    // Restore Module._resolveFilename and clean up require.cache
+    (Module as any)._resolveFilename = originalResolveFilename;
+    delete require.cache[cacheKey];
   });
 
   // ─── createPool ──────────────────────────────────────────────

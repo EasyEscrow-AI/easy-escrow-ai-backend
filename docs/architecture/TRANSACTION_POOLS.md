@@ -73,7 +73,7 @@ Transaction pools have a corresponding on-chain representation using the EasyEsc
 
 Stores the pool's on-chain state: status, member count, settled count, corridor, and authority.
 
-**Seeds:** `["pool_state", pool_id_bytes]`
+**Seeds:** `["pool_vault", pool_id_bytes]`
 
 ```text
 pool_id_bytes = UUID as 32-byte zero-padded buffer
@@ -83,13 +83,13 @@ pool_id_bytes = UUID as 32-byte zero-padded buffer
 
 A token account (ATA) that holds pooled USDC during settlement. Funds are deposited when members are added and disbursed during settlement.
 
-**Seeds:** `["pool_vault", pool_id_bytes]`
+**Seeds:** `["pool_vault_token", pool_id_bytes]`
 
 ### PoolReceipt PDA
 
 One per settled member. Stores the encrypted receipt payload and commitment hash on-chain.
 
-**Seeds:** `["pool_receipt", pool_id_bytes, member_id_bytes]`
+**Seeds:** `["pool_receipt", pool_id_bytes, escrow_id_bytes]`
 
 ### On-Chain Instructions
 
@@ -295,7 +295,7 @@ The `PoolExpiryMonitor` runs every 5-10 minutes (configurable) to detect and can
 | Min expiry                 | 1 hour             | Validation middleware               |
 | Default expiry             | 24 hours           | `POOL_DEFAULT_EXPIRY_HOURS`         |
 | Max settlement concurrency | 5                  | `POOL_SETTLEMENT_CONCURRENCY`       |
-| Pool code format           | `TP-XXX-XXX`       | 30-char alphanumeric (no 0/O/1/I/L) |
+| Pool code format           | `TP-XXX-XXX`       | 10-char with hyphens (no 0/O/1/I/L) |
 | Notes/reason max length    | 500 chars          | Validation middleware               |
 
 ## Database Schema

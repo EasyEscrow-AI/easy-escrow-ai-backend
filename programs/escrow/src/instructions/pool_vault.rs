@@ -155,10 +155,8 @@ pub struct ReleasePoolFees<'info> {
         seeds = [PoolVault::SEED_PREFIX, pool_id.as_ref()],
         bump = pool_vault.bump,
         has_one = authority @ EscrowError::Unauthorized,
-        constraint = pool_vault.status == PoolVaultStatus::Active
-            || pool_vault.status == PoolVaultStatus::Settling
-            || pool_vault.status == PoolVaultStatus::Settled
-            @ EscrowError::PoolVaultNotActive,
+        constraint = pool_vault.status == PoolVaultStatus::Settled
+            @ EscrowError::PoolNotSettledOrCancelled,
     )]
     pub pool_vault: Account<'info, PoolVault>,
 
