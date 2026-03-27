@@ -404,7 +404,10 @@ export class InstitutionEscrowService {
       );
       const payerPk = toPublicKey(payerWallet, 'payerWallet');
       const recipientPk = toPublicKey(recipientWallet, 'recipientWallet');
-      const settlementPk = toPublicKey(resolvedSettlementAuthority, 'settlementAuthority');
+
+      // On-chain settlement authority must be the admin keypair (backend signs release tx).
+      // The DB stores the client's wallet as settlementAuthority for API authorization.
+      const onChainSettlementAuthority = programService.adminPublicKey;
 
       try {
         const result = await programService.initEscrowOnChain({
@@ -413,7 +416,7 @@ export class InstitutionEscrowService {
           recipientWallet: recipientPk,
           usdcMint: onChainMint,
           feeCollector: feeCollectorPk,
-          settlementAuthority: settlementPk,
+          settlementAuthority: onChainSettlementAuthority,
           amount,
           platformFee,
           conditionType: conditionType as string,
@@ -803,7 +806,6 @@ export class InstitutionEscrowService {
       if (!config.platform.feeCollectorAddress) {
         throw new Error('Platform feeCollectorAddress is not configured');
       }
-      const resolvedSettlementAuthority = escrow.settlementAuthority || escrow.payerWallet;
       const onChainMint = programService.getUsdcMintAddress();
       if (escrow.usdcMint !== onChainMint.toBase58()) {
         console.warn(
@@ -818,7 +820,8 @@ export class InstitutionEscrowService {
       );
       const payerPk = toPublicKey(escrow.payerWallet, 'payerWallet');
       const recipientPk = toPublicKey(escrow.recipientWallet!, 'recipientWallet');
-      const settlementPk = toPublicKey(resolvedSettlementAuthority, 'settlementAuthority');
+      // On-chain settlement authority must be the admin keypair (backend signs release tx)
+      const onChainSettlementAuthority = programService.adminPublicKey;
 
       try {
         const result = await programService.initEscrowOnChain({
@@ -827,7 +830,7 @@ export class InstitutionEscrowService {
           recipientWallet: recipientPk,
           usdcMint: onChainMint,
           feeCollector: feeCollectorPk,
-          settlementAuthority: settlementPk,
+          settlementAuthority: onChainSettlementAuthority,
           amount: Number(escrow.amount),
           platformFee: Number(escrow.platformFee),
           conditionType: escrow.conditionType as string,
