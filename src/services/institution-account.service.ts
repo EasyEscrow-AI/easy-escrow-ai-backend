@@ -318,15 +318,18 @@ export class InstitutionAccountService {
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
     });
 
-    // Only fetch balances when explicitly requested (expensive: N RPC calls)
-    if (!filters?.includeBalances) {
-      return accounts;
-    }
-
+    // includeBalances=true → live RPC fetch (expensive)
+    // default → return cached balances from Redis (cheap, no RPC calls)
     const accountsWithBalances = await Promise.all(
       accounts.map(async (account) => {
         try {
-          const balance = await this.getAccountBalance(account.walletAddress);
+          if (filters?.includeBalances) {
+            // Live RPC fetch + cache update
+            const balance = await this.getAccountBalance(account.walletAddress);
+            return { ...account, balance };
+          }
+          // Return cached balance (fast, no RPC) — null if never fetched
+          const balance = await this.getCachedBalance(account.walletAddress);
           return { ...account, balance };
         } catch {
           return {
@@ -713,6 +716,24 @@ export class InstitutionAccountService {
     }
 
     return balance;
+  }
+
+  /** Return cached balance from Redis without RPC call. Returns default zeros if not cached. */
+  private async getCachedBalance(walletAddress: string): Promise<AccountBalance> {
+    const cacheKey = `${BALANCE_CACHE_PREFIX}${walletAddress}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch { /* Redis unavailable */ }
+    return { sol: 0, usdc: 0, tokens: [], lastUpdated: new Date().toISOString() };
+  }
+
+  /** Bust the balance cache for a wallet so the next fetch gets fresh data from RPC. */
+  async invalidateBalanceCache(walletAddress: string): Promise<void> {
+    const cacheKey = `${BALANCE_CACHE_PREFIX}${walletAddress}`;
+    try {
+      await redisClient.del(cacheKey);
+    } catch { /* Redis unavailable */ }
   }
 
   async refreshAccountBalance(clientId: string, accountId: string) {
