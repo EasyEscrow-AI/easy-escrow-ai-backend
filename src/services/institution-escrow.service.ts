@@ -1250,25 +1250,29 @@ export class InstitutionEscrowService {
     });
 
     // 2. Invoice amount match (if selected) — uses document-extracted amount
+    // Accept match against escrow amount OR escrow + platform fee (total due)
     if (selectedConditions.includes('invoice_amount_match')) {
       const extractedAmount =
         docFields.total_amount ?? docFields.invoiceAmount ?? docFields.amount;
       const escrowAmount = Number(escrow.amount);
-      const amountMatches =
-        extractedAmount !== undefined &&
-        extractedAmount !== null &&
-        Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
+      const totalDue = escrowAmount + Number(escrow.platformFee || 0);
+      const extracted = extractedAmount !== undefined && extractedAmount !== null
+        ? Number(extractedAmount)
+        : NaN;
+      const matchesEscrow = !isNaN(extracted) && Math.abs(extracted - escrowAmount) < 0.01;
+      const matchesTotalDue = !isNaN(extracted) && Math.abs(extracted - totalDue) < 0.01;
+      const amountMatches = matchesEscrow || matchesTotalDue;
       results.push({
         condition: 'invoice_amount_match',
         label: 'Invoice amount matches exactly',
-        passed: !!amountMatches,
+        passed: amountMatches,
         detail: amountMatches
-          ? `Invoice amount $${Number(extractedAmount).toLocaleString()} matches escrow amount $${escrowAmount.toLocaleString()}`
+          ? `Invoice amount $${extracted.toLocaleString()} matches ${matchesEscrow ? 'escrow amount' : 'total due (escrow + fee)'} $${(matchesEscrow ? escrowAmount : totalDue).toLocaleString()}`
           : `Invoice amount ${
-              extractedAmount !== undefined && extractedAmount !== null
-                ? `$${Number(extractedAmount).toLocaleString()}`
+              !isNaN(extracted)
+                ? `$${extracted.toLocaleString()}`
                 : 'not found in document'
-            } does not match escrow amount $${escrowAmount.toLocaleString()}`,
+            } does not match escrow amount $${escrowAmount.toLocaleString()} or total due $${totalDue.toLocaleString()}`,
       });
     }
 

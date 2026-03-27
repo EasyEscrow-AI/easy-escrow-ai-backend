@@ -288,6 +288,30 @@ describe('AI Release Check — Document Verification', () => {
     expect(amountCheck.detail).to.include('500');
   });
 
+  it('should pass invoice_amount_match when document amount matches total due (escrow + fee)', async () => {
+    const escrow = makeEscrow({
+      amount: 19.99,
+      platformFee: 0.2,
+      releaseMode: 'ai',
+      releaseConditions: ['invoice_amount_match'],
+    });
+
+    // Invoice shows total due ($20.19 = $19.99 escrow + $0.20 fee)
+    aiServiceStub.analyzeDocument.resolves({
+      riskScore: 10,
+      recommendation: 'APPROVE',
+      extractedFields: { total_amount: 20.19, currency: 'USDC' },
+      factors: [],
+    });
+
+    const result = await (service as any).performAiReleaseCheck(escrow, CLIENT_ID);
+
+    const amountCheck = result.conditions.find((c: any) => c.condition === 'invoice_amount_match');
+    expect(amountCheck).to.exist;
+    expect(amountCheck.passed).to.be.true;
+    expect(amountCheck.detail).to.include('total due');
+  });
+
   it('should FAIL invoice_amount_match when document amount differs from escrow', async () => {
     const escrow = makeEscrow({
       amount: 500,
