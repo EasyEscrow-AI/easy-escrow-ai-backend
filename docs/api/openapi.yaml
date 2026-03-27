@@ -4245,6 +4245,11 @@ paths:
                     Optional escrow code (EE-XXX-XXX) or UUID. When provided, the backend
                     pre-fetches escrow details and injects them as context, enabling faster
                     and more specific answers about that escrow.
+                  oneOf:
+                    - pattern: '^EE-[A-Z0-9]{3,4}-[A-Z0-9]{3,4}$'
+                      description: Escrow code format
+                    - format: uuid
+                      description: Escrow UUID
                   example: "EE-A1B-C2D"
                 history:
                   type: array
@@ -4283,6 +4288,8 @@ paths:
                     example: true
                   data:
                     type: object
+                    required:
+                      - reply
                     properties:
                       reply:
                         type: string

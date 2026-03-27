@@ -261,7 +261,7 @@ export class AiChatService {
 
     // Build anonymizer and optionally pre-fetch escrow context in parallel
     const anonymizer = new DataAnonymizer();
-    let escrowContext: string | null = null;
+    let escrowContextMessage: string | null = null;
 
     if (request.escrowId) {
       // Parallel: fetch escrow details + build client token map
@@ -272,16 +272,13 @@ export class AiChatService {
 
       if (escrowRecord) {
         const details = this.formatEscrowDetails(escrowRecord, anonymizer);
-        escrowContext = this.buildEscrowContextPrompt(details);
+        escrowContextMessage = this.buildEscrowContextMessage(details);
       } else {
-        escrowContext = `\n\n## Current Escrow Context\nThe user referenced escrow "${request.escrowId}" but it was not found in their account. Let the user know and offer to help find the correct escrow.`;
+        escrowContextMessage = `[System context: The user referenced escrow "${request.escrowId}" but it was not found in their account. Let the user know and offer to help find the correct escrow.]`;
       }
     } else {
       await this.buildClientTokenMap(anonymizer, clientId);
     }
-
-    // Build system prompt — append escrow context when available
-    const systemPrompt = escrowContext ? `${SYSTEM_PROMPT}${escrowContext}` : SYSTEM_PROMPT;
 
     // Anonymize conversation history and current message
     const messages: Anthropic.MessageParam[] = [];
@@ -295,9 +292,14 @@ export class AiChatService {
       }
     }
 
+    // If escrow context was pre-fetched, prepend it to the user message
+    const userContent = escrowContextMessage
+      ? `${escrowContextMessage}\n\n${anonymizer.anonymizeText(request.message)}`
+      : anonymizer.anonymizeText(request.message);
+
     messages.push({
       role: 'user',
-      content: anonymizer.anonymizeText(request.message),
+      content: userContent,
     });
 
     // Tool use loop — Claude may call tools, we execute them and feed results back
@@ -309,7 +311,7 @@ export class AiChatService {
       const response = await anthropic.messages.create({
         model,
         max_tokens: 2048,
-        system: systemPrompt,
+        system: SYSTEM_PROMPT,
         messages,
         tools: CHAT_TOOLS,
       });
@@ -542,11 +544,15 @@ export class AiChatService {
       })),
       auditLog: escrow.auditLogs.map((a) => ({
         action: a.action,
-        details: a.details,
+        details: a.details
+          ? anonymizer.anonymizeText(
+              typeof a.details === 'string' ? a.details : JSON.stringify(a.details)
+            )
+          : null,
         at: a.createdAt.toISOString(),
       })),
       documents: escrow.files.map((f) => ({
-        name: f.fileName,
+        name: anonymizer.anonymizeText(f.fileName),
         type: f.documentType,
         uploadedAt: f.uploadedAt.toISOString(),
       })),
@@ -671,58 +677,53 @@ export class AiChatService {
   }
 
   /**
-   * Build a system prompt section with pre-fetched escrow details so Claude
-   * can answer escrow-specific questions without a tool call round-trip.
+   * Build a concise escrow context message for the user message layer.
+   * Includes only structured fields (no free-text audit details or filenames).
+   * Full details remain available via the get_escrow_details tool.
    */
-  private buildEscrowContextPrompt(details: ReturnType<typeof this.formatEscrowDetails>): string {
+  private buildEscrowContextMessage(details: ReturnType<typeof this.formatEscrowDetails>): string {
     const lines = [
-      '\n\n## Current Escrow Context',
-      `The user is currently viewing escrow **${details.escrowCode}**. Here are the live details:`,
-      `- **Status:** ${details.status}`,
-      `- **Amount:** ${details.amount}`,
-      `- **Platform Fee:** ${details.platformFee}`,
-      `- **Corridor:** ${details.corridor}`,
-      `- **Condition Type:** ${details.conditionType}`,
-      `- **Risk Score:** ${details.riskScore ?? 'Not assessed'}`,
-      `- **Created:** ${details.createdAt}`,
-      `- **Expires:** ${details.expiresAt ?? 'No expiry'}`,
-      `- **Funded:** ${details.fundedAt ?? 'Not yet funded'}`,
-      `- **Resolved:** ${details.resolvedAt ?? 'Not yet resolved'}`,
+      `[Escrow context for ${details.escrowCode}:`,
+      `Status: ${details.status} | Amount: ${details.amount} | Fee: ${details.platformFee}`,
+      `Corridor: ${details.corridor} | Condition: ${details.conditionType} | Risk: ${
+        details.riskScore ?? 'N/A'
+      }`,
+      `Created: ${details.createdAt} | Expires: ${details.expiresAt ?? 'none'} | Funded: ${
+        details.fundedAt ?? 'no'
+      } | Resolved: ${details.resolvedAt ?? 'no'}`,
     ];
 
     if (details.deposits.length > 0) {
-      lines.push('', '**Deposits:**');
-      for (const d of details.deposits) {
-        lines.push(`- ${d.amount} (${d.confirmed ? `confirmed ${d.confirmed}` : 'pending'})`);
-      }
+      lines.push(
+        `Deposits (${details.deposits.length}): ${details.deposits
+          .map((d) => `${d.amount} ${d.confirmed ? 'confirmed' : 'pending'}`)
+          .join(', ')}`
+      );
     }
 
     if (details.auditLog.length > 0) {
-      lines.push('', '**Recent Activity:**');
-      for (const a of details.auditLog) {
-        lines.push(
-          `- ${a.action} at ${a.at}${
-            a.details
-              ? ` — ${typeof a.details === 'string' ? a.details : JSON.stringify(a.details)}`
-              : ''
-          }`
-        );
-      }
+      // Only include action types and timestamps — no free-text details
+      lines.push(
+        `Recent activity (${details.auditLog.length}): ${details.auditLog
+          .map((a) => `${a.action} at ${a.at}`)
+          .join(', ')}`
+      );
     }
 
     if (details.documents.length > 0) {
-      lines.push('', '**Documents:**');
-      for (const doc of details.documents) {
-        lines.push(`- ${doc.name} (${doc.type}, uploaded ${doc.uploadedAt})`);
-      }
+      // Only include document types and count — no filenames
+      lines.push(
+        `Documents (${details.documents.length}): ${details.documents
+          .map((d) => d.type)
+          .join(', ')}`
+      );
     }
 
     lines.push(
-      '',
-      'Use this data to answer questions about this escrow directly. Only call get_escrow_details if the user asks about a DIFFERENT escrow.'
+      'Use this context to answer questions about this escrow. Call get_escrow_details only for a DIFFERENT escrow.]'
     );
 
-    return lines.join('\n');
+    return lines.join(' | ');
   }
 
   /**
