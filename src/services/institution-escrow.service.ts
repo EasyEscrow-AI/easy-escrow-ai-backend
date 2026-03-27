@@ -50,9 +50,10 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   COMPLIANCE_HOLD: 'Compliance Hold',
   COMPLIANCE_WARNING: 'Compliance Warning',
   DEPOSIT_CONFIRMED: 'Escrow Funded',
-  AI_RELEASE_CHECK: 'AI Analysis',
+  AI_RELEASE_CHECK: 'AI Release Check',
+  AI_AUTO_RELEASE: 'AI Auto-Release',
   FUNDS_RELEASED: 'Funds Released',
-  ESCROW_COMPLETED: 'Settlement Complete',
+  ESCROW_COMPLETED: 'Escrow Complete',
   ESCROW_CANCELLED: 'Cancelled',
   ESCROW_EXPIRED: 'Expired',
   INSUFFICIENT_FUNDS: 'Insufficient Funds',
@@ -1178,6 +1179,39 @@ export class InstitutionEscrowService {
     const results: Array<{ condition: string; label: string; passed: boolean; detail: string }> =
       [];
 
+    // Analyze the uploaded proof document(s) to extract invoice data
+    // This is needed for invoice_amount_match and client_info_match conditions
+    let docFields: Record<string, unknown> = {};
+    const needsDocAnalysis =
+      selectedConditions.includes('invoice_amount_match') ||
+      selectedConditions.includes('client_info_match') ||
+      selectedConditions.includes('document_signature_verified');
+
+    if (needsDocAnalysis) {
+      const latestFile = await this.prisma.institutionFile.findFirst({
+        where: { escrowId: escrow.escrowId },
+        orderBy: { uploadedAt: 'desc' },
+        select: { id: true, fileName: true, clientId: true },
+      });
+
+      if (latestFile) {
+        try {
+          const docAnalysis = await aiService.analyzeDocument({
+            escrowId: escrow.escrowId,
+            fileId: latestFile.id,
+            clientId: latestFile.clientId,
+            context: {
+              expectedAmount: Number(escrow.amount),
+              corridor: escrow.corridor,
+            },
+          });
+          docFields = docAnalysis.extractedFields || {};
+        } catch (err) {
+          console.warn('[InstitutionEscrow] Document analysis for release check failed:', err);
+        }
+      }
+    }
+
     // 1. Legal compliance (always required for AI mode)
     const compliancePassed = analysis.recommendation !== 'REJECT' && analysis.riskScore < 70;
     results.push({
@@ -1189,59 +1223,93 @@ export class InstitutionEscrowService {
         : `Failed: risk score ${analysis.riskScore}/100, recommendation: ${analysis.recommendation}`,
     });
 
-    // 2. Invoice amount match (if selected)
+    // 2. Invoice amount match (if selected) — uses document-extracted amount
     if (selectedConditions.includes('invoice_amount_match')) {
       const extractedAmount =
-        analysis.extractedFields?.invoiceAmount ?? analysis.extractedFields?.amount;
+        docFields.total_amount ?? docFields.invoiceAmount ?? docFields.amount;
       const escrowAmount = Number(escrow.amount);
       const amountMatches =
-        extractedAmount !== undefined && Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
+        extractedAmount !== undefined &&
+        extractedAmount !== null &&
+        Math.abs(Number(extractedAmount) - escrowAmount) < 0.01;
       results.push({
         condition: 'invoice_amount_match',
         label: 'Invoice amount matches exactly',
         passed: !!amountMatches,
         detail: amountMatches
-          ? `Invoice amount ${extractedAmount} matches escrow amount ${escrowAmount}`
+          ? `Invoice amount $${Number(extractedAmount).toLocaleString()} matches escrow amount $${escrowAmount.toLocaleString()}`
           : `Invoice amount ${
-              extractedAmount ?? 'not found'
-            } does not match escrow amount ${escrowAmount}`,
+              extractedAmount !== undefined && extractedAmount !== null
+                ? `$${Number(extractedAmount).toLocaleString()}`
+                : 'not found in document'
+            } does not match escrow amount $${escrowAmount.toLocaleString()}`,
       });
     }
 
-    // 3. Client information match (if selected)
+    // 3. Client information match (if selected) — verify sender & recipient from document
     if (selectedConditions.includes('client_info_match')) {
-      const client = await this.prisma.institutionClient.findUnique({
-        where: { id: clientId },
-        select: { companyName: true, legalName: true, country: true },
+      // Look up both the payer (sender) and recipient client names
+      const payerClient = await this.prisma.institutionClient.findUnique({
+        where: { id: escrow.clientId },
+        select: { companyName: true, legalName: true },
       });
-      const extractedCompany =
-        analysis.extractedFields?.companyName ?? analysis.extractedFields?.clientName;
-      const clientMatch =
-        extractedCompany !== undefined &&
-        client &&
-        (String(extractedCompany)
-          .toLowerCase()
-          .includes(client.companyName?.toLowerCase() || '') ||
-          String(extractedCompany)
-            .toLowerCase()
-            .includes(client.legalName?.toLowerCase() || ''));
+
+      // Resolve recipient client by wallet
+      let recipientCompanyName: string | null = null;
+      if (escrow.recipientWallet) {
+        const recipientClientId = await this.resolveClientIdByWallet(escrow.recipientWallet);
+        if (recipientClientId) {
+          const recipientClient = await this.prisma.institutionClient.findUnique({
+            where: { id: recipientClientId },
+            select: { companyName: true },
+          });
+          recipientCompanyName = recipientClient?.companyName || null;
+        }
+      }
+
+      // Extract sender and recipient from the document
+      const docSender = docFields.sender_name ?? docFields.counterparty_name ?? docFields.companyName;
+      const docRecipient = docFields.recipient_name;
+
+      // Check sender matches
+      const senderMatch = docSender != null && payerClient &&
+        (String(docSender).toLowerCase().includes(payerClient.companyName?.toLowerCase() || '') ||
+         String(docSender).toLowerCase().includes(payerClient.legalName?.toLowerCase() || ''));
+
+      // Check recipient matches (if we can resolve the recipient)
+      const recipientMatch = !recipientCompanyName || (
+        docRecipient != null &&
+        String(docRecipient).toLowerCase().includes(recipientCompanyName.toLowerCase())
+      );
+
+      const bothMatch = !!senderMatch && recipientMatch;
+      const details: string[] = [];
+      if (senderMatch) {
+        details.push(`Sender "${docSender}" matches "${payerClient?.companyName}"`);
+      } else {
+        details.push(`Sender "${docSender ?? 'not found'}" does not match "${payerClient?.companyName}"`);
+      }
+      if (recipientCompanyName) {
+        if (docRecipient != null && String(docRecipient).toLowerCase().includes(recipientCompanyName.toLowerCase())) {
+          details.push(`Recipient "${docRecipient}" matches "${recipientCompanyName}"`);
+        } else {
+          details.push(`Recipient "${docRecipient ?? 'not found'}" does not match "${recipientCompanyName}"`);
+        }
+      }
+
       results.push({
         condition: 'client_info_match',
         label: 'Client information matches exactly',
-        passed: !!clientMatch,
-        detail: clientMatch
-          ? `Extracted company "${extractedCompany}" matches client record`
-          : `Extracted company "${extractedCompany ?? 'not found'}" does not match client "${
-              client?.companyName
-            }"`,
+        passed: bothMatch,
+        detail: details.join('; '),
       });
     }
 
     // 4. Document signature verified (if selected)
     if (selectedConditions.includes('document_signature_verified')) {
       const signatureVerified =
-        analysis.extractedFields?.signatureVerified === true ||
-        analysis.extractedFields?.docusignStatus === 'completed';
+        docFields.signatureVerified === true ||
+        docFields.docusignStatus === 'completed';
       results.push({
         condition: 'document_signature_verified',
         label: 'Document signature is verified (via DocuSign)',
@@ -2535,16 +2603,24 @@ export class InstitutionEscrowService {
         nonceAccount: e.nonceAccount,
         authority: e.settlementAuthority,
       },
-      release: {
-        mode: e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual'),
-        conditionType: e.conditionType,
-        approvalParties: e.approvalParties || [],
-        conditions: e.releaseConditions || [],
-        conditionLabels: (e.releaseConditions || []).map(
-          (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
-        ),
-        instructions: e.approvalInstructions || null,
-      },
+      release: (() => {
+        const mode = e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual');
+        const rawConditions: string[] = e.releaseConditions || [];
+        // For AI mode, legal_compliance is always required even if not explicitly in the array
+        const conditions = mode === 'ai' && !rawConditions.includes('legal_compliance')
+          ? ['legal_compliance', ...rawConditions]
+          : rawConditions;
+        return {
+          mode,
+          conditionType: e.conditionType,
+          approvalParties: e.approvalParties || [],
+          conditions,
+          conditionLabels: conditions.map(
+            (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
+          ),
+          instructions: e.approvalInstructions || null,
+        };
+      })(),
       privacy: {
         level: e.privacyLevel || 'NONE',
         stealthPaymentId: e.stealthPaymentId || null,
@@ -2718,6 +2794,7 @@ export class InstitutionEscrowService {
     base.activityLog = (await this.getActivityLog(e.escrowId)).map((log) => {
       // Strip nested details.kyt to avoid data bloat — KYT fields are already flattened
       const { details, ...rest } = log as any;
+      const isAiAction = rest.action === 'AI_RELEASE_CHECK' || rest.action === 'AI_AUTO_RELEASE';
       return {
         ...rest,
         details: details
@@ -2726,6 +2803,13 @@ export class InstitutionEscrowService {
               riskLevel: details.riskLevel || null,
               riskScore: details.riskScore || null,
               flags: details.flags || null,
+              // Preserve AI release check details for frontend display
+              ...(isAiAction && {
+                passed: details.passed ?? null,
+                recommendation: details.recommendation || null,
+                summary: details.summary || null,
+                conditions: details.conditions || null,
+              }),
             }
           : null,
       };
