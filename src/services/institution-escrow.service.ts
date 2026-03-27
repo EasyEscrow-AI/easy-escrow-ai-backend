@@ -1451,9 +1451,26 @@ export class InstitutionEscrowService {
 
     // Trigger AI release check if releaseMode is 'ai'
     // If all conditions pass, auto-release the funds
+    let aiReleaseChecks: Record<string, unknown> | null = null;
+
     if (escrow.releaseMode === 'ai') {
       try {
         const check = await this.performAiReleaseCheck(escrow, clientId);
+
+        aiReleaseChecks = {
+          passed: check.passed,
+          recommendation: check.aiAnalysis.recommendation,
+          riskScore: check.aiAnalysis.riskScore,
+          summary: check.aiAnalysis.summary,
+          conditions: check.conditions.map((c) => ({
+            key: c.condition,
+            label: c.label,
+            passed: c.passed,
+            detail: c.detail,
+          })),
+          checkedAt: new Date().toISOString(),
+        };
+
         await this.createKytAuditLog(escrow, 'AI_RELEASE_CHECK', 'AI Orchestrator', {
           passed: check.passed,
           releaseMode: 'ai',
@@ -1487,7 +1504,8 @@ export class InstitutionEscrowService {
               'AI auto-release — all conditions passed',
               'AI Orchestrator'
             );
-            return releaseResult;
+            // Attach AI check results to the release response
+            return { ...(releaseResult as Record<string, unknown>), aiReleaseChecks };
           } catch (releaseErr) {
             console.error('[InstitutionEscrow] AI auto-release failed (non-critical):', releaseErr);
             // Fall through — escrow stays in PENDING_RELEASE for manual release
@@ -1498,12 +1516,22 @@ export class InstitutionEscrowService {
           `[InstitutionEscrow] AI release check failed for ${escrow.escrowCode || escrowId}:`,
           aiErr instanceof Error ? aiErr.message : aiErr
         );
+        aiReleaseChecks = {
+          passed: false,
+          error: aiErr instanceof Error ? aiErr.message : 'AI check failed',
+          checkedAt: new Date().toISOString(),
+        };
       }
     }
 
     const updated = await this.getEscrowInternal(clientId, idOrCode, true);
     const partyNames = await this.resolvePartyNames([updated as any], clientId);
-    return this.formatEscrow(updated, partyNames[0]);
+    const result = this.formatEscrow(updated, partyNames[0]);
+    // Attach AI release check results so the frontend knows why auto-release did/didn't happen
+    if (aiReleaseChecks) {
+      (result as any).aiReleaseChecks = aiReleaseChecks;
+    }
+    return result;
   }
 
   /**
