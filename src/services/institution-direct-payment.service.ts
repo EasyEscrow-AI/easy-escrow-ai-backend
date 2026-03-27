@@ -32,7 +32,7 @@ export class InstitutionDirectPaymentService {
       this.prisma.directPayment.count({ where }),
     ]);
 
-    return { data: payments.map((p: any) => this.format(p)), total, limit, offset };
+    return { data: await Promise.all(payments.map((p: any) => this.format(p))), total, limit, offset };
   }
 
   async getById(clientId: string, paymentId: string) {
@@ -55,16 +55,47 @@ export class InstitutionDirectPaymentService {
     });
 
     return {
-      ...this.format(payment),
+      ...(await this.format(payment)),
       activityLog: auditLogs.map((l: any) => ({ id: l.id, action: l.action, actor: l.actor, details: l.details, createdAt: l.createdAt })),
     };
   }
 
-  private format(p: any) {
+  /**
+   * Resolve account + branch details for a wallet address.
+   */
+  private async resolveParty(wallet: string): Promise<{
+    clientId: string; name: string; accountLabel: string | null; branchName: string | null; wallet: string;
+  } | null> {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { walletAddress: wallet, isActive: true },
+      select: {
+        label: true,
+        client: { select: { id: true, companyName: true } },
+        branch: { select: { name: true } },
+      },
+    });
+    if (!account) return null;
+    return {
+      clientId: account.client.id,
+      name: account.client.companyName,
+      accountLabel: account.label || null,
+      branchName: account.branch?.name || null,
+      wallet,
+    };
+  }
+
+  private async format(p: any) {
+    const [from, to] = await Promise.all([
+      this.resolveParty(p.senderWallet),
+      this.resolveParty(p.recipientWallet),
+    ]);
+
     return {
       id: p.paymentCode || p.id, paymentId: p.paymentCode || p.id, internalId: p.id,
       sender: p.sender, senderCountry: p.senderCountry, senderWallet: p.senderWallet,
       recipient: p.recipient, recipientCountry: p.recipientCountry, recipientWallet: p.recipientWallet,
+      from: from || { clientId: p.clientId, name: p.sender, accountLabel: null, branchName: null, wallet: p.senderWallet },
+      to: to || { clientId: null, name: p.recipient, accountLabel: null, branchName: null, wallet: p.recipientWallet },
       amount: Number(p.amount), currency: p.currency, corridor: p.corridor, status: p.status,
       txHash: p.txHash, platformFee: Number(p.platformFee), riskScore: p.riskScore,
       settlementMode: p.settlementMode, releaseMode: p.releaseMode,
