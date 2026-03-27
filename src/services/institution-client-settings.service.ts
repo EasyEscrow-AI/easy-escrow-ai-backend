@@ -240,6 +240,24 @@ export class InstitutionClientSettingsService {
         );
       }
     }
+    if ('poolDefaultSettlementMode' in filteredUpdates) {
+      const valid = ['SEQUENTIAL', 'PARALLEL'];
+      if (!valid.includes(filteredUpdates.poolDefaultSettlementMode)) {
+        throw new Error(`poolDefaultSettlementMode must be one of: ${valid.join(', ')}`);
+      }
+    }
+    if ('poolDefaultExpiryHours' in filteredUpdates) {
+      const v = filteredUpdates.poolDefaultExpiryHours;
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < 1 || v > 2160) {
+        throw new Error('poolDefaultExpiryHours must be a positive integer between 1 and 2160');
+      }
+    }
+    if ('poolMaxMembers' in filteredUpdates) {
+      const v = filteredUpdates.poolMaxMembers;
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < 1 || v > 100) {
+        throw new Error('poolMaxMembers must be a positive integer between 1 and 100');
+      }
+    }
 
     const settings = await this.prisma.institutionClientSettings.upsert({
       where: { clientId },

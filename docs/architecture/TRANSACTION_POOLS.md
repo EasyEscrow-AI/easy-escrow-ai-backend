@@ -18,7 +18,7 @@ Transaction pools enable batching multiple funded institution escrows into a sin
 
 A transaction pool moves through a strict state machine:
 
-```
+```text
   OPEN ──────────> LOCKED ──────────> SETTLING ──────────> SETTLED
    │                 │                    │
    │                 │                    ├──────────> PARTIAL_FAIL ──> SETTLING (retry)
@@ -57,7 +57,7 @@ A transaction pool moves through a strict state machine:
 
 Each pool member tracks its own settlement state:
 
-```
+```text
 PENDING ──> SETTLING ──> SETTLED
                 │
                 └──> FAILED (retryable)
@@ -75,7 +75,7 @@ Stores the pool's on-chain state: status, member count, settled count, corridor,
 
 **Seeds:** `["pool_state", pool_id_bytes]`
 
-```
+```text
 pool_id_bytes = UUID as 32-byte zero-padded buffer
 ```
 
@@ -117,7 +117,7 @@ Each instruction includes a Memo program instruction for audit trail:
 
 Members are settled one at a time in sequence-number order:
 
-```
+```text
 Pool LOCKED ─── settle ───> SETTLING
   │
   ├─ Member 1: PENDING -> SETTLING -> release funds -> encrypt receipt -> SETTLED
@@ -134,7 +134,7 @@ On failure, sequential mode continues to the next member rather than stopping.
 
 Members are settled in concurrent batches controlled by `POOL_SETTLEMENT_CONCURRENCY` (default: 5):
 
-```
+```text
 Pool LOCKED ─── settle ───> SETTLING
   │
   ├─ Batch 1 (members 1-5): Promise.allSettled([...])
@@ -183,7 +183,7 @@ Each settled member gets an on-chain receipt encrypted with AES-256-GCM. Only th
 
 Fixed 512-byte payload stored in the `PoolReceipt` PDA:
 
-```
+```text
 Offset  Size  Field
 ──────  ────  ─────
 0       12    Initialization Vector (IV)
@@ -302,7 +302,7 @@ The `PoolExpiryMonitor` runs every 5-10 minutes (configurable) to detect and can
 
 ### TransactionPool
 
-```
+```text
 transaction_pools
 ├── id                       UUID PK
 ├── pool_code                String UNIQUE (TP-XXX-XXX)
@@ -334,7 +334,7 @@ transaction_pools
 
 ### TransactionPoolMember
 
-```
+```text
 transaction_pool_members
 ├── id                    UUID PK
 ├── pool_id               String FK -> transaction_pools
@@ -362,7 +362,7 @@ transaction_pool_members
 
 ### TransactionPoolAuditLog
 
-```
+```text
 transaction_pool_audit_logs
 ├── id          UUID PK
 ├── pool_id     String FK -> transaction_pools
@@ -406,19 +406,19 @@ Every pool lifecycle event is recorded in `TransactionPoolAuditLog`. Actions inc
 
 All endpoints are under `/api/v1/institution/pools` and require institution JWT authentication.
 
-| #   | Method   | Path                           | Auth             | Rate Limit | Description                        |
-| --- | -------- | ------------------------------ | ---------------- | ---------- | ---------------------------------- |
-| 1   | `POST`   | `/pools`                       | JWT              | 30/min     | Create pool                        |
-| 2   | `GET`    | `/pools`                       | JWT              | 30/min     | List pools (paginated, filterable) |
-| 3   | `GET`    | `/pools/:id`                   | JWT              | 30/min     | Get pool detail with members       |
-| 4   | `POST`   | `/pools/:id/add`               | JWT              | 30/min     | Add escrow to pool                 |
-| 5   | `DELETE` | `/pools/:id/members/:memberId` | JWT              | 30/min     | Remove member                      |
-| 6   | `POST`   | `/pools/:id/lock`              | JWT              | 30/min     | Lock pool                          |
-| 7   | `POST`   | `/pools/:id/settle`            | JWT + Settlement | 10/min     | Settle pool                        |
-| 8   | `POST`   | `/pools/:id/retry`             | JWT + Settlement | 10/min     | Retry failed members               |
-| 9   | `POST`   | `/pools/:id/cancel`            | JWT              | 30/min     | Cancel pool                        |
-| 10  | `GET`    | `/pools/:id/audit`             | JWT              | 30/min     | Get audit log                      |
-| 11  | `GET`    | `/pools/:id/receipt/:escrowId` | JWT              | 30/min     | Decrypt receipt                    |
+| #   | Method   | Path                     | Auth             | Rate Limit | Description                        |
+| --- | -------- | ------------------------ | ---------------- | ---------- | ---------------------------------- |
+| 1   | `POST`   | `/`                      | JWT              | 30/min     | Create pool                        |
+| 2   | `GET`    | `/`                      | JWT              | 30/min     | List pools (paginated, filterable) |
+| 3   | `GET`    | `/:id`                   | JWT              | 30/min     | Get pool detail with members       |
+| 4   | `POST`   | `/:id/add`               | JWT              | 30/min     | Add escrow to pool                 |
+| 5   | `DELETE` | `/:id/members/:memberId` | JWT              | 30/min     | Remove member                      |
+| 6   | `POST`   | `/:id/lock`              | JWT              | 30/min     | Lock pool                          |
+| 7   | `POST`   | `/:id/settle`            | JWT + Settlement | 10/min     | Settle pool                        |
+| 8   | `POST`   | `/:id/retry`             | JWT + Settlement | 10/min     | Retry failed members               |
+| 9   | `POST`   | `/:id/cancel`            | JWT              | 30/min     | Cancel pool                        |
+| 10  | `GET`    | `/:id/audit`             | JWT              | 30/min     | Get audit log                      |
+| 11  | `GET`    | `/:id/receipt/:escrowId` | JWT              | 30/min     | Decrypt receipt                    |
 
 The `:id` parameter accepts either a UUID or pool code (`TP-XXX-XXX`).
 

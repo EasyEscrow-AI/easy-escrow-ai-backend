@@ -12,13 +12,13 @@ The Transaction Pools API enables batching multiple funded institution escrows i
 
 All endpoints require a valid institution JWT in the `Authorization` header:
 
-```
+```text
 Authorization: Bearer <jwt_token>
 ```
 
 Settlement endpoints (`settle`, `retry`) additionally require the `X-Settlement-Authority` header:
 
-```
+```text
 X-Settlement-Authority: <settlement_authority_api_key>
 ```
 

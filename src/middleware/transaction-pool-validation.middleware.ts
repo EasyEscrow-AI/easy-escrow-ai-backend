@@ -115,9 +115,14 @@ export const validateListPools = [
     .withMessage('corridor must be in format XX-XX'),
   query('limit')
     .optional()
+    .toInt()
     .isInt({ min: 1, max: 100 })
     .withMessage('limit must be between 1 and 100'),
-  query('offset').optional().isInt({ min: 0 }).withMessage('offset must be non-negative'),
+  query('offset')
+    .optional()
+    .toInt()
+    .isInt({ min: 0 })
+    .withMessage('offset must be non-negative'),
 ];
 
 /**
@@ -127,9 +132,14 @@ export const validateGetPoolAudit = [
   param('id').custom(isUuidOrPoolCode),
   query('limit')
     .optional()
+    .toInt()
     .isInt({ min: 1, max: 100 })
     .withMessage('limit must be between 1 and 100'),
-  query('offset').optional().isInt({ min: 0 }).withMessage('offset must be non-negative'),
+  query('offset')
+    .optional()
+    .toInt()
+    .isInt({ min: 0 })
+    .withMessage('offset must be non-negative'),
 ];
 
 /**

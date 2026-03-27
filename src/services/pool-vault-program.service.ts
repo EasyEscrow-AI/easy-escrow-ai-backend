@@ -165,7 +165,7 @@ export class PoolVaultProgramService {
 
     // Load AES key for receipt encryption
     const aesKeyHex = process.env.POOL_RECEIPT_ENCRYPTION_KEY;
-    if (!aesKeyHex || aesKeyHex.length < 64) {
+    if (!aesKeyHex || aesKeyHex.length !== 64) {
       throw new Error('POOL_RECEIPT_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)');
     }
     this.aesKey = Buffer.from(aesKeyHex, 'hex');
@@ -285,10 +285,18 @@ export class PoolVaultProgramService {
       maxRetries: 3,
     });
 
-    await this.connection.confirmTransaction(
+    const timeoutMs = parseInt(process.env.TX_CONFIRMATION_TIMEOUT_MS || '30000', 10);
+    const confirmPromise = this.connection.confirmTransaction(
       { signature: txSignature, blockhash, lastValidBlockHeight },
       'confirmed'
     );
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Transaction confirmation timed out after ${timeoutMs}ms: ${txSignature}`)),
+        timeoutMs
+      )
+    );
+    await Promise.race([confirmPromise, timeoutPromise]);
 
     return txSignature;
   }
@@ -547,31 +555,32 @@ export class PoolVaultProgramService {
 
   /**
    * Cancel a pool member on-chain: refund USDC from vault back to payer
+   * Maps to the Rust cancel_pool_vault instruction (refunds one member's deposit)
    */
   async cancelPoolMemberOnChain(params: {
     poolId: string;
-    memberId: string;
+    refundAmountMicroUsdc: string;
     payerWallet: PublicKey;
     usdcMint: PublicKey;
     poolCode?: string;
     escrowCode?: string;
   }): Promise<string> {
     const poolIdBytes = this.uuidToBytes(params.poolId);
-    const memberIdBytes = this.uuidToBytes(params.memberId);
     const [poolStatePda] = this.derivePoolStatePda(poolIdBytes);
     const [vaultPda] = this.derivePoolVaultPda(poolIdBytes);
     const poolIdArray = Array.from(poolIdBytes);
-    const memberIdArray = Array.from(memberIdBytes);
+    const amountBN = new BN(params.refundAmountMicroUsdc);
 
     const payerAta = await getAssociatedTokenAddress(params.usdcMint, params.payerWallet);
 
     const ix = await (this.program.methods as any)
-      .cancelPoolMember(poolIdArray, memberIdArray)
+      .cancelPoolVault(poolIdArray, amountBN)
       .accounts({
         authority: this.adminKeypair.publicKey,
-        poolState: poolStatePda,
-        tokenVault: vaultPda,
-        payerTokenAccount: payerAta,
+        poolVault: poolStatePda,
+        vaultTokenAccount: vaultPda,
+        refundTokenAccount: payerAta,
+        mint: params.usdcMint,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
@@ -591,7 +600,7 @@ export class PoolVaultProgramService {
     const txSignature = await this.signAndSubmit(transaction);
 
     console.log(
-      `[PoolVaultProgramService] Cancel pool member on-chain: pool=${params.poolId}, member=${params.memberId}, tx: ${txSignature}`
+      `[PoolVaultProgramService] Cancel pool member on-chain: pool=${params.poolId}, tx: ${txSignature}`
     );
 
     return txSignature;

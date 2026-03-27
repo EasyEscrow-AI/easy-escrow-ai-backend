@@ -1966,6 +1966,8 @@ pub enum EscrowError {
     PoolExpiryTooShort,
     #[msg("Pool vault: expiry too long (maximum 90 days)")]
     PoolExpiryTooLong,
+    #[msg("Pool vault: token mint does not match pool vault mint")]
+    PoolMintMismatch,
 }
 
 // ============================================================================

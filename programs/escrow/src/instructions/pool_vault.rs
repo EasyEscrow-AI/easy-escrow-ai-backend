@@ -61,7 +61,7 @@ pub struct DepositToPool<'info> {
     /// Depositor's USDC token account (source)
     #[account(
         mut,
-        constraint = depositor_token_account.mint == pool_vault.mint @ EscrowError::PoolInvalidAmount,
+        constraint = depositor_token_account.mint == pool_vault.mint @ EscrowError::PoolMintMismatch,
     )]
     pub depositor_token_account: InterfaceAccount<'info, TokenAccount>,
 
@@ -121,7 +121,7 @@ pub struct ReleasePoolMember<'info> {
     /// Recipient's USDC token account (destination)
     #[account(
         mut,
-        constraint = recipient_token_account.mint == pool_vault.mint @ EscrowError::PoolInvalidAmount,
+        constraint = recipient_token_account.mint == pool_vault.mint @ EscrowError::PoolMintMismatch,
     )]
     pub recipient_token_account: InterfaceAccount<'info, TokenAccount>,
 
@@ -155,6 +155,10 @@ pub struct ReleasePoolFees<'info> {
         seeds = [PoolVault::SEED_PREFIX, pool_id.as_ref()],
         bump = pool_vault.bump,
         has_one = authority @ EscrowError::Unauthorized,
+        constraint = pool_vault.status == PoolVaultStatus::Active
+            || pool_vault.status == PoolVaultStatus::Settling
+            || pool_vault.status == PoolVaultStatus::Settled
+            @ EscrowError::PoolVaultNotActive,
     )]
     pub pool_vault: Account<'info, PoolVault>,
 
@@ -169,7 +173,7 @@ pub struct ReleasePoolFees<'info> {
     /// Fee collector's USDC token account (destination)
     #[account(
         mut,
-        constraint = fee_collector_token_account.mint == pool_vault.mint @ EscrowError::PoolInvalidAmount,
+        constraint = fee_collector_token_account.mint == pool_vault.mint @ EscrowError::PoolMintMismatch,
         constraint = fee_collector_token_account.owner == pool_vault.fee_collector @ EscrowError::Unauthorized,
     )]
     pub fee_collector_token_account: InterfaceAccount<'info, TokenAccount>,
@@ -243,7 +247,7 @@ pub struct CancelPoolVault<'info> {
     /// Refund recipient's USDC token account
     #[account(
         mut,
-        constraint = refund_token_account.mint == pool_vault.mint @ EscrowError::PoolInvalidAmount,
+        constraint = refund_token_account.mint == pool_vault.mint @ EscrowError::PoolMintMismatch,
     )]
     pub refund_token_account: InterfaceAccount<'info, TokenAccount>,
 

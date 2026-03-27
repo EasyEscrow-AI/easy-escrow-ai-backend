@@ -1150,7 +1150,7 @@ model InstitutionClientSettings {
   maxFeeUsdc                Decimal   @default(20.00) @map("max_fee_usdc") @db.Decimal(20, 6)  // Maximum fee in USDC
   notificationPreferences   Json?     @map("notification_preferences")  // Per-event notification prefs [{event, inApp, email, sms}]
   poolMaxMembers            Int?      @map("pool_max_members")
-  poolDefaultSettlementMode String?   @map("pool_default_settlement_mode")
+  poolDefaultSettlementMode PoolSettlementMode? @map("pool_default_settlement_mode")
   poolDefaultExpiryHours    Int?      @map("pool_default_expiry_hours")
   createdAt                 DateTime  @default(now()) @map("created_at")
   updatedAt                 DateTime  @updatedAt @map("updated_at")
@@ -1238,12 +1238,17 @@ model InstitutionEscrow {
   resolvedAt            DateTime?                 @map("resolved_at")
   fundedAt              DateTime?                 @map("funded_at")
 
+  // Pool association (optional)
+  poolId                String?                   @map("pool_id")
+
   // Relations
   client                InstitutionClient         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  pool                  TransactionPool?          @relation(fields: [poolId], references: [id])
   deposits              InstitutionDeposit[]
   auditLogs             InstitutionAuditLog[]
   aiAnalyses            InstitutionAiAnalysis[]
   files                 InstitutionFile[]
+  poolMembers           TransactionPoolMember[]
 
   @@index([clientId])
   @@index([escrowId])
@@ -1254,6 +1259,7 @@ model InstitutionEscrow {
   @@index([recipientWallet])
   @@index([expiresAt])
   @@index([createdAt])
+  @@index([poolId])
   @@index([status, expiresAt], name: "idx_inst_escrow_status_expiry")
   @@index([clientId, status], name: "idx_inst_escrow_client_status")
   @@map("institution_escrows")
@@ -1687,6 +1693,7 @@ model TransactionPool {
   members   TransactionPoolMember[]
   auditLogs TransactionPoolAuditLog[]
   client    InstitutionClient         @relation(fields: [clientId], references: [id])
+  escrows   InstitutionEscrow[]
 
   @@index([clientId, status])
   @@index([status])
@@ -1723,7 +1730,8 @@ model TransactionPoolMember {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
-  pool TransactionPool @relation(fields: [poolId], references: [id])
+  pool   TransactionPool   @relation(fields: [poolId], references: [id])
+  escrow InstitutionEscrow @relation(fields: [escrowId], references: [escrowId])
 
   @@unique([poolId, escrowId])
   @@index([poolId])

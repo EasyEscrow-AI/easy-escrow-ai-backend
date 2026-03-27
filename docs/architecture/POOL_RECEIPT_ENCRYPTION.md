@@ -17,7 +17,7 @@ Every settled transaction pool member receives an on-chain encrypted receipt sto
 
 The encrypted receipt is a **fixed 512-byte buffer** stored in the `PoolReceipt` PDA's `encryptedPayload` field:
 
-```
+```text
 Offset   Size    Field               Description
 ──────   ────    ─────               ───────────
 0        12      IV                  Initialization vector (random per receipt)
@@ -147,7 +147,7 @@ if (!aesKeyHex || aesKeyHex.length < 64) {
 
 ## Encryption Flow
 
-```
+```text
 1. Build ReceiptPlaintext object from settlement data
 2. JSON.stringify(plaintext) → plaintext bytes
 3. Validate plaintext.length <= 480 bytes
@@ -165,7 +165,7 @@ if (!aesKeyHex || aesKeyHex.length < 64) {
 
 ## Decryption Flow
 
-```
+```text
 1. Validate payload is exactly 512 bytes
 2. Read IV from offset 0 (12 bytes)
 3. Read auth tag from offset 12 (16 bytes)

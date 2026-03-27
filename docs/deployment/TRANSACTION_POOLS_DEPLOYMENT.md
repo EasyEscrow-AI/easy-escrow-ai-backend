@@ -70,7 +70,7 @@ docker compose up -d --build backend
 
 3. Verify the routes are registered in startup logs:
 
-```
+```text
 Transaction pool routes enabled
 ```
 
@@ -117,7 +117,7 @@ A successful `201` response with a pool code (`TP-XXX-XXX`) confirms:
 
 The expiry monitor starts automatically. Check logs for:
 
-```
+```text
 [PoolExpiryMonitor] Monitor started
 [PoolExpiryMonitor]    Schedule: */10 * * * *
 ```
@@ -142,7 +142,7 @@ The pool expiry monitor sends alerts via `alertingService` after 3 consecutive f
 
 Pool operations are logged with the `[TransactionPoolService]` and `[PoolVaultProgramService]` prefixes. Key log patterns:
 
-```
+```text
 [TransactionPoolService] On-chain pool vault init success for TP-XXX-XXX
 [PoolVaultProgramService] Release pool member on-chain: pool=..., member=..., tx: ...
 [PoolExpiryMonitor] Batch 1: Found 3 expired pools

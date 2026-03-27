@@ -1,6 +1,8 @@
 import { prisma } from '../config/database';
 import type { PrismaClient } from '../generated/prisma';
 
+const POOL_AUDIT_ACTIONS = ['POOL_CREATED', 'POOL_LOCKED', 'POOL_SETTLED', 'POOL_FAILED', 'POOL_CANCELLED', 'POOL_RELEASE_DEFERRED'] as const;
+
 export class InstitutionReportsService {
   private prisma: PrismaClient;
 
@@ -12,7 +14,7 @@ export class InstitutionReportsService {
     const { from, to, limit = 50, offset = 0 } = params;
     const where: any = {
       clientId,
-      action: { in: ['COMPLIANCE_HOLD', 'COMPLIANCE_CHECK_PASSED', 'COMPLIANCE_CHECK_FAILED', 'ESCROW_CREATED', 'DRAFT_SUBMITTED', 'DEPOSIT_CONFIRMED', 'FUNDS_RELEASED', 'ESCROW_CANCELLED', 'ESCROW_COMPLETED', 'INSUFFICIENT_FUNDS', 'POOL_CREATED', 'POOL_LOCKED', 'POOL_SETTLED', 'POOL_FAILED', 'POOL_CANCELLED'] },
+      action: { in: ['COMPLIANCE_HOLD', 'COMPLIANCE_CHECK_PASSED', 'COMPLIANCE_CHECK_FAILED', 'ESCROW_CREATED', 'DRAFT_SUBMITTED', 'DEPOSIT_CONFIRMED', 'FUNDS_RELEASED', 'ESCROW_CANCELLED', 'ESCROW_COMPLETED', 'INSUFFICIENT_FUNDS', ...POOL_AUDIT_ACTIONS] },
     };
     if (from) where.createdAt = { ...where.createdAt, gte: new Date(from) };
     if (to) where.createdAt = { ...where.createdAt, lte: new Date(to) };
@@ -119,7 +121,7 @@ export class InstitutionReportsService {
     const { escrowId, from, to, limit = 50, offset = 0 } = params;
     const where: any = {
       clientId,
-      action: { in: ['ESCROW_CREATED', 'DRAFT_UPDATED', 'DRAFT_SUBMITTED', 'DEPOSIT_CONFIRMED', 'FUNDS_RELEASED', 'ESCROW_CANCELLED', 'ESCROW_EXPIRED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS', 'POOL_CREATED', 'POOL_LOCKED', 'POOL_SETTLED', 'POOL_FAILED', 'POOL_CANCELLED', 'POOL_RELEASE_DEFERRED'] },
+      action: { in: ['ESCROW_CREATED', 'DRAFT_UPDATED', 'DRAFT_SUBMITTED', 'DEPOSIT_CONFIRMED', 'FUNDS_RELEASED', 'ESCROW_CANCELLED', 'ESCROW_EXPIRED', 'COMPLIANCE_HOLD', 'INSUFFICIENT_FUNDS', ...POOL_AUDIT_ACTIONS] },
     };
     if (escrowId) where.escrowId = escrowId;
     if (from || to) {

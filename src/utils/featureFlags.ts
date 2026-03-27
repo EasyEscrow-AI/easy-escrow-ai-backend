@@ -61,7 +61,8 @@ export function isPrivacyEnabled(): boolean {
  * Gated by TRANSACTION_POOLS_ENABLED env var (requires INSTITUTION_ESCROW_ENABLED too).
  */
 export function isTransactionPoolsEnabled(): boolean {
-  return process.env.TRANSACTION_POOLS_ENABLED === 'true';
+  return process.env.TRANSACTION_POOLS_ENABLED === 'true' &&
+         process.env.INSTITUTION_ESCROW_ENABLED === 'true';
 }
 
 /**

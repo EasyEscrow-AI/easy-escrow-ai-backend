@@ -267,7 +267,11 @@ export class TransactionPoolService {
       include: { members: { where: { status: { not: 'REMOVED' } } } },
     });
 
-    return this.formatPool(updatedPool!, updatedPool!.members);
+    if (!updatedPool) {
+      throw new Error(`Pool ${pool.id} not found after update`);
+    }
+
+    return this.formatPool(updatedPool, updatedPool.members);
   }
 
   /**
@@ -327,7 +331,11 @@ export class TransactionPoolService {
       include: { members: { where: { status: { not: 'REMOVED' } } } },
     });
 
-    return this.formatPool(updatedPool!, updatedPool!.members);
+    if (!updatedPool) {
+      throw new Error(`Pool ${pool.id} not found after update`);
+    }
+
+    return this.formatPool(updatedPool, updatedPool.members);
   }
 
   /**
@@ -634,8 +642,6 @@ export class TransactionPoolService {
 
     // Recalculate totals
     const totalSettled = pool.settledCount + newSettled;
-    const totalFailed =
-      pool.failedCount - newSettled + newFailed - (failedMembers.length - newFailed);
     const remainingFailed = await this.prisma.transactionPoolMember.count({
       where: { poolId: pool.id, status: 'FAILED' },
     });
@@ -702,9 +708,10 @@ export class TransactionPoolService {
         if (programService && escrow) {
           try {
             const usdcMint = programService.getUsdcMintAddress();
+            const refundAmount = (Number(member.amount) + Number(member.platformFee)) * 1_000_000;
             await programService.cancelPoolMemberOnChain({
               poolId: pool.id,
-              memberId: member.id,
+              refundAmountMicroUsdc: Math.round(refundAmount).toString(),
               payerWallet: new PublicKey(escrow.payerWallet),
               usdcMint,
               poolCode: pool.poolCode,
@@ -1088,11 +1095,16 @@ export class TransactionPoolService {
     const memberRiskScores: Array<{ escrowId: string; riskScore: number }> = [];
     const flags: string[] = [];
 
+    // Batch-fetch all escrows in a single query to avoid N+1
+    const escrowIds = members.map((m) => m.escrowId);
+    const escrows = await this.prisma.institutionEscrow.findMany({
+      where: { escrowId: { in: escrowIds } },
+      select: { riskScore: true, escrowId: true, escrowCode: true, corridor: true },
+    });
+    const escrowMap = new Map(escrows.map((e) => [e.escrowId, e]));
+
     for (const member of members) {
-      const escrow = await this.prisma.institutionEscrow.findUnique({
-        where: { escrowId: member.escrowId },
-        select: { riskScore: true, escrowId: true, escrowCode: true, corridor: true },
-      });
+      const escrow = escrowMap.get(member.escrowId);
 
       const riskScore = escrow?.riskScore ? Number(escrow.riskScore) : 0;
       memberRiskScores.push({ escrowId: member.escrowId, riskScore });

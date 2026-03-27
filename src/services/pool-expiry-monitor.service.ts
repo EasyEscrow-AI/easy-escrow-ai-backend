@@ -242,9 +242,10 @@ export class PoolExpiryMonitor {
 
                 if (programService && escrow) {
                   const usdcMint = programService.getUsdcMintAddress();
+                  const refundAmount = (Number(member.amount) + Number(member.platformFee)) * 1_000_000;
                   await programService.cancelPoolMemberOnChain({
                     poolId: pool.id,
-                    memberId: member.id,
+                    refundAmountMicroUsdc: Math.round(refundAmount).toString(),
                     payerWallet: new PublicKey(escrow.payerWallet),
                     usdcMint,
                     poolCode: pool.poolCode,
@@ -261,6 +262,15 @@ export class PoolExpiryMonitor {
                   `${LOG_PREFIX}   Member refund failed for ${member.id}:`,
                   (memberErr as Error).message
                 );
+                // On-chain refund failed — record error but don't mark as REMOVED
+                try {
+                  await this.prisma.transactionPoolMember.update({
+                    where: { id: member.id },
+                    data: { errorMessage: `Refund failed: ${(memberErr as Error).message}` },
+                  });
+                } catch {
+                  // DB update failure is non-critical here
+                }
               }
 
               // Delay between on-chain transactions
@@ -421,6 +431,7 @@ export class PoolExpiryMonitor {
           pool.memberCount > 0 ? ` ${pool.memberCount} member(s) have been refunded.` : ''
         }`,
         metadata: {
+          poolId: pool.id,
           poolCode: pool.poolCode,
           memberCount: pool.memberCount,
           totalAmount: Number(pool.totalAmount),

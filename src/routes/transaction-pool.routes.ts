@@ -440,8 +440,9 @@ router.get(
         : error.message.includes('Access denied')
         ? 403
         : 500;
+      const errorLabel = status === 403 ? 'Forbidden' : status === 404 ? 'Not Found' : 'Internal Error';
       res.status(status).json({
-        error: status === 500 ? 'Internal Error' : 'Not Found',
+        error: errorLabel,
         message: error.message,
         timestamp: new Date().toISOString(),
       });

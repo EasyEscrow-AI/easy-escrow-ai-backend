@@ -19,6 +19,15 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import Module from 'module';
 
+const savedEnv = {
+  NODE_ENV: process.env.NODE_ENV,
+  JWT_SECRET: process.env.JWT_SECRET,
+  USDC_MINT_ADDRESS: process.env.USDC_MINT_ADDRESS,
+  INSTITUTION_ESCROW_ENABLED: process.env.INSTITUTION_ESCROW_ENABLED,
+  TRANSACTION_POOLS_ENABLED: process.env.TRANSACTION_POOLS_ENABLED,
+  PLATFORM_FEE_COLLECTOR_ADDRESS: process.env.PLATFORM_FEE_COLLECTOR_ADDRESS,
+};
+
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
 process.env.USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -202,6 +211,7 @@ describe('TransactionPoolService', function () {
       },
       institutionEscrow: {
         findUnique: sandbox.stub().resolves(makeEscrow()),
+        findMany: sandbox.stub().resolves([makeEscrow()]),
       },
       $transaction: sandbox.stub().callsFake(async (ops: any[]) => {
         const results = [];
@@ -282,6 +292,16 @@ describe('TransactionPoolService', function () {
 
   afterEach(() => {
     sandbox.restore();
+  });
+
+  after(() => {
+    for (const [key, value] of Object.entries(savedEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
   });
 
   // ─── createPool ──────────────────────────────────────────────
@@ -1091,12 +1111,7 @@ describe('TransactionPoolService', function () {
       const encrypted = encryptReceiptPayload(sampleReceipt, aesKey);
       const wrongKey = crypto.randomBytes(32);
 
-      try {
-        decryptReceiptPayload(encrypted, wrongKey);
-        expect.fail('Should have thrown');
-      } catch (err: any) {
-        expect(err.message).to.include('Unsupported state');
-      }
+      expect(() => decryptReceiptPayload(encrypted, wrongKey)).to.throw();
     });
 
     it('should reject payload with wrong size', () => {

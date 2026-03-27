@@ -115,3 +115,12 @@ ALTER TABLE "transaction_pool_members" ADD CONSTRAINT "transaction_pool_members_
 
 -- AddForeignKey: transaction_pool_audit_logs -> transaction_pools
 ALTER TABLE "transaction_pool_audit_logs" ADD CONSTRAINT "transaction_pool_audit_logs_pool_id_fkey" FOREIGN KEY ("pool_id") REFERENCES "transaction_pools"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey: institution_escrows.pool_id -> transaction_pools
+ALTER TABLE "institution_escrows" ADD CONSTRAINT "institution_escrows_pool_id_fkey" FOREIGN KEY ("pool_id") REFERENCES "transaction_pools"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey: transaction_pool_members.escrow_id -> institution_escrows
+ALTER TABLE "transaction_pool_members" ADD CONSTRAINT "transaction_pool_members_escrow_id_fkey" FOREIGN KEY ("escrow_id") REFERENCES "institution_escrows"("escrow_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AlterColumn: Convert pool_default_settlement_mode from TEXT to PoolSettlementMode enum
+ALTER TABLE "institution_client_settings" ALTER COLUMN "pool_default_settlement_mode" TYPE "PoolSettlementMode" USING "pool_default_settlement_mode"::"PoolSettlementMode";

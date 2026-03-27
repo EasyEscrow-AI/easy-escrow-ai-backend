@@ -341,6 +341,7 @@ class InstitutionSearchService {
   }
 
   private async searchPools(clientId: string, q: string, limit: number): Promise<SearchResult[]> {
+    if (process.env.TRANSACTION_POOLS_ENABLED !== 'true') return [];
     const or: any[] = [
       { poolCode: { contains: q, mode: 'insensitive' } },
       { corridor: { contains: q, mode: 'insensitive' } },
@@ -384,7 +385,7 @@ class InstitutionSearchService {
 
   private matchPoolStatus(q: string): string | null {
     const statuses = ['OPEN', 'LOCKED', 'SETTLING', 'SETTLED', 'PARTIAL_FAIL', 'FAILED', 'CANCELLED'];
-    const upper = q.toUpperCase().replace(/\s+/g, '_');
+    const upper = q.toUpperCase().replace(/[\s-]+/g, '_');
     return statuses.find((s) => s === upper || s.startsWith(upper)) || null;
   }
 

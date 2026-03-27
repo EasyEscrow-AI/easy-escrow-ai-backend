@@ -783,9 +783,10 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionSearchRoutes);
   app.use(privacyRoutes);
 
-  // Transaction Pool routes (gated by TRANSACTION_POOLS_ENABLED)
+  // Transaction Pool routes (router has internal requirePoolsEnabled() guard
+  // that returns proper 404 when TRANSACTION_POOLS_ENABLED is not 'true')
+  app.use(transactionPoolRoutes);
   if (process.env.TRANSACTION_POOLS_ENABLED === 'true') {
-    app.use(transactionPoolRoutes);
     console.log('✅ Transaction pool routes enabled');
   }
 
