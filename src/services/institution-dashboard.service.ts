@@ -23,11 +23,47 @@ export class InstitutionDashboardService {
     this.prisma = prisma;
   }
 
+  /** Build the OR array for matching escrows where the institution is payer OR recipient */
+  private async buildEscrowOrClause(clientId: string): Promise<Array<Record<string, unknown>>> {
+    const wallets = await this.getClientWallets(clientId);
+    return [
+      { clientId },
+      ...(wallets.length > 0 ? [{ recipientWallet: { in: wallets } }] : []),
+    ];
+  }
+
+  /** Build a full where clause that matches escrows where the institution is payer OR recipient */
+  private async escrowWhereForClient(clientId: string, extra: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
+    const orClause = await this.buildEscrowOrClause(clientId);
+    return { OR: orClause, ...extra };
+  }
+
+  private async getClientWallets(clientId: string): Promise<string[]> {
+    const [client, accounts] = await Promise.all([
+      this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { primaryWallet: true, settledWallets: true },
+      }),
+      this.prisma.institutionAccount.findMany({
+        where: { clientId, isActive: true },
+        select: { walletAddress: true },
+      }),
+    ]);
+    return [
+      client?.primaryWallet,
+      ...(client?.settledWallets || []),
+      ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+    ].filter(Boolean) as string[];
+  }
+
   async getMetrics(clientId: string) {
     const now = new Date();
     const day1 = new Date(now); day1.setDate(day1.getDate() - 1);
     const day7 = new Date(now); day7.setDate(day7.getDate() - 7);
     const day30 = new Date(now); day30.setDate(day30.getDate() - 30);
+
+    // Build OR clause once — reuse for all escrow queries
+    const orClause = await this.buildEscrowOrClause(clientId);
 
     const [
       escrows, directPayments, activeEscrowAgg,
@@ -36,7 +72,7 @@ export class InstitutionDashboardService {
       totalClients, verifiedClients, pendingClients,
     ] = await Promise.all([
       this.prisma.institutionEscrow.findMany({
-        where: { clientId },
+        where: { OR: orClause } as any,
         select: { amount: true, platformFee: true, status: true },
       }),
       this.prisma.directPayment.findMany({
@@ -44,13 +80,13 @@ export class InstitutionDashboardService {
         select: { amount: true, platformFee: true, status: true },
       }),
       this.prisma.institutionEscrow.aggregate({
-        where: { clientId, status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] } },
+        where: { OR: orClause, status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'RELEASING'] } } as any,
         _sum: { amount: true },
         _count: true,
       }),
-      this.prisma.institutionEscrow.aggregate({ where: { clientId, createdAt: { gte: day1 } }, _sum: { amount: true } }),
-      this.prisma.institutionEscrow.aggregate({ where: { clientId, createdAt: { gte: day7 } }, _sum: { amount: true } }),
-      this.prisma.institutionEscrow.aggregate({ where: { clientId, createdAt: { gte: day30 } }, _sum: { amount: true } }),
+      this.prisma.institutionEscrow.aggregate({ where: { OR: orClause, createdAt: { gte: day1 } } as any, _sum: { amount: true } }),
+      this.prisma.institutionEscrow.aggregate({ where: { OR: orClause, createdAt: { gte: day7 } } as any, _sum: { amount: true } }),
+      this.prisma.institutionEscrow.aggregate({ where: { OR: orClause, createdAt: { gte: day30 } } as any, _sum: { amount: true } }),
       this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day1 } }, _sum: { amount: true } }),
       this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day7 } }, _sum: { amount: true } }),
       this.prisma.directPayment.aggregate({ where: { clientId, createdAt: { gte: day30 } }, _sum: { amount: true } }),
@@ -97,10 +133,17 @@ export class InstitutionDashboardService {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
+    const wallets = await this.getClientWallets(clientId);
+    const orClause = [
+      { clientId },
+      ...(wallets.length > 0 ? [{ recipientWallet: { in: wallets } }] : []),
+    ];
+    const escrowWhere = { OR: orClause, createdAt: { gte: since } };
+
     const [escrows, payments] = await Promise.all([
       this.prisma.institutionEscrow.findMany({
-        where: { clientId, createdAt: { gte: since } },
-        select: { amount: true, status: true, createdAt: true, fundedAt: true, resolvedAt: true, corridor: true },
+        where: escrowWhere as any,
+        select: { amount: true, status: true, createdAt: true, fundedAt: true, resolvedAt: true, corridor: true, clientId: true, recipientWallet: true },
         orderBy: { createdAt: 'asc' },
       }),
       this.prisma.directPayment.findMany({
@@ -118,13 +161,21 @@ export class InstitutionDashboardService {
       byKey[key].received += received;
     };
 
-    for (const e of escrows) {
+    for (const e of escrows as any[]) {
       const amt = Number(e.amount);
+      // Determine if this institution is the payer or recipient for this escrow
+      const isPayer = e.clientId === clientId;
+      const isRecipient = !isPayer && wallets.includes(e.recipientWallet);
+
       if (e.fundedAt && ['FUNDED', 'COMPLETE', 'RELEASED'].includes(e.status)) {
-        addToKey(e.fundedAt.toISOString().split('T')[0], 0, amt);
+        // Funded: payer sent money, recipient received money
+        if (isPayer) addToKey(e.fundedAt.toISOString().split('T')[0], amt, 0);
+        if (isRecipient) addToKey(e.fundedAt.toISOString().split('T')[0], 0, amt);
       }
       if (e.resolvedAt && ['COMPLETE', 'RELEASED'].includes(e.status)) {
-        addToKey(e.resolvedAt.toISOString().split('T')[0], amt, 0);
+        // Released: payer's escrow resolved, recipient received payout
+        if (isPayer) addToKey(e.resolvedAt.toISOString().split('T')[0], 0, amt);
+        if (isRecipient) addToKey(e.resolvedAt.toISOString().split('T')[0], amt, 0);
       }
     }
     for (const p of payments) {
@@ -175,11 +226,11 @@ export class InstitutionDashboardService {
   }
 
   async getPendingActions(clientId: string) {
+    const pendingWhere = await this.escrowWhereForClient(clientId, {
+      status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD', 'PENDING_RELEASE'] },
+    });
     const pendingEscrows = await this.prisma.institutionEscrow.findMany({
-      where: {
-        clientId,
-        status: { in: ['CREATED', 'FUNDED', 'COMPLIANCE_HOLD'] },
-      },
+      where: pendingWhere as any,
       select: {
         escrowCode: true, escrowId: true, status: true,
         amount: true, corridor: true, createdAt: true, expiresAt: true,
@@ -257,10 +308,11 @@ export class InstitutionDashboardService {
   }
 
   async getCorridorActivity(clientId: string) {
+    const corridorWhere = await this.escrowWhereForClient(clientId, { corridor: { not: null } });
     const [escrows, payments, corridors] = await Promise.all([
       this.prisma.institutionEscrow.groupBy({
         by: ['corridor'],
-        where: { clientId, corridor: { not: null } },
+        where: corridorWhere as any,
         _count: true,
         _sum: { amount: true },
       }),
@@ -305,6 +357,7 @@ export class InstitutionDashboardService {
   }
 
   async getComplianceScorecard(clientId: string) {
+    const escrowWhere = await this.escrowWhereForClient(clientId);
     const [aiAnalyses, auditLogs, escrows] = await Promise.all([
       this.prisma.institutionAiAnalysis.findMany({
         where: { clientId },
@@ -320,7 +373,7 @@ export class InstitutionDashboardService {
         select: { action: true, createdAt: true },
       }),
       this.prisma.institutionEscrow.findMany({
-        where: { clientId },
+        where: escrowWhere as any,
         select: { status: true, riskScore: true },
       }),
     ]);
