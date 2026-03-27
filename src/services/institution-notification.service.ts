@@ -140,7 +140,26 @@ class InstitutionNotificationService {
       }),
     ]);
 
-    return { notifications, total, unreadCount, limit, offset };
+    // Enrich notifications with escrowCode (EE-XXX-XXX) for frontend display
+    const escrowIds = notifications
+      .map((n: any) => n.escrowId)
+      .filter(Boolean) as string[];
+
+    let escrowCodeMap: Map<string, string> = new Map();
+    if (escrowIds.length > 0) {
+      const escrows = await prisma.institutionEscrow.findMany({
+        where: { escrowId: { in: escrowIds } },
+        select: { escrowId: true, escrowCode: true },
+      });
+      escrowCodeMap = new Map(escrows.map((e) => [e.escrowId, e.escrowCode]));
+    }
+
+    const enriched = notifications.map((n: any) => ({
+      ...n,
+      escrowCode: n.escrowId ? escrowCodeMap.get(n.escrowId) || null : null,
+    }));
+
+    return { notifications: enriched, total, unreadCount, limit, offset };
   }
 
   /**
