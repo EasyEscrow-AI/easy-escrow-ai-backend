@@ -9,7 +9,11 @@
  * 5. List/get escrows (Redis cache + Prisma)
  */
 
-import { PrismaClient, InstitutionEscrowStatus, PrivacyLevel as PrismaPrivacyLevel } from '../generated/prisma';
+import {
+  PrismaClient,
+  InstitutionEscrowStatus,
+  PrivacyLevel as PrismaPrivacyLevel,
+} from '../generated/prisma';
 import { prisma } from '../config/database';
 import type { SettlementMode, ReleaseMode } from '../types/institution-escrow';
 import { redisClient } from '../config/redis';
@@ -51,6 +55,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   COMPLIANCE_WARNING: 'Compliance Warning',
   DEPOSIT_CONFIRMED: 'Escrow Funded',
   AI_RELEASE_CHECK: 'AI Release Check',
+  AI_APPROVED: 'AI Approved',
   AI_AUTO_RELEASE: 'AI Auto-Release',
   FUNDS_RELEASED: 'Funds Released',
   ESCROW_COMPLETED: 'Escrow Complete',
@@ -266,7 +271,7 @@ export class InstitutionEscrowService {
     // Convert amount to micro-USDC (6 decimals), apply BPS, then convert back.
     // E.g. 599.99 USDC * 20 bps: 599990000 * 20 / 10000 = 1199980 micro = 1.199980 USDC
     const amountMicro = Math.round(amount * 1_000_000);
-    const feeMicro = Math.floor(amountMicro * feeBps / 10000);
+    const feeMicro = Math.floor((amountMicro * feeBps) / 10000);
     const rawFee = feeMicro / 1_000_000;
     // Round to 6 decimal places (USDC precision) to prevent float drift
     const fee = Math.round(Math.min(maxFee, Math.max(minFee, rawFee)) * 1_000_000) / 1_000_000;
@@ -540,7 +545,6 @@ export class InstitutionEscrowService {
       console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
     }
 
-
     // 12. Cache in Redis
     await this.cacheEscrow(escrow);
 
@@ -706,7 +710,8 @@ export class InstitutionEscrowService {
       updateData.approvalInstructions = params.approvalInstructions;
 
     if (params.payerName !== undefined) updateData.payerName = params.payerName;
-    if (params.payerAccountLabel !== undefined) updateData.payerAccountLabel = params.payerAccountLabel;
+    if (params.payerAccountLabel !== undefined)
+      updateData.payerAccountLabel = params.payerAccountLabel;
     if (params.payerBranchName !== undefined) updateData.payerBranchName = params.payerBranchName;
     if (params.recipientName !== undefined) updateData.recipientName = params.recipientName;
     if (params.recipientAccountLabel !== undefined)
@@ -1072,7 +1077,9 @@ export class InstitutionEscrowService {
     try {
       const { getInstitutionAccountService } = await import('./institution-account.service');
       await getInstitutionAccountService().invalidateBalanceCache(escrow.payerWallet);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     try {
       await getInstitutionNotificationService().notify({
@@ -1100,11 +1107,20 @@ export class InstitutionEscrowService {
             escrowId,
             type: 'ESCROW_FUNDED',
             title: `Payment Received — ${escrow.escrowCode || escrowId}`,
-            message: `${senderName} has deposited ${Number(escrow.amount)} USDC into escrow ${escrow.escrowCode || escrowId}. Funds are locked and awaiting release conditions.`,
-            metadata: { amount: Number(escrow.amount), escrowCode: escrow.escrowCode, sender: senderName, txSignature },
+            message: `${senderName} has deposited ${Number(escrow.amount)} USDC into escrow ${
+              escrow.escrowCode || escrowId
+            }. Funds are locked and awaiting release conditions.`,
+            metadata: {
+              amount: Number(escrow.amount),
+              escrowCode: escrow.escrowCode,
+              sender: senderName,
+              txSignature,
+            },
           });
         }
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
     }
 
     await this.cacheEscrow(updated);
@@ -1148,10 +1164,7 @@ export class InstitutionEscrowService {
 
     const payerWallet = toPublicKey(escrow.payerWallet, 'payerWallet');
     const usdcMint = programService.getUsdcMintAddress();
-    const feeCollector = toPublicKey(
-      config.platform.feeCollectorAddress,
-      'feeCollectorAddress'
-    );
+    const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
 
     const tx = await programService.buildDepositTransaction({
       escrowId,
@@ -1252,13 +1265,11 @@ export class InstitutionEscrowService {
     // 2. Invoice amount match (if selected) — uses document-extracted amount
     // Accept match against escrow amount OR escrow + platform fee (total due)
     if (selectedConditions.includes('invoice_amount_match')) {
-      const extractedAmount =
-        docFields.total_amount ?? docFields.invoiceAmount ?? docFields.amount;
+      const extractedAmount = docFields.total_amount ?? docFields.invoiceAmount ?? docFields.amount;
       const escrowAmount = Number(escrow.amount);
       const totalDue = escrowAmount + Number(escrow.platformFee || 0);
-      const extracted = extractedAmount !== undefined && extractedAmount !== null
-        ? Number(extractedAmount)
-        : NaN;
+      const extracted =
+        extractedAmount !== undefined && extractedAmount !== null ? Number(extractedAmount) : NaN;
       const matchesEscrow = !isNaN(extracted) && Math.abs(extracted - escrowAmount) < 0.01;
       const matchesTotalDue = !isNaN(extracted) && Math.abs(extracted - totalDue) < 0.01;
       const amountMatches = matchesEscrow || matchesTotalDue;
@@ -1267,11 +1278,11 @@ export class InstitutionEscrowService {
         label: 'Invoice amount matches exactly',
         passed: amountMatches,
         detail: amountMatches
-          ? `Invoice amount $${extracted.toLocaleString()} matches ${matchesEscrow ? 'escrow amount' : 'total due (escrow + fee)'} $${(matchesEscrow ? escrowAmount : totalDue).toLocaleString()}`
+          ? `Invoice amount $${extracted.toLocaleString()} matches ${
+              matchesEscrow ? 'escrow amount' : 'total due (escrow + fee)'
+            } $${(matchesEscrow ? escrowAmount : totalDue).toLocaleString()}`
           : `Invoice amount ${
-              !isNaN(extracted)
-                ? `$${extracted.toLocaleString()}`
-                : 'not found in document'
+              !isNaN(extracted) ? `$${extracted.toLocaleString()}` : 'not found in document'
             } does not match escrow amount $${escrowAmount.toLocaleString()} or total due $${totalDue.toLocaleString()}`,
       });
     }
@@ -1298,32 +1309,46 @@ export class InstitutionEscrowService {
       }
 
       // Extract sender and recipient from the document
-      const docSender = docFields.sender_name ?? docFields.counterparty_name ?? docFields.companyName;
+      const docSender =
+        docFields.sender_name ?? docFields.counterparty_name ?? docFields.companyName;
       const docRecipient = docFields.recipient_name;
 
       // Check sender matches
-      const senderMatch = docSender != null && payerClient &&
-        (String(docSender).toLowerCase().includes(payerClient.companyName?.toLowerCase() || '') ||
-         String(docSender).toLowerCase().includes(payerClient.legalName?.toLowerCase() || ''));
+      const senderMatch =
+        docSender != null &&
+        payerClient &&
+        (String(docSender)
+          .toLowerCase()
+          .includes(payerClient.companyName?.toLowerCase() || '') ||
+          String(docSender)
+            .toLowerCase()
+            .includes(payerClient.legalName?.toLowerCase() || ''));
 
       // Check recipient matches (if we can resolve the recipient)
-      const recipientMatch = !recipientCompanyName || (
-        docRecipient != null &&
-        String(docRecipient).toLowerCase().includes(recipientCompanyName.toLowerCase())
-      );
+      const recipientMatch =
+        !recipientCompanyName ||
+        (docRecipient != null &&
+          String(docRecipient).toLowerCase().includes(recipientCompanyName.toLowerCase()));
 
       const bothMatch = !!senderMatch && recipientMatch;
       const details: string[] = [];
       if (senderMatch) {
         details.push(`Sender "${docSender}" matches "${payerClient?.companyName}"`);
       } else {
-        details.push(`Sender "${docSender ?? 'not found'}" does not match "${payerClient?.companyName}"`);
+        details.push(
+          `Sender "${docSender ?? 'not found'}" does not match "${payerClient?.companyName}"`
+        );
       }
       if (recipientCompanyName) {
-        if (docRecipient != null && String(docRecipient).toLowerCase().includes(recipientCompanyName.toLowerCase())) {
+        if (
+          docRecipient != null &&
+          String(docRecipient).toLowerCase().includes(recipientCompanyName.toLowerCase())
+        ) {
           details.push(`Recipient "${docRecipient}" matches "${recipientCompanyName}"`);
         } else {
-          details.push(`Recipient "${docRecipient ?? 'not found'}" does not match "${recipientCompanyName}"`);
+          details.push(
+            `Recipient "${docRecipient ?? 'not found'}" does not match "${recipientCompanyName}"`
+          );
         }
       }
 
@@ -1338,8 +1363,7 @@ export class InstitutionEscrowService {
     // 4. Document signature verified (if selected)
     if (selectedConditions.includes('document_signature_verified')) {
       const signatureVerified =
-        docFields.signatureVerified === true ||
-        docFields.docusignStatus === 'completed';
+        docFields.signatureVerified === true || docFields.docusignStatus === 'completed';
       results.push({
         condition: 'document_signature_verified',
         label: 'Document signature is verified (via DocuSign)',
@@ -1372,13 +1396,16 @@ export class InstitutionEscrowService {
     const { escrowId } = escrow;
 
     if (escrow.status !== 'FUNDED') {
-      throw new Error(
-        `Cannot fulfill: escrow status is ${escrow.status}, expected FUNDED`
-      );
+      throw new Error(`Cannot fulfill: escrow status is ${escrow.status}, expected FUNDED`);
     }
 
     // Resolve proof document — accept files uploaded by the caller (creator or recipient)
-    let proofDocument: { id: string; fileName: string; documentType: string; uploadedAt: Date } | null = null;
+    let proofDocument: {
+      id: string;
+      fileName: string;
+      documentType: string;
+      uploadedAt: Date;
+    } | null = null;
 
     if (opts?.fileId) {
       // Explicit file — validate it exists and belongs to this escrow
@@ -1437,7 +1464,9 @@ export class InstitutionEscrowService {
         message: auditMessage,
         metadata: { escrowId, escrowCode: escrow.escrowCode, status: 'PENDING_RELEASE' },
       });
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     // Also notify the escrow creator if the fulfiller is a counterparty
     if (escrow.clientId !== clientId) {
@@ -1450,7 +1479,9 @@ export class InstitutionEscrowService {
           message: auditMessage,
           metadata: { escrowId, escrowCode: escrow.escrowCode, status: 'PENDING_RELEASE' },
         });
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
     }
 
     // Trigger AI release check if releaseMode is 'ai'
@@ -1494,11 +1525,23 @@ export class InstitutionEscrowService {
         // Auto-release if all AI conditions passed
         if (check.passed) {
           try {
-            console.log(`[InstitutionEscrow] AI auto-release triggered for ${escrow.escrowCode || escrowId}`);
+            console.log(
+              `[InstitutionEscrow] AI auto-release triggered for ${escrow.escrowCode || escrowId}`
+            );
+            await this.createKytAuditLog(escrow, 'AI_APPROVED', 'AI Orchestrator', {
+              releaseMode: 'ai',
+              riskScore: check.aiAnalysis.riskScore,
+              recommendation: check.aiAnalysis.recommendation,
+              message: `AI approved release — risk score ${check.aiAnalysis.riskScore / 100}`,
+            });
             await this.createKytAuditLog(escrow, 'AI_AUTO_RELEASE', 'AI Orchestrator', {
               releaseMode: 'ai',
               conditionsPassed: check.conditions.length,
-              conditions: check.conditions.map((c) => ({ condition: c.condition, label: c.label, passed: c.passed })),
+              conditions: check.conditions.map((c) => ({
+                condition: c.condition,
+                label: c.label,
+                passed: c.passed,
+              })),
               riskScore: check.aiAnalysis.riskScore,
               message: `AI auto-release initiated — ${check.conditions.length} conditions passed`,
             });
@@ -1506,7 +1549,16 @@ export class InstitutionEscrowService {
               escrow.clientId,
               escrowId,
               'AI auto-release — all conditions passed',
-              'AI Orchestrator'
+              'AI Orchestrator',
+              undefined,
+              {
+                skipAiCheck: true,
+                aiMemoData: {
+                  recommendation: check.aiAnalysis.recommendation,
+                  riskScore: check.aiAnalysis.riskScore,
+                  factors: check.aiAnalysis.factors,
+                },
+              }
             );
             // Attach AI check results to the release response
             return { ...(releaseResult as Record<string, unknown>), aiReleaseChecks };
@@ -1602,7 +1654,9 @@ export class InstitutionEscrowService {
       escrowId,
       type: 'ESCROW_FUNDED',
       title: `Proof of Delivery Requested — ${escrow.escrowCode}`,
-      message: `${payerCompanyName} has requested you upload proof of delivery for escrow ${escrow.escrowCode} ($${amount} USDC).${message ? `\n\nMessage: ${message}` : ''}`,
+      message: `${payerCompanyName} has requested you upload proof of delivery for escrow ${
+        escrow.escrowCode
+      } ($${amount} USDC).${message ? `\n\nMessage: ${message}` : ''}`,
       metadata: {
         escrowId,
         escrowCode: escrow.escrowCode,
@@ -1634,13 +1688,18 @@ export class InstitutionEscrowService {
     idOrCode: string,
     notes?: string,
     actorEmail?: string,
-    privacyPreferences?: PrivacyPreferences
+    privacyPreferences?: PrivacyPreferences,
+    options?: { skipAiCheck?: boolean; aiMemoData?: AiMemoData }
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
 
     // Allow release from FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS (retry after funding)
-    const releasableStatuses: InstitutionEscrowStatus[] = ['FUNDED', 'PENDING_RELEASE', 'INSUFFICIENT_FUNDS'];
+    const releasableStatuses: InstitutionEscrowStatus[] = [
+      'FUNDED',
+      'PENDING_RELEASE',
+      'INSUFFICIENT_FUNDS',
+    ];
     if (!releasableStatuses.includes(escrow.status)) {
       throw new Error(
         `Cannot release: escrow status is ${escrow.status}, expected FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS`
@@ -1648,10 +1707,11 @@ export class InstitutionEscrowService {
     }
 
     // Track AI analysis for chain-of-custody memo digest
-    let aiAnalysisForMemo: AiMemoData | null = null;
+    let aiAnalysisForMemo: AiMemoData | null = options?.aiMemoData || null;
 
     // Gate by releaseMode: if AI, run AI compliance checks before proceeding
-    if (escrow.releaseMode === 'ai') {
+    // Skip if caller already performed the check (e.g. fulfillEscrow auto-release)
+    if (escrow.releaseMode === 'ai' && !options?.skipAiCheck) {
       const aiResult = await this.performAiReleaseCheck(escrow, clientId);
       aiAnalysisForMemo = {
         recommendation: aiResult.aiAnalysis.recommendation,
@@ -1698,6 +1758,14 @@ export class InstitutionEscrowService {
           `AI release check failed: ${failedConditions.map((c) => c.label).join('; ')}`
         );
       }
+
+      // Log explicit AI approval for audit trail visibility
+      await this.createKytAuditLog(escrow, 'AI_APPROVED', 'AI Orchestrator', {
+        releaseMode: 'ai',
+        riskScore: aiResult.aiAnalysis.riskScore,
+        recommendation: aiResult.aiAnalysis.recommendation,
+        message: `AI approved release — risk score ${aiResult.aiAnalysis.riskScore / 100}`,
+      });
     }
 
     // Update status to RELEASING
@@ -1742,9 +1810,7 @@ export class InstitutionEscrowService {
           where: { escrowId },
           data: { status: originalStatus },
         });
-        throw new Error(
-          `Stealth address derivation failed: ${(privacyError as Error).message}`
-        );
+        throw new Error(`Stealth address derivation failed: ${(privacyError as Error).message}`);
       }
     }
 
@@ -1795,7 +1861,10 @@ export class InstitutionEscrowService {
             const stealthService = getStealthAddressService();
             await stealthService.confirmStealthPayment(stealthPaymentId, releaseTxSig);
           } catch (err) {
-            console.warn('[InstitutionEscrow] Stealth payment confirmation failed (non-critical):', err);
+            console.warn(
+              '[InstitutionEscrow] Stealth payment confirmation failed (non-critical):',
+              err
+            );
           }
         }
       } catch (error) {
@@ -1859,9 +1928,13 @@ export class InstitutionEscrowService {
       const accountService = getInstitutionAccountService();
       await Promise.all([
         accountService.invalidateBalanceCache(escrow.payerWallet),
-        escrow.recipientWallet ? accountService.invalidateBalanceCache(escrow.recipientWallet) : Promise.resolve(),
+        escrow.recipientWallet
+          ? accountService.invalidateBalanceCache(escrow.recipientWallet)
+          : Promise.resolve(),
       ]);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     // Return nonce to pool without re-advancing (already advanced above)
     if (escrow.nonceAccount) {
@@ -1920,11 +1993,22 @@ export class InstitutionEscrowService {
               type: 'SETTLEMENT_COMPLETE',
               priority: 'HIGH',
               title: `Funds Released — ${escrow.escrowCode || escrowId}`,
-              message: `${Number(escrow.amount)} USDC from ${senderName} has been released to your wallet (${escrow.escrowCode || escrowId}).`,
-              metadata: { amount: Number(escrow.amount), escrowCode: escrow.escrowCode, sender: senderName, releaseTxSignature: releaseTxSig },
+              message: `${Number(
+                escrow.amount
+              )} USDC from ${senderName} has been released to your wallet (${
+                escrow.escrowCode || escrowId
+              }).`,
+              metadata: {
+                amount: Number(escrow.amount),
+                escrowCode: escrow.escrowCode,
+                sender: senderName,
+                releaseTxSignature: releaseTxSig,
+              },
             });
           }
-        } catch { /* non-critical */ }
+        } catch {
+          /* non-critical */
+        }
       }
 
       const completed = await this.prisma.institutionEscrow.update({
@@ -2226,10 +2310,7 @@ export class InstitutionEscrowService {
       // role === 'all': return escrows where institution is payer OR recipient
       const recipientWallets = await this.getClientWallets(clientId);
       ownershipFilter = {
-        OR: [
-          { clientId },
-          { recipientWallet: { in: recipientWallets } },
-        ],
+        OR: [{ clientId }, { recipientWallet: { in: recipientWallets } }],
       };
     }
 
@@ -2420,7 +2501,11 @@ export class InstitutionEscrowService {
         },
       });
     } catch (error) {
-      console.error('[InstitutionEscrowService] Failed to create audit log:', error);
+      // Log with enough context to diagnose which audit entry failed
+      console.error(
+        `[InstitutionEscrowService] Failed to create audit log: action=${action} escrowId=${escrowId} actor=${actor}`,
+        error instanceof Error ? error.message : error
+      );
     }
   }
 
@@ -2448,10 +2533,7 @@ export class InstitutionEscrowService {
 
     const client = await this.prisma.institutionClient.findFirst({
       where: {
-        OR: [
-          { primaryWallet: wallet },
-          { settledWallets: { hasSome: [wallet] } },
-        ],
+        OR: [{ primaryWallet: wallet }, { settledWallets: { hasSome: [wallet] } }],
       },
       select: { id: true },
     });
@@ -2580,7 +2662,12 @@ export class InstitutionEscrowService {
       payerWallets.length > 0
         ? this.prisma.institutionAccount.findMany({
             where: { clientId: payerClientId, walletAddress: { in: payerWallets } },
-            select: { walletAddress: true, label: true, name: true, branch: { select: { name: true } } },
+            select: {
+              walletAddress: true,
+              label: true,
+              name: true,
+              branch: { select: { name: true } },
+            },
           })
         : Promise.resolve([]),
       recipientWallets.length > 0
@@ -2609,15 +2696,22 @@ export class InstitutionEscrowService {
     ]);
 
     // Payer account lookup: wallet → { label, branchName }
-    const payerAccountMap = new Map(payerAccounts.map((a) => [
-      a.walletAddress,
-      { label: a.label || a.name, branchName: (a as any).branch?.name || null },
-    ]));
+    const payerAccountMap = new Map(
+      payerAccounts.map((a) => [
+        a.walletAddress,
+        { label: a.label || a.name, branchName: (a as any).branch?.name || null },
+      ])
+    );
 
     // Recipient lookup: wallet → { clientId, companyName, accountLabel, branchName }
     const recipientMap = new Map<
       string,
-      { clientId: string; companyName: string; accountLabel: string | null; branchName: string | null }
+      {
+        clientId: string;
+        companyName: string;
+        accountLabel: string | null;
+        branchName: string | null;
+      }
     >();
 
     // Accounts give us both client identity and account label
@@ -2640,7 +2734,12 @@ export class InstitutionEscrowService {
       if (c.settledWallets) wallets.push(...c.settledWallets);
       for (const w of wallets) {
         if (recipientWallets.includes(w) && !recipientMap.has(w)) {
-          recipientMap.set(w, { clientId: c.id, companyName: c.companyName, accountLabel: null, branchName: null });
+          recipientMap.set(w, {
+            clientId: c.id,
+            companyName: c.companyName,
+            accountLabel: null,
+            branchName: null,
+          });
         }
       }
     }
@@ -2672,8 +2771,7 @@ export class InstitutionEscrowService {
     // Privacy-aware masking: hide recipientWallet for non-owners when STEALTH
     const privacyLevel = e.privacyLevel || 'NONE';
     const isOwner = !callerClientId || callerClientId === e.clientId;
-    const isRecipient =
-      callerClientId && partyNames?.counterpartyId === callerClientId;
+    const isRecipient = callerClientId && partyNames?.counterpartyId === callerClientId;
     const shouldMask = privacyLevel === 'STEALTH' && !isOwner && !isRecipient;
 
     return {
@@ -2693,12 +2791,12 @@ export class InstitutionEscrowService {
         wallet: e.payerWallet,
       },
       to: {
-        clientId: shouldMask ? null : (partyNames?.counterpartyId ?? null),
+        clientId: shouldMask ? null : partyNames?.counterpartyId ?? null,
         name: shouldMask
           ? 'Stealth Recipient'
-          : (partyNames?.recipientName ?? truncateWallet(e.recipientWallet)),
-        accountLabel: shouldMask ? null : (partyNames?.recipientAccountLabel ?? null),
-        branchName: shouldMask ? null : (partyNames?.recipientBranchName ?? null),
+          : partyNames?.recipientName ?? truncateWallet(e.recipientWallet),
+        accountLabel: shouldMask ? null : partyNames?.recipientAccountLabel ?? null,
+        branchName: shouldMask ? null : partyNames?.recipientBranchName ?? null,
         wallet: shouldMask ? null : e.recipientWallet,
       },
       settlement: {
@@ -2713,17 +2811,16 @@ export class InstitutionEscrowService {
         const mode = e.releaseMode || (e.conditionType === 'COMPLIANCE_CHECK' ? 'ai' : 'manual');
         const rawConditions: string[] = e.releaseConditions || [];
         // For AI mode, legal_compliance is always required even if not explicitly in the array
-        const conditions = mode === 'ai' && !rawConditions.includes('legal_compliance')
-          ? ['legal_compliance', ...rawConditions]
-          : rawConditions;
+        const conditions =
+          mode === 'ai' && !rawConditions.includes('legal_compliance')
+            ? ['legal_compliance', ...rawConditions]
+            : rawConditions;
         return {
           mode,
           conditionType: e.conditionType,
           approvalParties: e.approvalParties || [],
           conditions,
-          conditionLabels: conditions.map(
-            (c: string) => AI_RELEASE_CONDITION_LABELS[c] || c
-          ),
+          conditionLabels: conditions.map((c: string) => AI_RELEASE_CONDITION_LABELS[c] || c),
           instructions: e.approvalInstructions || null,
         };
       })(),
@@ -2753,52 +2850,52 @@ export class InstitutionEscrowService {
   ): Promise<Record<string, unknown>> {
     const e = escrow as any;
 
-    const [partyNamesArr, corridorRecord, client, recipientClient, aiAnalyses, files] = await Promise.all([
-      this.resolvePartyNames([escrow], e.clientId),
-      e.corridor
-        ? this.prisma.institutionCorridor.findUnique({ where: { code: e.corridor } })
-        : Promise.resolve(null),
-      this.prisma.institutionClient.findUnique({
-        where: { id: e.clientId },
-        select: { companyName: true, country: true },
-      }),
-      // Pre-fetch recipient client for country — resolvePartyNames gives us the counterpartyId
-      Promise.resolve(null as any), // placeholder, resolved below
-      this.prisma.institutionAiAnalysis.findMany({
-        where: { escrowId: e.escrowId },
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          analysisType: true,
-          riskScore: true,
-          recommendation: true,
-          summary: true,
-          factors: true,
-          extractedFields: true,
-          createdAt: true,
-        },
-      }),
-      this.prisma.institutionFile.findMany({
-        where: { escrowId: e.escrowId },
-        orderBy: { uploadedAt: 'desc' },
-        select: {
-          id: true,
-          fileName: true,
-          documentType: true,
-          mimeType: true,
-          sizeBytes: true,
-          uploadedAt: true,
-        },
-      }),
-    ]);
+    const [partyNamesArr, corridorRecord, client, recipientClient, aiAnalyses, files] =
+      await Promise.all([
+        this.resolvePartyNames([escrow], e.clientId),
+        e.corridor
+          ? this.prisma.institutionCorridor.findUnique({ where: { code: e.corridor } })
+          : Promise.resolve(null),
+        this.prisma.institutionClient.findUnique({
+          where: { id: e.clientId },
+          select: { companyName: true, country: true },
+        }),
+        // Pre-fetch recipient client for country — resolvePartyNames gives us the counterpartyId
+        Promise.resolve(null as any), // placeholder, resolved below
+        this.prisma.institutionAiAnalysis.findMany({
+          where: { escrowId: e.escrowId },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            analysisType: true,
+            riskScore: true,
+            recommendation: true,
+            summary: true,
+            factors: true,
+            extractedFields: true,
+            createdAt: true,
+          },
+        }),
+        this.prisma.institutionFile.findMany({
+          where: { escrowId: e.escrowId },
+          orderBy: { uploadedAt: 'desc' },
+          select: {
+            id: true,
+            fileName: true,
+            documentType: true,
+            mimeType: true,
+            sizeBytes: true,
+            uploadedAt: true,
+          },
+        }),
+      ]);
 
     const base = this.formatEscrow(escrow, partyNamesArr[0], callerClientId);
 
     // Privacy-aware masking check (same logic as formatEscrow)
     const privacyLevel = e.privacyLevel || 'NONE';
     const isOwner = !callerClientId || callerClientId === e.clientId;
-    const isRecipient =
-      callerClientId && partyNamesArr[0]?.counterpartyId === callerClientId;
+    const isRecipient = callerClientId && partyNamesArr[0]?.counterpartyId === callerClientId;
     const shouldMask = privacyLevel === 'STEALTH' && !isOwner && !isRecipient;
 
     // Enrich from/to with country
@@ -2835,7 +2932,13 @@ export class InstitutionEscrowService {
       const sections = extracted._sections || null;
       // Map numeric riskScore to human-readable risk level
       const riskLevel =
-        a.riskScore <= 25 ? 'low_risk' : a.riskScore <= 50 ? 'medium_risk' : a.riskScore <= 80 ? 'high_risk' : 'blocked';
+        a.riskScore <= 25
+          ? 'low_risk'
+          : a.riskScore <= 50
+          ? 'medium_risk'
+          : a.riskScore <= 80
+          ? 'high_risk'
+          : 'blocked';
       return {
         id: a.id,
         type: a.analysisType,
@@ -2857,13 +2960,14 @@ export class InstitutionEscrowService {
     }));
 
     // Fulfillment info: present when escrow is PENDING_RELEASE or later and has documents
-    const fulfillmentLog = e.status !== 'DRAFT' && e.status !== 'CREATED' && e.status !== 'FUNDED'
-      ? await this.prisma.institutionAuditLog.findFirst({
-          where: { escrowId: e.escrowId, action: 'ESCROW_FULFILLED' },
-          orderBy: { createdAt: 'desc' },
-          select: { actor: true, details: true, createdAt: true },
-        })
-      : null;
+    const fulfillmentLog =
+      e.status !== 'DRAFT' && e.status !== 'CREATED' && e.status !== 'FUNDED'
+        ? await this.prisma.institutionAuditLog.findFirst({
+            where: { escrowId: e.escrowId, action: 'ESCROW_FULFILLED' },
+            orderBy: { createdAt: 'desc' },
+            select: { actor: true, details: true, createdAt: true },
+          })
+        : null;
     base.fulfillment = fulfillmentLog
       ? {
           submittedBy: fulfillmentLog.actor,
