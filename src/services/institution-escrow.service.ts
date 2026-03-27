@@ -1493,8 +1493,11 @@ export class InstitutionEscrowService {
             // Fall through — escrow stays in PENDING_RELEASE for manual release
           }
         }
-      } catch {
-        // AI check failure at fulfillment time is non-critical
+      } catch (aiErr) {
+        console.error(
+          `[InstitutionEscrow] AI release check failed for ${escrow.escrowCode || escrowId}:`,
+          aiErr instanceof Error ? aiErr.message : aiErr
+        );
       }
     }
 
