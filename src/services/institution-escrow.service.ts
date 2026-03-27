@@ -184,6 +184,8 @@ export interface ListEscrowsParams {
   corridor?: string;
   limit?: number;
   offset?: number;
+  /** Filter by payer, recipient, or all (default: all) */
+  role?: 'payer' | 'recipient' | 'all';
 }
 
 export class InstitutionEscrowService {
@@ -288,10 +290,16 @@ export class InstitutionEscrowService {
       settlementMode,
       releaseMode,
       approvalParties,
-      releaseConditions,
+      releaseConditions: rawReleaseConditions,
       approvalInstructions,
       actorEmail,
     } = params;
+
+    // Ensure legal_compliance is always included for AI release mode (Set union)
+    const releaseConditions =
+      releaseMode === 'ai'
+        ? [...new Set([...(rawReleaseConditions || []), 'legal_compliance'])]
+        : rawReleaseConditions;
 
     // 1. Validate client is verified
     const client = await this.prisma.institutionClient.findUnique({
@@ -571,10 +579,16 @@ export class InstitutionEscrowService {
       settlementMode,
       releaseMode,
       approvalParties,
-      releaseConditions,
+      releaseConditions: rawDraftConditions,
       approvalInstructions,
       actorEmail,
     } = params;
+
+    // Ensure legal_compliance is always included for AI release mode (Set union)
+    const releaseConditions =
+      releaseMode === 'ai'
+        ? [...new Set([...(rawDraftConditions || []), 'legal_compliance'])]
+        : rawDraftConditions;
 
     // Validate client exists and is active
     const client = await this.prisma.institutionClient.findUnique({
@@ -680,8 +694,14 @@ export class InstitutionEscrowService {
     if (params.settlementMode !== undefined) updateData.settlementMode = params.settlementMode;
     if (params.releaseMode !== undefined) updateData.releaseMode = params.releaseMode;
     if (params.approvalParties !== undefined) updateData.approvalParties = params.approvalParties;
-    if (params.releaseConditions !== undefined)
-      updateData.releaseConditions = params.releaseConditions;
+    if (params.releaseConditions !== undefined) {
+      // Ensure legal_compliance is always included for AI release mode (Set union)
+      const effectiveMode = params.releaseMode ?? escrow.releaseMode;
+      updateData.releaseConditions =
+        effectiveMode === 'ai'
+          ? [...new Set([...params.releaseConditions, 'legal_compliance'])]
+          : params.releaseConditions;
+    }
     if (params.approvalInstructions !== undefined)
       updateData.approvalInstructions = params.approvalInstructions;
 
@@ -2141,9 +2161,28 @@ export class InstitutionEscrowService {
     limit: number;
     offset: number;
   }> {
-    const { clientId, status, corridor, limit = 20, offset = 0 } = params;
+    const { clientId, status, corridor, limit = 20, offset = 0, role = 'all' } = params;
 
-    const where: Record<string, unknown> = { clientId };
+    // Build ownership filter based on role
+    let ownershipFilter: Record<string, unknown>;
+    if (role === 'payer') {
+      ownershipFilter = { clientId };
+    } else if (role === 'recipient') {
+      // Find all wallets belonging to this institution
+      const recipientWallets = await this.getClientWallets(clientId);
+      ownershipFilter = { recipientWallet: { in: recipientWallets } };
+    } else {
+      // role === 'all': return escrows where institution is payer OR recipient
+      const recipientWallets = await this.getClientWallets(clientId);
+      ownershipFilter = {
+        OR: [
+          { clientId },
+          { recipientWallet: { in: recipientWallets } },
+        ],
+      };
+    }
+
+    const where: Record<string, unknown> = { ...ownershipFilter };
     if (status) where.status = status;
     if (corridor) where.corridor = corridor;
 
@@ -2165,6 +2204,25 @@ export class InstitutionEscrowService {
       limit,
       offset,
     };
+  }
+
+  /** Collect all wallet addresses belonging to a client (primary + settled + accounts) */
+  private async getClientWallets(clientId: string): Promise<string[]> {
+    const [client, accounts] = await Promise.all([
+      this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { primaryWallet: true, settledWallets: true },
+      }),
+      this.prisma.institutionAccount.findMany({
+        where: { clientId, isActive: true },
+        select: { walletAddress: true },
+      }),
+    ]);
+    return [
+      client?.primaryWallet,
+      ...(client?.settledWallets || []),
+      ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+    ].filter(Boolean) as string[];
   }
 
   /**
