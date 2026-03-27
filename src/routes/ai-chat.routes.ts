@@ -26,12 +26,21 @@ const chatRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const ESCROW_CODE_REGEX = /^EE-[A-Z0-9]{3,4}-[A-Z0-9]{3,4}$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const validateChatMessage = [
   body('message')
     .isString()
     .trim()
     .isLength({ min: 1, max: 4000 })
     .withMessage('Message must be between 1 and 4000 characters'),
+  body('escrowId')
+    .optional()
+    .isString()
+    .trim()
+    .custom((v: string) => ESCROW_CODE_REGEX.test(v) || UUID_REGEX.test(v))
+    .withMessage('escrowId must be a valid escrow code (EE-XXX-XXX) or UUID'),
   body('history')
     .optional()
     .isArray({ max: 50 })
@@ -66,13 +75,11 @@ router.post(
 
     try {
       const service = getAiChatService();
-      const result = await service.chat(
-        req.institutionClient!.clientId,
-        {
-          message: req.body.message,
-          history: req.body.history,
-        },
-      );
+      const result = await service.chat(req.institutionClient!.clientId, {
+        message: req.body.message,
+        history: req.body.history,
+        escrowId: req.body.escrowId,
+      });
 
       res.status(200).json({
         success: true,
@@ -84,15 +91,15 @@ router.post(
       const status = message.includes('rate limit')
         ? 429
         : message.includes('not configured')
-          ? 503
-          : 500;
+        ? 503
+        : 500;
       res.status(status).json({
         error: 'Chat Error',
         message: status === 500 ? 'An internal error occurred' : message,
         timestamp: new Date().toISOString(),
       });
     }
-  },
+  }
 );
 
 export default router;
