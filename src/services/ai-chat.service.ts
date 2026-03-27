@@ -38,6 +38,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   message: string;
   history?: ChatMessage[];
+  escrowId?: string; // Escrow code (EE-XXX-XXX) or UUID — pre-fetches context into prompt
 }
 
 export interface ChatResponse {
@@ -222,8 +223,9 @@ export class AiChatService {
     await this.checkRateLimit(clientId);
 
     // FAQ fast-path: check for common questions that can be answered instantly
+    // Skip when escrowId is provided (user is asking about a specific escrow)
     // Skip if message requires live data (specific escrows, account details)
-    if (!requiresLiveData(request.message)) {
+    if (!request.escrowId && !requiresLiveData(request.message)) {
       // "Tell me more" follow-up: check if the last assistant message was a FAQ short answer
       if (request.history?.length && isTellMeMore(request.message)) {
         const lastFaqId = this.extractFaqId(request.history);
@@ -257,9 +259,29 @@ export class AiChatService {
     const anthropic = this.getAnthropicClient();
     const model = process.env.AI_CHAT_MODEL || process.env.AI_ANALYSIS_MODEL || CHAT_MODEL;
 
-    // Build anonymizer with client's known sensitive data
+    // Build anonymizer and optionally pre-fetch escrow context in parallel
     const anonymizer = new DataAnonymizer();
-    await this.buildClientTokenMap(anonymizer, clientId);
+    let escrowContext: string | null = null;
+
+    if (request.escrowId) {
+      // Parallel: fetch escrow details + build client token map
+      const [escrowRecord] = await Promise.all([
+        this.fetchEscrowWithDetails(request.escrowId, clientId),
+        this.buildClientTokenMap(anonymizer, clientId),
+      ]);
+
+      if (escrowRecord) {
+        const details = this.formatEscrowDetails(escrowRecord, anonymizer);
+        escrowContext = this.buildEscrowContextPrompt(details);
+      } else {
+        escrowContext = `\n\n## Current Escrow Context\nThe user referenced escrow "${request.escrowId}" but it was not found in their account. Let the user know and offer to help find the correct escrow.`;
+      }
+    } else {
+      await this.buildClientTokenMap(anonymizer, clientId);
+    }
+
+    // Build system prompt — append escrow context when available
+    const systemPrompt = escrowContext ? `${SYSTEM_PROMPT}${escrowContext}` : SYSTEM_PROMPT;
 
     // Anonymize conversation history and current message
     const messages: Anthropic.MessageParam[] = [];
@@ -287,7 +309,7 @@ export class AiChatService {
       const response = await anthropic.messages.create({
         model,
         max_tokens: 2048,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages,
         tools: CHAT_TOOLS,
       });
@@ -443,17 +465,19 @@ export class AiChatService {
     });
   }
 
-  private async toolGetEscrowDetails(
-    input: Record<string, unknown>,
-    clientId: string,
-    anonymizer: DataAnonymizer
-  ): Promise<string> {
-    const code = input.escrow_code as string;
-
-    const escrow = await this.prisma.institutionEscrow.findFirst({
+  /**
+   * Fetch an escrow with its relations by code/ID, scoped to the client.
+   * Shared by both the tool path and the pre-fetch context path.
+   */
+  private async fetchEscrowWithDetails(escrowIdentifier: string, clientId: string) {
+    return this.prisma.institutionEscrow.findFirst({
       where: {
         clientId,
-        OR: [{ escrowCode: code }, { escrowId: code }, { id: code }],
+        OR: [
+          { escrowCode: escrowIdentifier },
+          { escrowId: escrowIdentifier },
+          { id: escrowIdentifier },
+        ],
       },
       include: {
         deposits: {
@@ -486,14 +510,17 @@ export class AiChatService {
         },
       },
     });
+  }
 
-    if (!escrow) {
-      return JSON.stringify({
-        error: 'Escrow not found. Check the escrow code and try again.',
-      });
-    }
-
-    const result = {
+  /**
+   * Format a fetched escrow record into a structured object suitable for JSON
+   * serialization (used by both tool responses and system prompt context).
+   */
+  private formatEscrowDetails(
+    escrow: NonNullable<Awaited<ReturnType<typeof this.fetchEscrowWithDetails>>>,
+    anonymizer: DataAnonymizer
+  ) {
+    return {
       escrowCode: escrow.escrowCode,
       status: escrow.status,
       amount: `${escrow.amount} USDC`,
@@ -524,8 +551,22 @@ export class AiChatService {
         uploadedAt: f.uploadedAt.toISOString(),
       })),
     };
+  }
 
-    return JSON.stringify(result);
+  private async toolGetEscrowDetails(
+    input: Record<string, unknown>,
+    clientId: string,
+    anonymizer: DataAnonymizer
+  ): Promise<string> {
+    const escrow = await this.fetchEscrowWithDetails(input.escrow_code as string, clientId);
+
+    if (!escrow) {
+      return JSON.stringify({
+        error: 'Escrow not found. Check the escrow code and try again.',
+      });
+    }
+
+    return JSON.stringify(this.formatEscrowDetails(escrow, anonymizer));
   }
 
   private async toolGetAccountSummary(
@@ -627,6 +668,61 @@ export class AiChatService {
     };
 
     return JSON.stringify(result);
+  }
+
+  /**
+   * Build a system prompt section with pre-fetched escrow details so Claude
+   * can answer escrow-specific questions without a tool call round-trip.
+   */
+  private buildEscrowContextPrompt(details: ReturnType<typeof this.formatEscrowDetails>): string {
+    const lines = [
+      '\n\n## Current Escrow Context',
+      `The user is currently viewing escrow **${details.escrowCode}**. Here are the live details:`,
+      `- **Status:** ${details.status}`,
+      `- **Amount:** ${details.amount}`,
+      `- **Platform Fee:** ${details.platformFee}`,
+      `- **Corridor:** ${details.corridor}`,
+      `- **Condition Type:** ${details.conditionType}`,
+      `- **Risk Score:** ${details.riskScore ?? 'Not assessed'}`,
+      `- **Created:** ${details.createdAt}`,
+      `- **Expires:** ${details.expiresAt ?? 'No expiry'}`,
+      `- **Funded:** ${details.fundedAt ?? 'Not yet funded'}`,
+      `- **Resolved:** ${details.resolvedAt ?? 'Not yet resolved'}`,
+    ];
+
+    if (details.deposits.length > 0) {
+      lines.push('', '**Deposits:**');
+      for (const d of details.deposits) {
+        lines.push(`- ${d.amount} (${d.confirmed ? `confirmed ${d.confirmed}` : 'pending'})`);
+      }
+    }
+
+    if (details.auditLog.length > 0) {
+      lines.push('', '**Recent Activity:**');
+      for (const a of details.auditLog) {
+        lines.push(
+          `- ${a.action} at ${a.at}${
+            a.details
+              ? ` — ${typeof a.details === 'string' ? a.details : JSON.stringify(a.details)}`
+              : ''
+          }`
+        );
+      }
+    }
+
+    if (details.documents.length > 0) {
+      lines.push('', '**Documents:**');
+      for (const doc of details.documents) {
+        lines.push(`- ${doc.name} (${doc.type}, uploaded ${doc.uploadedAt})`);
+      }
+    }
+
+    lines.push(
+      '',
+      'Use this data to answer questions about this escrow directly. Only call get_escrow_details if the user asks about a DIFFERENT escrow.'
+    );
+
+    return lines.join('\n');
   }
 
   /**

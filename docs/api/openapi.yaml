@@ -4214,6 +4214,10 @@ paths:
         Send a message to the EasyEscrow AI assistant. Supports multi-turn conversations
         via the `history` parameter.
 
+        Optionally pass `escrowId` to pre-load escrow context into the conversation,
+        enabling faster and more specific answers about a particular escrow without
+        requiring tool call round-trips.
+
         All messages are processed through a PII anonymization pipeline before reaching
         the AI model. Responses are de-anonymized before returning.
 
@@ -4235,6 +4239,13 @@ paths:
                   maxLength: 4000
                   description: The message to send to the AI assistant
                   example: "What are the compliance requirements for a cross-border escrow between Singapore and the EU?"
+                escrowId:
+                  type: string
+                  description: |
+                    Optional escrow code (EE-XXX-XXX) or UUID. When provided, the backend
+                    pre-fetches escrow details and injects them as context, enabling faster
+                    and more specific answers about that escrow.
+                  example: "EE-A1B-C2D"
                 history:
                   type: array
                   maxItems: 50
@@ -4273,14 +4284,30 @@ paths:
                   data:
                     type: object
                     properties:
-                      response:
+                      reply:
                         type: string
-                        description: AI assistant's response
+                        description: AI assistant's response text
                         example: "For cross-border escrow between Singapore and the EU, the key compliance requirements include..."
-                      anonymized:
-                        type: boolean
-                        description: Whether PII anonymization was applied
-                        example: true
+                      toolsUsed:
+                        type: array
+                        items:
+                          type: string
+                        description: Database tools invoked to answer the question (e.g. search_escrows, get_escrow_details)
+                        example: ["get_escrow_details"]
+                      faqId:
+                        type: string
+                        description: FAQ entry ID if the response was served from the FAQ fast-path
+                        example: "platform-fees"
+                      usage:
+                        type: object
+                        description: Token usage for the AI API call (0/0 for FAQ fast-path responses)
+                        properties:
+                          inputTokens:
+                            type: integer
+                            example: 1250
+                          outputTokens:
+                            type: integer
+                            example: 180
                   timestamp:
                     type: string
                     format: date-time
