@@ -234,6 +234,7 @@ describe('Chain-of-Custody Audit Trail', () => {
       await service.releaseEscrowOnChain({
         escrowId: '550e8400-e29b-41d4-a716-446655440000',
         recipientWallet: RECIPIENT,
+        feeCollector: PAYER,
         usdcMint: USDC_MINT,
         escrowCode: 'EE-A3K7-9WFP',
         aiDigest: 'ai=APPROVE:risk=low-risk:sha=a1b2c3d4',
@@ -262,6 +263,7 @@ describe('Chain-of-Custody Audit Trail', () => {
       await service.releaseEscrowOnChain({
         escrowId: '550e8400-e29b-41d4-a716-446655440000',
         recipientWallet: RECIPIENT,
+        feeCollector: RECIPIENT,
         usdcMint: USDC_MINT,
         escrowCode: 'EE-A3K7-9WFP',
       });

@@ -441,6 +441,7 @@ describe('InstitutionEscrowProgramService', () => {
         escrowId: TEST_UUID,
         authority: PAYER_PUBKEY,
         recipientWallet: RECIPIENT_PUBKEY,
+        feeCollector: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
       });
 
@@ -455,11 +456,12 @@ describe('InstitutionEscrowProgramService', () => {
         escrowId: TEST_UUID,
         authority: PAYER_PUBKEY,
         recipientWallet: RECIPIENT_PUBKEY,
+        feeCollector: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
       });
 
-      // 1 ATA create instruction + 1 release instruction (no fee collector ATA needed)
-      expect(result.instructions.length).to.equal(2);
+      // 2 ATA create instructions (recipient + fee collector) + 1 release instruction
+      expect(result.instructions.length).to.equal(3);
     });
 
     it('should skip ATA creation instruction when recipient ATA already exists', async () => {
@@ -469,6 +471,7 @@ describe('InstitutionEscrowProgramService', () => {
         escrowId: TEST_UUID,
         authority: PAYER_PUBKEY,
         recipientWallet: RECIPIENT_PUBKEY,
+        feeCollector: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
       });
 
@@ -622,6 +625,7 @@ describe('InstitutionEscrowProgramService', () => {
       const result = await service.releaseEscrowOnChain({
         escrowId: TEST_UUID,
         recipientWallet: RECIPIENT_PUBKEY,
+        feeCollector: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
       });
 
@@ -688,6 +692,7 @@ describe('InstitutionEscrowProgramService', () => {
         await service.releaseEscrowOnChain({
           escrowId: TEST_UUID,
           recipientWallet: RECIPIENT_PUBKEY,
+          feeCollector: PAYER_PUBKEY,
           usdcMint: USDC_MINT,
         });
         expect.fail('Should have thrown');
