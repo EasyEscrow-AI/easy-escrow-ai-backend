@@ -1379,9 +1379,10 @@ Respond with ONLY the JSON object, no additional text.`;
    */
   private async extractPdfText(buffer: Buffer): Promise<string> {
     try {
-      const pdfParse = require('pdf-parse');
-      const data = await pdfParse(buffer);
-      return data.text || '';
+      const { PDFParse } = require('pdf-parse');
+      const parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
+      return result.text || '';
     } catch (error) {
       console.error('[AiAnalysisService] PDF extraction failed:', error);
       return '[PDF text extraction failed]';
