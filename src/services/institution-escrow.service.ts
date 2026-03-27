@@ -1355,7 +1355,8 @@ export class InstitutionEscrowService {
       } catch { /* non-critical */ }
     }
 
-    // Trigger AI release check if releaseMode is 'ai' (non-blocking — records result only)
+    // Trigger AI release check if releaseMode is 'ai'
+    // If all conditions pass, auto-release the funds
     if (escrow.releaseMode === 'ai') {
       try {
         const check = await this.performAiReleaseCheck(escrow, clientId);
@@ -1374,6 +1375,30 @@ export class InstitutionEscrowService {
                 .map((c) => c.label)
                 .join(', ')}`,
         });
+
+        // Auto-release if all AI conditions passed
+        if (check.passed) {
+          try {
+            console.log(`[InstitutionEscrow] AI auto-release triggered for ${escrow.escrowCode || escrowId}`);
+            await this.createKytAuditLog(escrow, 'AI_AUTO_RELEASE', 'AI Orchestrator', {
+              releaseMode: 'ai',
+              conditionsPassed: check.conditions.length,
+              conditions: check.conditions.map((c) => ({ condition: c.condition, label: c.label, passed: c.passed })),
+              riskScore: check.aiAnalysis.riskScore,
+              message: `AI auto-release initiated — ${check.conditions.length} conditions passed`,
+            });
+            const releaseResult = await this.releaseFunds(
+              escrow.clientId,
+              escrowId,
+              'AI auto-release — all conditions passed',
+              'AI Orchestrator'
+            );
+            return releaseResult;
+          } catch (releaseErr) {
+            console.error('[InstitutionEscrow] AI auto-release failed (non-critical):', releaseErr);
+            // Fall through — escrow stays in PENDING_RELEASE for manual release
+          }
+        }
       } catch {
         // AI check failure at fulfillment time is non-critical
       }
@@ -2665,6 +2690,30 @@ export class InstitutionEscrowService {
           documentCount: files.length,
         }
       : null;
+
+    // AI release checks: retrieve the latest AI_RELEASE_CHECK from audit log
+    const aiReleaseLog = await this.prisma.institutionAuditLog.findFirst({
+      where: { escrowId: e.escrowId, action: 'AI_RELEASE_CHECK' },
+      orderBy: { createdAt: 'desc' },
+      select: { details: true, createdAt: true },
+    });
+    if (aiReleaseLog) {
+      const details = aiReleaseLog.details as any;
+      base.aiReleaseChecks = {
+        passed: details?.passed ?? false,
+        recommendation: details?.recommendation || null,
+        summary: details?.summary || null,
+        conditions: (details?.conditions || []).map((c: any) => ({
+          key: c.condition,
+          label: c.label,
+          passed: c.passed,
+          detail: c.detail,
+        })),
+        checkedAt: aiReleaseLog.createdAt,
+      };
+    } else {
+      base.aiReleaseChecks = null;
+    }
 
     base.activityLog = (await this.getActivityLog(e.escrowId)).map((log) => {
       // Strip nested details.kyt to avoid data bloat — KYT fields are already flattened
