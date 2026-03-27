@@ -528,6 +528,7 @@ export class InstitutionEscrowService {
       console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
     }
 
+
     // 12. Cache in Redis
     await this.cacheEscrow(escrow);
 
@@ -1056,6 +1057,24 @@ export class InstitutionEscrowService {
       });
     } catch (error) {
       console.warn('[InstitutionEscrow] ESCROW_FUNDED notification failed (non-critical):', error);
+    }
+
+    // Notify the recipient that funds are locked and ready
+    if (escrow.recipientWallet) {
+      try {
+        const recipientClientId = await this.resolveClientIdByWallet(escrow.recipientWallet);
+        if (recipientClientId && recipientClientId !== clientId) {
+          const senderName = await this.resolveActorName(escrow.clientId);
+          await getInstitutionNotificationService().notify({
+            clientId: recipientClientId,
+            escrowId,
+            type: 'ESCROW_FUNDED',
+            title: `Payment Received — ${escrow.escrowCode || escrowId}`,
+            message: `${senderName} has deposited ${Number(escrow.amount)} USDC into escrow ${escrow.escrowCode || escrowId}. Funds are locked and awaiting release conditions.`,
+            metadata: { amount: Number(escrow.amount), escrowCode: escrow.escrowCode, sender: senderName, txSignature },
+          });
+        }
+      } catch { /* non-critical */ }
     }
 
     await this.cacheEscrow(updated);
@@ -1722,6 +1741,25 @@ export class InstitutionEscrowService {
         },
       });
 
+      // Notify the recipient that funds have been released to them
+      if (escrow.recipientWallet) {
+        try {
+          const recipientClientId = await this.resolveClientIdByWallet(escrow.recipientWallet);
+          if (recipientClientId && recipientClientId !== clientId) {
+            const senderName = await this.resolveActorName(escrow.clientId);
+            await getInstitutionNotificationService().notify({
+              clientId: recipientClientId,
+              escrowId,
+              type: 'SETTLEMENT_COMPLETE',
+              priority: 'HIGH',
+              title: `Funds Released — ${escrow.escrowCode || escrowId}`,
+              message: `${Number(escrow.amount)} USDC from ${senderName} has been released to your wallet (${escrow.escrowCode || escrowId}).`,
+              metadata: { amount: Number(escrow.amount), escrowCode: escrow.escrowCode, sender: senderName, releaseTxSignature: releaseTxSig },
+            });
+          }
+        } catch { /* non-critical */ }
+      }
+
       const completed = await this.prisma.institutionEscrow.update({
         where: { escrowId },
         data: { status: 'COMPLETE' },
@@ -2190,6 +2228,29 @@ export class InstitutionEscrowService {
       select: { companyName: true },
     });
     return client?.companyName || clientId;
+  }
+
+  /**
+   * Resolve a wallet address to a registered institution client ID.
+   * Returns null if the wallet is not associated with any client.
+   */
+  private async resolveClientIdByWallet(wallet: string): Promise<string | null> {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { walletAddress: wallet, isActive: true },
+      select: { clientId: true },
+    });
+    if (account) return account.clientId;
+
+    const client = await this.prisma.institutionClient.findFirst({
+      where: {
+        OR: [
+          { primaryWallet: wallet },
+          { settledWallets: { hasSome: [wallet] } },
+        ],
+      },
+      select: { id: true },
+    });
+    return client?.id || null;
   }
 
   /**

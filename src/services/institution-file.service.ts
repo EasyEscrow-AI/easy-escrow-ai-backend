@@ -180,7 +180,35 @@ export class InstitutionFileService {
       throw new Error('File not found');
     }
 
-    if (file.clientId !== clientId) {
+    // Allow access if caller owns the file or is a party to the escrow
+    if (file.clientId !== clientId && file.escrowId) {
+      const escrow = await this.prisma.institutionEscrow.findUnique({
+        where: { escrowId: file.escrowId },
+        select: { clientId: true, recipientWallet: true, payerWallet: true },
+      });
+      let isParty = escrow?.clientId === clientId;
+      if (!isParty && escrow) {
+        const client = await this.prisma.institutionClient.findUnique({
+          where: { id: clientId },
+          select: { primaryWallet: true, settledWallets: true },
+        });
+        const accounts = await this.prisma.institutionAccount.findMany({
+          where: { clientId, isActive: true },
+          select: { walletAddress: true },
+        });
+        const callerWallets = [
+          client?.primaryWallet,
+          ...(client?.settledWallets || []),
+          ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+        ].filter(Boolean);
+        isParty = callerWallets.some(
+          (w) => w === escrow.recipientWallet || w === escrow.payerWallet
+        );
+      }
+      if (!isParty) {
+        throw new Error('Unauthorized: file does not belong to this client');
+      }
+    } else if (file.clientId !== clientId) {
       throw new Error('Unauthorized: file does not belong to this client');
     }
 
@@ -200,25 +228,62 @@ export class InstitutionFileService {
    * List files for a client, optionally filtered by escrowId
    */
   async listFiles(clientId: string, escrowIdOrCode?: string) {
-    const where: { clientId: string; escrowId?: string } = { clientId };
-    if (escrowIdOrCode) {
-      if (escrowIdOrCode.startsWith('EE-')) {
-        const esc = await this.prisma.institutionEscrow.findUnique({
-          where: { escrowCode: escrowIdOrCode },
-          select: { escrowId: true },
-        });
-        if (esc) where.escrowId = esc.escrowId;
-      } else {
-        where.escrowId = escrowIdOrCode;
-      }
+    // Without escrowId, only return the caller's own files
+    if (!escrowIdOrCode) {
+      return this.prisma.institutionFile.findMany({
+        where: { clientId },
+        orderBy: { uploadedAt: 'desc' },
+      });
     }
 
-    const files = await this.prisma.institutionFile.findMany({
-      where,
+    // Resolve escrow code to UUID
+    let escrowId = escrowIdOrCode;
+    if (escrowIdOrCode.startsWith('EE-')) {
+      const esc = await this.prisma.institutionEscrow.findUnique({
+        where: { escrowCode: escrowIdOrCode },
+        select: { escrowId: true },
+      });
+      if (esc) escrowId = esc.escrowId;
+    }
+
+    // Verify caller is a party to this escrow (owner or counterparty)
+    const escrow = await this.prisma.institutionEscrow.findUnique({
+      where: { escrowId },
+      select: { clientId: true, recipientWallet: true, payerWallet: true },
+    });
+    if (!escrow) {
+      return [];
+    }
+
+    let isParty = escrow.clientId === clientId;
+    if (!isParty) {
+      const client = await this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { primaryWallet: true, settledWallets: true },
+      });
+      const accounts = await this.prisma.institutionAccount.findMany({
+        where: { clientId, isActive: true },
+        select: { walletAddress: true },
+      });
+      const callerWallets = [
+        client?.primaryWallet,
+        ...(client?.settledWallets || []),
+        ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+      ].filter(Boolean);
+      isParty = callerWallets.some(
+        (w) => w === escrow.recipientWallet || w === escrow.payerWallet
+      );
+    }
+
+    if (!isParty) {
+      return [];
+    }
+
+    // Return all files attached to this escrow (from any party)
+    return this.prisma.institutionFile.findMany({
+      where: { escrowId },
       orderBy: { uploadedAt: 'desc' },
     });
-
-    return files;
   }
 
   /**
