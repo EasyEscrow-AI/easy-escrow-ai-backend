@@ -1071,7 +1071,14 @@ export class InstitutionEscrowService {
   async getDepositTransaction(
     clientId: string,
     idOrCode: string
-  ): Promise<{ transaction: string; escrowId: string }> {
+  ): Promise<{
+    transaction: string;
+    escrowId: string;
+    amount: number;
+    platformFee: number;
+    totalDeposit: number;
+    currency: string;
+  }> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
 
@@ -1111,7 +1118,17 @@ export class InstitutionEscrowService {
 
     const serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
 
-    return { transaction: serialized, escrowId };
+    const amount = Number(escrow.amount);
+    const platformFee = Number(escrow.platformFee);
+
+    return {
+      transaction: serialized,
+      escrowId,
+      amount,
+      platformFee,
+      totalDeposit: amount + platformFee,
+      currency: 'USDC',
+    };
   }
 
   /**
