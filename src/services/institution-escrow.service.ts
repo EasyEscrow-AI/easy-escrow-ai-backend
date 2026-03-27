@@ -1068,6 +1068,12 @@ export class InstitutionEscrowService {
       }
     );
 
+    // Bust payer's balance cache after deposit (USDC left their wallet)
+    try {
+      const { getInstitutionAccountService } = await import('./institution-account.service');
+      await getInstitutionAccountService().invalidateBalanceCache(escrow.payerWallet);
+    } catch { /* non-critical */ }
+
     try {
       await getInstitutionNotificationService().notify({
         clientId,
@@ -1811,6 +1817,16 @@ export class InstitutionEscrowService {
         privacyLevel: actualPrivacyLevel as unknown as PrismaPrivacyLevel,
       },
     });
+
+    // Bust balance caches so wallets show updated balances immediately
+    try {
+      const { getInstitutionAccountService } = await import('./institution-account.service');
+      const accountService = getInstitutionAccountService();
+      await Promise.all([
+        accountService.invalidateBalanceCache(escrow.payerWallet),
+        escrow.recipientWallet ? accountService.invalidateBalanceCache(escrow.recipientWallet) : Promise.resolve(),
+      ]);
+    } catch { /* non-critical */ }
 
     // Return nonce to pool without re-advancing (already advanced above)
     if (escrow.nonceAccount) {
