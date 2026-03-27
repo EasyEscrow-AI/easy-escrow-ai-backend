@@ -528,22 +528,6 @@ export class InstitutionEscrowService {
       console.warn('[InstitutionEscrow] Notification failed (non-critical):', error);
     }
 
-    // Notify the recipient that a payment is being prepared for them
-    if (recipientWallet) {
-      try {
-        const recipientClientId = await this.resolveClientIdByWallet(recipientWallet);
-        if (recipientClientId && recipientClientId !== clientId) {
-          await getInstitutionNotificationService().notify({
-            clientId: recipientClientId,
-            escrowId,
-            type: 'ESCROW_CREATED',
-            title: `Incoming Payment — ${escrowCode}`,
-            message: `${client.companyName} has initiated a payment of ${amount} USDC to you (${escrowCode}). Awaiting deposit.`,
-            metadata: { amount, corridor, escrowCode, sender: client.companyName },
-          });
-        }
-      } catch { /* non-critical */ }
-    }
 
     // 12. Cache in Redis
     await this.cacheEscrow(escrow);
