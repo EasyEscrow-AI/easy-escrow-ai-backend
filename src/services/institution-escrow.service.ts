@@ -1245,33 +1245,62 @@ export class InstitutionEscrowService {
       });
     }
 
-    // 3. Client information match (if selected) — uses document-extracted counterparty
+    // 3. Client information match (if selected) — verify sender & recipient from document
     if (selectedConditions.includes('client_info_match')) {
-      const client = await this.prisma.institutionClient.findUnique({
-        where: { id: clientId },
-        select: { companyName: true, legalName: true, country: true },
+      // Look up both the payer (sender) and recipient client names
+      const payerClient = await this.prisma.institutionClient.findUnique({
+        where: { id: escrow.clientId },
+        select: { companyName: true, legalName: true },
       });
-      const extractedCompany =
-        docFields.counterparty_name ?? docFields.companyName ?? docFields.clientName;
-      const clientMatch =
-        extractedCompany !== undefined &&
-        extractedCompany !== null &&
-        client &&
-        (String(extractedCompany)
-          .toLowerCase()
-          .includes(client.companyName?.toLowerCase() || '') ||
-          String(extractedCompany)
-            .toLowerCase()
-            .includes(client.legalName?.toLowerCase() || ''));
+
+      // Resolve recipient client by wallet
+      let recipientCompanyName: string | null = null;
+      if (escrow.recipientWallet) {
+        const recipientClientId = await this.resolveClientIdByWallet(escrow.recipientWallet);
+        if (recipientClientId) {
+          const recipientClient = await this.prisma.institutionClient.findUnique({
+            where: { id: recipientClientId },
+            select: { companyName: true },
+          });
+          recipientCompanyName = recipientClient?.companyName || null;
+        }
+      }
+
+      // Extract sender and recipient from the document
+      const docSender = docFields.sender_name ?? docFields.counterparty_name ?? docFields.companyName;
+      const docRecipient = docFields.recipient_name;
+
+      // Check sender matches
+      const senderMatch = docSender != null && payerClient &&
+        (String(docSender).toLowerCase().includes(payerClient.companyName?.toLowerCase() || '') ||
+         String(docSender).toLowerCase().includes(payerClient.legalName?.toLowerCase() || ''));
+
+      // Check recipient matches (if we can resolve the recipient)
+      const recipientMatch = !recipientCompanyName || (
+        docRecipient != null &&
+        String(docRecipient).toLowerCase().includes(recipientCompanyName.toLowerCase())
+      );
+
+      const bothMatch = !!senderMatch && recipientMatch;
+      const details: string[] = [];
+      if (senderMatch) {
+        details.push(`Sender "${docSender}" matches "${payerClient?.companyName}"`);
+      } else {
+        details.push(`Sender "${docSender ?? 'not found'}" does not match "${payerClient?.companyName}"`);
+      }
+      if (recipientCompanyName) {
+        if (docRecipient != null && String(docRecipient).toLowerCase().includes(recipientCompanyName.toLowerCase())) {
+          details.push(`Recipient "${docRecipient}" matches "${recipientCompanyName}"`);
+        } else {
+          details.push(`Recipient "${docRecipient ?? 'not found'}" does not match "${recipientCompanyName}"`);
+        }
+      }
+
       results.push({
         condition: 'client_info_match',
         label: 'Client information matches exactly',
-        passed: !!clientMatch,
-        detail: clientMatch
-          ? `Document company "${extractedCompany}" matches client "${client?.companyName}"`
-          : `Document company "${extractedCompany ?? 'not found in document'}" does not match client "${
-              client?.companyName
-            }"`,
+        passed: bothMatch,
+        detail: details.join('; '),
       });
     }
 

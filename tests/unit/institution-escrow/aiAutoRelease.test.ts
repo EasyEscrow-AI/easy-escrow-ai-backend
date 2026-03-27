@@ -312,7 +312,7 @@ describe('AI Release Check — Document Verification', () => {
     expect(amountCheck.detail).to.include('does not match');
   });
 
-  it('should pass client_info_match when document company matches client', async () => {
+  it('should pass client_info_match when document sender and recipient match escrow parties', async () => {
     const escrow = makeEscrow({
       amount: 500,
       releaseMode: 'ai',
@@ -322,7 +322,7 @@ describe('AI Release Check — Document Verification', () => {
     aiServiceStub.analyzeDocument.resolves({
       riskScore: 10,
       recommendation: 'APPROVE',
-      extractedFields: { total_amount: 500, counterparty_name: 'Optimus Exchange AG' },
+      extractedFields: { total_amount: 500, sender_name: 'Optimus Exchange AG', recipient_name: 'Some Recipient' },
       factors: [],
     });
 
@@ -335,7 +335,7 @@ describe('AI Release Check — Document Verification', () => {
     expect(clientCheck.detail).to.include('Optimus Exchange AG');
   });
 
-  it('should FAIL client_info_match when document company does not match', async () => {
+  it('should FAIL client_info_match when document sender does not match', async () => {
     const escrow = makeEscrow({
       amount: 500,
       releaseMode: 'ai',
@@ -345,7 +345,7 @@ describe('AI Release Check — Document Verification', () => {
     aiServiceStub.analyzeDocument.resolves({
       riskScore: 10,
       recommendation: 'APPROVE',
-      extractedFields: { total_amount: 500, counterparty_name: 'Totally Different Corp' },
+      extractedFields: { total_amount: 500, sender_name: 'Phantom Industries Ltd', recipient_name: 'Unknown Corp' },
       factors: [],
     });
 

@@ -1259,6 +1259,8 @@ Respond with ONLY the JSON object, no additional text.`;
 
     const systemPrompt = `You are a compliance analyst reviewing trade documents for cross-border escrow payments. Analyze the provided document and return a JSON assessment.
 
+CRITICAL: Extract the sender (FROM) and recipient (BILL TO / TO) company names exactly as they appear in the document. These are used to verify the document matches the escrow parties. Do NOT guess or invent names — if not found, use null.
+
 Your response MUST be valid JSON with this exact structure:
 {
   "risk_score": <number 0-100>,
@@ -1267,7 +1269,9 @@ Your response MUST be valid JSON with this exact structure:
     "document_type": "<string>",
     "total_amount": <number|null>,
     "currency": "<string|null>",
-    "counterparty_name": "<string|null>",
+    "sender_name": "<string|null — the FROM/sender company name>",
+    "recipient_name": "<string|null — the BILL TO/recipient company name>",
+    "counterparty_name": "<string|null — legacy, use sender_name/recipient_name instead>",
     "date": "<string|null>",
     "reference_number": "<string|null>",
     "description": "<string|null>"
