@@ -1355,7 +1355,8 @@ export class InstitutionEscrowService {
       } catch { /* non-critical */ }
     }
 
-    // Trigger AI release check if releaseMode is 'ai' (non-blocking — records result only)
+    // Trigger AI release check if releaseMode is 'ai'
+    // If all conditions pass, auto-release the funds
     if (escrow.releaseMode === 'ai') {
       try {
         const check = await this.performAiReleaseCheck(escrow, clientId);
@@ -1374,6 +1375,23 @@ export class InstitutionEscrowService {
                 .map((c) => c.label)
                 .join(', ')}`,
         });
+
+        // Auto-release if all AI conditions passed
+        if (check.passed) {
+          try {
+            console.log(`[InstitutionEscrow] AI auto-release triggered for ${escrow.escrowCode || escrowId}`);
+            const releaseResult = await this.releaseFunds(
+              escrow.clientId,
+              escrowId,
+              'AI auto-release — all conditions passed',
+              'AI Orchestrator'
+            );
+            return releaseResult;
+          } catch (releaseErr) {
+            console.error('[InstitutionEscrow] AI auto-release failed (non-critical):', releaseErr);
+            // Fall through — escrow stays in PENDING_RELEASE for manual release
+          }
+        }
       } catch {
         // AI check failure at fulfillment time is non-critical
       }
