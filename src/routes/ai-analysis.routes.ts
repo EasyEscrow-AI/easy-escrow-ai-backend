@@ -51,8 +51,46 @@ async function buildPreReleaseChecks(
   clientId: string,
   analysisResult: EscrowAnalysisResult
 ): Promise<PreReleaseCheck[] | null> {
+  // Allow both escrow creator and counterparty (recipient) to access
+  const base = escrowWhere(escrowIdOrCode);
+  let whereClause: Record<string, unknown> = { ...base, clientId };
+
+  const owned = await prisma.institutionEscrow.findFirst({
+    where: whereClause,
+    select: { escrowId: true },
+  });
+  if (!owned) {
+    // Check counterparty access
+    const esc = await prisma.institutionEscrow.findFirst({
+      where: base,
+      select: { escrowId: true, recipientWallet: true, payerWallet: true },
+    });
+    if (esc) {
+      const client = await prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { primaryWallet: true, settledWallets: true },
+      });
+      const accounts = await prisma.institutionAccount.findMany({
+        where: { clientId, isActive: true },
+        select: { walletAddress: true },
+      });
+      const callerWallets = [
+        client?.primaryWallet,
+        ...(client?.settledWallets || []),
+        ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+      ].filter(Boolean);
+      const isCounterparty = callerWallets.some(
+        (w) => w === esc.recipientWallet || w === esc.payerWallet
+      );
+      if (isCounterparty) whereClause = base;
+      else return null;
+    } else {
+      return null;
+    }
+  }
+
   const escrow = await prisma.institutionEscrow.findFirst({
-    where: { ...escrowWhere(escrowIdOrCode), clientId },
+    where: whereClause,
     include: {
       client: {
         select: { companyName: true, kycStatus: true, country: true },

@@ -87,6 +87,53 @@ export class AiAnalysisService {
   }
 
   /**
+   * Verify caller has access to an escrow (owner or counterparty matched by wallet).
+   * Returns the Prisma where clause to use for the escrow lookup.
+   */
+  private async escrowWhereWithAccess(
+    escrowId: string,
+    clientId: string
+  ): Promise<Record<string, unknown>> {
+    const base = escrowWhere(escrowId);
+
+    // Try direct ownership first
+    const owned = await this.prisma.institutionEscrow.findFirst({
+      where: { ...base, clientId },
+      select: { escrowId: true },
+    });
+    if (owned) return { ...base, clientId };
+
+    // Check counterparty access via wallet match
+    const escrow = await this.prisma.institutionEscrow.findFirst({
+      where: base,
+      select: { escrowId: true, recipientWallet: true, payerWallet: true },
+    });
+    if (!escrow) throw new Error('Escrow not found or access denied');
+
+    const client = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+      select: { primaryWallet: true, settledWallets: true },
+    });
+    const accounts = await this.prisma.institutionAccount.findMany({
+      where: { clientId, isActive: true },
+      select: { walletAddress: true },
+    });
+    const callerWallets = [
+      client?.primaryWallet,
+      ...(client?.settledWallets || []),
+      ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+    ].filter(Boolean);
+
+    const isCounterparty = callerWallets.some(
+      (w) => w === escrow.recipientWallet || w === escrow.payerWallet
+    );
+    if (!isCounterparty) throw new Error('Escrow not found or access denied');
+
+    // Counterparty verified — return where without clientId filter
+    return base;
+  }
+
+  /**
    * Analyze a document for risk assessment
    */
   async analyzeDocument(params: AnalyzeDocumentParams): Promise<AiAnalysisResult> {
@@ -95,9 +142,10 @@ export class AiAnalysisService {
     // Rate limit check
     await this.checkRateLimit(clientId);
 
-    // Verify escrow belongs to this client, and fetch non-PII client details for context
+    // Verify escrow belongs to this client or caller is a counterparty
+    const accessWhere = await this.escrowWhereWithAccess(escrowId, clientId);
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { ...escrowWhere(escrowId), clientId },
+      where: accessWhere,
       select: {
         escrowId: true,
         escrowCode: true,
@@ -236,9 +284,10 @@ export class AiAnalysisService {
    * Get analysis results for an escrow
    */
   async getAnalysisResults(escrowId: string, clientId: string): Promise<AiAnalysisResult[]> {
-    // Verify escrow belongs to client
+    // Verify escrow belongs to client or caller is a counterparty
+    const accessWhere = await this.escrowWhereWithAccess(escrowId, clientId);
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { ...escrowWhere(escrowId), clientId },
+      where: accessWhere,
     });
     if (!escrow) {
       throw new Error('Escrow not found or access denied');
@@ -272,8 +321,9 @@ export class AiAnalysisService {
     const { anonymize = true } = options;
     await this.checkRateLimit(clientId);
 
+    const accessWhere = await this.escrowWhereWithAccess(escrowId, clientId);
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { ...escrowWhere(escrowId), clientId },
+      where: accessWhere,
       include: {
         client: {
           select: {
@@ -649,8 +699,9 @@ RESPONSE FORMAT (valid JSON only, no other text):
   ): Promise<EscrowAnalysisResult> {
     await this.checkRateLimit(clientId);
 
+    const accessWhere = await this.escrowWhereWithAccess(escrowId, clientId);
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { ...escrowWhere(escrowId), clientId },
+      where: accessWhere,
       include: {
         client: {
           select: {
@@ -858,8 +909,9 @@ RESPONSE FORMAT (valid JSON only, no other text):
     escrowId: string,
     clientId: string
   ): Promise<Array<EscrowAnalysisResult>> {
+    const accessWhere = await this.escrowWhereWithAccess(escrowId, clientId);
     const escrow = await this.prisma.institutionEscrow.findFirst({
-      where: { ...escrowWhere(escrowId), clientId },
+      where: accessWhere,
     });
     if (!escrow) {
       throw new Error('Escrow not found or access denied');
