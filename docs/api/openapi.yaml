@@ -2099,10 +2099,21 @@ paths:
       tags:
         - Institution Escrow
       summary: List escrows
-      description: List escrows for the authenticated client with optional filters and pagination.
+      description: |
+        List escrows for the authenticated institution with optional filters and pagination.
+
+        By default returns escrows where the institution is the **payer** or the **recipient**.
+        Use the `role` query param to filter by relationship.
       security:
         - BearerAuth: []
       parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [payer, recipient, all]
+            default: all
+          description: Filter by institution's role — payer (created by), recipient (received), or all (both)
         - in: query
           name: status
           schema:
@@ -7419,11 +7430,18 @@ components:
             enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
           description: |
             AI release conditions to evaluate when releaseMode is 'ai'.
+            `legal_compliance` is always auto-included for AI mode.
             - **legal_compliance**: All legal compliance checks pass (always required for AI mode)
             - **invoice_amount_match**: Invoice amount matches escrow amount exactly
             - **client_info_match**: Client information matches exactly
             - **document_signature_verified**: Document signature is verified (via DocuSign)
           example: ["legal_compliance", "invoice_amount_match"]
+        conditions:
+          type: array
+          items:
+            type: string
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+          description: Alias for `releaseConditions` — either field is accepted.
         approvalParties:
           type: array
           items:

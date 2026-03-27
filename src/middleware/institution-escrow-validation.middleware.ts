@@ -133,6 +133,17 @@ export const validateCreateInstitutionEscrow = [
     .withMessage(
       `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
     ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
   body('approvalInstructions')
     .optional()
     .isString()
@@ -213,6 +224,17 @@ export const validateSaveDraft = [
     .isIn(VALID_RELEASE_CONDITIONS)
     .withMessage(
       `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
     ),
   body('approvalInstructions')
     .optional()
@@ -296,6 +318,17 @@ export const validateUpdateDraft = [
     .isIn(VALID_RELEASE_CONDITIONS)
     .withMessage(
       `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
     ),
   body('approvalInstructions')
     .optional()
@@ -401,6 +434,11 @@ export const validateListEscrows = [
     .isInt({ min: 1, max: 100 })
     .withMessage('limit must be between 1 and 100'),
   query('offset').optional().isInt({ min: 0 }).withMessage('offset must be non-negative'),
+  query('role')
+    .optional()
+    .isString()
+    .isIn(['payer', 'recipient', 'all'])
+    .withMessage('role must be one of: payer, recipient, all'),
 ];
 
 /**
