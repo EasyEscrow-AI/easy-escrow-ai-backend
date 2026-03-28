@@ -13,6 +13,7 @@ import {
   requireSettlementAuthority,
   InstitutionAuthenticatedRequest,
 } from '../../../src/middleware/institution-jwt.middleware';
+import { resetInstitutionEscrowConfig } from '../../../src/config/institution-escrow.config';
 import { generateTestToken, generateExpiredToken } from '../../helpers/institution-test-utils';
 
 describe('InstitutionJwtMiddleware', () => {
@@ -297,6 +298,9 @@ describe('InstitutionJwtMiddleware', () => {
         email: 'test@example.com',
         tier: 'STANDARD',
       };
+      // Ensure CDP is disabled by default for existing tests
+      delete process.env.CDP_ENABLED;
+      resetInstitutionEscrowConfig();
     });
 
     it('should pass with valid settlement authority key', () => {
@@ -382,6 +386,52 @@ describe('InstitutionJwtMiddleware', () => {
 
       expect(next.called).to.be.false;
       expect(res.status.calledWith(500)).to.be.true;
+    });
+
+    it('should bypass API key check when CDP is enabled', () => {
+      const originalCdp = process.env.CDP_ENABLED;
+      process.env.CDP_ENABLED = 'true';
+      resetInstitutionEscrowConfig();
+
+      // No settlement authority header — would normally fail
+      req.headers = {};
+
+      requireSettlementAuthority(
+        req as InstitutionAuthenticatedRequest,
+        res,
+        next
+      );
+
+      // Restore
+      process.env.CDP_ENABLED = originalCdp;
+      resetInstitutionEscrowConfig();
+
+      expect(next.calledOnce).to.be.true;
+      expect(res.status.called).to.be.false;
+    });
+
+    it('should still require auth before CDP bypass', () => {
+      const originalCdp = process.env.CDP_ENABLED;
+      process.env.CDP_ENABLED = 'true';
+      resetInstitutionEscrowConfig();
+
+      req.institutionClient = undefined;
+      req.headers = {};
+
+      requireSettlementAuthority(
+        req as InstitutionAuthenticatedRequest,
+        res,
+        next
+      );
+
+      // Restore
+      process.env.CDP_ENABLED = originalCdp;
+      resetInstitutionEscrowConfig();
+
+      expect(next.called).to.be.false;
+      expect(res.status.calledWith(401)).to.be.true;
+      const body = res.json.firstCall.args[0];
+      expect(body.code).to.equal('AUTH_REQUIRED');
     });
   });
 });
