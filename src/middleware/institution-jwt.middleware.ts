@@ -294,13 +294,16 @@ export const requireInstitutionOrAdminAuth = async (
 
 /**
  * Returns the effective clientId for data filtering.
- * - Admin without ?clientId scope → null (aggregate across all clients)
- * - Admin with ?clientId scope → that clientId
+ * - Admin JWT with explicit ?clientId scope → that clientId
+ * - Admin (any path) without scope → null (aggregate across all clients)
  * - Regular client → their clientId
  */
 export function getEffectiveClientId(req: InstitutionAuthenticatedRequest): string | null {
   if (req.isAdmin) {
-    return req.institutionClient?.clientId ?? null;
+    // Admin JWT path: institutionClient is only set when ?clientId was explicitly provided
+    if (req.adminUser) return req.institutionClient?.clientId ?? null;
+    // Institution JWT admin (detected by companyName): always aggregate
+    return null;
   }
   return req.institutionClient!.clientId;
 }
