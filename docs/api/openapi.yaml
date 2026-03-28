@@ -2621,7 +2621,7 @@ paths:
         **Rate Limited**: 10 requests per minute.
       security:
         - BearerAuth: []
-        - SettlementAuthority: []
+          SettlementAuthority: []
       parameters:
         - in: path
           name: id
@@ -7265,6 +7265,14 @@ components:
             recipientWallet:
               type: string
               nullable: true
+        defaultTimelockHours:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 2160
+          description: |
+            Default payment timelock in hours for new escrows created by this client.
+            0 or null = disabled (falls back to global config). Values are in hours.
         createdAt:
           type: string
           format: date-time
@@ -7281,6 +7289,13 @@ components:
         webhookUrl:
           type: string
           description: Webhook URL for escrow status notifications
+        defaultTimelockHours:
+          type: integer
+          minimum: 0
+          maximum: 2160
+          description: |
+            Default payment timelock in hours for new escrows. 0 = disabled (falls back to global config).
+            Per-escrow `timelockHours` takes precedence over this client-level default.
 
     InstitutionWalletsUpdate:
       type: object
@@ -7463,7 +7478,8 @@ components:
           maximum: 2160
           description: |
             Payment timelock in hours (cooling-off period between funding and release).
-            0 = disabled. Defaults to client settings or global config (24h).
+            0 = disabled. Falls back to client `defaultTimelockHours` setting, then global config (default 24h).
+            Must be less than `expiryHours` to prevent un-releasable escrows.
           example: 24
         settlementMode:
           type: string
@@ -7844,7 +7860,10 @@ components:
           type: integer
           minimum: 0
           maximum: 2160
-          description: Payment timelock in hours (optional for drafts)
+          description: |
+            Payment timelock in hours. 0 = disabled.
+            Falls back to client `defaultTimelockHours` setting, then global config (default 24h).
+            Must be less than `expiryHours` to prevent un-releasable escrows.
           example: 24
         payerName:
           type: string
@@ -7903,7 +7922,9 @@ components:
           type: integer
           minimum: 0
           maximum: 2160
-          description: Payment timelock in hours
+          description: |
+            Payment timelock in hours. 0 = disabled.
+            Must be less than `expiryHours` to prevent un-releasable escrows.
         payerName:
           type: string
           maxLength: 200

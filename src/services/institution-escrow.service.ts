@@ -290,6 +290,35 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Resolve timelock hours using priority chain:
+   * 1. Per-escrow value (if provided) — 0 = disabled (returns null)
+   * 2. Per-client defaultTimelockHours (from InstitutionClientSettings)
+   * 3. Global config defaultTimelockHours
+   * 4. null (no timelock)
+   */
+  private async resolveTimelockHours(
+    clientId: string,
+    perEscrowValue?: number
+  ): Promise<number | null> {
+    if (perEscrowValue !== undefined) {
+      return perEscrowValue > 0 ? perEscrowValue : null;
+    }
+    try {
+      const settings = await this.prisma.institutionClientSettings.findUnique({
+        where: { clientId },
+        select: { defaultTimelockHours: true },
+      });
+      if (settings?.defaultTimelockHours != null && settings.defaultTimelockHours > 0) {
+        return settings.defaultTimelockHours;
+      }
+    } catch {
+      // Fall through to global default
+    }
+    const instConfig = getInstitutionEscrowConfig();
+    return instConfig.defaultTimelockHours > 0 ? instConfig.defaultTimelockHours : null;
+  }
+
+  /**
    * Create a new institution escrow
    */
   async createEscrow(params: CreateEscrowParams): Promise<CreateEscrowResult> {
@@ -379,30 +408,10 @@ export class InstitutionEscrowService {
     expiresAt.setHours(expiresAt.getHours() + expiryHours);
 
     // 7b. Resolve timelock hours: per-escrow > per-client > global config > 0
-    let resolvedTimelockHours: number | null = null;
-    if (params.timelockHours !== undefined) {
-      resolvedTimelockHours = params.timelockHours > 0 ? params.timelockHours : null;
-    } else {
-      try {
-        const settings = await this.prisma.institutionClientSettings.findUnique({
-          where: { clientId },
-          select: { defaultTimelockHours: true },
-        });
-        if (settings?.defaultTimelockHours != null && settings.defaultTimelockHours > 0) {
-          resolvedTimelockHours = settings.defaultTimelockHours;
-        } else {
-          const instConfig = getInstitutionEscrowConfig();
-          if (instConfig.defaultTimelockHours > 0) {
-            resolvedTimelockHours = instConfig.defaultTimelockHours;
-          }
-        }
-      } catch {
-        const instConfig = getInstitutionEscrowConfig();
-        if (instConfig.defaultTimelockHours > 0) {
-          resolvedTimelockHours = instConfig.defaultTimelockHours;
-        }
-      }
-    }
+    const resolvedTimelockHours = await this.resolveTimelockHours(
+      clientId,
+      params.timelockHours
+    );
     // Validate timelockHours < expiryHours to prevent un-releasable escrows
     if (resolvedTimelockHours && resolvedTimelockHours >= expiryHours) {
       throw new Error(
@@ -781,6 +790,10 @@ export class InstitutionEscrowService {
     if (params.recipientBranchName !== undefined)
       updateData.recipientBranchName = params.recipientBranchName;
 
+    if (params.timelockHours !== undefined) {
+      updateData.timelockHours = params.timelockHours > 0 ? params.timelockHours : null;
+    }
+
     // Post-merge check: ensure payer !== recipient after partial update
     const mergedPayerWallet = (updateData.payerWallet as string) || escrow.payerWallet;
     const mergedRecipientWallet = (updateData.recipientWallet as string) || escrow.recipientWallet;
@@ -969,6 +982,17 @@ export class InstitutionEscrowService {
       }
     }
 
+    // Resolve timelock: if draft already has one, keep it; otherwise apply defaults
+    const resolvedTimelockHours = await this.resolveTimelockHours(
+      clientId,
+      escrow.timelockHours != null ? escrow.timelockHours : undefined
+    );
+    if (resolvedTimelockHours && resolvedTimelockHours >= expiryHours) {
+      throw new Error(
+        `timelockHours (${resolvedTimelockHours}) must be less than expiryHours (${expiryHours})`
+      );
+    }
+
     const updated = await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: {
@@ -979,6 +1003,7 @@ export class InstitutionEscrowService {
         vaultPda,
         expiresAt,
         initTxSignature,
+        timelockHours: resolvedTimelockHours,
       },
     });
 

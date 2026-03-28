@@ -206,6 +206,7 @@ router.put(
         recipientName: req.body.recipientName,
         recipientAccountLabel: req.body.recipientAccountLabel,
         recipientBranchName: req.body.recipientBranchName,
+        timelockHours: req.body.timelockHours,
       });
 
       res.status(200).json({
