@@ -11,7 +11,7 @@ import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { body, validationResult } from 'express-validator';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getAiChatService } from '../services/ai-chat.service';
@@ -60,7 +60,7 @@ const validateChatMessage = [
 router.post(
   '/api/v1/ai/chat',
   chatRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateChatMessage,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);

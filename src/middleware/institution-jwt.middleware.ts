@@ -8,6 +8,11 @@ export interface InstitutionAuthenticatedRequest extends Request {
     email: string;
     tier: string;
   };
+  adminUser?: {
+    adminId: string;
+    email: string;
+    role: string;
+  };
 }
 
 interface InstitutionJwtPayload {
@@ -141,6 +146,106 @@ export const optionalInstitutionAuth = (
     // Don't fail on optional auth errors
     req.institutionClient = undefined;
     next();
+  }
+};
+
+/**
+ * Accepts either a valid institution JWT or admin JWT.
+ * - Institution JWT: populates req.institutionClient with clientId/email/tier
+ * - Admin JWT: populates req.adminUser with adminId/email/role.
+ *   If the admin provides a ?clientId query param, req.institutionClient is
+ *   also populated so downstream handlers work unchanged.
+ */
+export const requireInstitutionOrAdminAuth = (
+  req: InstitutionAuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'No authentication token provided',
+        code: 'TOKEN_MISSING',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const token = authHeader.slice(7);
+
+    let decoded: any;
+    try {
+      const secret = getJwtSecret();
+      decoded = jwt.verify(token, secret);
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication token has expired',
+          code: 'TOKEN_EXPIRED',
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Invalid authentication token',
+          code: 'TOKEN_INVALID',
+          timestamp: new Date().toISOString(),
+        });
+      }
+      return;
+    }
+
+    // Institution JWT path (has clientId)
+    if (decoded.clientId) {
+      req.institutionClient = {
+        clientId: decoded.clientId,
+        email: decoded.email,
+        tier: decoded.tier,
+      };
+      next();
+      return;
+    }
+
+    // Admin JWT path (has adminId)
+    if (decoded.adminId) {
+      req.adminUser = {
+        adminId: decoded.adminId,
+        email: decoded.email,
+        role: decoded.role,
+      };
+
+      // Admin can scope to a specific client via ?clientId query param
+      const clientId = req.query.clientId as string | undefined;
+      if (clientId) {
+        req.institutionClient = {
+          clientId,
+          email: decoded.email,
+          tier: 'admin',
+        };
+      }
+
+      next();
+      return;
+    }
+
+    // Token has neither clientId nor adminId
+    res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Invalid authentication token',
+      code: 'TOKEN_INVALID',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to authenticate request',
+      timestamp: new Date().toISOString(),
+    });
   }
 };
 

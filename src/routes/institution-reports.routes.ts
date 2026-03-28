@@ -1,12 +1,12 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { requireInstitutionAuth, InstitutionAuthenticatedRequest } from '../middleware/institution-jwt.middleware';
+import { requireInstitutionOrAdminAuth, InstitutionAuthenticatedRequest } from '../middleware/institution-jwt.middleware';
 import { getInstitutionReportsService } from '../services/institution-reports.service';
 
 const router = Router();
 const standardRateLimiter = rateLimit({ windowMs: 60 * 1000, max: 30, message: { error: 'Rate limit exceeded', message: 'Too many requests' }, standardHeaders: true, legacyHeaders: false });
 
-router.get('/api/v1/institution/reports/compliance', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/reports/compliance', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionReportsService();
@@ -20,7 +20,7 @@ router.get('/api/v1/institution/reports/compliance', standardRateLimiter, requir
     }
   });
 
-router.get('/api/v1/institution/reports/audit', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/reports/audit', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionReportsService();
@@ -35,7 +35,7 @@ router.get('/api/v1/institution/reports/audit', standardRateLimiter, requireInst
     }
   });
 
-router.get('/api/v1/institution/reports/receipts', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/reports/receipts', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionReportsService();
@@ -49,7 +49,7 @@ router.get('/api/v1/institution/reports/receipts', standardRateLimiter, requireI
     }
   });
 
-router.get('/api/v1/institution/reports/escrow-log', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/reports/escrow-log', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionReportsService();
