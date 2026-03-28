@@ -67,6 +67,9 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   ON_CHAIN_INIT_FAILED: 'On-Chain Init Failed',
   ON_CHAIN_RELEASE_FAILED: 'On-Chain Release Failed',
   ON_CHAIN_CANCEL_FAILED: 'On-Chain Cancel Failed',
+  TIMELOCK_SET: 'Timelock Set',
+  TIMELOCK_OVERRIDE: 'Timelock Override',
+  TIMELOCK_DEFERRED: 'Auto-Release Deferred (Timelock)',
   ESCROW_FULFILLED: 'Proof of Delivery',
   PROOF_SUBMITTED: 'Proof Submitted',
   RECIPIENT_NOTIFIED: 'Recipient Notified',
@@ -134,6 +137,8 @@ export interface CreateEscrowParams {
   recipientName?: string;
   recipientAccountLabel?: string;
   recipientBranchName?: string;
+  /** Payment timelock hours (cooling-off period). 0 = disabled. */
+  timelockHours?: number;
 }
 
 export interface SaveDraftParams {
@@ -157,6 +162,7 @@ export interface SaveDraftParams {
   recipientName?: string;
   recipientAccountLabel?: string;
   recipientBranchName?: string;
+  timelockHours?: number;
 }
 
 export interface UpdateDraftParams {
@@ -179,6 +185,7 @@ export interface UpdateDraftParams {
   recipientName?: string;
   recipientAccountLabel?: string;
   recipientBranchName?: string;
+  timelockHours?: number;
 }
 
 export interface CreateEscrowResult {
@@ -283,6 +290,35 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Resolve timelock hours using priority chain:
+   * 1. Per-escrow value (if provided) — 0 = disabled (returns null)
+   * 2. Per-client defaultTimelockHours (from InstitutionClientSettings)
+   * 3. Global config defaultTimelockHours
+   * 4. null (no timelock)
+   */
+  private async resolveTimelockHours(
+    clientId: string,
+    perEscrowValue?: number
+  ): Promise<number | null> {
+    if (perEscrowValue !== undefined) {
+      return perEscrowValue > 0 ? perEscrowValue : null;
+    }
+    try {
+      const settings = await this.prisma.institutionClientSettings.findUnique({
+        where: { clientId },
+        select: { defaultTimelockHours: true },
+      });
+      if (settings?.defaultTimelockHours != null && settings.defaultTimelockHours > 0) {
+        return settings.defaultTimelockHours;
+      }
+    } catch {
+      // Fall through to global default
+    }
+    const instConfig = getInstitutionEscrowConfig();
+    return instConfig.defaultTimelockHours > 0 ? instConfig.defaultTimelockHours : null;
+  }
+
+  /**
    * Create a new institution escrow
    */
   async createEscrow(params: CreateEscrowParams): Promise<CreateEscrowResult> {
@@ -370,6 +406,18 @@ export class InstitutionEscrowService {
     // 7. Calculate expiry
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + expiryHours);
+
+    // 7b. Resolve timelock hours: per-escrow > per-client > global config > 0
+    const resolvedTimelockHours = await this.resolveTimelockHours(
+      clientId,
+      params.timelockHours
+    );
+    // Validate timelockHours < expiryHours to prevent un-releasable escrows
+    if (resolvedTimelockHours && resolvedTimelockHours >= expiryHours) {
+      throw new Error(
+        `timelockHours (${resolvedTimelockHours}) must be less than expiryHours (${expiryHours})`
+      );
+    }
 
     // 8. Determine settlement authority — prefer explicit param, then client's primary wallet (if valid), else payer
     let resolvedSettlementAuthority = settlementAuthority || payerWallet;
@@ -508,6 +556,7 @@ export class InstitutionEscrowService {
         recipientName: params.recipientName || null,
         recipientAccountLabel: params.recipientAccountLabel || null,
         recipientBranchName: params.recipientBranchName || null,
+        timelockHours: resolvedTimelockHours,
       },
     });
 
@@ -635,6 +684,11 @@ export class InstitutionEscrowService {
     const platformFee =
       resolvedAmount > 0 ? await this.calculatePlatformFee(clientId, resolvedAmount) : 0;
 
+    // Resolve timelock for draft: per-escrow > per-client > global > null
+    const draftTimelockHours = params.timelockHours !== undefined
+      ? (params.timelockHours > 0 ? params.timelockHours : null)
+      : null; // Drafts only store explicit value; defaults applied at submit/create
+
     const escrow = await this.prisma.institutionEscrow.create({
       data: {
         escrowId,
@@ -655,6 +709,7 @@ export class InstitutionEscrowService {
         approvalParties: approvalParties || [],
         releaseConditions: releaseConditions || [],
         approvalInstructions: approvalInstructions || null,
+        timelockHours: draftTimelockHours,
         payerName: params.payerName || null,
         payerAccountLabel: params.payerAccountLabel || null,
         payerBranchName: params.payerBranchName || null,
@@ -734,6 +789,10 @@ export class InstitutionEscrowService {
       updateData.recipientAccountLabel = params.recipientAccountLabel;
     if (params.recipientBranchName !== undefined)
       updateData.recipientBranchName = params.recipientBranchName;
+
+    if (params.timelockHours !== undefined) {
+      updateData.timelockHours = params.timelockHours > 0 ? params.timelockHours : null;
+    }
 
     // Post-merge check: ensure payer !== recipient after partial update
     const mergedPayerWallet = (updateData.payerWallet as string) || escrow.payerWallet;
@@ -923,6 +982,17 @@ export class InstitutionEscrowService {
       }
     }
 
+    // Resolve timelock: if draft already has one, keep it; otherwise apply defaults
+    const resolvedTimelockHours = await this.resolveTimelockHours(
+      clientId,
+      escrow.timelockHours != null ? escrow.timelockHours : undefined
+    );
+    if (resolvedTimelockHours && resolvedTimelockHours >= expiryHours) {
+      throw new Error(
+        `timelockHours (${resolvedTimelockHours}) must be less than expiryHours (${expiryHours})`
+      );
+    }
+
     const updated = await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: {
@@ -933,6 +1003,7 @@ export class InstitutionEscrowService {
         vaultPda,
         expiresAt,
         initTxSignature,
+        timelockHours: resolvedTimelockHours,
       },
     });
 
@@ -1065,13 +1136,19 @@ export class InstitutionEscrowService {
       },
     });
 
-    // Update escrow status to FUNDED
+    // Update escrow status to FUNDED and compute unlockAt from timelockHours
+    const fundedAt = new Date();
+    const unlockAt = escrow.timelockHours && escrow.timelockHours > 0
+      ? new Date(fundedAt.getTime() + escrow.timelockHours * 60 * 60 * 1000)
+      : null;
+
     const updated = await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: {
         status: 'FUNDED',
         depositTxSignature: txSignature,
-        fundedAt: new Date(),
+        fundedAt,
+        unlockAt,
       },
     });
 
@@ -1107,6 +1184,19 @@ export class InstitutionEscrowService {
         message: `${Number(escrow.amount)} USDC deposited to PDA`,
       }
     );
+
+    if (unlockAt) {
+      await this.createKytAuditLog(
+        escrow,
+        'TIMELOCK_SET',
+        actorEmail || (await this.resolveActorName(escrow.clientId)),
+        {
+          timelockHours: escrow.timelockHours,
+          unlockAt: unlockAt.toISOString(),
+          message: `Payment timelock active — funds unlock at ${unlockAt.toISOString()}`,
+        }
+      );
+    }
 
     // Bust payer's balance cache after deposit (USDC left their wallet)
     try {
@@ -1585,47 +1675,65 @@ export class InstitutionEscrowService {
 
         // Auto-release if all AI conditions passed
         if (check.passed) {
-          try {
+          // Check timelock before auto-releasing — if locked, defer to manual release
+          const freshEscrow = await this.getEscrowInternal(escrow.clientId, escrowId);
+          if (freshEscrow.unlockAt && new Date() < new Date(freshEscrow.unlockAt)) {
             console.log(
-              `[InstitutionEscrow] AI auto-release triggered for ${escrow.escrowCode || escrowId}`
+              `[InstitutionEscrow] AI auto-release deferred for ${escrow.escrowCode || escrowId} — timelock active until ${new Date(freshEscrow.unlockAt).toISOString()}`
             );
-            await this.createKytAuditLog(escrow, 'AI_APPROVED', 'AI Orchestrator', {
-              releaseMode: 'ai',
+            await this.createKytAuditLog(escrow, 'TIMELOCK_DEFERRED', 'AI Orchestrator', {
+              unlockAt: new Date(freshEscrow.unlockAt).toISOString(),
               riskScore: check.aiAnalysis.riskScore,
-              recommendation: check.aiAnalysis.recommendation,
-              message: `AI approved release — risk score ${check.aiAnalysis.riskScore / 100}`,
+              message: `AI approved but auto-release deferred — timelock active until ${new Date(freshEscrow.unlockAt).toISOString()}`,
             });
-            await this.createKytAuditLog(escrow, 'AI_AUTO_RELEASE', 'AI Orchestrator', {
-              releaseMode: 'ai',
-              conditionsPassed: check.conditions.length,
-              conditions: check.conditions.map((c) => ({
-                condition: c.condition,
-                label: c.label,
-                passed: c.passed,
-              })),
-              riskScore: check.aiAnalysis.riskScore,
-              message: `AI auto-release initiated — ${check.conditions.length} conditions passed`,
-            });
-            const releaseResult = await this.releaseFunds(
-              escrow.clientId,
-              escrowId,
-              'AI auto-release — all conditions passed',
-              'AI Orchestrator',
-              undefined,
-              {
-                skipAiCheck: true,
-                aiMemoData: {
-                  recommendation: check.aiAnalysis.recommendation,
-                  riskScore: check.aiAnalysis.riskScore,
-                  factors: check.aiAnalysis.factors,
-                },
-              }
-            );
-            // Attach AI check results to the release response
-            return { ...(releaseResult as Record<string, unknown>), aiReleaseChecks };
-          } catch (releaseErr) {
-            console.error('[InstitutionEscrow] AI auto-release failed (non-critical):', releaseErr);
-            // Fall through — escrow stays in PENDING_RELEASE for manual release
+            aiReleaseChecks = {
+              ...aiReleaseChecks,
+              autoReleaseDeferred: true,
+              unlockAt: new Date(freshEscrow.unlockAt).toISOString(),
+            } as any;
+          } else {
+            try {
+              console.log(
+                `[InstitutionEscrow] AI auto-release triggered for ${escrow.escrowCode || escrowId}`
+              );
+              await this.createKytAuditLog(escrow, 'AI_APPROVED', 'AI Orchestrator', {
+                releaseMode: 'ai',
+                riskScore: check.aiAnalysis.riskScore,
+                recommendation: check.aiAnalysis.recommendation,
+                message: `AI approved release — risk score ${check.aiAnalysis.riskScore / 100}`,
+              });
+              await this.createKytAuditLog(escrow, 'AI_AUTO_RELEASE', 'AI Orchestrator', {
+                releaseMode: 'ai',
+                conditionsPassed: check.conditions.length,
+                conditions: check.conditions.map((c) => ({
+                  condition: c.condition,
+                  label: c.label,
+                  passed: c.passed,
+                })),
+                riskScore: check.aiAnalysis.riskScore,
+                message: `AI auto-release initiated — ${check.conditions.length} conditions passed`,
+              });
+              const releaseResult = await this.releaseFunds(
+                escrow.clientId,
+                escrowId,
+                'AI auto-release — all conditions passed',
+                'AI Orchestrator',
+                undefined,
+                {
+                  skipAiCheck: true,
+                  aiMemoData: {
+                    recommendation: check.aiAnalysis.recommendation,
+                    riskScore: check.aiAnalysis.riskScore,
+                    factors: check.aiAnalysis.factors,
+                  },
+                }
+              );
+              // Attach AI check results to the release response
+              return { ...(releaseResult as Record<string, unknown>), aiReleaseChecks };
+            } catch (releaseErr) {
+              console.error('[InstitutionEscrow] AI auto-release failed (non-critical):', releaseErr);
+              // Fall through — escrow stays in PENDING_RELEASE for manual release
+            }
           }
         }
       } catch (aiErr) {
@@ -1754,7 +1862,7 @@ export class InstitutionEscrowService {
     notes?: string,
     actorEmail?: string,
     privacyPreferences?: PrivacyPreferences,
-    options?: { skipAiCheck?: boolean; aiMemoData?: AiMemoData }
+    options?: { skipAiCheck?: boolean; aiMemoData?: AiMemoData; forceRelease?: boolean }
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1770,6 +1878,28 @@ export class InstitutionEscrowService {
       throw new Error(
         `Cannot release: escrow status is ${escrow.status}, expected ${expected}`
       );
+    }
+
+    // Timelock gate: prevent release before cooling-off period expires
+    if (escrow.unlockAt && new Date() < new Date(escrow.unlockAt)) {
+      if (options?.forceRelease) {
+        await this.createKytAuditLog(
+          escrow,
+          'TIMELOCK_OVERRIDE',
+          actorEmail || (await this.resolveActorName(clientId)),
+          {
+            unlockAt: new Date(escrow.unlockAt).toISOString(),
+            overriddenAt: new Date().toISOString(),
+            message: `Timelock override — funds were locked until ${new Date(escrow.unlockAt).toISOString()}`,
+          }
+        );
+      } else {
+        const unlockDate = new Date(escrow.unlockAt);
+        const hoursRemaining = Math.ceil((unlockDate.getTime() - Date.now()) / (60 * 60 * 1000));
+        throw new Error(
+          `Cannot release: payment timelock active. Funds unlock at ${unlockDate.toISOString()} (${hoursRemaining}h remaining). Use forceRelease to override.`
+        );
+      }
     }
 
     // Track AI analysis for chain-of-custody memo digest
@@ -2888,7 +3018,9 @@ export class InstitutionEscrowService {
       escrowId: e.escrowCode,
       internalId: e.escrowId,
       status: e.status,
-      statusLabel: InstitutionEscrowService.STATUS_LABELS[e.status] || e.status,
+      statusLabel: (e.status === 'FUNDED' && e.unlockAt && new Date() < new Date(e.unlockAt))
+        ? 'Funded — Timelock Active'
+        : InstitutionEscrowService.STATUS_LABELS[e.status] || e.status,
       amount: Number(e.amount),
       platformFee: Number(e.platformFee),
       corridor: e.corridor,
@@ -2939,6 +3071,11 @@ export class InstitutionEscrowService {
         level: e.privacyLevel || 'NONE',
         stealthPaymentId: e.stealthPaymentId || null,
       },
+      timelock: e.timelockHours ? {
+        hours: e.timelockHours,
+        unlockAt: e.unlockAt || null,
+        isLocked: e.unlockAt ? new Date() < new Date(e.unlockAt) : false,
+      } : null,
       transactions: {
         initTx: e.initTxSignature || null,
         depositTx: e.depositTxSignature || null,
@@ -2950,6 +3087,7 @@ export class InstitutionEscrowService {
         updatedAt: e.updatedAt,
         expiresAt: e.expiresAt,
         fundedAt: e.fundedAt,
+        unlockAt: e.unlockAt || null,
         resolvedAt: e.resolvedAt,
       },
     };

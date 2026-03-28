@@ -150,6 +150,10 @@ export const validateCreateInstitutionEscrow = [
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 2160 })
+    .withMessage('timelockHours must be between 0 and 2160 (90 days)'),
   ...partyDisplayNameValidators,
 ];
 
@@ -242,6 +246,10 @@ export const validateSaveDraft = [
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 2160 })
+    .withMessage('timelockHours must be between 0 and 2160 (90 days)'),
   ...partyDisplayNameValidators,
 ];
 
@@ -336,6 +344,10 @@ export const validateUpdateDraft = [
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 2160 })
+    .withMessage('timelockHours must be between 0 and 2160 (90 days)'),
   ...partyDisplayNameValidators,
 ];
 
@@ -371,6 +383,10 @@ export const validateReleaseFunds = [
     .isString()
     .isLength({ max: 500 })
     .withMessage('notes must be 500 characters or less'),
+  body('forceRelease')
+    .optional()
+    .isBoolean()
+    .withMessage('forceRelease must be a boolean'),
 ];
 
 /**

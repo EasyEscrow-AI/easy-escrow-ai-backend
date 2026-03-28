@@ -28,6 +28,7 @@ const ALLOWED_SETTINGS_FIELDS = [
   'minFeeUsdc',
   'maxFeeUsdc',
   'notificationPreferences',
+  'defaultTimelockHours',
 ] as const;
 
 const DEFAULT_NOTIFICATION_PREFERENCES = [
@@ -235,6 +236,12 @@ export class InstitutionClientSettingsService {
         throw new Error(
           `minFeeUsdc (${filteredUpdates.minFeeUsdc}) must not exceed maxFeeUsdc (${filteredUpdates.maxFeeUsdc})`
         );
+      }
+    }
+    if ('defaultTimelockHours' in filteredUpdates) {
+      const v = filteredUpdates.defaultTimelockHours;
+      if (v !== null && (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 2160)) {
+        throw new Error('defaultTimelockHours must be an integer between 0 and 2160, or null');
       }
     }
 

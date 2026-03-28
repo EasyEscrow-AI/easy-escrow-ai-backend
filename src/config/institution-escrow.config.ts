@@ -21,6 +21,9 @@ export interface InstitutionEscrowConfig {
   /** Default escrow expiry in hours */
   defaultExpiryHours: number;
 
+  /** Default payment timelock in hours (cooling-off period between funding and release) */
+  defaultTimelockHours: number;
+
   /** JWT authentication settings */
   jwt: {
     /** Access token expiry (e.g., '15m', '1h') */
@@ -71,6 +74,7 @@ export function loadInstitutionEscrowConfig(): InstitutionEscrowConfig {
     minUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MIN_USDC || '100'),
     maxUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MAX_USDC || '1000000'),
     defaultExpiryHours: parseInt(process.env.INSTITUTION_ESCROW_DEFAULT_EXPIRY_HOURS || '72', 10),
+    defaultTimelockHours: parseInt(process.env.INSTITUTION_ESCROW_DEFAULT_TIMELOCK_HOURS || '24', 10),
     jwt: {
       accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '1h',
       refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
