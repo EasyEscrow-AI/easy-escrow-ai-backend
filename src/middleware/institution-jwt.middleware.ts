@@ -2,6 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
+// Renew access token when it has less than this many seconds remaining
+const SLIDING_RENEWAL_THRESHOLD_SEC = 10 * 60; // 10 minutes
+
 export interface InstitutionAuthenticatedRequest extends Request {
   institutionClient?: {
     clientId: string;
@@ -85,6 +88,10 @@ function extractAndVerifyToken(req: Request, res: Response): InstitutionJwtPaylo
 /**
  * Requires a valid institution JWT token.
  * Attaches decoded payload to req.institutionClient.
+ *
+ * Sliding renewal: when the access token is within 10 minutes of expiry,
+ * a fresh token is issued and returned via the X-New-Access-Token header
+ * so the frontend can transparently refresh without hitting /auth/refresh.
  */
 export const requireInstitutionAuth = (
   req: InstitutionAuthenticatedRequest,
@@ -100,6 +107,26 @@ export const requireInstitutionAuth = (
       email: payload.email,
       tier: payload.tier,
     };
+
+    // Sliding renewal: issue a fresh token when close to expiry
+    if (payload.exp) {
+      const remainingSec = payload.exp - Math.floor(Date.now() / 1000);
+      if (remainingSec > 0 && remainingSec < SLIDING_RENEWAL_THRESHOLD_SEC) {
+        try {
+          const secret = getJwtSecret();
+          const originalLifetime = payload.exp - (payload.iat || payload.exp);
+          const expirySec = originalLifetime > 0 ? originalLifetime : 3600;
+          const newToken = jwt.sign(
+            { clientId: payload.clientId, email: payload.email, tier: payload.tier },
+            secret,
+            { expiresIn: expirySec }
+          );
+          res.setHeader('X-New-Access-Token', newToken);
+        } catch {
+          // Non-fatal — just skip renewal
+        }
+      }
+    }
 
     next();
   } catch (error) {

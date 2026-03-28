@@ -156,7 +156,7 @@ router.post(
       res.status(401).json({
         error: 'Token Refresh Failed',
         message: error.message,
-        code: 'REFRESH_FAILED',
+        code: error.code || 'REFRESH_FAILED',
         timestamp: new Date().toISOString(),
       });
     }

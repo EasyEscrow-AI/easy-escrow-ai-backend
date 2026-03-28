@@ -168,15 +168,21 @@ export class InstitutionAuthService {
     });
 
     if (!storedToken) {
-      throw new Error('Invalid refresh token');
+      const err = new Error('Invalid refresh token') as Error & { code: string };
+      err.code = 'REFRESH_TOKEN_INVALID';
+      throw err;
     }
 
     if (storedToken.revokedAt) {
-      throw new Error('Refresh token has been revoked');
+      const err = new Error('Refresh token has been revoked') as Error & { code: string };
+      err.code = 'REFRESH_TOKEN_REVOKED';
+      throw err;
     }
 
     if (storedToken.expiresAt < new Date()) {
-      throw new Error('Refresh token has expired');
+      const err = new Error('Refresh token has expired') as Error & { code: string };
+      err.code = 'REFRESH_TOKEN_EXPIRED';
+      throw err;
     }
 
     // Revoke old refresh token
