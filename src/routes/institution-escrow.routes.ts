@@ -22,6 +22,7 @@ import { param, validationResult } from 'express-validator';
 import {
   requireInstitutionOrAdminAuth,
   requireSettlementAuthority,
+  getEffectiveClientId,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import {
@@ -522,8 +523,9 @@ router.get(
 
     try {
       const service = getInstitutionEscrowService();
+      const clientId = getEffectiveClientId(req);
       const result = await service.listEscrows({
-        clientId: req.institutionClient!.clientId,
+        clientId,
         status: req.query.status as string | undefined,
         corridor: req.query.corridor as string | undefined,
         limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,

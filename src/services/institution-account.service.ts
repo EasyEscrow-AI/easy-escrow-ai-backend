@@ -297,8 +297,8 @@ export class InstitutionAccountService {
     return txs.slice(offset, offset + limit);
   }
 
-  async listAccounts(clientId: string, filters?: ListAccountsFilters) {
-    const where: Prisma.InstitutionAccountWhereInput = { clientId };
+  async listAccounts(clientId: string | null, filters?: ListAccountsFilters) {
+    const where: Prisma.InstitutionAccountWhereInput = clientId ? { clientId } : {};
 
     if (filters?.accountType) {
       where.accountType = filters.accountType;
