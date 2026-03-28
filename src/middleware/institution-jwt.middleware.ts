@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 
 // Renew access token when it has less than this many seconds remaining
 const SLIDING_RENEWAL_THRESHOLD_SEC = 10 * 60; // 10 minutes
@@ -297,38 +298,46 @@ export const requireSettlementAuthority = (
       return;
     }
 
-    const settlementKey = req.headers['x-settlement-authority-key'] as string;
+    // When CDP is enabled, the CDP wallet's policy engine provides independent
+    // transaction-level verification, so the API key check is not required for
+    // JWT-authenticated users (institution or admin). The API key is still
+    // required when CDP is disabled (original settlement flow).
+    const cdpEnabled = getInstitutionEscrowConfig().cdp.enabled;
 
-    if (!settlementKey) {
-      res.status(403).json({
-        error: 'Forbidden',
-        message: 'Invalid settlement authority key',
-        code: 'SETTLEMENT_UNAUTHORIZED',
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
+    if (!cdpEnabled) {
+      const settlementKey = req.headers['x-settlement-authority-key'] as string;
 
-    const expectedKey = process.env.SETTLEMENT_AUTHORITY_API_KEY;
+      if (!settlementKey) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Invalid settlement authority key',
+          code: 'SETTLEMENT_UNAUTHORIZED',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
 
-    if (!expectedKey) {
-      console.error('SETTLEMENT_AUTHORITY_API_KEY environment variable is not configured');
-      res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'Settlement authority is not configured',
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
+      const expectedKey = process.env.SETTLEMENT_AUTHORITY_API_KEY;
 
-    if (!constantTimeCompare(settlementKey, expectedKey)) {
-      res.status(403).json({
-        error: 'Forbidden',
-        message: 'Invalid settlement authority key',
-        code: 'SETTLEMENT_UNAUTHORIZED',
-        timestamp: new Date().toISOString(),
-      });
-      return;
+      if (!expectedKey) {
+        console.error('SETTLEMENT_AUTHORITY_API_KEY environment variable is not configured');
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Settlement authority is not configured',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!constantTimeCompare(settlementKey, expectedKey)) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Invalid settlement authority key',
+          code: 'SETTLEMENT_UNAUTHORIZED',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
     }
 
     next();
