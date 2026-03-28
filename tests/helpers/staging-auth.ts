@@ -7,7 +7,7 @@
 
 const STAGING_API = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const STAGING_EMAIL = process.env.STAGING_EMAIL || 'ops@globaltrade-industries.com';
-const STAGING_PASSWORD = process.env.STAGING_PASSWORD || 'HelveticaDemo2026!';
+const STAGING_PASSWORD = process.env.STAGING_PASSWORD || 'change-me';
 
 export interface StagingAuthResult {
   accessToken: string;

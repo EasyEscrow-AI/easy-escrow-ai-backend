@@ -5,7 +5,7 @@
  * institution data. Every reference (escrows, payments, notifications) is wired
  * to actual clients in the database — no broken foreign keys.
  *
- * Loginable accounts (password: StagingDemo2026!):
+ * Loginable accounts (password: set via SEED_PASSWORD env var):
  *   1. ops@helvetica-digital.ch        (Helvetica Digital AG, ENTERPRISE)
  *   2. treasury@alpine-custody.ch      (Alpine Crypto Custody GmbH, PREMIUM)
  *   3. finance@satoshi-bridge.io       (Satoshi Bridge Labs Inc, ENTERPRISE)
@@ -1982,7 +1982,9 @@ async function main() {
   }
 
   console.log('=== Unified Staging Seed — All Institution Data ===\n');
-  const passwordHash = await bcrypt.hash('StagingDemo2026!', 12);
+  const seedPassword = process.env.SEED_PASSWORD;
+  if (!seedPassword) { console.error('ERROR: SEED_PASSWORD env var required'); process.exit(1); }
+  const passwordHash = await bcrypt.hash(seedPassword, 12);
 
   // ── 1. Corridors ──────────────────────────────────────────────────────
   console.log('1. Seeding corridors...');
@@ -2383,7 +2385,7 @@ async function main() {
   console.log(`   Escrows: ${escrowDefs.length}`);
   console.log(`   Direct Payments: ${paymentDefs.length}`);
   console.log(`   Notifications: ${notificationDefs.length}`);
-  console.log(`\n   Password for all logins: StagingDemo2026!`);
+  console.log(`\n   Password for all logins: (set via SEED_PASSWORD env var)`);
   console.log(`\n   Loginable accounts:`);
   for (const c of loginableClients) {
     console.log(`     ${c.email} (${c.companyName})`);

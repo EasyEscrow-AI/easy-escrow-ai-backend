@@ -23,7 +23,7 @@ import bs58 from 'bs58';
 
 dotenv.config({ path: '.env.staging' });
 
-const RPC_URL = 'https://red-quaint-wind.solana-devnet.quiknode.pro/7306a6f82b57d473dd2bb175986828be9c121355';
+const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const STAGING_API_URL = 'https://staging-api.easyescrow.ai';
 
 // Hardcoded tree address

@@ -7,7 +7,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import axios from 'axios';
 import bs58 from 'bs58';
 
-const RPC_URL = 'https://red-quaint-wind.solana-devnet.quiknode.pro/7306a6f82b57d473dd2bb175986828be9c121355';
+const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const TREE_ADDRESS = 'HTVCa1CKzeaLwZsrPFP6BgPp7wfSoeJMQfNses5PBhhA';
 const CNFT_ASSET_ID = '2q3TWSmbKSqYD3DqrScPRHsNpwjGK83ouKSyqKEKwgjG';
 

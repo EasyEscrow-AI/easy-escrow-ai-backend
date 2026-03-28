@@ -48,8 +48,8 @@ DIGITAL_OCEAN_API_KEY=dop_v1_xxxxx
 
 # AWS S3
 AWS_S3_BUCKET=easyescrow-backups
-AWS_S3_KEY=AKIA3O456Q45RSX43JUY
-AWS_S3_SECRET=2fCthjQVmjtyx++TAnYtWt4C7gkVVD6SIWpSO0de
+AWS_S3_KEY=your-aws-access-key-id
+AWS_S3_SECRET=your-aws-secret-access-key
 AWS_S3_REGION=us-east-1
 ```
 
