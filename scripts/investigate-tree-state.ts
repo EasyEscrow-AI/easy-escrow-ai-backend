@@ -12,9 +12,8 @@ dotenv.config({ path: '.env.staging' });
 
 const TREE_ADDRESS = 'H47jXeKnijdgzKPnrdWyZ2dPpQQbDGAtcgoQvwWohNgz';
 const CNFT_ASSET_ID = '7BC3X263a9N3BepgLa69LpTY2ZjwQr5ZeCCqEC7Xs1YM';
-// Hardcoded for investigation (env loading has issues)
-const HELIUS_RPC = 'https://devnet.helius-rpc.com/?api-key=5a8c5d8d-15c2-4dc3-8ceb-109cd9baa8b8';
-const QUICKNODE_RPC = 'https://red-quaint-wind.solana-devnet.quiknode.pro/7306a6f82b57d473dd2bb175986828be9c121355';
+const HELIUS_RPC = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+const QUICKNODE_RPC = process.env.QUICKNODE_RPC_URL || 'https://api.devnet.solana.com';
 
 async function getDasProof(rpcUrl: string, assetId: string): Promise<any> {
   const response = await axios.post(rpcUrl, {

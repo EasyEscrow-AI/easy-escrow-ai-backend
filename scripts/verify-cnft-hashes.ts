@@ -6,7 +6,7 @@
 import axios from 'axios';
 import bs58 from 'bs58';
 
-const HELIUS_RPC = 'https://devnet.helius-rpc.com/?api-key=5a8c5d8d-15c2-4dc3-8ceb-109cd9baa8b8';
+const HELIUS_RPC = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const CNFT_ASSET_ID = '9krakwJJwGHSPwgrC9mJbnazM7hhZomoeGQrn2xcVAT7';
 
 async function getDasAsset(assetId: string) {

@@ -45,7 +45,9 @@ async function main() {
   // 1. Primary Client: Helvetica Digital
   // ============================================================================
   console.log('Seeding primary client: Helvetica Digital...');
-  const passwordHash = await bcrypt.hash(process.env.SEED_PASSWORD || 'HelveticaDemo2026!', 12);
+  const seedPassword = process.env.SEED_PASSWORD;
+  if (!seedPassword) { console.error('ERROR: SEED_PASSWORD env var required'); process.exit(1); }
+  const passwordHash = await bcrypt.hash(seedPassword, 12);
 
   const helvetica = await prisma.institutionClient.upsert({
     where: { email: 'ops@helvetica-digital.ch' },
@@ -607,7 +609,7 @@ async function main() {
   // Summary
   // ============================================================================
   console.log('\nInstitution portal seed data complete!');
-  console.log(`  Login: ops@helvetica-digital.ch / HelveticaDemo2026!`);
+  console.log(`  Login: ops@helvetica-digital.ch / (set via SEED_PASSWORD env var)`);
   console.log(`  Branches: ${branchData.length} (incl. RU sanctioned)`);
   console.log(`  Accounts: ${accountData.length}`);
   console.log(`  Escrows: ${escrows.length} active`);
