@@ -408,12 +408,12 @@ export class InstitutionEscrowService {
       );
     }
 
-    // 10. Initialize escrow on-chain
+    // 10. Initialize escrow on-chain (skip for direct payments — no vault needed)
     let escrowPda: string | null = null;
     let vaultPda: string | null = null;
     let initTxSignature: string | null = null;
     const programService = this.getProgramService();
-    if (programService) {
+    if (programService && settlementMode !== 'direct') {
       // Validate all PublicKey inputs before on-chain call
       if (!config.platform.feeCollectorAddress) {
         throw new Error('Platform feeCollectorAddress is not configured');
@@ -839,12 +839,12 @@ export class InstitutionEscrowService {
       }
     }
 
-    // Initialize escrow on-chain
+    // Initialize escrow on-chain (skip for direct payments — no vault needed)
     let escrowPda: string | null = null;
     let vaultPda: string | null = null;
     let initTxSignature: string | null = null;
     const programService = this.getProgramService();
-    if (programService) {
+    if (programService && (escrow as any).settlementMode !== 'direct') {
       if (!config.platform.feeCollectorAddress) {
         throw new Error('Platform feeCollectorAddress is not configured');
       }
@@ -1836,13 +1836,16 @@ export class InstitutionEscrowService {
 
     // Update status to RELEASING
     const originalStatus = escrow.status;
+    const isDirectPayment = (escrow as any).settlementMode === 'direct';
     await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: { status: 'RELEASING' },
     });
 
-    // Check payer's token balance before settlement
-    await this.checkPayerBalance(escrow, clientId);
+    // Check payer's token balance before settlement (skip for direct payments — no vault)
+    if (!isDirectPayment) {
+      await this.checkPayerBalance(escrow, clientId);
+    }
 
     // Resolve release destination (standard or stealth address)
     const effectivePrivacy = privacyPreferences || {
@@ -1903,10 +1906,11 @@ export class InstitutionEscrowService {
 
     // Execute on-chain release (transfer USDC from vault to recipient)
     // Fee was already collected at deposit time — release just sends vault balance to recipient
+    // Direct payments skip on-chain settlement entirely — no vault to release from
     let releaseTxSig: string | null = null;
     const releaseProgramService = this.getProgramService();
     const useCdpRelease = ((escrow.releaseConditions as string[]) || []).includes('cdp_policy_approval');
-    if (releaseProgramService && escrow.escrowPda) {
+    if (releaseProgramService && escrow.escrowPda && !isDirectPayment) {
       try {
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         const aiDigest = buildAiDigest(aiAnalysisForMemo);
@@ -1968,7 +1972,7 @@ export class InstitutionEscrowService {
         }
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
-          data: { status: 'FUNDED' },
+          data: { status: originalStatus },
         });
         await this.createAuditLog(
           escrowId,
@@ -1981,7 +1985,7 @@ export class InstitutionEscrowService {
         );
         throw new Error(`On-chain release failed: ${(error as Error).message}`);
       }
-    } else if (escrow.nonceAccount) {
+    } else if (escrow.nonceAccount && !isDirectPayment) {
       // Fallback: advance nonce if no PDA (legacy escrows created before on-chain wiring)
       try {
         const npm = this.getNoncePoolManager();
@@ -1993,7 +1997,7 @@ export class InstitutionEscrowService {
         console.error('[InstitutionEscrow] Nonce advance failed during release:', error);
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
-          data: { status: 'FUNDED' },
+          data: { status: originalStatus },
         });
         throw new Error('On-chain settlement failed: nonce advance error');
       }
