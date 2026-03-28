@@ -10,7 +10,7 @@ import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { param, query, validationResult } from 'express-validator';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionNotificationService } from '../services/institution-notification.service';
@@ -61,7 +61,7 @@ function handleValidation(req: any, res: Response): boolean {
 router.get(
   '/api/v1/institution-notifications',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateListNotifications,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
@@ -93,7 +93,7 @@ router.get(
 router.post(
   '/api/v1/institution-notifications/read-all',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionNotificationService();
@@ -118,7 +118,7 @@ router.post(
 router.post(
   '/api/v1/institution-notifications/:id/read',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateNotificationId,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;

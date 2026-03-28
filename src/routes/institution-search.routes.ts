@@ -8,7 +8,7 @@ import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { query, validationResult } from 'express-validator';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionSearchService } from '../services/institution-search.service';
@@ -47,7 +47,7 @@ const validateSearch = [
 router.get(
   '/api/v1/institution/search',
   searchRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateSearch,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);

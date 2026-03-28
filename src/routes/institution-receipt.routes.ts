@@ -8,7 +8,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionReceiptService } from '../services/institution-receipt.service';
@@ -33,7 +33,7 @@ const receiptRateLimiter = rateLimit({
 router.get(
   '/api/v1/institution-escrow/:escrowId/receipt',
   receiptRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { escrowId } = req.params;
@@ -77,7 +77,7 @@ router.get(
 router.get(
   '/api/v1/institution-escrow/:escrowId/receipt/data',
   receiptRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { escrowId } = req.params;

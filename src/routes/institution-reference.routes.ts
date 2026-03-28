@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { prisma } from '../config/database';
@@ -31,7 +31,7 @@ const SANCTIONED_REGIONS = ['RU', 'BY', 'KP', 'IR', 'SY', 'CU'];
 router.get(
   '/api/v1/institution/exchange-rates',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (_req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const now = new Date().toISOString();
@@ -61,7 +61,7 @@ router.get(
 router.get(
   '/api/v1/institution/sanctioned-regions',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (_req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       res
@@ -87,7 +87,7 @@ router.get(
 router.get(
   '/api/v1/institution/corridors',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (_req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const corridors = await prisma.institutionCorridor.findMany({

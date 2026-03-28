@@ -329,4 +329,505 @@ router.get(
   }
 );
 
+// ─── Corridor Management ─────────────────────────────────────────────
+
+// PATCH /api/admin/institution-escrow/corridors/:code
+router.patch(
+  '/api/admin/institution-escrow/corridors/:code',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (req: Request, res: Response) => {
+    try {
+      const { code } = req.params;
+
+      const corridor = await prisma.institutionCorridor.findUnique({
+        where: { code },
+      });
+
+      if (!corridor) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: `Corridor ${code} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const allowedFields: Record<string, boolean> = {
+        minAmount: true, maxAmount: true, dailyLimit: true, monthlyLimit: true,
+        requiredDocuments: true, riskLevel: true, status: true, name: true,
+        compliance: true, description: true, riskReason: true,
+        travelRuleThreshold: true, eddThreshold: true, reportingThreshold: true,
+      };
+
+      const data: Record<string, any> = {};
+      for (const [key, value] of Object.entries(req.body)) {
+        if (allowedFields[key]) data[key] = value;
+      }
+
+      if (Object.keys(data).length === 0) {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: 'No valid fields to update',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const updated = await prisma.institutionCorridor.update({
+        where: { code },
+        data,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// ─── Client Settings (Admin) ────────────────────────────────────────
+
+// GET /api/admin/institution-escrow/clients/:clientId/settings
+router.get(
+  '/api/admin/institution-escrow/clients/:clientId/settings',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (req: Request, res: Response) => {
+    try {
+      const { clientId } = req.params;
+
+      const settings = await prisma.institutionClientSettings.findUnique({
+        where: { clientId },
+      });
+
+      if (!settings) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: `Settings not found for client ${clientId}`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: settings,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// PATCH /api/admin/institution-escrow/clients/:clientId/settings
+router.patch(
+  '/api/admin/institution-escrow/clients/:clientId/settings',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (req: Request, res: Response) => {
+    try {
+      const { clientId } = req.params;
+
+      const existing = await prisma.institutionClientSettings.findUnique({
+        where: { clientId },
+      });
+
+      if (!existing) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: `Settings not found for client ${clientId}`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const allowedFields: Record<string, boolean> = {
+        defaultCorridor: true, defaultCurrency: true, timezone: true,
+        autoApproveThreshold: true, manualReviewThreshold: true,
+        autoTravelRule: true, aiAutoRelease: true, riskTolerance: true,
+        defaultToken: true, emailNotifications: true, feeBps: true,
+        minFeeUsdc: true, maxFeeUsdc: true,
+      };
+
+      const data: Record<string, any> = {};
+      for (const [key, value] of Object.entries(req.body)) {
+        if (allowedFields[key]) data[key] = value;
+      }
+
+      const updated = await prisma.institutionClientSettings.update({
+        where: { clientId },
+        data,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// ─── Client Status (Admin) ──────────────────────────────────────────
+
+// GET /api/admin/institution-escrow/clients/:clientId/status
+router.get(
+  '/api/admin/institution-escrow/clients/:clientId/status',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (req: Request, res: Response) => {
+    try {
+      const { clientId } = req.params;
+
+      const client = await prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: {
+          id: true,
+          companyName: true,
+          status: true,
+          kycStatus: true,
+          tier: true,
+          isArchived: true,
+          riskRating: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      if (!client) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: `Client ${clientId} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: client,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// PATCH /api/admin/institution-escrow/clients/:clientId/status
+router.patch(
+  '/api/admin/institution-escrow/clients/:clientId/status',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    try {
+      const { clientId } = req.params;
+
+      const client = await prisma.institutionClient.findUnique({
+        where: { id: clientId },
+      });
+
+      if (!client) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: `Client ${clientId} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const allowedFields: Record<string, boolean> = {
+        status: true, kycStatus: true, tier: true, isArchived: true, riskRating: true,
+      };
+
+      const data: Record<string, any> = {};
+      for (const [key, value] of Object.entries(req.body)) {
+        if (allowedFields[key]) data[key] = value;
+      }
+
+      if (Object.keys(data).length === 0) {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: 'No valid fields to update',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const updated = await prisma.institutionClient.update({
+        where: { id: clientId },
+        data,
+        select: {
+          id: true,
+          companyName: true,
+          status: true,
+          kycStatus: true,
+          tier: true,
+          isArchived: true,
+          riskRating: true,
+          updatedAt: true,
+        },
+      });
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// ─── Account Toggles (Admin) ────────────────────────────────────────
+
+// GET /api/admin/institution-escrow/accounts/:accountId/toggles
+router.get(
+  '/api/admin/institution-escrow/accounts/:accountId/toggles',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (req: Request, res: Response) => {
+    try {
+      const { accountId } = req.params;
+
+      const account = await prisma.institutionAccount.findUnique({
+        where: { id: accountId },
+        select: {
+          id: true,
+          name: true,
+          label: true,
+          isActive: true,
+          isDefault: true,
+          approvalMode: true,
+          approvalThreshold: true,
+          whitelistEnforced: true,
+          notifyOnEscrowCreated: true,
+          notifyOnEscrowFunded: true,
+          notifyOnEscrowReleased: true,
+          notifyOnComplianceAlert: true,
+          verificationStatus: true,
+        },
+      });
+
+      if (!account) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: `Account ${accountId} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: account,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// PATCH /api/admin/institution-escrow/accounts/:accountId/toggles
+router.patch(
+  '/api/admin/institution-escrow/accounts/:accountId/toggles',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    try {
+      const { accountId } = req.params;
+
+      const account = await prisma.institutionAccount.findUnique({
+        where: { id: accountId },
+      });
+
+      if (!account) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: `Account ${accountId} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const allowedFields: Record<string, boolean> = {
+        isActive: true, isDefault: true, approvalMode: true,
+        approvalThreshold: true, whitelistEnforced: true,
+        notifyOnEscrowCreated: true, notifyOnEscrowFunded: true,
+        notifyOnEscrowReleased: true, notifyOnComplianceAlert: true,
+        verificationStatus: true, verificationNotes: true,
+      };
+
+      const data: Record<string, any> = {};
+      for (const [key, value] of Object.entries(req.body)) {
+        if (allowedFields[key]) data[key] = value;
+      }
+
+      if (Object.keys(data).length === 0) {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: 'No valid fields to update',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const updated = await prisma.institutionAccount.update({
+        where: { id: accountId },
+        data,
+        select: {
+          id: true,
+          name: true,
+          label: true,
+          isActive: true,
+          isDefault: true,
+          approvalMode: true,
+          approvalThreshold: true,
+          whitelistEnforced: true,
+          notifyOnEscrowCreated: true,
+          notifyOnEscrowFunded: true,
+          notifyOnEscrowReleased: true,
+          notifyOnComplianceAlert: true,
+          verificationStatus: true,
+          updatedAt: true,
+        },
+      });
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// ─── Feature Flags (Admin) ──────────────────────────────────────────
+
+// GET /api/admin/institution-escrow/feature-flags
+router.get(
+  '/api/admin/institution-escrow/feature-flags',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (_req: Request, res: Response) => {
+    try {
+      const flags = {
+        institutionEscrowEnabled: process.env.INSTITUTION_ESCROW_ENABLED === 'true',
+        privacyEnabled: process.env.PRIVACY_ENABLED !== 'false',
+        jitoBundlesEnabled: (() => {
+          const disable = process.env.DISABLE_JITO_BUNDLES?.toLowerCase();
+          if (disable === 'true' || disable === '1') return false;
+          const nodeEnv = process.env.NODE_ENV || 'development';
+          const network = process.env.SOLANA_NETWORK || 'devnet';
+          return nodeEnv === 'production' || network === 'mainnet-beta';
+        })(),
+        aiAnalysisEnabled: !!process.env.ANTHROPIC_API_KEY,
+        cdpSettlementEnabled: !!process.env.CDP_API_KEY_NAME,
+      };
+
+      res.status(200).json({
+        success: true,
+        data: flags,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// PATCH /api/admin/institution-escrow/feature-flags
+router.patch(
+  '/api/admin/institution-escrow/feature-flags',
+  standardRateLimiter,
+  requireAdminOrApiKey,
+  async (req: AdminAuthenticatedRequest, res: Response) => {
+    try {
+      const allowedFlags: Record<string, string> = {
+        institutionEscrowEnabled: 'INSTITUTION_ESCROW_ENABLED',
+        privacyEnabled: 'PRIVACY_ENABLED',
+        disableJitoBundles: 'DISABLE_JITO_BUNDLES',
+      };
+
+      const updated: Record<string, boolean> = {};
+      for (const [key, value] of Object.entries(req.body)) {
+        const envVar = allowedFlags[key];
+        if (envVar && typeof value === 'boolean') {
+          process.env[envVar] = String(value);
+          updated[key] = value;
+        }
+      }
+
+      if (Object.keys(updated).length === 0) {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: 'No valid feature flags to update. Allowed: ' + Object.keys(allowedFlags).join(', '),
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const adminId = req.adminUser?.adminId || req.apiKeyFingerprint || 'unknown';
+      console.log(`[Admin] Feature flags updated by ${adminId}:`, updated);
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        message: 'Feature flags updated (runtime only — will reset on restart)',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Internal Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 export default router;
