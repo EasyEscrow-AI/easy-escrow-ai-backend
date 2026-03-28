@@ -85,11 +85,14 @@ export class CdpSettlementService {
   async signTransaction(serializedTx: Buffer): Promise<Buffer> {
     const account = await this.getOrCreateAccount();
 
+    // CDP SDK expects the transaction as a base64 string, not a Buffer.
+    // Passing a raw Buffer causes the API to reject with "value must be a string".
     const result = await account.signTransaction({
-      transaction: serializedTx,
+      transaction: serializedTx.toString('base64'),
     });
 
-    return Buffer.from(result.signedTransaction);
+    // The signed transaction comes back as base64 string
+    return Buffer.from(result.signedTransaction, 'base64');
   }
 
   /**
