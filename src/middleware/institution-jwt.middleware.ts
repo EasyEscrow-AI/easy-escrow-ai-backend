@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
+import { prisma } from '../config/database';
 
 // Renew access token when it has less than this many seconds remaining
 const SLIDING_RENEWAL_THRESHOLD_SEC = 10 * 60; // 10 minutes
@@ -16,6 +18,7 @@ export interface InstitutionAuthenticatedRequest extends Request {
     email: string;
     role: string;
   };
+  isAdmin?: boolean;
 }
 
 interface InstitutionJwtPayload {
@@ -183,11 +186,11 @@ export const optionalInstitutionAuth = (
  *   If the admin provides a ?clientId query param, req.institutionClient is
  *   also populated so downstream handlers work unchanged.
  */
-export const requireInstitutionOrAdminAuth = (
+export const requireInstitutionOrAdminAuth = async (
   req: InstitutionAuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -233,6 +236,18 @@ export const requireInstitutionOrAdminAuth = (
         email: decoded.email,
         tier: decoded.tier,
       };
+
+      // Check if this institution client is an admin (e.g. Amina Bank)
+      try {
+        const client = await prisma.institutionClient.findUnique({
+          where: { id: decoded.clientId },
+          select: { companyName: true },
+        });
+        req.isAdmin = client?.companyName?.toLowerCase().includes('amina') ?? false;
+      } catch {
+        req.isAdmin = false;
+      }
+
       next();
       return;
     }
@@ -244,6 +259,7 @@ export const requireInstitutionOrAdminAuth = (
         email: decoded.email,
         role: decoded.role,
       };
+      req.isAdmin = true;
 
       // Admin can scope to a specific client via ?clientId query param
       const clientId = req.query.clientId as string | undefined;
@@ -277,6 +293,22 @@ export const requireInstitutionOrAdminAuth = (
 };
 
 /**
+ * Returns the effective clientId for data filtering.
+ * - Admin JWT with explicit ?clientId scope → that clientId
+ * - Admin (any path) without scope → null (aggregate across all clients)
+ * - Regular client → their clientId
+ */
+export function getEffectiveClientId(req: InstitutionAuthenticatedRequest): string | null {
+  if (req.isAdmin) {
+    // Admin JWT path: institutionClient is only set when ?clientId was explicitly provided
+    if (req.adminUser) return req.institutionClient?.clientId ?? null;
+    // Institution JWT admin (detected by companyName): always aggregate
+    return null;
+  }
+  return req.institutionClient!.clientId;
+}
+
+/**
  * Requires a valid settlement authority key.
  * Must be used after requireInstitutionAuth (expects req.institutionClient to be set).
  * Validates the X-Settlement-Authority-Key header against SETTLEMENT_AUTHORITY_API_KEY.
@@ -297,38 +329,46 @@ export const requireSettlementAuthority = (
       return;
     }
 
-    const settlementKey = req.headers['x-settlement-authority-key'] as string;
+    // When CDP is enabled, the CDP wallet's policy engine provides independent
+    // transaction-level verification, so the API key check is not required for
+    // JWT-authenticated users (institution or admin). The API key is still
+    // required when CDP is disabled (original settlement flow).
+    const cdpEnabled = getInstitutionEscrowConfig().cdp.enabled;
 
-    if (!settlementKey) {
-      res.status(403).json({
-        error: 'Forbidden',
-        message: 'Invalid settlement authority key',
-        code: 'SETTLEMENT_UNAUTHORIZED',
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
+    if (!cdpEnabled) {
+      const settlementKey = req.headers['x-settlement-authority-key'] as string;
 
-    const expectedKey = process.env.SETTLEMENT_AUTHORITY_API_KEY;
+      if (!settlementKey) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Invalid settlement authority key',
+          code: 'SETTLEMENT_UNAUTHORIZED',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
 
-    if (!expectedKey) {
-      console.error('SETTLEMENT_AUTHORITY_API_KEY environment variable is not configured');
-      res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'Settlement authority is not configured',
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
+      const expectedKey = process.env.SETTLEMENT_AUTHORITY_API_KEY;
 
-    if (!constantTimeCompare(settlementKey, expectedKey)) {
-      res.status(403).json({
-        error: 'Forbidden',
-        message: 'Invalid settlement authority key',
-        code: 'SETTLEMENT_UNAUTHORIZED',
-        timestamp: new Date().toISOString(),
-      });
-      return;
+      if (!expectedKey) {
+        console.error('SETTLEMENT_AUTHORITY_API_KEY environment variable is not configured');
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Settlement authority is not configured',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!constantTimeCompare(settlementKey, expectedKey)) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Invalid settlement authority key',
+          code: 'SETTLEMENT_UNAUTHORIZED',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
     }
 
     next();

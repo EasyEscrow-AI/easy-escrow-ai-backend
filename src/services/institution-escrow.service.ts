@@ -195,7 +195,7 @@ export interface CreateEscrowResult {
 }
 
 export interface ListEscrowsParams {
-  clientId: string;
+  clientId: string | null;
   status?: string;
   corridor?: string;
   limit?: number;
@@ -447,12 +447,12 @@ export class InstitutionEscrowService {
       );
     }
 
-    // 10. Initialize escrow on-chain
+    // 10. Initialize escrow on-chain (skip for direct payments — no vault needed)
     let escrowPda: string | null = null;
     let vaultPda: string | null = null;
     let initTxSignature: string | null = null;
     const programService = this.getProgramService();
-    if (programService) {
+    if (programService && settlementMode !== 'direct') {
       // Validate all PublicKey inputs before on-chain call
       if (!config.platform.feeCollectorAddress) {
         throw new Error('Platform feeCollectorAddress is not configured');
@@ -594,7 +594,7 @@ export class InstitutionEscrowService {
         escrowId,
         type: 'ESCROW_CREATED',
         title: 'Escrow Created',
-        message: `Escrow ${escrowCode} created for ${amount} USDC on corridor ${corridor}. Awaiting deposit.`,
+        message: `Escrow ${escrowCode} created for ${amount} USDC on corridor ${corridor}. ${settlementMode === 'direct' ? 'Awaiting proof of delivery.' : 'Awaiting deposit.'}`,
         metadata: { amount, corridor, escrowCode, riskScore: complianceResult.riskScore },
       });
     } catch (error) {
@@ -885,12 +885,12 @@ export class InstitutionEscrowService {
       }
     }
 
-    // Initialize escrow on-chain
+    // Initialize escrow on-chain (skip for direct payments — no vault needed)
     let escrowPda: string | null = null;
     let vaultPda: string | null = null;
     let initTxSignature: string | null = null;
     const programService = this.getProgramService();
-    if (programService) {
+    if (programService && (escrow as any).settlementMode !== 'direct') {
       if (!config.platform.feeCollectorAddress) {
         throw new Error('Platform feeCollectorAddress is not configured');
       }
@@ -1025,7 +1025,7 @@ export class InstitutionEscrowService {
         title: 'Escrow Created',
         message: `Escrow ${escrow.escrowCode} created for ${Number(
           escrow.amount
-        )} USDC on corridor ${escrow.corridor}. Awaiting deposit.`,
+        )} USDC on corridor ${escrow.corridor}. ${(escrow as any).settlementMode === 'direct' ? 'Awaiting proof of delivery.' : 'Awaiting deposit.'}`,
         metadata: {
           amount: Number(escrow.amount),
           corridor: escrow.corridor,
@@ -1066,6 +1066,10 @@ export class InstitutionEscrowService {
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
+
+    if ((escrow as any).settlementMode === 'direct') {
+      throw new Error('Cannot record deposit: this escrow uses direct settlement (no deposit step required)');
+    }
 
     if (escrow.status !== 'CREATED') {
       throw new Error(`Cannot record deposit: escrow status is ${escrow.status}, expected CREATED`);
@@ -1242,6 +1246,10 @@ export class InstitutionEscrowService {
   }> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
+
+    if ((escrow as any).settlementMode === 'direct') {
+      throw new Error('Cannot get deposit transaction: this escrow uses direct settlement (no deposit required)');
+    }
 
     if (escrow.status !== 'CREATED') {
       throw new Error(
@@ -1509,8 +1517,12 @@ export class InstitutionEscrowService {
     const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
     const { escrowId } = escrow;
 
-    if (escrow.status !== 'FUNDED') {
-      throw new Error(`Cannot fulfill: escrow status is ${escrow.status}, expected FUNDED`);
+    // Direct payments skip the deposit step, so they remain in CREATED status
+    const allowedStatuses = (escrow as any).settlementMode === 'direct'
+      ? ['CREATED', 'FUNDED']
+      : ['FUNDED'];
+    if (!allowedStatuses.includes(escrow.status)) {
+      throw new Error(`Cannot fulfill: escrow status is ${escrow.status}, expected ${allowedStatuses.join(' or ')}`);
     }
 
     // Resolve proof document — accept files uploaded by the caller (creator or recipient)
@@ -1558,7 +1570,7 @@ export class InstitutionEscrowService {
       'PROOF_SUBMITTED',
       actorEmail || (await this.resolveActorName(clientId)),
       {
-        previousStatus: 'FUNDED',
+        previousStatus: escrow.status,
         newStatus: 'PENDING_RELEASE',
         message: auditMessage,
         fileId: proofDocument.id,
@@ -1734,10 +1746,14 @@ export class InstitutionEscrowService {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
 
-    const validStatuses: InstitutionEscrowStatus[] = ['FUNDED'];
+    // Direct payments can notify from CREATED (no deposit step)
+    const isDirectPayment = (escrow as any).settlementMode === 'direct';
+    const validStatuses: InstitutionEscrowStatus[] = isDirectPayment
+      ? ['CREATED', 'FUNDED', 'PENDING_RELEASE']
+      : ['FUNDED'];
     if (!validStatuses.includes(escrow.status)) {
       throw new Error(
-        `Cannot notify recipient: escrow status is ${escrow.status}, expected FUNDED`
+        `Cannot notify recipient: escrow status is ${escrow.status}, expected ${validStatuses.join(', ')}`
       );
     }
 
@@ -1827,14 +1843,15 @@ export class InstitutionEscrowService {
     const { escrowId } = escrow;
 
     // Allow release from FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS (retry after funding)
-    const releasableStatuses: InstitutionEscrowStatus[] = [
-      'FUNDED',
-      'PENDING_RELEASE',
-      'INSUFFICIENT_FUNDS',
-    ];
+    // Direct payments also allow release from CREATED (no deposit step)
+    const isDirectPayment = (escrow as any).settlementMode === 'direct';
+    const releasableStatuses: InstitutionEscrowStatus[] = isDirectPayment
+      ? ['CREATED', 'FUNDED', 'PENDING_RELEASE', 'INSUFFICIENT_FUNDS']
+      : ['FUNDED', 'PENDING_RELEASE', 'INSUFFICIENT_FUNDS'];
     if (!releasableStatuses.includes(escrow.status)) {
+      const expected = releasableStatuses.join(', ');
       throw new Error(
-        `Cannot release: escrow status is ${escrow.status}, expected FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS`
+        `Cannot release: escrow status is ${escrow.status}, expected ${expected}`
       );
     }
 
@@ -1929,8 +1946,10 @@ export class InstitutionEscrowService {
       data: { status: 'RELEASING' },
     });
 
-    // Check payer's token balance before settlement
-    await this.checkPayerBalance(escrow, clientId);
+    // Check payer's token balance before settlement (skip for direct payments — no vault)
+    if (!isDirectPayment) {
+      await this.checkPayerBalance(escrow, clientId);
+    }
 
     // Resolve release destination (standard or stealth address)
     const effectivePrivacy = privacyPreferences || {
@@ -1991,10 +2010,11 @@ export class InstitutionEscrowService {
 
     // Execute on-chain release (transfer USDC from vault to recipient)
     // Fee was already collected at deposit time — release just sends vault balance to recipient
+    // Direct payments skip on-chain settlement entirely — no vault to release from
     let releaseTxSig: string | null = null;
     const releaseProgramService = this.getProgramService();
     const useCdpRelease = ((escrow.releaseConditions as string[]) || []).includes('cdp_policy_approval');
-    if (releaseProgramService && escrow.escrowPda) {
+    if (releaseProgramService && escrow.escrowPda && !isDirectPayment) {
       try {
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         const aiDigest = buildAiDigest(aiAnalysisForMemo);
@@ -2056,7 +2076,7 @@ export class InstitutionEscrowService {
         }
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
-          data: { status: 'FUNDED' },
+          data: { status: originalStatus },
         });
         await this.createAuditLog(
           escrowId,
@@ -2069,7 +2089,7 @@ export class InstitutionEscrowService {
         );
         throw new Error(`On-chain release failed: ${(error as Error).message}`);
       }
-    } else if (escrow.nonceAccount) {
+    } else if (escrow.nonceAccount && !isDirectPayment) {
       // Fallback: advance nonce if no PDA (legacy escrows created before on-chain wiring)
       try {
         const npm = this.getNoncePoolManager();
@@ -2081,7 +2101,7 @@ export class InstitutionEscrowService {
         console.error('[InstitutionEscrow] Nonce advance failed during release:', error);
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
-          data: { status: 'FUNDED' },
+          data: { status: originalStatus },
         });
         throw new Error('On-chain settlement failed: nonce advance error');
       }
@@ -2489,12 +2509,14 @@ export class InstitutionEscrowService {
   }> {
     const { clientId, status, corridor, limit = 20, offset = 0, role = 'all' } = params;
 
-    // Build ownership filter based on role
+    // Admin (null clientId): no ownership filter — return all escrows
+    // Regular client: filter by ownership role
     let ownershipFilter: Record<string, unknown>;
-    if (role === 'payer') {
+    if (!clientId) {
+      ownershipFilter = {};
+    } else if (role === 'payer') {
       ownershipFilter = { clientId };
     } else if (role === 'recipient') {
-      // Find all wallets belonging to this institution
       const recipientWallets = await this.getClientWallets(clientId);
       ownershipFilter = { recipientWallet: { in: recipientWallets } };
     } else {
@@ -2519,10 +2541,12 @@ export class InstitutionEscrowService {
       this.prisma.institutionEscrow.count({ where: where as any }),
     ]);
 
-    const partyNamesArr = await this.resolvePartyNames(escrows as any[], clientId);
+    // For admin (null clientId), resolve names using each escrow's own clientId
+    const resolveClientId = clientId || (escrows.length > 0 ? (escrows[0] as any).clientId : '');
+    const partyNamesArr = await this.resolvePartyNames(escrows as any[], resolveClientId);
 
     return {
-      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i], clientId)),
+      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i], clientId ?? undefined)),
       total,
       limit,
       offset,
