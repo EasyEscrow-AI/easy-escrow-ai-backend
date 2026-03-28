@@ -600,6 +600,7 @@ exports.Prisma.InstitutionClientSettingsScalarFieldEnum = {
   activeSanctionsLists: 'activeSanctionsLists',
   aiAutoRelease: 'aiAutoRelease',
   riskTolerance: 'riskTolerance',
+  defaultTimelockHours: 'defaultTimelockHours',
   defaultToken: 'defaultToken',
   emailNotifications: 'emailNotifications',
   language: 'language',
@@ -666,7 +667,9 @@ exports.Prisma.InstitutionEscrowScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   resolvedAt: 'resolvedAt',
-  fundedAt: 'fundedAt'
+  fundedAt: 'fundedAt',
+  unlockAt: 'unlockAt',
+  timelockHours: 'timelockHours'
 };
 
 exports.Prisma.InstitutionDepositScalarFieldEnum = {

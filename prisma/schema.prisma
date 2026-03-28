@@ -1138,6 +1138,7 @@ model InstitutionClientSettings {
   activeSanctionsLists      String[]  @default(["OFAC SDN", "EU Consolidated", "UN Sanctions"]) @map("active_sanctions_lists")
   aiAutoRelease             Boolean   @default(false) @map("ai_auto_release")
   riskTolerance             String    @default("low") @map("risk_tolerance") // low, medium, high
+  defaultTimelockHours      Int?                      @map("default_timelock_hours")
   defaultToken              String    @default("usdc") @map("default_token")
   emailNotifications        Boolean   @default(true) @map("email_notifications")
   language                  String?   // en, de, fr, ar, zh, es
@@ -1233,6 +1234,8 @@ model InstitutionEscrow {
   updatedAt             DateTime                  @updatedAt @map("updated_at")
   resolvedAt            DateTime?                 @map("resolved_at")
   fundedAt              DateTime?                 @map("funded_at")
+  unlockAt              DateTime?                 @map("unlock_at")
+  timelockHours         Int?                      @map("timelock_hours")
 
   // Relations
   client                InstitutionClient         @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -1252,6 +1255,7 @@ model InstitutionEscrow {
   @@index([createdAt])
   @@index([status, expiresAt], name: "idx_inst_escrow_status_expiry")
   @@index([clientId, status], name: "idx_inst_escrow_client_status")
+  @@index([unlockAt], name: "idx_inst_escrow_unlock_at")
   @@map("institution_escrows")
 }
 

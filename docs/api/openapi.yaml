@@ -2641,6 +2641,10 @@ paths:
                   type: string
                   maxLength: 500
                   description: Optional release notes
+                forceRelease:
+                  type: boolean
+                  description: Override active payment timelock (logged in audit trail)
+                  default: false
             example:
               notes: "Invoice verified, releasing payment"
       responses:
@@ -7453,6 +7457,14 @@ components:
             Optional SPL token mint address. Must be on the AMINA-approved whitelist.
             Defaults to USDC if omitted. Use `GET /api/v1/institution/tokens` to list available tokens.
           example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        timelockHours:
+          type: integer
+          minimum: 0
+          maximum: 2160
+          description: |
+            Payment timelock in hours (cooling-off period between funding and release).
+            0 = disabled. Defaults to client settings or global config (24h).
+          example: 24
         settlementMode:
           type: string
           enum: [escrow, direct]
@@ -7618,6 +7630,15 @@ components:
             isCdpAuthority:
               type: boolean
               description: Whether the settlement authority is a CDP (Coinbase Developer Platform) wallet
+        timelockHours:
+          type: integer
+          nullable: true
+          description: Payment timelock in hours (null if not configured)
+        unlockAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the payment timelock expires (null if no timelock or not yet funded)
         releaseMode:
           type: string
           enum: [manual, ai]
@@ -7819,6 +7840,12 @@ components:
         tokenMint:
           type: string
           description: Optional SPL token mint address (defaults to USDC)
+        timelockHours:
+          type: integer
+          minimum: 0
+          maximum: 2160
+          description: Payment timelock in hours (optional for drafts)
+          example: 24
         payerName:
           type: string
           maxLength: 200
@@ -7872,6 +7899,11 @@ components:
         tokenMint:
           type: string
           description: SPL token mint address
+        timelockHours:
+          type: integer
+          minimum: 0
+          maximum: 2160
+          description: Payment timelock in hours
         payerName:
           type: string
           maxLength: 200
