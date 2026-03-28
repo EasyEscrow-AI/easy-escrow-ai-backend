@@ -104,6 +104,7 @@ router.post(
         recipientName: req.body.recipientName,
         recipientAccountLabel: req.body.recipientAccountLabel,
         recipientBranchName: req.body.recipientBranchName,
+        timelockHours: req.body.timelockHours,
       });
 
       res.status(201).json({
@@ -155,6 +156,7 @@ router.post(
         recipientName: req.body.recipientName,
         recipientAccountLabel: req.body.recipientAccountLabel,
         recipientBranchName: req.body.recipientBranchName,
+        timelockHours: req.body.timelockHours,
       });
 
       res.status(201).json({
@@ -204,6 +206,7 @@ router.put(
         recipientName: req.body.recipientName,
         recipientAccountLabel: req.body.recipientAccountLabel,
         recipientBranchName: req.body.recipientBranchName,
+        timelockHours: req.body.timelockHours,
       });
 
       res.status(200).json({
@@ -430,7 +433,8 @@ router.post(
         req.params.id,
         req.body.notes,
         req.institutionClient!.email,
-        privacyPreferences
+        privacyPreferences,
+        { forceRelease: req.body.forceRelease === true }
       );
 
       res.status(200).json({
