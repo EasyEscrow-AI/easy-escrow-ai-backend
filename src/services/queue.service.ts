@@ -82,8 +82,8 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
       return {
         host: url.hostname,
         port: parseInt(url.port || '6379', 10),
-        password: url.password || undefined,
-        username: url.username || undefined,
+        password: url.password ? decodeURIComponent(url.password) : undefined,
+        username: url.username ? decodeURIComponent(url.username) : undefined,
         // TLS configuration for Upstash
         tls: isTLS ? {
           // Upstash uses valid certificates, but some environments need this
