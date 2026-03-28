@@ -1,14 +1,14 @@
 /**
  * Institution Escrow Admin Routes
  *
- * POST   /api/admin/institution-escrow/allowlist          → addToAllowlist
- * DELETE /api/admin/institution-escrow/allowlist/:wallet   → removeFromAllowlist
- * GET    /api/admin/institution-escrow/allowlist           → listAllowlist
- * POST   /api/admin/institution-escrow/corridors           → configureCorridor
- * GET    /api/admin/institution-escrow/corridors            → listCorridors
- * POST   /api/admin/institution-escrow/pause               → pauseEscrowOperations
- * POST   /api/admin/institution-escrow/unpause             → unpauseEscrowOperations
- * GET    /api/admin/institution-escrow/pause               → getPauseStatus
+ * POST   /api/v1/admin/institution-escrow/allowlist          → addToAllowlist
+ * DELETE /api/v1/admin/institution-escrow/allowlist/:wallet   → removeFromAllowlist
+ * GET    /api/v1/admin/institution-escrow/allowlist           → listAllowlist
+ * POST   /api/v1/admin/institution-escrow/corridors           → configureCorridor
+ * GET    /api/v1/admin/institution-escrow/corridors            → listCorridors
+ * POST   /api/v1/admin/institution-escrow/pause               → pauseEscrowOperations
+ * POST   /api/v1/admin/institution-escrow/unpause             → unpauseEscrowOperations
+ * GET    /api/v1/admin/institution-escrow/pause               → getPauseStatus
  */
 
 import { Router, Request, Response } from 'express';
@@ -37,9 +37,9 @@ const standardRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// POST /api/admin/institution-escrow/allowlist
+// POST /api/v1/admin/institution-escrow/allowlist
 router.post(
-  '/api/admin/institution-escrow/allowlist',
+  '/api/v1/admin/institution-escrow/allowlist',
   standardRateLimiter,
   requireAdminOrApiKey,
   validateAddToAllowlist,
@@ -73,9 +73,9 @@ router.post(
   }
 );
 
-// DELETE /api/admin/institution-escrow/allowlist/:wallet
+// DELETE /api/v1/admin/institution-escrow/allowlist/:wallet
 router.delete(
-  '/api/admin/institution-escrow/allowlist/:wallet',
+  '/api/v1/admin/institution-escrow/allowlist/:wallet',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: Request, res: Response) => {
@@ -98,9 +98,9 @@ router.delete(
   }
 );
 
-// GET /api/admin/institution-escrow/allowlist
+// GET /api/v1/admin/institution-escrow/allowlist
 router.get(
-  '/api/admin/institution-escrow/allowlist',
+  '/api/v1/admin/institution-escrow/allowlist',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (_req: Request, res: Response) => {
@@ -124,9 +124,9 @@ router.get(
   }
 );
 
-// POST /api/admin/institution-escrow/corridors
+// POST /api/v1/admin/institution-escrow/corridors
 router.post(
-  '/api/admin/institution-escrow/corridors',
+  '/api/v1/admin/institution-escrow/corridors',
   standardRateLimiter,
   requireAdminOrApiKey,
   validateConfigureCorridor,
@@ -182,9 +182,9 @@ router.post(
   }
 );
 
-// GET /api/admin/institution-escrow/corridors
+// GET /api/v1/admin/institution-escrow/corridors
 router.get(
-  '/api/admin/institution-escrow/corridors',
+  '/api/v1/admin/institution-escrow/corridors',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (_req: Request, res: Response) => {
@@ -209,9 +209,9 @@ router.get(
   }
 );
 
-// POST /api/admin/institution-escrow/pause
+// POST /api/v1/admin/institution-escrow/pause
 router.post(
-  '/api/admin/institution-escrow/pause',
+  '/api/v1/admin/institution-escrow/pause',
   standardRateLimiter,
   requireAdminOrApiKey,
   validatePauseEscrow,
@@ -262,9 +262,9 @@ router.post(
   }
 );
 
-// POST /api/admin/institution-escrow/unpause
+// POST /api/v1/admin/institution-escrow/unpause
 router.post(
-  '/api/admin/institution-escrow/unpause',
+  '/api/v1/admin/institution-escrow/unpause',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: AdminAuthenticatedRequest, res: Response) => {
@@ -304,9 +304,9 @@ router.post(
   }
 );
 
-// GET /api/admin/institution-escrow/pause
+// GET /api/v1/admin/institution-escrow/pause
 router.get(
-  '/api/admin/institution-escrow/pause',
+  '/api/v1/admin/institution-escrow/pause',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (_req: Request, res: Response) => {
@@ -331,9 +331,9 @@ router.get(
 
 // ─── Corridor Management ─────────────────────────────────────────────
 
-// PATCH /api/admin/institution-escrow/corridors/:code
+// PATCH /api/v1/admin/institution-escrow/corridors/:code
 router.patch(
-  '/api/admin/institution-escrow/corridors/:code',
+  '/api/v1/admin/institution-escrow/corridors/:code',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: Request, res: Response) => {
@@ -396,9 +396,9 @@ router.patch(
 
 // ─── Client Settings (Admin) ────────────────────────────────────────
 
-// GET /api/admin/institution-escrow/clients/:clientId/settings
+// GET /api/v1/admin/institution-escrow/clients/:clientId/settings
 router.get(
-  '/api/admin/institution-escrow/clients/:clientId/settings',
+  '/api/v1/admin/institution-escrow/clients/:clientId/settings',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: Request, res: Response) => {
@@ -433,9 +433,9 @@ router.get(
   }
 );
 
-// PATCH /api/admin/institution-escrow/clients/:clientId/settings
+// PATCH /api/v1/admin/institution-escrow/clients/:clientId/settings
 router.patch(
-  '/api/admin/institution-escrow/clients/:clientId/settings',
+  '/api/v1/admin/institution-escrow/clients/:clientId/settings',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: Request, res: Response) => {
@@ -490,9 +490,9 @@ router.patch(
 
 // ─── Client Status (Admin) ──────────────────────────────────────────
 
-// GET /api/admin/institution-escrow/clients/:clientId/status
+// GET /api/v1/admin/institution-escrow/clients/:clientId/status
 router.get(
-  '/api/admin/institution-escrow/clients/:clientId/status',
+  '/api/v1/admin/institution-escrow/clients/:clientId/status',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: Request, res: Response) => {
@@ -538,9 +538,9 @@ router.get(
   }
 );
 
-// PATCH /api/admin/institution-escrow/clients/:clientId/status
+// PATCH /api/v1/admin/institution-escrow/clients/:clientId/status
 router.patch(
-  '/api/admin/institution-escrow/clients/:clientId/status',
+  '/api/v1/admin/institution-escrow/clients/:clientId/status',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: AdminAuthenticatedRequest, res: Response) => {
@@ -610,9 +610,9 @@ router.patch(
 
 // ─── Account Toggles (Admin) ────────────────────────────────────────
 
-// GET /api/admin/institution-escrow/accounts/:accountId/toggles
+// GET /api/v1/admin/institution-escrow/accounts/:accountId/toggles
 router.get(
-  '/api/admin/institution-escrow/accounts/:accountId/toggles',
+  '/api/v1/admin/institution-escrow/accounts/:accountId/toggles',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: Request, res: Response) => {
@@ -662,9 +662,9 @@ router.get(
   }
 );
 
-// PATCH /api/admin/institution-escrow/accounts/:accountId/toggles
+// PATCH /api/v1/admin/institution-escrow/accounts/:accountId/toggles
 router.patch(
-  '/api/admin/institution-escrow/accounts/:accountId/toggles',
+  '/api/v1/admin/institution-escrow/accounts/:accountId/toggles',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: AdminAuthenticatedRequest, res: Response) => {
@@ -744,9 +744,9 @@ router.patch(
 
 // ─── Feature Flags (Admin) ──────────────────────────────────────────
 
-// GET /api/admin/institution-escrow/feature-flags
+// GET /api/v1/admin/institution-escrow/feature-flags
 router.get(
-  '/api/admin/institution-escrow/feature-flags',
+  '/api/v1/admin/institution-escrow/feature-flags',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (_req: Request, res: Response) => {
@@ -780,9 +780,9 @@ router.get(
   }
 );
 
-// PATCH /api/admin/institution-escrow/feature-flags
+// PATCH /api/v1/admin/institution-escrow/feature-flags
 router.patch(
-  '/api/admin/institution-escrow/feature-flags',
+  '/api/v1/admin/institution-escrow/feature-flags',
   standardRateLimiter,
   requireAdminOrApiKey,
   async (req: AdminAuthenticatedRequest, res: Response) => {

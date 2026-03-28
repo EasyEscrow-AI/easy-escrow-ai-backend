@@ -16,9 +16,9 @@ const loginRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// POST /api/admin/auth/login
+// POST /api/v1/admin/auth/login
 router.post(
-  '/api/admin/auth/login',
+  '/api/v1/admin/auth/login',
   loginRateLimiter,
   async (req: Request, res: Response) => {
     try {
@@ -52,8 +52,8 @@ router.post(
   }
 );
 
-// POST /api/admin/auth/refresh
-router.post('/api/admin/auth/refresh', loginRateLimiter, async (req: Request, res: Response) => {
+// POST /api/v1/admin/auth/refresh
+router.post('/api/v1/admin/auth/refresh', loginRateLimiter, async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
@@ -83,9 +83,9 @@ router.post('/api/admin/auth/refresh', loginRateLimiter, async (req: Request, re
   }
 });
 
-// POST /api/admin/auth/logout
+// POST /api/v1/admin/auth/logout
 router.post(
-  '/api/admin/auth/logout',
+  '/api/v1/admin/auth/logout',
   requireAdminAuth,
   async (req: Request, res: Response) => {
     try {
@@ -118,9 +118,9 @@ router.post(
   }
 );
 
-// GET /api/admin/auth/me
+// GET /api/v1/admin/auth/me
 router.get(
-  '/api/admin/auth/me',
+  '/api/v1/admin/auth/me',
   requireAdminAuth,
   async (req: AdminAuthenticatedRequest, res: Response) => {
     try {
@@ -142,9 +142,9 @@ router.get(
   }
 );
 
-// PUT /api/admin/auth/password
+// PUT /api/v1/admin/auth/password
 router.put(
-  '/api/admin/auth/password',
+  '/api/v1/admin/auth/password',
   requireAdminAuth,
   async (req: AdminAuthenticatedRequest, res: Response) => {
     try {
