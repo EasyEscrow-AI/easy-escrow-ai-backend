@@ -5,7 +5,7 @@
 
 // Use native fetch (Node 18+)
 
-const HELIUS_RPC = 'https://mainnet.helius-rpc.com/?api-key=5a8c5d8d-15c2-4dc3-8ceb-109cd9baa8b8';
+const HELIUS_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const PRODUCTION_API = 'https://api.easyescrow.ai';
 
 const MAINNET_WALLETS = [
