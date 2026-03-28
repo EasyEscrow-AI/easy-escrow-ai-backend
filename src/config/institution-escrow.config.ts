@@ -48,6 +48,15 @@ export interface InstitutionEscrowConfig {
 
   /** API key for settlement authority operations */
   settlementAuthorityApiKey: string;
+
+  /** CDP (Coinbase Developer Platform) wallet settings for independent settlement authority */
+  cdp: {
+    enabled: boolean;
+    apiKeyId: string;
+    apiKeySecret: string;
+    walletSecret: string;
+    accountName: string;
+  };
 }
 
 /**
@@ -78,6 +87,13 @@ export function loadInstitutionEscrowConfig(): InstitutionEscrowConfig {
       region: process.env.DO_SPACES_REGION || '',
     },
     settlementAuthorityApiKey: process.env.SETTLEMENT_AUTHORITY_API_KEY || '',
+    cdp: {
+      enabled: process.env.CDP_ENABLED?.toLowerCase() === 'true',
+      apiKeyId: process.env.CDP_API_KEY_ID || '',
+      apiKeySecret: process.env.CDP_API_KEY_SECRET || '',
+      walletSecret: process.env.CDP_WALLET_SECRET || '',
+      accountName: process.env.CDP_ACCOUNT_NAME || 'easyescrow-settlement-devnet',
+    },
   };
 }
 
@@ -99,6 +115,24 @@ export function getInstitutionEscrowConfig(): InstitutionEscrowConfig {
  */
 export function resetInstitutionEscrowConfig(): void {
   _institutionEscrowConfig = null;
+}
+
+/**
+ * Validate CDP configuration when CDP_ENABLED=true.
+ * Throws at startup if required credentials are missing.
+ */
+export function validateCdpConfig(cfg: InstitutionEscrowConfig): void {
+  if (!cfg.cdp.enabled) return;
+  const missing: string[] = [];
+  if (!cfg.cdp.apiKeyId) missing.push('CDP_API_KEY_ID');
+  if (!cfg.cdp.apiKeySecret) missing.push('CDP_API_KEY_SECRET');
+  if (!cfg.cdp.walletSecret) missing.push('CDP_WALLET_SECRET');
+  if (missing.length > 0) {
+    throw new Error(
+      `CDP_ENABLED=true but required credentials are missing: ${missing.join(', ')}. ` +
+        'Set these environment variables or disable CDP with CDP_ENABLED=false.'
+    );
+  }
 }
 
 export const institutionEscrowConfig = {

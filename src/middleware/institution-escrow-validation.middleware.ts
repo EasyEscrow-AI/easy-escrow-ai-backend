@@ -58,6 +58,7 @@ const VALID_RELEASE_CONDITIONS = [
   'invoice_amount_match',
   'client_info_match',
   'document_signature_verified',
+  'cdp_policy_approval',
 ];
 
 /**
