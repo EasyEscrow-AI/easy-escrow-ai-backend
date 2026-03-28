@@ -1444,8 +1444,12 @@ export class InstitutionEscrowService {
     const escrow = await this.getEscrowInternal(clientId, idOrCode, true);
     const { escrowId } = escrow;
 
-    if (escrow.status !== 'FUNDED') {
-      throw new Error(`Cannot fulfill: escrow status is ${escrow.status}, expected FUNDED`);
+    // Direct payments skip the deposit step, so they remain in CREATED status
+    const allowedStatuses = (escrow as any).settlementMode === 'direct'
+      ? ['CREATED', 'FUNDED']
+      : ['FUNDED'];
+    if (!allowedStatuses.includes(escrow.status)) {
+      throw new Error(`Cannot fulfill: escrow status is ${escrow.status}, expected ${allowedStatuses.join(' or ')}`);
     }
 
     // Resolve proof document — accept files uploaded by the caller (creator or recipient)
