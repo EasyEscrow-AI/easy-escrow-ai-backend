@@ -2599,6 +2599,12 @@ paths:
         Release escrowed USDC to the recipient wallet. This endpoint requires **both**
         a valid JWT token and a settlement authority API key (`X-Settlement-Authority-Key` header).
 
+        When `cdp_policy_approval` is included in the escrow's release conditions, the release
+        transaction is routed through the CDP (Coinbase Developer Platform) wallet and must pass
+        the configured CDP policy validation before funds are transferred. This requires the
+        `CDP_ENABLED=true` environment flag; if `cdp_policy_approval` is present on an escrow
+        but CDP is disabled, the release request is rejected (there is no fallback to admin signing).
+
         **Rate Limited**: 10 requests per minute.
       security:
         - BearerAuth: []
@@ -7448,7 +7454,7 @@ components:
           type: array
           items:
             type: string
-            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified, cdp_policy_approval]
           description: |
             AI release conditions to evaluate when releaseMode is 'ai'.
             `legal_compliance` is always auto-included for AI mode.
@@ -7456,12 +7462,13 @@ components:
             - **invoice_amount_match**: Invoice amount matches escrow amount exactly
             - **client_info_match**: Client information matches exactly
             - **document_signature_verified**: Document signature is verified (via DocuSign)
+            - **cdp_policy_approval**: Release requires CDP (Coinbase Developer Platform) wallet policy approval
           example: ["legal_compliance", "invoice_amount_match"]
         conditions:
           type: array
           items:
             type: string
-            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified, cdp_policy_approval]
           description: Alias for `releaseConditions` — either field is accepted.
         approvalParties:
           type: array
@@ -7568,9 +7575,36 @@ components:
           type: string
           nullable: true
           description: Release transaction signature
-        settlementAuthority:
-          type: string
-          nullable: true
+        settlement:
+          type: object
+          description: Settlement infrastructure details (on-chain accounts and authority)
+          properties:
+            mode:
+              type: string
+              enum: [escrow, direct]
+              description: "Settlement mode: 'escrow' for PDA vault, 'direct' for direct transfer"
+            tokenMint:
+              type: string
+              description: USDC token mint address used for this escrow
+            escrowPda:
+              type: string
+              nullable: true
+              description: On-chain escrow PDA address
+            vaultPda:
+              type: string
+              nullable: true
+              description: On-chain token vault PDA address
+            nonceAccount:
+              type: string
+              nullable: true
+              description: Durable nonce account for atomic settlement
+            authority:
+              type: string
+              nullable: true
+              description: Settlement authority wallet address (admin or CDP wallet)
+            isCdpAuthority:
+              type: boolean
+              description: Whether the settlement authority is a CDP (Coinbase Developer Platform) wallet
         releaseMode:
           type: string
           enum: [manual, ai]
@@ -7579,7 +7613,7 @@ components:
           type: array
           items:
             type: string
-            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified, cdp_policy_approval]
           description: AI release conditions to evaluate (only used when releaseMode is 'ai')
         releaseConditionLabels:
           type: array
