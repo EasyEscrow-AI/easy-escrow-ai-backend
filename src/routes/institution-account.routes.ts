@@ -19,6 +19,7 @@ import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
   requireInstitutionOrAdminAuth,
+  getEffectiveClientId,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionAccountService } from '../services/institution-account.service';
@@ -137,7 +138,8 @@ router.get(
         filters.includeBalances = val === 'true';
       }
 
-      const accounts = await service.listAccounts(req.institutionClient!.clientId, filters);
+      const clientId = getEffectiveClientId(req);
+      const accounts = await service.listAccounts(clientId, filters);
 
       res.status(200).json({
         success: true,

@@ -188,7 +188,7 @@ export interface CreateEscrowResult {
 }
 
 export interface ListEscrowsParams {
-  clientId: string;
+  clientId: string | null;
   status?: string;
   corridor?: string;
   limit?: number;
@@ -2384,12 +2384,14 @@ export class InstitutionEscrowService {
   }> {
     const { clientId, status, corridor, limit = 20, offset = 0, role = 'all' } = params;
 
-    // Build ownership filter based on role
+    // Admin (null clientId): no ownership filter — return all escrows
+    // Regular client: filter by ownership role
     let ownershipFilter: Record<string, unknown>;
-    if (role === 'payer') {
+    if (!clientId) {
+      ownershipFilter = {};
+    } else if (role === 'payer') {
       ownershipFilter = { clientId };
     } else if (role === 'recipient') {
-      // Find all wallets belonging to this institution
       const recipientWallets = await this.getClientWallets(clientId);
       ownershipFilter = { recipientWallet: { in: recipientWallets } };
     } else {
@@ -2414,10 +2416,12 @@ export class InstitutionEscrowService {
       this.prisma.institutionEscrow.count({ where: where as any }),
     ]);
 
-    const partyNamesArr = await this.resolvePartyNames(escrows as any[], clientId);
+    // For admin (null clientId), resolve names using each escrow's own clientId
+    const resolveClientId = clientId || (escrows.length > 0 ? (escrows[0] as any).clientId : '');
+    const partyNamesArr = await this.resolvePartyNames(escrows as any[], resolveClientId);
 
     return {
-      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i], clientId)),
+      escrows: escrows.map((e, i) => this.formatEscrow(e, partyNamesArr[i], clientId ?? undefined)),
       total,
       limit,
       offset,

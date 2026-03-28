@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
+import { prisma } from '../config/database';
 
 // Renew access token when it has less than this many seconds remaining
 const SLIDING_RENEWAL_THRESHOLD_SEC = 10 * 60; // 10 minutes
@@ -17,6 +18,7 @@ export interface InstitutionAuthenticatedRequest extends Request {
     email: string;
     role: string;
   };
+  isAdmin?: boolean;
 }
 
 interface InstitutionJwtPayload {
@@ -184,11 +186,11 @@ export const optionalInstitutionAuth = (
  *   If the admin provides a ?clientId query param, req.institutionClient is
  *   also populated so downstream handlers work unchanged.
  */
-export const requireInstitutionOrAdminAuth = (
+export const requireInstitutionOrAdminAuth = async (
   req: InstitutionAuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -234,6 +236,18 @@ export const requireInstitutionOrAdminAuth = (
         email: decoded.email,
         tier: decoded.tier,
       };
+
+      // Check if this institution client is an admin (e.g. Amina Bank)
+      try {
+        const client = await prisma.institutionClient.findUnique({
+          where: { id: decoded.clientId },
+          select: { companyName: true },
+        });
+        req.isAdmin = client?.companyName?.toLowerCase().includes('amina') ?? false;
+      } catch {
+        req.isAdmin = false;
+      }
+
       next();
       return;
     }
@@ -245,6 +259,7 @@ export const requireInstitutionOrAdminAuth = (
         email: decoded.email,
         role: decoded.role,
       };
+      req.isAdmin = true;
 
       // Admin can scope to a specific client via ?clientId query param
       const clientId = req.query.clientId as string | undefined;
@@ -276,6 +291,19 @@ export const requireInstitutionOrAdminAuth = (
     });
   }
 };
+
+/**
+ * Returns the effective clientId for data filtering.
+ * - Admin without ?clientId scope → null (aggregate across all clients)
+ * - Admin with ?clientId scope → that clientId
+ * - Regular client → their clientId
+ */
+export function getEffectiveClientId(req: InstitutionAuthenticatedRequest): string | null {
+  if (req.isAdmin) {
+    return req.institutionClient?.clientId ?? null;
+  }
+  return req.institutionClient!.clientId;
+}
 
 /**
  * Requires a valid settlement authority key.
