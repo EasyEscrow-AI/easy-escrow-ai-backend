@@ -1836,7 +1836,6 @@ export class InstitutionEscrowService {
 
     // Update status to RELEASING
     const originalStatus = escrow.status;
-    const isDirectPayment = (escrow as any).settlementMode === 'direct';
     await this.prisma.institutionEscrow.update({
       where: { escrowId },
       data: { status: 'RELEASING' },
