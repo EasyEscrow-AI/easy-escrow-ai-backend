@@ -2514,7 +2514,7 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    $ref: '#/components/schemas/InstitutionEscrow'
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
                   timestamp:
                     type: string
                     format: date-time
