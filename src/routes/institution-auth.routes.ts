@@ -14,7 +14,7 @@ import rateLimit from 'express-rate-limit';
 import { validationResult } from 'express-validator';
 import { getInstitutionAuthService } from '../services/institution-auth.service';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 
@@ -167,7 +167,7 @@ router.post(
 router.post(
   '/api/v1/institution/auth/logout',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: Request, res: Response) => {
     try {
       const { refreshToken } = req.body;
@@ -203,7 +203,7 @@ router.post(
 router.get(
   '/api/v1/institution/auth/me',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const authService = getInstitutionAuthService();
@@ -230,7 +230,7 @@ router.get(
 router.put(
   '/api/v1/institution/auth/password',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { oldPassword, newPassword } = req.body;

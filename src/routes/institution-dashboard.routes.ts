@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionDashboardService } from '../services/institution-dashboard.service';
@@ -16,7 +16,7 @@ const standardRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.get('/api/v1/institution/dashboard/metrics', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/dashboard/metrics', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();
@@ -27,7 +27,7 @@ router.get('/api/v1/institution/dashboard/metrics', standardRateLimiter, require
     }
   });
 
-router.get('/api/v1/institution/dashboard/cashflow', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/dashboard/cashflow', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();
@@ -39,7 +39,7 @@ router.get('/api/v1/institution/dashboard/cashflow', standardRateLimiter, requir
     }
   });
 
-router.get('/api/v1/institution/dashboard/pending-actions', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/dashboard/pending-actions', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();
@@ -50,7 +50,7 @@ router.get('/api/v1/institution/dashboard/pending-actions', standardRateLimiter,
     }
   });
 
-router.get('/api/v1/institution/dashboard/recent-direct', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/dashboard/recent-direct', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();
@@ -62,7 +62,7 @@ router.get('/api/v1/institution/dashboard/recent-direct', standardRateLimiter, r
     }
   });
 
-router.get('/api/v1/institution/dashboard/branch-activity', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/dashboard/branch-activity', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();
@@ -73,7 +73,7 @@ router.get('/api/v1/institution/dashboard/branch-activity', standardRateLimiter,
     }
   });
 
-router.get('/api/v1/institution/dashboard/corridor-activity', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/dashboard/corridor-activity', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();
@@ -84,7 +84,7 @@ router.get('/api/v1/institution/dashboard/corridor-activity', standardRateLimite
     }
   });
 
-router.get('/api/v1/institution/dashboard/compliance', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/dashboard/compliance', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();
@@ -95,7 +95,7 @@ router.get('/api/v1/institution/dashboard/compliance', standardRateLimiter, requ
     }
   });
 
-router.get('/api/v1/institution/dashboard/sanctions', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/dashboard/sanctions', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDashboardService();

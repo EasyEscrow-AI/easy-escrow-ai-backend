@@ -7,7 +7,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { prisma } from '../config/database';
@@ -32,7 +32,7 @@ function riskScoreToLevel(score: number): 'low' | 'medium' | 'high' {
 router.get(
   '/api/v1/institution/branches',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { riskLevel, isHeadquarters, isActive } = req.query;
