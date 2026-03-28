@@ -554,7 +554,7 @@ export class InstitutionEscrowService {
         escrowId,
         type: 'ESCROW_CREATED',
         title: 'Escrow Created',
-        message: `Escrow ${escrowCode} created for ${amount} USDC on corridor ${corridor}. Awaiting deposit.`,
+        message: `Escrow ${escrowCode} created for ${amount} USDC on corridor ${corridor}. ${settlementMode === 'direct' ? 'Awaiting proof of delivery.' : 'Awaiting deposit.'}`,
         metadata: { amount, corridor, escrowCode, riskScore: complianceResult.riskScore },
       });
     } catch (error) {
@@ -979,7 +979,7 @@ export class InstitutionEscrowService {
         title: 'Escrow Created',
         message: `Escrow ${escrow.escrowCode} created for ${Number(
           escrow.amount
-        )} USDC on corridor ${escrow.corridor}. Awaiting deposit.`,
+        )} USDC on corridor ${escrow.corridor}. ${(escrow as any).settlementMode === 'direct' ? 'Awaiting proof of delivery.' : 'Awaiting deposit.'}`,
         metadata: {
           amount: Number(escrow.amount),
           corridor: escrow.corridor,
@@ -1020,6 +1020,10 @@ export class InstitutionEscrowService {
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
+
+    if ((escrow as any).settlementMode === 'direct') {
+      throw new Error('Cannot record deposit: this escrow uses direct settlement (no deposit step required)');
+    }
 
     if (escrow.status !== 'CREATED') {
       throw new Error(`Cannot record deposit: escrow status is ${escrow.status}, expected CREATED`);
@@ -1177,6 +1181,10 @@ export class InstitutionEscrowService {
   }> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
+
+    if ((escrow as any).settlementMode === 'direct') {
+      throw new Error('Cannot get deposit transaction: this escrow uses direct settlement (no deposit required)');
+    }
 
     if (escrow.status !== 'CREATED') {
       throw new Error(
@@ -1497,7 +1505,7 @@ export class InstitutionEscrowService {
       'PROOF_SUBMITTED',
       actorEmail || (await this.resolveActorName(clientId)),
       {
-        previousStatus: 'FUNDED',
+        previousStatus: escrow.status,
         newStatus: 'PENDING_RELEASE',
         message: auditMessage,
         fileId: proofDocument.id,
@@ -1655,10 +1663,14 @@ export class InstitutionEscrowService {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
 
-    const validStatuses: InstitutionEscrowStatus[] = ['FUNDED'];
+    // Direct payments can notify from CREATED (no deposit step)
+    const isDirectPayment = (escrow as any).settlementMode === 'direct';
+    const validStatuses: InstitutionEscrowStatus[] = isDirectPayment
+      ? ['CREATED', 'FUNDED', 'PENDING_RELEASE']
+      : ['FUNDED'];
     if (!validStatuses.includes(escrow.status)) {
       throw new Error(
-        `Cannot notify recipient: escrow status is ${escrow.status}, expected FUNDED`
+        `Cannot notify recipient: escrow status is ${escrow.status}, expected ${validStatuses.join(', ')}`
       );
     }
 
@@ -1748,14 +1760,15 @@ export class InstitutionEscrowService {
     const { escrowId } = escrow;
 
     // Allow release from FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS (retry after funding)
-    const releasableStatuses: InstitutionEscrowStatus[] = [
-      'FUNDED',
-      'PENDING_RELEASE',
-      'INSUFFICIENT_FUNDS',
-    ];
+    // Direct payments also allow release from CREATED (no deposit step)
+    const isDirectPayment = (escrow as any).settlementMode === 'direct';
+    const releasableStatuses: InstitutionEscrowStatus[] = isDirectPayment
+      ? ['CREATED', 'FUNDED', 'PENDING_RELEASE', 'INSUFFICIENT_FUNDS']
+      : ['FUNDED', 'PENDING_RELEASE', 'INSUFFICIENT_FUNDS'];
     if (!releasableStatuses.includes(escrow.status)) {
+      const expected = releasableStatuses.join(', ');
       throw new Error(
-        `Cannot release: escrow status is ${escrow.status}, expected FUNDED, PENDING_RELEASE, or INSUFFICIENT_FUNDS`
+        `Cannot release: escrow status is ${escrow.status}, expected ${expected}`
       );
     }
 
