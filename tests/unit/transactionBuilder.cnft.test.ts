@@ -58,23 +58,6 @@ describe('TransactionBuilder - cNFT Integration', () => {
     return data;
   };
 
-  // Helper to create proper nonce account data for NonceAccount.fromAccountData
-  const createMockNonceAccountData = (authority: PublicKey, nonce: string): Buffer => {
-    // NonceAccount layout: version (4) + state (4) + authority (32) + nonce (32) = 72 bytes
-    const data = Buffer.alloc(80); // Standard nonce account size
-    // Version: 4 bytes (little-endian u32, typically 0)
-    data.writeUInt32LE(0, 0);
-    // State: 4 bytes (little-endian u32, 1 = Initialized)
-    data.writeUInt32LE(1, 4);
-    // Authority: 32 bytes (PublicKey)
-    authority.toBuffer().copy(data, 8);
-    // Nonce: 32 bytes (blockhash) - pad to 32 bytes
-    const nonceBuffer = Buffer.alloc(32);
-    Buffer.from(nonce.slice(0, 32)).copy(nonceBuffer);
-    nonceBuffer.copy(data, 40);
-    return data;
-  };
-
   beforeEach(() => {
     // Generate keypairs
     platformAuthority = Keypair.generate();
@@ -154,8 +137,10 @@ describe('TransactionBuilder - cNFT Integration', () => {
     };
 
     // Mock global fetch for DAS API calls (cnftService uses fetch internally)
-    global.fetch = async (url: string, options?: any) => {
-      const body = options?.body ? JSON.parse(options.body) : {};
+    global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      const options = init || (input instanceof Request ? input : {});
+      const body = (options as any)?.body ? JSON.parse((options as any).body as string) : {};
       const method = body.method;
 
       // Mock getAsset
@@ -306,7 +291,7 @@ describe('TransactionBuilder - cNFT Integration', () => {
       };
 
       // Mock fetch to return different asset data for taker cNFT
-      global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
         const options = init || (input instanceof Request ? input : {});
         const body = options?.body ? JSON.parse(options.body as string) : {};
@@ -429,7 +414,7 @@ describe('TransactionBuilder - cNFT Integration', () => {
         proof: Array.from({ length: 10 }, (_, i) => `proof-node-${i}`),
       };
 
-      global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
         const options = init || (input instanceof Request ? input : {});
         const body = options?.body ? JSON.parse(options.body as string) : {};
@@ -634,7 +619,7 @@ describe('TransactionBuilder - cNFT Integration', () => {
         tree_id: mockTreeAddress.toBase58(),
       };
 
-      global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
         const options = init || (input instanceof Request ? input : {});
         const body = options?.body ? JSON.parse(options.body as string) : {};
@@ -770,7 +755,7 @@ describe('TransactionBuilder - cNFT Integration', () => {
       // For SOL-only swaps, fetch should not be called for DAS API
       let fetchCallCount = 0;
       const originalFetch = global.fetch;
-      global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
         fetchCallCount++;
         return originalFetch(input, init);
       };
@@ -807,7 +792,7 @@ describe('TransactionBuilder - cNFT Integration', () => {
   describe('Error Handling', () => {
     it('should throw error when cNFT proof fetch fails', async () => {
       // Mock fetch to return error for proof fetch
-      global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
         const options = init || (input instanceof Request ? input : {});
         const body = options?.body ? JSON.parse(options.body as string) : {};
@@ -902,7 +887,7 @@ describe('TransactionBuilder - cNFT Integration', () => {
         proof: Array.from({ length: 100 }, (_, i) => `proof-node-${i}`),
       };
 
-      global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
         const options = init || (input instanceof Request ? input : {});
         const body = options?.body ? JSON.parse(options.body as string) : {};
