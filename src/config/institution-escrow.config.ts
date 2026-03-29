@@ -74,7 +74,7 @@ export function loadInstitutionEscrowConfig(): InstitutionEscrowConfig {
     minUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MIN_USDC || '100'),
     maxUsdc: parseFloat(process.env.INSTITUTION_ESCROW_MAX_USDC || '1000000'),
     defaultExpiryHours: parseInt(process.env.INSTITUTION_ESCROW_DEFAULT_EXPIRY_HOURS || '72', 10),
-    defaultTimelockHours: parseInt(process.env.INSTITUTION_ESCROW_DEFAULT_TIMELOCK_HOURS || '24', 10),
+    defaultTimelockHours: parseInt(process.env.INSTITUTION_ESCROW_DEFAULT_TIMELOCK_HOURS || '0', 10),
     jwt: {
       accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '1h',
       refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
