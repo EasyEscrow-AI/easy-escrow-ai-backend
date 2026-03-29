@@ -20,10 +20,11 @@ import {
 
 const router = Router();
 
-// Rate limiter for auth endpoints: 15 requests per 15 minutes
+// Rate limiter for auth endpoints: 15 requests per 15 minutes (production), 100 in staging/dev
+const isProduction = process.env.NODE_ENV === 'production';
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: isProduction ? 15 : 100,
   message: { error: 'Too many attempts', message: 'Please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
