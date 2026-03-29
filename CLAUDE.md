@@ -316,6 +316,7 @@ Environment-specific IDL files in `src/generated/anchor/`:
 - Document uploads stored in DigitalOcean Spaces (S3-compatible)
 - Settlement authority pattern: separate API key for release operations
 - Default escrow expiry: 72 hours (configurable)
+- Payment timelock: optional cooling-off period (0-72h) between funding and release (`timelockHours`). Default 0 (disabled). See `docs/architecture/PAYMENT_TIMELOCK.md`
 - Config validated at startup only when feature is enabled
 
 ### Transaction Flow
