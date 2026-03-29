@@ -2033,13 +2033,66 @@ export class InstitutionEscrowService {
       }
     }
 
-    // Execute on-chain release (transfer USDC from vault to recipient)
-    // Fee was already collected at deposit time — release just sends vault balance to recipient
-    // Direct payments skip on-chain settlement entirely — no vault to release from
+    // Execute on-chain settlement
+    // Escrow mode: release USDC from vault PDA to recipient
+    // Direct mode: transfer USDC from admin/CDP wallet to recipient (no vault)
     let releaseTxSig: string | null = null;
     const releaseProgramService = this.getProgramService();
     const useCdpRelease = ((escrow.releaseConditions as string[]) || []).includes('cdp_policy_approval');
-    if (releaseProgramService && escrow.escrowPda && !isDirectPayment) {
+
+    if (isDirectPayment && releaseProgramService) {
+      // Direct payment: plain SPL transfer from admin/CDP wallet to recipient
+      try {
+        const usdcMint = releaseProgramService.getUsdcMintAddress();
+        const aiDigest = buildAiDigest(aiAnalysisForMemo);
+
+        if (useCdpRelease) {
+          const cdpPubkey = await getCdpSettlementService().getPublicKey();
+          releaseTxSig = await releaseProgramService.transferUsdcDirectWithCdp({
+            cdpAuthorityPubkey: cdpPubkey,
+            recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
+            usdcMint,
+            amount: Number(escrow.amount),
+            platformFee: Number(escrow.platformFee),
+            feeCollector: toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress'),
+            escrowCode: escrow.escrowCode,
+            aiDigest,
+          });
+          await this.createKytAuditLog(escrow, 'CDP_POLICY_CHECK', 'CDP Settlement Authority', {
+            passed: true,
+            message: 'CDP policy engine approved direct transfer',
+            cdpWallet: cdpPubkey.toBase58(),
+          });
+        } else {
+          releaseTxSig = await releaseProgramService.transferUsdcDirect({
+            recipientWallet: toPublicKey(releaseRecipient, 'recipientWallet'),
+            usdcMint,
+            amount: Number(escrow.amount),
+            platformFee: Number(escrow.platformFee),
+            feeCollector: toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress'),
+            escrowCode: escrow.escrowCode,
+            aiDigest,
+          });
+        }
+        console.log(
+          `[InstitutionEscrow] Direct transfer success for ${escrowId}, tx: ${releaseTxSig}`
+        );
+      } catch (error) {
+        console.error('[InstitutionEscrow] Direct transfer failed:', error);
+        await this.prisma.institutionEscrow.update({
+          where: { escrowId },
+          data: { status: originalStatus },
+        });
+        await this.createAuditLog(
+          escrowId,
+          clientId,
+          'ON_CHAIN_RELEASE_FAILED',
+          escrow.settlementAuthority,
+          { error: (error as Error).message, mode: 'direct' }
+        );
+        throw new Error(`Direct transfer failed: ${(error as Error).message}`);
+      }
+    } else if (releaseProgramService && escrow.escrowPda && !isDirectPayment) {
       try {
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         const aiDigest = buildAiDigest(aiAnalysisForMemo);
