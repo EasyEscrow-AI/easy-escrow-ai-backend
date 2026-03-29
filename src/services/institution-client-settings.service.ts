@@ -240,8 +240,8 @@ export class InstitutionClientSettingsService {
     }
     if ('defaultTimelockHours' in filteredUpdates) {
       const v = filteredUpdates.defaultTimelockHours;
-      if (v !== null && (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 2160)) {
-        throw new Error('defaultTimelockHours must be an integer between 0 and 2160, or null');
+      if (v !== null && (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 72)) {
+        throw new Error('defaultTimelockHours must be an integer between 0 and 72, or null');
       }
     }
 
