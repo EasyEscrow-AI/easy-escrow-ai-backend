@@ -152,8 +152,8 @@ export const validateCreateInstitutionEscrow = [
     .withMessage('approvalInstructions must be 2000 characters or less'),
   body('timelockHours')
     .optional()
-    .isInt({ min: 0, max: 2160 })
-    .withMessage('timelockHours must be between 0 and 2160 (90 days)'),
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
   ...partyDisplayNameValidators,
 ];
 
@@ -248,8 +248,8 @@ export const validateSaveDraft = [
     .withMessage('approvalInstructions must be 2000 characters or less'),
   body('timelockHours')
     .optional()
-    .isInt({ min: 0, max: 2160 })
-    .withMessage('timelockHours must be between 0 and 2160 (90 days)'),
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
   ...partyDisplayNameValidators,
 ];
 
@@ -346,8 +346,8 @@ export const validateUpdateDraft = [
     .withMessage('approvalInstructions must be 2000 characters or less'),
   body('timelockHours')
     .optional()
-    .isInt({ min: 0, max: 2160 })
-    .withMessage('timelockHours must be between 0 and 2160 (90 days)'),
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
   ...partyDisplayNameValidators,
 ];
 
