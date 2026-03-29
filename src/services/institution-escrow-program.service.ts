@@ -18,6 +18,7 @@ import {
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
+  createTransferInstruction,
 } from '@solana/spl-token';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import { BN } from 'bn.js';
@@ -738,6 +739,147 @@ export class InstitutionEscrowProgramService {
       `[InstitutionEscrowProgramService] CDP cancel escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
     );
 
+    return txSignature;
+  }
+
+  /**
+   * Direct USDC transfer (no escrow PDA) — admin signs as authority and fee payer.
+   * Used for direct settlement mode escrows where funds are transferred without a vault.
+   */
+  async transferUsdcDirect(params: {
+    recipientWallet: PublicKey;
+    usdcMint: PublicKey;
+    amount: number;
+    platformFee: number;
+    feeCollector: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    const { recipientWallet, usdcMint, amount, platformFee, feeCollector, escrowCode, aiDigest } = params;
+    const transaction = new Transaction();
+
+    // Admin ATA (source of funds)
+    const adminAta = await getAssociatedTokenAddress(usdcMint, this.adminKeypair.publicKey);
+
+    // Recipient ATA (create if needed)
+    const recipientAtaResult = await this.getOrCreateAta(usdcMint, recipientWallet, this.adminKeypair.publicKey);
+    if (recipientAtaResult.instruction) {
+      transaction.add(recipientAtaResult.instruction);
+    }
+
+    // Transfer net amount (amount - fee) to recipient
+    const netAmountMicro = BigInt(decimalToMicroUsdc(amount)) - BigInt(decimalToMicroUsdc(platformFee));
+    transaction.add(
+      createTransferInstruction(adminAta, recipientAtaResult.address, this.adminKeypair.publicKey, netAmountMicro)
+    );
+
+    // Transfer fee to fee collector (if fee > 0)
+    if (platformFee > 0) {
+      const feeCollectorAtaResult = await this.getOrCreateAta(usdcMint, feeCollector, this.adminKeypair.publicKey);
+      if (feeCollectorAtaResult.instruction) {
+        transaction.add(feeCollectorAtaResult.instruction);
+      }
+      const feeMicro = BigInt(decimalToMicroUsdc(platformFee));
+      transaction.add(
+        createTransferInstruction(adminAta, feeCollectorAtaResult.address, this.adminKeypair.publicKey, feeMicro)
+      );
+    }
+
+    // Add memo
+    if (escrowCode) {
+      let memo = `EasyEscrow:direct:${escrowCode}`;
+      if (aiDigest) memo += `:${aiDigest}`;
+      transaction.add(createMemoInstruction(memo, this.adminKeypair.publicKey));
+    }
+
+    const txSignature = await this.signAndSubmit(transaction);
+    console.log(`[InstitutionEscrowProgramService] Direct USDC transfer: ${txSignature}`);
+    return txSignature;
+  }
+
+  /**
+   * Direct USDC transfer with CDP as the authority (multi-sign pattern).
+   * CDP wallet holds the USDC and signs the transfer; admin pays fees.
+   */
+  async transferUsdcDirectWithCdp(params: {
+    cdpAuthorityPubkey: PublicKey;
+    recipientWallet: PublicKey;
+    usdcMint: PublicKey;
+    amount: number;
+    platformFee: number;
+    feeCollector: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    const { cdpAuthorityPubkey, recipientWallet, usdcMint, amount, platformFee, feeCollector, escrowCode, aiDigest } = params;
+    const transaction = new Transaction();
+
+    // CDP ATA (source of funds — CDP wallet holds the USDC)
+    const cdpAta = await getAssociatedTokenAddress(usdcMint, cdpAuthorityPubkey);
+
+    // Recipient ATA (create if needed, admin pays rent)
+    const recipientAtaResult = await this.getOrCreateAta(usdcMint, recipientWallet, this.adminKeypair.publicKey);
+    if (recipientAtaResult.instruction) {
+      transaction.add(recipientAtaResult.instruction);
+    }
+
+    // Transfer net amount from CDP ATA to recipient (CDP is the signer/authority)
+    const netAmountMicro = BigInt(decimalToMicroUsdc(amount)) - BigInt(decimalToMicroUsdc(platformFee));
+    transaction.add(
+      createTransferInstruction(cdpAta, recipientAtaResult.address, cdpAuthorityPubkey, netAmountMicro)
+    );
+
+    // Transfer fee from CDP ATA to fee collector
+    if (platformFee > 0) {
+      const feeCollectorAtaResult = await this.getOrCreateAta(usdcMint, feeCollector, this.adminKeypair.publicKey);
+      if (feeCollectorAtaResult.instruction) {
+        transaction.add(feeCollectorAtaResult.instruction);
+      }
+      const feeMicro = BigInt(decimalToMicroUsdc(platformFee));
+      transaction.add(
+        createTransferInstruction(cdpAta, feeCollectorAtaResult.address, cdpAuthorityPubkey, feeMicro)
+      );
+    }
+
+    // Add memo
+    if (escrowCode) {
+      let memo = `EasyEscrow:direct:${escrowCode}`;
+      if (aiDigest) memo += `:${aiDigest}`;
+      transaction.add(createMemoInstruction(memo, this.adminKeypair.publicKey));
+    }
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // CDP signs the transfer authority
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(`CDP direct transfer failed on-chain: ${JSON.stringify(txResult.meta.err)}`);
+    }
+
+    console.log(`[InstitutionEscrowProgramService] CDP direct USDC transfer: ${txSignature}`);
     return txSignature;
   }
 
