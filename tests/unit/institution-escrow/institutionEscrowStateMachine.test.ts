@@ -100,19 +100,41 @@ describe('InstitutionEscrowStateMachine', () => {
       institutionClient: {
         findUnique: sandbox.stub().resolves({
           id: CLIENT_ID,
+          companyName: 'Test Corp',
           status: 'ACTIVE',
           kycStatus: 'VERIFIED',
           primaryWallet: PAYER_WALLET,
+          settledWallets: [],
         }),
+        findFirst: sandbox.stub().resolves({
+          id: CLIENT_ID,
+          companyName: 'Test Corp',
+          primaryWallet: PAYER_WALLET,
+        }),
+        findMany: sandbox.stub().resolves([]),
       },
       institutionDeposit: {
         create: sandbox.stub().resolves({}),
       },
       institutionAuditLog: {
         create: sandbox.stub().resolves({}),
+        findMany: sandbox.stub().resolves([]),
       },
       institutionNotification: {
         create: sandbox.stub().resolves({}),
+      },
+      institutionAccount: {
+        findMany: sandbox.stub().resolves([]),
+      },
+      institutionAiAnalysis: {
+        findMany: sandbox.stub().resolves([]),
+        findFirst: sandbox.stub().resolves(null),
+      },
+      institutionFile: {
+        findMany: sandbox.stub().resolves([]),
+      },
+      institutionCorridor: {
+        findUnique: sandbox.stub().resolves(null),
       },
     };
 
@@ -233,14 +255,14 @@ describe('InstitutionEscrowStateMachine', () => {
       expect(result).to.have.property('status', 'COMPLETE');
     });
 
-    it('FUNDED -> RELEASED (when COMPLETE transition fails)', async () => {
+    it('FUNDED -> COMPLETE (notification failure is non-fatal)', async () => {
       prismaStub.institutionEscrow.findUnique.resolves(makeEscrow('FUNDED'));
-      // Override: notification creation fails → stays at RELEASED
+      // Notification failure is caught internally — release still completes
       prismaStub.institutionNotification.create = sandbox.stub().rejects(new Error('DB error'));
 
       const result = await service.releaseFunds(CLIENT_ID, ESCROW_ID);
 
-      expect(result).to.have.property('status', 'RELEASED');
+      expect(result).to.have.property('status', 'COMPLETE');
     });
 
     it('FUNDED -> CANCELLED (via cancel)', async () => {
