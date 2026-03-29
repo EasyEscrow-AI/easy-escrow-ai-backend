@@ -64,9 +64,12 @@ describe('InstitutionReceiptService', () => {
     primaryWallet: 'FakeWallet1111111111111111111111111111111111',
   };
 
+  const ESCROW_CODE = 'EE-INST-AB3D7KMN';
+
   const mockEscrow = {
     id: 'row-id-1',
     escrowId: ESCROW_ID,
+    escrowCode: ESCROW_CODE,
     clientId: CLIENT_ID,
     payerWallet: 'PayerWallet1111111111111111111111111111111111',
     recipientWallet: 'RecipientWallet11111111111111111111111111111',
@@ -201,7 +204,7 @@ describe('InstitutionReceiptService', () => {
 
       const data = await service.getReceiptData(ESCROW_ID, CLIENT_ID);
 
-      expect(data.escrow.escrowId).to.equal(ESCROW_ID);
+      expect(data.escrow.escrowId).to.equal(ESCROW_CODE);
       expect(data.escrow.status).to.equal('RELEASED');
       expect(data.escrow.corridor).to.equal('CH-SG');
       expect(data.escrow.conditionType).to.equal('ADMIN_RELEASE');
@@ -418,7 +421,7 @@ describe('InstitutionReceiptService', () => {
       const html = service.renderReceiptHTML(receiptData);
 
       expect(html).to.include('Escrow Details');
-      expect(html).to.include(ESCROW_ID);
+      expect(html).to.include(ESCROW_CODE);
       expect(html).to.include('CH-SG');
       expect(html).to.include('Admin Release');
     });
