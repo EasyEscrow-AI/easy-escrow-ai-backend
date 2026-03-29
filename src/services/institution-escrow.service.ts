@@ -550,6 +550,8 @@ export class InstitutionEscrowService {
         releaseConditions: releaseConditions || [],
         approvalInstructions,
         initTxSignature,
+        // Direct payments don't support stealth addresses (no vault PDA for ephemeral keys)
+        ...(settlementMode === 'direct' ? { privacyLevel: 'NONE' } : {}),
         payerName: params.payerName || null,
         payerAccountLabel: params.payerAccountLabel || null,
         payerBranchName: params.payerBranchName || null,
@@ -1977,9 +1979,13 @@ export class InstitutionEscrowService {
     }
 
     // Resolve release destination (standard or stealth address)
-    const effectivePrivacy = privacyPreferences || {
-      level: (escrow.privacyLevel as PrivacyLevel) || PrivacyLevel.STEALTH,
-    };
+    // Direct payments always use NONE privacy — stealth addresses are incompatible
+    // with direct transfers (no vault PDA to derive ephemeral keys from)
+    const effectivePrivacy = isDirectPayment
+      ? { level: PrivacyLevel.NONE }
+      : privacyPreferences || {
+          level: (escrow.privacyLevel as PrivacyLevel) || PrivacyLevel.STEALTH,
+        };
 
     let releaseRecipient = escrow.recipientWallet!;
     let stealthPaymentId: string | undefined;
@@ -2078,7 +2084,8 @@ export class InstitutionEscrowService {
           `[InstitutionEscrow] Direct transfer success for ${escrowId}, tx: ${releaseTxSig}`
         );
       } catch (error) {
-        console.error('[InstitutionEscrow] Direct transfer failed:', error);
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.error('[InstitutionEscrow] Direct transfer failed:', errMsg);
         await this.prisma.institutionEscrow.update({
           where: { escrowId },
           data: { status: originalStatus },
@@ -2088,9 +2095,9 @@ export class InstitutionEscrowService {
           clientId,
           'ON_CHAIN_RELEASE_FAILED',
           escrow.settlementAuthority,
-          { error: (error as Error).message, mode: 'direct' }
+          { error: errMsg, mode: 'direct' }
         );
-        throw new Error(`Direct transfer failed: ${(error as Error).message}`);
+        throw new Error(`Direct transfer failed: ${errMsg}`);
       }
     } else if (releaseProgramService && escrow.escrowPda && !isDirectPayment) {
       try {
