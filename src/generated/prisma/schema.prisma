@@ -1012,15 +1012,15 @@ model InstitutionAccount {
   isDefault Boolean @default(false) @map("is_default")
   isActive  Boolean @default(true) @map("is_active")
 
+  // Branch
+  branchId String? @map("branch_id")
+
   // Stealth / Privacy
   stealthMetaAddressId String? @unique @map("stealth_meta_address_id")
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Branch association (optional)
-  branchId String? @map("branch_id")
 
   // Relations
   client             InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -1033,7 +1033,6 @@ model InstitutionAccount {
   @@index([accountType])
   @@index([verificationStatus])
   @@index([isActive])
-  @@index([branchId])
   @@map("institution_accounts")
 }
 

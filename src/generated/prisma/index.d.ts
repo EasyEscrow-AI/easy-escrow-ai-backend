@@ -27646,10 +27646,10 @@ export namespace Prisma {
     defaultCurrency: string | null
     isDefault: boolean | null
     isActive: boolean | null
+    branchId: string | null
     stealthMetaAddressId: string | null
     createdAt: Date | null
     updatedAt: Date | null
-    branchId: string | null
   }
 
   export type InstitutionAccountMaxAggregateOutputType = {
@@ -27684,10 +27684,10 @@ export namespace Prisma {
     defaultCurrency: string | null
     isDefault: boolean | null
     isActive: boolean | null
+    branchId: string | null
     stealthMetaAddressId: string | null
     createdAt: Date | null
     updatedAt: Date | null
-    branchId: string | null
   }
 
   export type InstitutionAccountCountAggregateOutputType = {
@@ -27723,10 +27723,10 @@ export namespace Prisma {
     defaultCurrency: number
     isDefault: number
     isActive: number
+    branchId: number
     stealthMetaAddressId: number
     createdAt: number
     updatedAt: number
-    branchId: number
     _all: number
   }
 
@@ -27783,10 +27783,10 @@ export namespace Prisma {
     defaultCurrency?: true
     isDefault?: true
     isActive?: true
+    branchId?: true
     stealthMetaAddressId?: true
     createdAt?: true
     updatedAt?: true
-    branchId?: true
   }
 
   export type InstitutionAccountMaxAggregateInputType = {
@@ -27821,10 +27821,10 @@ export namespace Prisma {
     defaultCurrency?: true
     isDefault?: true
     isActive?: true
+    branchId?: true
     stealthMetaAddressId?: true
     createdAt?: true
     updatedAt?: true
-    branchId?: true
   }
 
   export type InstitutionAccountCountAggregateInputType = {
@@ -27860,10 +27860,10 @@ export namespace Prisma {
     defaultCurrency?: true
     isDefault?: true
     isActive?: true
+    branchId?: true
     stealthMetaAddressId?: true
     createdAt?: true
     updatedAt?: true
-    branchId?: true
     _all?: true
   }
 
@@ -27986,10 +27986,10 @@ export namespace Prisma {
     defaultCurrency: string
     isDefault: boolean
     isActive: boolean
+    branchId: string | null
     stealthMetaAddressId: string | null
     createdAt: Date
     updatedAt: Date
-    branchId: string | null
     _count: InstitutionAccountCountAggregateOutputType | null
     _avg: InstitutionAccountAvgAggregateOutputType | null
     _sum: InstitutionAccountSumAggregateOutputType | null
@@ -28044,10 +28044,10 @@ export namespace Prisma {
     defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
+    branchId?: boolean
     stealthMetaAddressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
     stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
@@ -28086,10 +28086,10 @@ export namespace Prisma {
     defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
+    branchId?: boolean
     stealthMetaAddressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
     stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
@@ -28128,10 +28128,10 @@ export namespace Prisma {
     defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
+    branchId?: boolean
     stealthMetaAddressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    branchId?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
     stealthMetaAddress?: boolean | InstitutionAccount$stealthMetaAddressArgs<ExtArgs>
@@ -28170,13 +28170,13 @@ export namespace Prisma {
     defaultCurrency?: boolean
     isDefault?: boolean
     isActive?: boolean
+    branchId?: boolean
     stealthMetaAddressId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    branchId?: boolean
   }
 
-  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "defaultCurrency" | "isDefault" | "isActive" | "stealthMetaAddressId" | "createdAt" | "updatedAt" | "branchId", ExtArgs["result"]["institutionAccount"]>
+  export type InstitutionAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "name" | "label" | "accountType" | "description" | "walletAddress" | "chain" | "walletProvider" | "custodyType" | "verificationStatus" | "verifiedAt" | "verificationNotes" | "maxTransactionAmount" | "minTransactionAmount" | "dailyVolumeLimit" | "monthlyVolumeLimit" | "dailyTransactionCountLimit" | "monthlyTransactionCountLimit" | "approvalMode" | "approvalThreshold" | "whitelistedAddresses" | "whitelistEnforced" | "notificationEmail" | "webhookUrl" | "notifyOnEscrowCreated" | "notifyOnEscrowFunded" | "notifyOnEscrowReleased" | "notifyOnComplianceAlert" | "defaultCurrency" | "isDefault" | "isActive" | "branchId" | "stealthMetaAddressId" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionAccount"]>
   export type InstitutionAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     branch?: boolean | InstitutionAccount$branchArgs<ExtArgs>
@@ -28233,10 +28233,10 @@ export namespace Prisma {
       defaultCurrency: string
       isDefault: boolean
       isActive: boolean
+      branchId: string | null
       stealthMetaAddressId: string | null
       createdAt: Date
       updatedAt: Date
-      branchId: string | null
     }, ExtArgs["result"]["institutionAccount"]>
     composites: {}
   }
@@ -28695,10 +28695,10 @@ export namespace Prisma {
     readonly defaultCurrency: FieldRef<"InstitutionAccount", 'String'>
     readonly isDefault: FieldRef<"InstitutionAccount", 'Boolean'>
     readonly isActive: FieldRef<"InstitutionAccount", 'Boolean'>
+    readonly branchId: FieldRef<"InstitutionAccount", 'String'>
     readonly stealthMetaAddressId: FieldRef<"InstitutionAccount", 'String'>
     readonly createdAt: FieldRef<"InstitutionAccount", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionAccount", 'DateTime'>
-    readonly branchId: FieldRef<"InstitutionAccount", 'String'>
   }
     
 
@@ -52562,10 +52562,10 @@ export namespace Prisma {
     defaultCurrency: 'defaultCurrency',
     isDefault: 'isDefault',
     isActive: 'isActive',
+    branchId: 'branchId',
     stealthMetaAddressId: 'stealthMetaAddressId',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
-    branchId: 'branchId'
+    updatedAt: 'updatedAt'
   };
 
   export type InstitutionAccountScalarFieldEnum = (typeof InstitutionAccountScalarFieldEnum)[keyof typeof InstitutionAccountScalarFieldEnum]
@@ -55841,10 +55841,10 @@ export namespace Prisma {
     defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     stealthMetaAddressId?: StringNullableFilter<"InstitutionAccount"> | string | null
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
-    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
     branch?: XOR<InstitutionBranchNullableScalarRelationFilter, InstitutionBranchWhereInput> | null
     stealthMetaAddress?: XOR<StealthMetaAddressNullableScalarRelationFilter, StealthMetaAddressWhereInput> | null
@@ -55883,10 +55883,10 @@ export namespace Prisma {
     defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    branchId?: SortOrderInput | SortOrder
     stealthMetaAddressId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    branchId?: SortOrderInput | SortOrder
     client?: InstitutionClientOrderByWithRelationInput
     branch?: InstitutionBranchOrderByWithRelationInput
     stealthMetaAddress?: StealthMetaAddressOrderByWithRelationInput
@@ -55930,9 +55930,9 @@ export namespace Prisma {
     defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
-    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
     branch?: XOR<InstitutionBranchNullableScalarRelationFilter, InstitutionBranchWhereInput> | null
     stealthMetaAddress?: XOR<StealthMetaAddressNullableScalarRelationFilter, StealthMetaAddressWhereInput> | null
@@ -55971,10 +55971,10 @@ export namespace Prisma {
     defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    branchId?: SortOrderInput | SortOrder
     stealthMetaAddressId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    branchId?: SortOrderInput | SortOrder
     _count?: InstitutionAccountCountOrderByAggregateInput
     _avg?: InstitutionAccountAvgOrderByAggregateInput
     _max?: InstitutionAccountMaxOrderByAggregateInput
@@ -56018,10 +56018,10 @@ export namespace Prisma {
     defaultCurrency?: StringWithAggregatesFilter<"InstitutionAccount"> | string
     isDefault?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
     isActive?: BoolWithAggregatesFilter<"InstitutionAccount"> | boolean
+    branchId?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
     stealthMetaAddressId?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionAccount"> | Date | string
-    branchId?: StringNullableWithAggregatesFilter<"InstitutionAccount"> | string | null
   }
 
   export type InstitutionBranchWhereInput = {
@@ -60700,10 +60700,10 @@ export namespace Prisma {
     defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    branchId?: string | null
     stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    branchId?: string | null
   }
 
   export type InstitutionAccountUpdateInput = {
@@ -60778,10 +60778,10 @@ export namespace Prisma {
     defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
     stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type InstitutionAccountCreateManyInput = {
@@ -60817,10 +60817,10 @@ export namespace Prisma {
     defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    branchId?: string | null
     stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    branchId?: string | null
   }
 
   export type InstitutionAccountUpdateManyMutationInput = {
@@ -60892,10 +60892,10 @@ export namespace Prisma {
     defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
     stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type InstitutionBranchCreateInput = {
@@ -65571,10 +65571,10 @@ export namespace Prisma {
     defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    branchId?: SortOrder
     stealthMetaAddressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    branchId?: SortOrder
   }
 
   export type InstitutionAccountAvgOrderByAggregateInput = {
@@ -65619,10 +65619,10 @@ export namespace Prisma {
     defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    branchId?: SortOrder
     stealthMetaAddressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    branchId?: SortOrder
   }
 
   export type InstitutionAccountMinOrderByAggregateInput = {
@@ -65657,10 +65657,10 @@ export namespace Prisma {
     defaultCurrency?: SortOrder
     isDefault?: SortOrder
     isActive?: SortOrder
+    branchId?: SortOrder
     stealthMetaAddressId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    branchId?: SortOrder
   }
 
   export type InstitutionAccountSumOrderByAggregateInput = {
@@ -73858,10 +73858,10 @@ export namespace Prisma {
     defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    branchId?: string | null
     stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    branchId?: string | null
   }
 
   export type InstitutionAccountCreateOrConnectWithoutClientInput = {
@@ -74442,10 +74442,10 @@ export namespace Prisma {
     defaultCurrency?: StringFilter<"InstitutionAccount"> | string
     isDefault?: BoolFilter<"InstitutionAccount"> | boolean
     isActive?: BoolFilter<"InstitutionAccount"> | boolean
+    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
     stealthMetaAddressId?: StringNullableFilter<"InstitutionAccount"> | string | null
     createdAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionAccount"> | Date | string
-    branchId?: StringNullableFilter<"InstitutionAccount"> | string | null
   }
 
   export type InstitutionAiAnalysisUpsertWithWhereUniqueWithoutClientInput = {
@@ -80241,9 +80241,9 @@ export namespace Prisma {
     defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    branchId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    branchId?: string | null
   }
 
   export type InstitutionAccountCreateOrConnectWithoutStealthMetaAddressInput = {
@@ -81983,10 +81983,10 @@ export namespace Prisma {
     defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    branchId?: string | null
     stealthMetaAddressId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    branchId?: string | null
   }
 
   export type InstitutionAiAnalysisCreateManyClientInput = {
@@ -82449,10 +82449,10 @@ export namespace Prisma {
     defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
     stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type InstitutionAccountUncheckedUpdateManyWithoutClientInput = {
@@ -82487,10 +82487,10 @@ export namespace Prisma {
     defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
     stealthMetaAddressId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type InstitutionAiAnalysisUpdateWithoutClientInput = {
@@ -83230,9 +83230,9 @@ export namespace Prisma {
     defaultCurrency?: string
     isDefault?: boolean
     isActive?: boolean
+    branchId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    branchId?: string | null
   }
 
   export type StealthPaymentUpdateWithoutMetaAddressInput = {
@@ -83351,9 +83351,9 @@ export namespace Prisma {
     defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type InstitutionAccountUncheckedUpdateManyWithoutStealthMetaAddressInput = {
@@ -83389,9 +83389,9 @@ export namespace Prisma {
     defaultCurrency?: StringFieldUpdateOperationsInput | string
     isDefault?: BoolFieldUpdateOperationsInput | boolean
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    branchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    branchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
 
