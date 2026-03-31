@@ -50,7 +50,7 @@ pub struct InitInstitutionEscrow<'info> {
     pub usdc_mint: Account<'info, Mint>,
 
     /// Fee collector wallet
-    /// CHECK: Validated by backend, receives platform fee on release
+    /// CHECK: Validated by backend, receives platform fee at deposit time
     pub fee_collector: UncheckedAccount<'info>,
 
     /// Settlement authority (can release funds)
@@ -63,6 +63,7 @@ pub struct InitInstitutionEscrow<'info> {
 }
 
 /// Deposit USDC into the institution escrow vault
+/// Fee is collected immediately at deposit time; only the escrow amount goes to the vault.
 #[derive(Accounts)]
 #[instruction(escrow_id: [u8; 32])]
 pub struct DepositInstitutionEscrow<'info> {
@@ -88,7 +89,7 @@ pub struct DepositInstitutionEscrow<'info> {
     )]
     pub escrow_state: Account<'info, InstitutionEscrow>,
 
-    /// SPL token vault PDA
+    /// SPL token vault PDA (holds only escrow amount for recipient)
     #[account(
         mut,
         seeds = [InstitutionEscrow::VAULT_SEED, escrow_id.as_ref()],
@@ -96,10 +97,20 @@ pub struct DepositInstitutionEscrow<'info> {
     )]
     pub token_vault: Account<'info, TokenAccount>,
 
+    /// Fee collector's USDC token account (receives platform fee at deposit time)
+    #[account(
+        mut,
+        constraint = fee_collector_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
+        constraint = fee_collector_token_account.owner == escrow_state.fee_collector @ EscrowError::InstitutionUnauthorized,
+    )]
+    pub fee_collector_token_account: Account<'info, TokenAccount>,
+
     pub token_program: Program<'info, Token>,
 }
 
-/// Release USDC from institution escrow to recipient and fee collector
+/// Release USDC from institution escrow to recipient.
+/// For new escrows (fee collected at deposit), vault contains only the escrow amount.
+/// For legacy escrows (fee in vault), vault contains amount + fee — excess sent to fee collector.
 #[derive(Accounts)]
 #[instruction(escrow_id: [u8; 32])]
 pub struct ReleaseInstitutionEscrow<'info> {
@@ -132,7 +143,7 @@ pub struct ReleaseInstitutionEscrow<'info> {
     )]
     pub recipient_token_account: Account<'info, TokenAccount>,
 
-    /// Fee collector's USDC token account (receives platform fee)
+    /// Fee collector's USDC token account (receives any remaining vault balance after recipient transfer)
     #[account(
         mut,
         constraint = fee_collector_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
@@ -256,7 +267,8 @@ pub fn init_institution_escrow(
     Ok(())
 }
 
-/// Deposit USDC into the institution escrow vault
+/// Deposit USDC into the institution escrow vault.
+/// Fee is collected immediately: escrow amount goes to vault, platform fee goes to fee collector.
 pub fn deposit_institution_escrow(
     ctx: Context<DepositInstitutionEscrow>,
     _escrow_id: [u8; 32],
@@ -281,8 +293,8 @@ pub fn deposit_institution_escrow(
         EscrowError::InstitutionDepositMismatch
     );
 
-    // Transfer USDC from payer to vault
-    let transfer_ctx = CpiContext::new(
+    // Transfer escrow amount to vault (what recipient will receive on release)
+    let vault_transfer_ctx = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         Transfer {
             from: ctx.accounts.payer_token_account.to_account_info(),
@@ -290,18 +302,37 @@ pub fn deposit_institution_escrow(
             authority: ctx.accounts.payer.to_account_info(),
         },
     );
-    token::transfer(transfer_ctx, total_deposit)?;
+    token::transfer(vault_transfer_ctx, escrow_state.amount)?;
+    msg!("Deposited {} USDC to vault for recipient", escrow_state.amount);
+
+    // Transfer platform fee directly to fee collector (non-refundable)
+    if escrow_state.platform_fee > 0 {
+        let fee_transfer_ctx = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.payer_token_account.to_account_info(),
+                to: ctx.accounts.fee_collector_token_account.to_account_info(),
+                authority: ctx.accounts.payer.to_account_info(),
+            },
+        );
+        token::transfer(fee_transfer_ctx, escrow_state.platform_fee)?;
+        msg!("Platform fee {} USDC sent to fee collector", escrow_state.platform_fee);
+    }
 
     // Update status to Funded
     let escrow_state = &mut ctx.accounts.escrow_state;
     escrow_state.status = InstitutionEscrowOnChainStatus::Funded;
 
-    msg!("Institution escrow funded: {} USDC deposited", total_deposit);
+    msg!("Institution escrow funded: {} USDC total ({} to vault, {} fee collected)",
+        total_deposit, escrow_state.amount, escrow_state.platform_fee);
 
     Ok(())
 }
 
-/// Release USDC from institution escrow to recipient and fee collector
+/// Release USDC from institution escrow to recipient.
+/// Handles both flows:
+///   - New flow (fee collected at deposit): vault contains only `amount`
+///   - Legacy flow (fee in vault): vault contains `amount + fee`, excess goes to fee collector
 pub fn release_institution_escrow(
     ctx: Context<ReleaseInstitutionEscrow>,
     escrow_id: [u8; 32],
@@ -351,8 +382,13 @@ pub fn release_institution_escrow(
     token::transfer(recipient_transfer_ctx, amount)?;
     msg!("Released {} USDC to recipient", amount);
 
-    // Transfer platform fee to fee collector
-    if platform_fee > 0 {
+    // Transfer any remaining vault balance to fee collector.
+    // For new escrows (fee collected at deposit), vault is now empty.
+    // For legacy escrows (fee in vault), this sends the platform fee to fee collector.
+    // Using reload() to get the updated balance after the recipient transfer.
+    ctx.accounts.token_vault.reload()?;
+    let remaining = ctx.accounts.token_vault.amount;
+    if remaining > 0 {
         let fee_transfer_ctx = CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
@@ -362,8 +398,8 @@ pub fn release_institution_escrow(
             },
             signer_seeds,
         );
-        token::transfer(fee_transfer_ctx, platform_fee)?;
-        msg!("Platform fee transferred: {} USDC", platform_fee);
+        token::transfer(fee_transfer_ctx, remaining)?;
+        msg!("Transferred {} USDC remaining balance to fee collector", remaining);
     }
 
     // Close vault account to recover rent

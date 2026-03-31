@@ -42,6 +42,7 @@ export const isValidUSDCAmount = (amount: number | string | Decimal): boolean =>
   if (amount instanceof Decimal) {
     numAmount = amount.toNumber();
   } else if (typeof amount === 'string') {
+    if (!/^\d+(\.\d+)?$/.test(amount.trim())) return false;
     numAmount = parseFloat(amount);
   } else {
     numAmount = amount;

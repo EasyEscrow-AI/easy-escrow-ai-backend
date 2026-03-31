@@ -3,6 +3,7 @@
  *
  * GET    /api/v1/institution/settings                  → getSettings
  * PUT    /api/v1/institution/settings                  → updateSettings
+ * PATCH  /api/v1/institution/settings                  → updateSettings (partial)
  * PUT    /api/v1/institution/settings/wallets          → updateWallets (legacy flat)
  * PUT    /api/v1/institution/settings/wallets/manage   → addOrUpdateWallet (new model)
  * GET    /api/v1/institution/settings/wallets/list     → listWallets
@@ -15,7 +16,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionClientSettingsService } from '../services/institution-client-settings.service';
@@ -34,7 +35,7 @@ const standardRateLimiter = rateLimit({
 router.get(
   '/api/v1/institution/settings',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -55,39 +56,56 @@ router.get(
   },
 );
 
+async function handleUpdateSettings(req: InstitutionAuthenticatedRequest, res: Response) {
+  try {
+    const service = getInstitutionClientSettingsService();
+    const settings = await service.updateSettings(
+      req.institutionClient!.clientId,
+      req.body,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: settings,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    const isClientError = error.status >= 400 && error.status < 500
+      || error.statusCode >= 400 && error.statusCode < 500
+      || error.name === 'ValidationError';
+    const status = isClientError ? (error.status || error.statusCode || 400) : 500;
+    if (status === 500) {
+      console.error('[Settings] Unexpected error:', error);
+    }
+    res.status(status).json({
+      error: status < 500 ? 'Update Failed' : 'Internal Error',
+      message: status < 500 ? error.message : 'An unexpected error occurred',
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
 // PUT /api/v1/institution/settings
 router.put(
   '/api/v1/institution/settings',
   standardRateLimiter,
-  requireInstitutionAuth,
-  async (req: InstitutionAuthenticatedRequest, res: Response) => {
-    try {
-      const service = getInstitutionClientSettingsService();
-      const settings = await service.updateSettings(
-        req.institutionClient!.clientId,
-        req.body,
-      );
+  requireInstitutionOrAdminAuth,
+  handleUpdateSettings,
+);
 
-      res.status(200).json({
-        success: true,
-        data: settings,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      res.status(400).json({
-        error: 'Update Failed',
-        message: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  },
+// PATCH /api/v1/institution/settings — partial update (same logic as PUT)
+router.patch(
+  '/api/v1/institution/settings',
+  standardRateLimiter,
+  requireInstitutionOrAdminAuth,
+  handleUpdateSettings,
 );
 
 // PUT /api/v1/institution/settings/wallets
 router.put(
   '/api/v1/institution/settings/wallets',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -115,7 +133,7 @@ router.put(
 router.put(
   '/api/v1/institution/settings/wallets/manage',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -143,7 +161,7 @@ router.put(
 router.get(
   '/api/v1/institution/settings/wallets/list',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -168,7 +186,7 @@ router.get(
 router.delete(
   '/api/v1/institution/settings/wallets/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -196,7 +214,7 @@ router.delete(
 router.post(
   '/api/v1/institution/api-keys',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { name, permissions } = req.body;
@@ -237,7 +255,7 @@ router.post(
 router.delete(
   '/api/v1/institution/api-keys/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -265,7 +283,7 @@ router.delete(
 router.get(
   '/api/v1/institution/api-keys',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();

@@ -102,13 +102,26 @@ Stablecoins are digital tokens pegged to a stable asset (typically USD). USDC (U
 - Minimum reserve and disclosure requirements
 - Capital requirements for stablecoin issuers
 
-**6. Swiss DLT Framework:**
-- Swiss Financial Market Infrastructure Act accommodates DLT-based assets
-- DLT trading facilities can operate with FINMA license
-- Stablecoins treated as deposits under Swiss Banking Act
+**6. Swiss DLT Framework (updated 2026):**
+- FINMA Payment Instrument Institution license (replaces Fintech license) for stablecoin-related services
+- No deposit/issuance cap (previous CHF 100M limit removed late 2025)
+- 1:1 reserve backing in segregated, bankruptcy-remote accounts
+- Yield/interest prohibited for Payment Instrument Institutions
+- Cross-border access allowed via supervised third-party custodians
+- Travel Rule threshold: CHF 1,000 for virtual currency exchanges to cash; others require full KYC
 - AML obligations under Swiss AMLA apply to all virtual asset intermediaries
 
-**7. Sanctions Compliance:**
+**7. US Stablecoin Framework (2026 — GENIUS Act / OCC):**
+- Permitted Payment Stablecoin Issuer (PPSI) license via the OCC
+- $10 Billion issuance cap for state-regulated issuers; federal oversight required above this threshold
+- 1:1 reserve backing in fiat or high-quality liquid assets (HQLA)
+- Yield/interest prohibited for PPSIs (including indirect yield through affiliates)
+- Foreign issuers prohibited until July 18, 2028, unless registered with the OCC
+- Travel Rule threshold: $3,000 for transmittals of funds (FinCEN)
+- CTR (Currency Transaction Report) filing at $10,000 threshold
+- OFAC screening mandatory for all US-bound transfers
+
+**8. Sanctions Compliance:**
 - OFAC (US), EU, UN, and Swiss SECO sanctions lists must be screened
 - Real-time screening of wallet addresses against known sanctioned addresses
 - Blockchain analytics tools (Chainalysis, Elliptic) for on-chain compliance
@@ -185,10 +198,12 @@ EasyEscrow.ai is a Solana-based platform providing trustless escrow services for
 - Document uploads for supporting trade documentation
 - KYC/KYB onboarding with tiered access levels
 - Escrow lifecycle: Created → Funded → (Compliance Check) → Released/Cancelled
-- Platform fees calculated on escrow amount
+- Platform fees: 0.20% (20 bps) with a minimum of $0.20 and maximum cap of $20 per escrow
+- Fee limits are configurable per institution via admin settings (within protocol limits)
+- All Solana network fees absorbed by the platform
 - Settlement authority pattern for secure release operations
 - Default escrow expiry: 72 hours (configurable)
-- Amount limits: $100 minimum, $1,000,000 maximum (default)
+- Amount limits: $10 minimum, $100,000,000 maximum (default)
 
 **Platform Architecture:**
 - Backend: Node.js/Express/TypeScript API
@@ -200,7 +215,7 @@ EasyEscrow.ai is a Solana-based platform providing trustless escrow services for
 - Deployment: DigitalOcean App Platform
 
 **Escrow Codes:**
-- Each institution escrow has a human-readable code: EE-XXXX-XXXX
+- Each institution escrow has a human-readable code: EE-XXX-XXX
 - This code can be used to look up escrow details
 - Separate from the internal UUID and on-chain PDA
 

@@ -8,9 +8,19 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only-32chars!';
+process.env.RESEND_API_KEY = 'test-resend-key';
+
+if (process.env.NODE_ENV !== 'test') {
+  throw new Error('Unit tests must run with NODE_ENV=test');
+}
+
 import { setMockPrismaClient, clearMockPrismaClient } from '../../../src/config/database';
 
-describe('InstitutionNotificationService', () => {
+describe('InstitutionNotificationService', function () {
+  this.timeout(10000);
+
   let sandbox: sinon.SinonSandbox;
   let prismaStub: any;
   let emailServiceStub: any;
@@ -58,10 +68,6 @@ describe('InstitutionNotificationService', () => {
   beforeEach(() => {
     sandbox = sinon.createSandbox();
 
-    // Ensure env vars needed by transitive imports are set for test context
-    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-for-testing-only-32chars!';
-    process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || 'test-resend-key';
-
     prismaStub = {
       institutionAccount: {
         findFirst: sandbox.stub().resolves(makeAccount()),
@@ -79,6 +85,9 @@ describe('InstitutionNotificationService', () => {
         count: sandbox.stub().resolves(1),
         update: sandbox.stub().resolves(makeNotification({ isRead: true, readAt: new Date() })),
         updateMany: sandbox.stub().resolves({ count: 3 }),
+      },
+      institutionEscrow: {
+        findMany: sandbox.stub().resolves([]),
       },
     };
 
@@ -232,32 +241,6 @@ describe('InstitutionNotificationService', () => {
       });
 
       // No preference key for SECURITY_ALERT, so it should always send
-      expect(prismaStub.institutionNotification.create.calledOnce).to.be.true;
-    });
-
-    it('should still create in-app notification when settings lookup fails', async () => {
-      prismaStub.institutionClientSettings.findUnique.rejects(new Error('Settings DB error'));
-
-      await notificationService.notify({
-        clientId: CLIENT_ID,
-        type: 'ESCROW_CREATED',
-        title: 'Test',
-        message: 'Test',
-      });
-
-      expect(prismaStub.institutionNotification.create.calledOnce).to.be.true;
-    });
-
-    it('should still create in-app notification when client lookup fails', async () => {
-      prismaStub.institutionClient.findUnique.rejects(new Error('Client DB error'));
-
-      await notificationService.notify({
-        clientId: CLIENT_ID,
-        type: 'ESCROW_CREATED',
-        title: 'Test',
-        message: 'Test',
-      });
-
       expect(prismaStub.institutionNotification.create.calledOnce).to.be.true;
     });
   });

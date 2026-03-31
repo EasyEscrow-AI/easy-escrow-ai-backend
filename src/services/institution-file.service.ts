@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PrismaClient, DocumentType } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 import { escrowWhere } from '../utils/uuid-conversion';
 import multer from 'multer';
@@ -69,14 +70,18 @@ export class InstitutionFileService {
   private bucket: string;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
     const spacesConfig = getInstitutionEscrowConfig().doSpaces;
     const endpoint = spacesConfig.endpoint;
     const region = spacesConfig.region || 'nyc3';
     this.bucket = spacesConfig.bucket;
 
     this.s3Client = new S3Client({
-      endpoint: endpoint ? `https://${endpoint}` : undefined,
+      endpoint: endpoint
+        ? endpoint.startsWith('https://')
+          ? endpoint
+          : `https://${endpoint}`
+        : undefined,
       region,
       credentials: {
         accessKeyId: spacesConfig.key,
@@ -93,20 +98,18 @@ export class InstitutionFileService {
     clientId: string,
     file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
     documentType: string,
-    escrowId?: string,
+    escrowId?: string
   ) {
     // Validate mime type
     if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       throw new Error(
-        `Invalid file type: ${file.mimetype}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`,
+        `Invalid file type: ${file.mimetype}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`
       );
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      throw new Error(
-        `File too large: ${file.size} bytes. Maximum: ${MAX_FILE_SIZE} bytes (25MB)`,
-      );
+      throw new Error(`File too large: ${file.size} bytes. Maximum: ${MAX_FILE_SIZE} bytes (25MB)`);
     }
 
     // Resolve escrow code to UUID if needed
@@ -125,9 +128,15 @@ export class InstitutionFileService {
 
     // Generate structured S3 key: institution/{clientId}/{YYYY-MM-DD}/{escrowId|general}/{timestamp}_{filename}
     const date = new Date();
-    const dateFolder = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+    const dateFolder = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(
+      2,
+      '0'
+    )}-${String(date.getUTCDate()).padStart(2, '0')}`;
     const folder = resolvedEscrowId || 'general';
-    const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${randomUUID().slice(0, 8)}_${sanitizedFileName}`;
+    const key = `institution/${clientId}/${dateFolder}/${folder}/${Date.now()}_${randomUUID().slice(
+      0,
+      8
+    )}_${sanitizedFileName}`;
 
     // Upload to S3
     await this.s3Client.send(
@@ -140,7 +149,7 @@ export class InstitutionFileService {
           clientId,
           documentType,
         },
-      }),
+      })
     );
 
     // Create database record
@@ -171,7 +180,35 @@ export class InstitutionFileService {
       throw new Error('File not found');
     }
 
-    if (file.clientId !== clientId) {
+    // Allow access if caller owns the file or is a party to the escrow
+    if (file.clientId !== clientId && file.escrowId) {
+      const escrow = await this.prisma.institutionEscrow.findUnique({
+        where: { escrowId: file.escrowId },
+        select: { clientId: true, recipientWallet: true, payerWallet: true },
+      });
+      let isParty = escrow?.clientId === clientId;
+      if (!isParty && escrow) {
+        const client = await this.prisma.institutionClient.findUnique({
+          where: { id: clientId },
+          select: { primaryWallet: true, settledWallets: true },
+        });
+        const accounts = await this.prisma.institutionAccount.findMany({
+          where: { clientId, isActive: true },
+          select: { walletAddress: true },
+        });
+        const callerWallets = [
+          client?.primaryWallet,
+          ...(client?.settledWallets || []),
+          ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+        ].filter(Boolean);
+        isParty = callerWallets.some(
+          (w) => w === escrow.recipientWallet || w === escrow.payerWallet
+        );
+      }
+      if (!isParty) {
+        throw new Error('Unauthorized: file does not belong to this client');
+      }
+    } else if (file.clientId !== clientId) {
       throw new Error('Unauthorized: file does not belong to this client');
     }
 
@@ -181,7 +218,7 @@ export class InstitutionFileService {
         Bucket: this.bucket,
         Key: file.fileKey,
       }),
-      { expiresIn: 3600 },
+      { expiresIn: 3600 }
     );
 
     return { url, expiresIn: 3600 };
@@ -191,25 +228,62 @@ export class InstitutionFileService {
    * List files for a client, optionally filtered by escrowId
    */
   async listFiles(clientId: string, escrowIdOrCode?: string) {
-    const where: { clientId: string; escrowId?: string } = { clientId };
-    if (escrowIdOrCode) {
-      if (escrowIdOrCode.startsWith('EE-')) {
-        const esc = await this.prisma.institutionEscrow.findUnique({
-          where: { escrowCode: escrowIdOrCode },
-          select: { escrowId: true },
-        });
-        if (esc) where.escrowId = esc.escrowId;
-      } else {
-        where.escrowId = escrowIdOrCode;
-      }
+    // Without escrowId, only return the caller's own files
+    if (!escrowIdOrCode) {
+      return this.prisma.institutionFile.findMany({
+        where: { clientId },
+        orderBy: { uploadedAt: 'desc' },
+      });
     }
 
-    const files = await this.prisma.institutionFile.findMany({
-      where,
+    // Resolve escrow code to UUID
+    let escrowId = escrowIdOrCode;
+    if (escrowIdOrCode.startsWith('EE-')) {
+      const esc = await this.prisma.institutionEscrow.findUnique({
+        where: { escrowCode: escrowIdOrCode },
+        select: { escrowId: true },
+      });
+      if (esc) escrowId = esc.escrowId;
+    }
+
+    // Verify caller is a party to this escrow (owner or counterparty)
+    const escrow = await this.prisma.institutionEscrow.findUnique({
+      where: { escrowId },
+      select: { clientId: true, recipientWallet: true, payerWallet: true },
+    });
+    if (!escrow) {
+      return [];
+    }
+
+    let isParty = escrow.clientId === clientId;
+    if (!isParty) {
+      const client = await this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { primaryWallet: true, settledWallets: true },
+      });
+      const accounts = await this.prisma.institutionAccount.findMany({
+        where: { clientId, isActive: true },
+        select: { walletAddress: true },
+      });
+      const callerWallets = [
+        client?.primaryWallet,
+        ...(client?.settledWallets || []),
+        ...accounts.map((a: { walletAddress: string }) => a.walletAddress),
+      ].filter(Boolean);
+      isParty = callerWallets.some(
+        (w) => w === escrow.recipientWallet || w === escrow.payerWallet
+      );
+    }
+
+    if (!isParty) {
+      return [];
+    }
+
+    // Return all files attached to this escrow (from any party)
+    return this.prisma.institutionFile.findMany({
+      where: { escrowId },
       orderBy: { uploadedAt: 'desc' },
     });
-
-    return files;
   }
 
   /**
@@ -233,7 +307,7 @@ export class InstitutionFileService {
       new DeleteObjectCommand({
         Bucket: this.bucket,
         Key: file.fileKey,
-      }),
+      })
     );
 
     // Delete from database
@@ -264,7 +338,7 @@ export class InstitutionFileService {
       new GetObjectCommand({
         Bucket: this.bucket,
         Key: file.fileKey,
-      }),
+      })
     );
 
     // Stream body to buffer
@@ -292,9 +366,7 @@ export const institutionFileUpload = multer({
       cb(null, true);
     } else {
       cb(
-        new Error(
-          `Invalid file type: ${file.mimetype}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`,
-        ),
+        new Error(`Invalid file type: ${file.mimetype}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`)
       );
     }
   },

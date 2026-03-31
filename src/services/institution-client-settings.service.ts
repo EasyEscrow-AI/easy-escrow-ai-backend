@@ -2,6 +2,7 @@ import { prisma } from '../config/database';
 import * as crypto from 'crypto';
 import type { PrismaClient } from '../generated/prisma';
 import { isValidSolanaAddress } from '../models/validators/solana.validator';
+import { PROTOCOL_FEE_LIMITS } from '../config/institution-escrow.config';
 
 // Fields allowed to be updated via updateSettings
 const ALLOWED_SETTINGS_FIELDS = [
@@ -19,7 +20,27 @@ const ALLOWED_SETTINGS_FIELDS = [
   'riskTolerance',
   'defaultToken',
   'emailNotifications',
+  'language',
+  'theme',
+  'twoFactorEnabled',
+  'aiRecommendations',
+  'feeBps',
+  'minFeeUsdc',
+  'maxFeeUsdc',
+  'notificationPreferences',
+  'defaultTimelockHours',
 ] as const;
+
+const DEFAULT_NOTIFICATION_PREFERENCES = [
+  { event: 'payment_created', inApp: true, email: true, sms: false },
+  { event: 'payment_requires_approval', inApp: true, email: true, sms: false },
+  { event: 'payment_compliance_hold', inApp: true, email: true, sms: false },
+  { event: 'payment_gate_hold', inApp: true, email: true, sms: false },
+  { event: 'payment_settled', inApp: true, email: true, sms: false },
+  { event: 'payment_expired', inApp: true, email: true, sms: false },
+  { event: 'payment_cancelled', inApp: true, email: true, sms: false },
+  { event: 'payment_failed', inApp: true, email: true, sms: false },
+];
 
 export class InstitutionClientSettingsService {
   private prisma: PrismaClient;
@@ -29,14 +50,64 @@ export class InstitutionClientSettingsService {
   }
 
   /**
-   * Get settings for a client, creating defaults if none exist
+   * Get settings for a client, creating defaults if none exist.
+   * Merges fields from InstitutionClient (tier, jurisdiction, kycStatus)
+   * and maps field names to match frontend expectations.
    */
   async getSettings(clientId: string) {
-    return this.prisma.institutionClientSettings.upsert({
-      where: { clientId },
-      create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC' },
-      update: {},
-    });
+    const [settings, client] = await Promise.all([
+      this.prisma.institutionClientSettings.upsert({
+        where: { clientId },
+        create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC' },
+        update: {},
+      }),
+      this.prisma.institutionClient.findUnique({
+        where: { id: clientId },
+        select: { tier: true, jurisdiction: true, kycStatus: true },
+      }),
+    ]);
+
+    const notificationPrefs = (settings.notificationPreferences as any[]) || DEFAULT_NOTIFICATION_PREFERENCES;
+
+    return {
+      institution: {
+        tier: client?.tier ?? null,
+        jurisdiction: client?.jurisdiction ?? null,
+        kycStatus: client?.kycStatus ?? null,
+      },
+      preferences: {
+        language: settings.language ?? 'en',
+        timezone: settings.timezone,
+        theme: settings.theme ?? 'light',
+        defaultCurrency: settings.defaultCurrency,
+      },
+      security: {
+        twoFactorEnabled: settings.twoFactorEnabled,
+      },
+      compliance: {
+        autoTravelRule: settings.autoTravelRule,
+        sanctionsLists: settings.activeSanctionsLists,
+        manualReviewThreshold: settings.manualReviewThreshold ? String(settings.manualReviewThreshold) : null,
+      },
+      ai: {
+        recommendations: settings.aiRecommendations,
+        autoRelease: settings.aiAutoRelease,
+        riskTolerance: settings.riskTolerance,
+      },
+      wallet: {
+        defaultToken: settings.defaultToken,
+        feeBps: settings.feeBps,
+        minFeeUsdc: settings.minFeeUsdc ? Number(settings.minFeeUsdc) : 0.2,
+        maxFeeUsdc: settings.maxFeeUsdc ? Number(settings.maxFeeUsdc) : 20.0,
+      },
+      notifications: {
+        emailEnabled: settings.emailNotifications,
+        preferences: notificationPrefs,
+      },
+      integration: {
+        webhookUrl: settings.webhookUrl,
+      },
+    };
   }
 
   /**
@@ -58,13 +129,19 @@ export class InstitutionClientSettingsService {
         throw new Error('manualReviewThreshold must be a non-negative number or null');
       }
     }
-    if ('autoTravelRule' in filteredUpdates && typeof filteredUpdates.autoTravelRule !== 'boolean') {
+    if (
+      'autoTravelRule' in filteredUpdates &&
+      typeof filteredUpdates.autoTravelRule !== 'boolean'
+    ) {
       throw new Error('autoTravelRule must be a boolean');
     }
     if ('aiAutoRelease' in filteredUpdates && typeof filteredUpdates.aiAutoRelease !== 'boolean') {
       throw new Error('aiAutoRelease must be a boolean');
     }
-    if ('emailNotifications' in filteredUpdates && typeof filteredUpdates.emailNotifications !== 'boolean') {
+    if (
+      'emailNotifications' in filteredUpdates &&
+      typeof filteredUpdates.emailNotifications !== 'boolean'
+    ) {
       throw new Error('emailNotifications must be a boolean');
     }
     if ('riskTolerance' in filteredUpdates) {
@@ -79,8 +156,92 @@ export class InstitutionClientSettingsService {
       }
     }
     if ('defaultToken' in filteredUpdates) {
-      if (typeof filteredUpdates.defaultToken !== 'string' || filteredUpdates.defaultToken.trim().length === 0) {
+      if (
+        typeof filteredUpdates.defaultToken !== 'string' ||
+        filteredUpdates.defaultToken.trim().length === 0
+      ) {
         throw new Error('defaultToken must be a non-empty string');
+      }
+    }
+    if ('language' in filteredUpdates) {
+      const valid = ['en', 'de', 'fr', 'ar', 'zh', 'es'];
+      if (filteredUpdates.language !== null && !valid.includes(filteredUpdates.language)) {
+        throw new Error(`language must be one of: ${valid.join(', ')} (or null)`);
+      }
+    }
+    if ('theme' in filteredUpdates) {
+      const valid = ['light', 'dark', 'system'];
+      if (filteredUpdates.theme !== null && !valid.includes(filteredUpdates.theme)) {
+        throw new Error('theme must be one of: light, dark, system (or null)');
+      }
+    }
+    if (
+      'twoFactorEnabled' in filteredUpdates &&
+      typeof filteredUpdates.twoFactorEnabled !== 'boolean'
+    ) {
+      throw new Error('twoFactorEnabled must be a boolean');
+    }
+    if (
+      'aiRecommendations' in filteredUpdates &&
+      typeof filteredUpdates.aiRecommendations !== 'boolean'
+    ) {
+      throw new Error('aiRecommendations must be a boolean');
+    }
+    if ('notificationPreferences' in filteredUpdates) {
+      const v = filteredUpdates.notificationPreferences;
+      if (!Array.isArray(v) || v.length === 0) {
+        throw new Error('notificationPreferences must be a non-empty array');
+      }
+      const validEvents = [
+        'payment_created', 'payment_requires_approval', 'payment_compliance_hold',
+        'payment_gate_hold', 'payment_settled', 'payment_expired',
+        'payment_cancelled', 'payment_failed',
+      ];
+      for (const pref of v) {
+        if (!pref.event || !validEvents.includes(pref.event)) {
+          throw new Error(`Invalid notification event: ${pref.event}`);
+        }
+        if (typeof pref.inApp !== 'boolean' || typeof pref.email !== 'boolean' || typeof pref.sms !== 'boolean') {
+          throw new Error('Each notification preference must have boolean inApp, email, and sms fields');
+        }
+      }
+    }
+    if ('feeBps' in filteredUpdates) {
+      const v = filteredUpdates.feeBps;
+      if (
+        typeof v !== 'number' ||
+        !Number.isInteger(v) ||
+        v < PROTOCOL_FEE_LIMITS.MIN_FEE_BPS ||
+        v > PROTOCOL_FEE_LIMITS.MAX_FEE_BPS
+      ) {
+        throw new Error(
+          `feeBps must be an integer between ${PROTOCOL_FEE_LIMITS.MIN_FEE_BPS} and ${PROTOCOL_FEE_LIMITS.MAX_FEE_BPS}`
+        );
+      }
+    }
+    if ('minFeeUsdc' in filteredUpdates) {
+      const v = filteredUpdates.minFeeUsdc;
+      if (typeof v !== 'number' || v < PROTOCOL_FEE_LIMITS.MIN_FEE_USDC) {
+        throw new Error(`minFeeUsdc must be at least ${PROTOCOL_FEE_LIMITS.MIN_FEE_USDC}`);
+      }
+    }
+    if ('maxFeeUsdc' in filteredUpdates) {
+      const v = filteredUpdates.maxFeeUsdc;
+      if (typeof v !== 'number' || v > PROTOCOL_FEE_LIMITS.MAX_FEE_USDC) {
+        throw new Error(`maxFeeUsdc must be at most ${PROTOCOL_FEE_LIMITS.MAX_FEE_USDC}`);
+      }
+    }
+    if ('minFeeUsdc' in filteredUpdates && 'maxFeeUsdc' in filteredUpdates) {
+      if (filteredUpdates.minFeeUsdc > filteredUpdates.maxFeeUsdc) {
+        throw new Error(
+          `minFeeUsdc (${filteredUpdates.minFeeUsdc}) must not exceed maxFeeUsdc (${filteredUpdates.maxFeeUsdc})`
+        );
+      }
+    }
+    if ('defaultTimelockHours' in filteredUpdates) {
+      const v = filteredUpdates.defaultTimelockHours;
+      if (v !== null && (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 72)) {
+        throw new Error('defaultTimelockHours must be an integer between 0 and 72, or null');
       }
     }
 
@@ -107,17 +268,10 @@ export class InstitutionClientSettingsService {
     wallets: { primaryWallet?: string; settlementWallet?: string }
   ) {
     if (wallets.primaryWallet && !isValidSolanaAddress(wallets.primaryWallet)) {
-      throw new Error(
-        `Invalid Solana address for primaryWallet: ${wallets.primaryWallet}`
-      );
+      throw new Error(`Invalid Solana address for primaryWallet: ${wallets.primaryWallet}`);
     }
-    if (
-      wallets.settlementWallet &&
-      !isValidSolanaAddress(wallets.settlementWallet)
-    ) {
-      throw new Error(
-        `Invalid Solana address for settlementWallet: ${wallets.settlementWallet}`
-      );
+    if (wallets.settlementWallet && !isValidSolanaAddress(wallets.settlementWallet)) {
+      throw new Error(`Invalid Solana address for settlementWallet: ${wallets.settlementWallet}`);
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -174,7 +328,7 @@ export class InstitutionClientSettingsService {
       provider?: string;
       isPrimary?: boolean;
       isSettlement?: boolean;
-    },
+    }
   ) {
     if (!data.name || !data.address) {
       throw new Error('name and address are required');
@@ -219,7 +373,8 @@ export class InstitutionClientSettingsService {
             description: data.description !== undefined ? data.description : existing.description,
             provider: data.provider !== undefined ? data.provider : existing.provider,
             isPrimary: data.isPrimary !== undefined ? data.isPrimary : existing.isPrimary,
-            isSettlement: data.isSettlement !== undefined ? data.isSettlement : existing.isSettlement,
+            isSettlement:
+              data.isSettlement !== undefined ? data.isSettlement : existing.isSettlement,
           },
         });
       } else {
@@ -257,7 +412,12 @@ export class InstitutionClientSettingsService {
         await tx.institutionClientSettings.upsert({
           where: { clientId },
           update: { settlementAuthorityWallet: wallet.address },
-          create: { clientId, defaultCurrency: 'USDC', timezone: 'UTC', settlementAuthorityWallet: wallet.address },
+          create: {
+            clientId,
+            defaultCurrency: 'USDC',
+            timezone: 'UTC',
+            settlementAuthorityWallet: wallet.address,
+          },
         });
       }
 
@@ -298,11 +458,7 @@ export class InstitutionClientSettingsService {
    * Generate a new API key for a client
    * Returns the raw key only once at creation time
    */
-  async generateApiKey(
-    clientId: string,
-    name: string,
-    permissions: string[]
-  ) {
+  async generateApiKey(clientId: string, name: string, permissions: string[]) {
     const rawKey = `inst_${crypto.randomBytes(32).toString('hex')}`;
     const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
 

@@ -13,6 +13,7 @@ import {
   requireSettlementAuthority,
   InstitutionAuthenticatedRequest,
 } from '../../../src/middleware/institution-jwt.middleware';
+import { resetInstitutionEscrowConfig } from '../../../src/config/institution-escrow.config';
 import { generateTestToken, generateExpiredToken } from '../../helpers/institution-test-utils';
 
 describe('InstitutionJwtMiddleware', () => {
@@ -34,6 +35,7 @@ describe('InstitutionJwtMiddleware', () => {
     res = {
       status: sinon.stub().returnsThis(),
       json: sinon.stub().returnsThis(),
+      setHeader: sinon.stub(),
     };
 
     next = sinon.spy();
@@ -136,6 +138,55 @@ describe('InstitutionJwtMiddleware', () => {
       expect(res.status.calledWith(401)).to.be.true;
       const body = res.json.firstCall.args[0];
       expect(body.code).to.equal('TOKEN_INVALID');
+    });
+
+    it('should set X-New-Access-Token header when token is near expiry', () => {
+      // Create a token with 1h expiry
+      const secret = process.env.JWT_SECRET || 'test-jwt-secret-for-testing-only-32chars!';
+      const token = jwt.sign(
+        { clientId: 'client-123', email: 'user@example.com', tier: 'ENTERPRISE' },
+        secret,
+        { expiresIn: 3600 } as jwt.SignOptions, // 1 hour
+      );
+
+      req.headers = { authorization: `Bearer ${token}` };
+
+      // Fast-forward to when only 10% of lifetime remains (54 min into a 1h token)
+      const clock = sandbox.useFakeTimers(Date.now() + 54 * 60 * 1000);
+
+      requireInstitutionAuth(
+        req as InstitutionAuthenticatedRequest,
+        res,
+        next
+      );
+
+      clock.restore();
+
+      expect(next.calledOnce).to.be.true;
+      expect(res.setHeader.calledWith('X-New-Access-Token')).to.be.true;
+      // Verify the new token is valid
+      const newToken = res.setHeader.firstCall.args[1];
+      const decoded = jwt.verify(newToken, secret) as any;
+      expect(decoded.clientId).to.equal('client-123');
+    });
+
+    it('should NOT set X-New-Access-Token when token has plenty of time left', () => {
+      const token = generateTestToken({
+        clientId: 'client-123',
+        email: 'user@example.com',
+        tier: 'ENTERPRISE',
+      });
+
+      req.headers = { authorization: `Bearer ${token}` };
+
+      requireInstitutionAuth(
+        req as InstitutionAuthenticatedRequest,
+        res,
+        next
+      );
+
+      expect(next.calledOnce).to.be.true;
+      expect(res.setHeader.called).to.be.false;
     });
 
     it('should return 401 TOKEN_INVALID when token signed with wrong secret', () => {
@@ -247,6 +298,9 @@ describe('InstitutionJwtMiddleware', () => {
         email: 'test@example.com',
         tier: 'STANDARD',
       };
+      // Ensure CDP is disabled by default for existing tests
+      delete process.env.CDP_ENABLED;
+      resetInstitutionEscrowConfig();
     });
 
     it('should pass with valid settlement authority key', () => {
@@ -332,6 +386,52 @@ describe('InstitutionJwtMiddleware', () => {
 
       expect(next.called).to.be.false;
       expect(res.status.calledWith(500)).to.be.true;
+    });
+
+    it('should bypass API key check when CDP is enabled', () => {
+      const originalCdp = process.env.CDP_ENABLED;
+      process.env.CDP_ENABLED = 'true';
+      resetInstitutionEscrowConfig();
+
+      // No settlement authority header — would normally fail
+      req.headers = {};
+
+      requireSettlementAuthority(
+        req as InstitutionAuthenticatedRequest,
+        res,
+        next
+      );
+
+      // Restore
+      process.env.CDP_ENABLED = originalCdp;
+      resetInstitutionEscrowConfig();
+
+      expect(next.calledOnce).to.be.true;
+      expect(res.status.called).to.be.false;
+    });
+
+    it('should still require auth before CDP bypass', () => {
+      const originalCdp = process.env.CDP_ENABLED;
+      process.env.CDP_ENABLED = 'true';
+      resetInstitutionEscrowConfig();
+
+      req.institutionClient = undefined;
+      req.headers = {};
+
+      requireSettlementAuthority(
+        req as InstitutionAuthenticatedRequest,
+        res,
+        next
+      );
+
+      // Restore
+      process.env.CDP_ENABLED = originalCdp;
+      resetInstitutionEscrowConfig();
+
+      expect(next.called).to.be.false;
+      expect(res.status.calledWith(401)).to.be.true;
+      const body = res.json.firstCall.args[0];
+      expect(body.code).to.equal('AUTH_REQUIRED');
     });
   });
 });

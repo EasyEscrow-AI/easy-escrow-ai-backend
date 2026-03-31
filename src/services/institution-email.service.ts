@@ -32,26 +32,26 @@ const SUBJECT_PREFIX: Partial<Record<NotificationType, string>> = {
   SECURITY_ALERT: 'Security Alert',
 };
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 class InstitutionEmailService {
-  private resend: Resend | null;
+  private resend: Resend;
   private fromAddress: string;
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey && process.env.NODE_ENV === 'production') {
+    if (!apiKey) {
       throw new Error('RESEND_API_KEY is not configured');
     }
-    this.resend = apiKey ? new Resend(apiKey) : null;
+    this.resend = new Resend(apiKey);
     this.fromAddress = process.env.RESEND_FROM_ADDRESS || 'notifications@easyescrow.ai';
+  }
+
+  private escapeHtml(unsafe: string): string {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   async sendNotificationEmail(params: SendNotificationEmailParams): Promise<void> {
@@ -69,17 +69,17 @@ class InstitutionEmailService {
       metadata,
     });
 
-    if (!this.resend) {
-      console.log('[EmailService] Resend not configured (non-production), skipping email:', { to, subject });
-      return;
+    try {
+      await this.resend.emails.send({
+        from: this.fromAddress,
+        to,
+        subject,
+        html,
+      });
+    } catch (error) {
+      console.error(`[EmailService] Failed to send email to ${to}:`, error);
+      throw error;
     }
-
-    await this.resend.emails.send({
-      from: this.fromAddress,
-      to,
-      subject,
-      html,
-    });
   }
 
   private buildEmailHtml(params: {
@@ -92,12 +92,8 @@ class InstitutionEmailService {
   }): string {
     const { recipientName, title, message, escrowId, metadata } = params;
 
-    const safeRecipientName = escapeHtml(recipientName);
-    const safeTitle = escapeHtml(title);
-    const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>');
-
     const escrowLine = escrowId
-      ? `<p style="color:#666;font-size:13px;">Escrow ID: ${escapeHtml(escrowId)}</p>`
+      ? `<p style="color:#666;font-size:13px;">Escrow ID: ${this.escapeHtml(escrowId)}</p>`
       : '';
 
     const metadataLines =
@@ -107,7 +103,7 @@ class InstitutionEmailService {
               .filter(([, v]) => v !== null && v !== undefined)
               .map(
                 ([k, v]) =>
-                  `<tr><td style="padding:4px 12px 4px 0;font-weight:600;">${escapeHtml(String(k))}</td><td style="padding:4px 0;">${escapeHtml(String(v))}</td></tr>`
+                  `<tr><td style="padding:4px 12px 4px 0;font-weight:600;">${this.escapeHtml(k)}</td><td style="padding:4px 0;">${this.escapeHtml(String(v))}</td></tr>`
               )
               .join('')}
            </table>`
@@ -123,9 +119,9 @@ class InstitutionEmailService {
       <div style="border-bottom:2px solid #2563eb;padding-bottom:16px;margin-bottom:24px;">
         <h2 style="margin:0;color:#1e293b;font-size:20px;">EasyEscrow.ai</h2>
       </div>
-      <p style="color:#374151;margin:0 0 8px;">Hi ${safeRecipientName},</p>
-      <h3 style="color:#1e293b;margin:16px 0 8px;">${safeTitle}</h3>
-      <p style="color:#4b5563;line-height:1.6;">${safeMessage}</p>
+      <p style="color:#374151;margin:0 0 8px;">Hi ${this.escapeHtml(recipientName)},</p>
+      <h3 style="color:#1e293b;margin:16px 0 8px;">${this.escapeHtml(title)}</h3>
+      <p style="color:#4b5563;line-height:1.6;">${this.escapeHtml(message)}</p>
       ${escrowLine}
       ${metadataLines}
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
@@ -141,8 +137,11 @@ class InstitutionEmailService {
 
 let instance: InstitutionEmailService | null = null;
 
-export function getEmailService(): InstitutionEmailService {
+export function getEmailService(): InstitutionEmailService | null {
   if (!instance) {
+    if (!process.env.RESEND_API_KEY) {
+      return null;
+    }
     instance = new InstitutionEmailService();
   }
   return instance;

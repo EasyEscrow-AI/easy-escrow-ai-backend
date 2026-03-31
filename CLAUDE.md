@@ -309,13 +309,14 @@ Environment-specific IDL files in `src/generated/anchor/`:
 
 ### Institution Escrow
 - Feature-flagged via `INSTITUTION_ESCROW_ENABLED` (disabled by default)
-- USDC escrow with configurable min/max amounts ($100 - $1M default)
+- USDC escrow with configurable min/max amounts ($10 - $100M default)
 - JWT authentication (access + refresh tokens) for institution users
 - Allowlist-based institution registration (not open signup)
 - AI compliance analysis via Claude API before escrow release
 - Document uploads stored in DigitalOcean Spaces (S3-compatible)
 - Settlement authority pattern: separate API key for release operations
 - Default escrow expiry: 72 hours (configurable)
+- Payment timelock: optional cooling-off period (0-72h) between funding and release (`timelockHours`). Default 0 (disabled). See `docs/architecture/PAYMENT_TIMELOCK.md`
 - Config validated at startup only when feature is enabled
 
 ### Transaction Flow

@@ -18,12 +18,15 @@ import {
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
+  createTransferInstruction,
 } from '@solana/spl-token';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import { BN } from 'bn.js';
+import { createHash } from 'crypto';
 import { config } from '../config';
 import { getEscrowIdl } from '../utils/idl-loader';
 import { loadAdminKeypair } from '../utils/loadAdminKeypair';
+import { getCdpSettlementService } from './cdp-settlement.service';
 
 // PDA seeds matching the Rust program
 const INST_ESCROW_SEED = Buffer.from('inst_escrow');
@@ -32,12 +35,16 @@ const INST_VAULT_SEED = Buffer.from('inst_vault');
 /**
  * Safely convert a decimal USDC amount to micro-USDC integer string
  * without floating-point multiplication.
- * E.g. 1000.50 → "1000500000", 0.123456 → "123456"
+ * Uses toFixed(6) as the rounding boundary to eliminate float drift,
+ * then BigInt string math for exact conversion.
+ * E.g. 599.99 → "599990000", 1000.50 → "1000500000", 0.123456 → "123456"
  */
 function decimalToMicroUsdc(amount: number): string {
-  const str = amount.toFixed(6);
+  if (amount < 0) throw new Error('Amount cannot be negative');
+  const str = amount.toFixed(6); // rounds to 6 decimal places (USDC precision)
   const [whole, frac] = str.split('.');
-  return (BigInt(whole) * BigInt(1_000_000) + BigInt(frac)).toString();
+  const fracPadded = (frac || '0').padEnd(6, '0').slice(0, 6);
+  return (BigInt(whole) * BigInt(1_000_000) + BigInt(fracPadded)).toString();
 }
 
 // Map condition type strings to Anchor enum variants
@@ -46,6 +53,43 @@ const CONDITION_TYPE_MAP: Record<string, Record<string, Record<string, never>>> 
   TIME_LOCK: { timeLock: {} },
   COMPLIANCE_CHECK: { complianceCheck: {} },
 };
+
+// SPL Memo program — used to embed the human-readable escrow code (EE-XXX-XXX) in transactions
+const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+
+/** AI analysis data needed for chain-of-custody memo digest */
+export interface AiMemoData {
+  recommendation: string;
+  riskScore: number;
+  factors: unknown;
+}
+
+/** Map numeric risk score (0-100) to human-readable level for on-chain memos */
+export function riskScoreToMemoLevel(score: number): string {
+  if (score >= 76) return 'blocked';
+  if (score >= 51) return 'high-risk';
+  if (score >= 26) return 'medium-risk';
+  return 'low-risk';
+}
+
+/** Build compact AI decision fingerprint for SPL Memo (chain-of-custody audit trail) */
+export function buildAiDigest(analysis: AiMemoData | null): string {
+  if (!analysis) return 'ai=NONE';
+  const riskLevel = riskScoreToMemoLevel(analysis.riskScore);
+  const hash = createHash('sha256')
+    .update(JSON.stringify({ r: analysis.recommendation, l: riskLevel, f: analysis.factors }))
+    .digest('hex')
+    .slice(0, 16);
+  return `ai=${analysis.recommendation}:risk=${riskLevel}:sha=${hash}`;
+}
+
+function createMemoInstruction(text: string, signer?: PublicKey): TransactionInstruction {
+  return new TransactionInstruction({
+    keys: signer ? [{ pubkey: signer, isSigner: true, isWritable: false }] : [],
+    programId: MEMO_PROGRAM_ID,
+    data: Buffer.from(text, 'utf-8'),
+  });
+}
 
 export class InstitutionEscrowProgramService {
   private connection: Connection;
@@ -146,6 +190,7 @@ export class InstitutionEscrowProgramService {
     conditionType: number | string;
     corridor: string;
     expiryTimestamp: number;
+    memo?: string;
   }): Promise<{ transaction: Transaction; escrowPda: string; vaultPda: string }> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -199,6 +244,9 @@ export class InstitutionEscrowProgramService {
       .instruction();
 
     const transaction = new Transaction().add(ix);
+    if (params.memo) {
+      transaction.add(createMemoInstruction(params.memo, params.authority));
+    }
 
     return {
       transaction,
@@ -208,12 +256,15 @@ export class InstitutionEscrowProgramService {
   }
 
   /**
-   * Build deposit transaction (signed by payer, not admin)
+   * Build deposit transaction (signed by payer, not admin).
+   * Fee is collected at deposit time: escrow amount goes to vault, platform fee goes to fee collector.
    */
   async buildDepositTransaction(params: {
     escrowId: string;
     payer: PublicKey;
     usdcMint: PublicKey;
+    feeCollector: PublicKey;
+    memo?: string;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -222,6 +273,18 @@ export class InstitutionEscrowProgramService {
 
     const payerAta = await getAssociatedTokenAddress(params.usdcMint, params.payer);
 
+    const transaction = new Transaction();
+
+    // Ensure fee collector ATA exists (payer pays for ATA creation if needed)
+    const feeCollectorAta = await this.getOrCreateAta(
+      params.usdcMint,
+      params.feeCollector,
+      params.payer
+    );
+    if (feeCollectorAta.instruction) {
+      transaction.add(feeCollectorAta.instruction);
+    }
+
     const ix = await (this.program.methods as any)
       .depositInstitutionEscrow(escrowIdArray)
       .accounts({
@@ -229,15 +292,23 @@ export class InstitutionEscrowProgramService {
         payerTokenAccount: payerAta,
         escrowState: escrowPda,
         tokenVault: vaultPda,
+        feeCollectorTokenAccount: feeCollectorAta.address,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
 
-    return new Transaction().add(ix);
+    transaction.add(ix);
+    if (params.memo) {
+      transaction.add(createMemoInstruction(params.memo, params.payer));
+    }
+    return transaction;
   }
 
   /**
-   * Build release transaction
+   * Build release transaction.
+   * Fee was collected at deposit time for new escrows, but release still passes
+   * fee_collector for backward compatibility — any remaining vault balance after
+   * the recipient transfer goes to fee collector (handles legacy escrows).
    */
   async buildReleaseTransaction(params: {
     escrowId: string;
@@ -245,6 +316,8 @@ export class InstitutionEscrowProgramService {
     recipientWallet: PublicKey;
     feeCollector: PublicKey;
     usdcMint: PublicKey;
+    memo?: string;
+    rentPayer?: PublicKey;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -253,20 +326,25 @@ export class InstitutionEscrowProgramService {
 
     const transaction = new Transaction();
 
-    // Ensure recipient and fee collector ATAs exist
+    // Use rentPayer for ATA creation (defaults to authority for backward compat).
+    // For CDP multi-sign, rentPayer is the admin so the CDP wallet doesn't pay rent.
+    const ataPayer = params.rentPayer ?? params.authority;
+
+    // Ensure recipient ATA exists
     const recipientAta = await this.getOrCreateAta(
       params.usdcMint,
       params.recipientWallet,
-      params.authority
+      ataPayer
     );
     if (recipientAta.instruction) {
       transaction.add(recipientAta.instruction);
     }
 
+    // Ensure fee collector ATA exists (handles legacy escrows with fee still in vault)
     const feeCollectorAta = await this.getOrCreateAta(
       params.usdcMint,
       params.feeCollector,
-      params.authority
+      ataPayer
     );
     if (feeCollectorAta.instruction) {
       transaction.add(feeCollectorAta.instruction);
@@ -286,6 +364,9 @@ export class InstitutionEscrowProgramService {
       .instruction();
 
     transaction.add(ix);
+    if (params.memo) {
+      transaction.add(createMemoInstruction(params.memo, params.authority));
+    }
 
     return transaction;
   }
@@ -298,6 +379,7 @@ export class InstitutionEscrowProgramService {
     caller: PublicKey;
     payerWallet: PublicKey;
     usdcMint: PublicKey;
+    memo?: string;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -318,7 +400,11 @@ export class InstitutionEscrowProgramService {
       })
       .instruction();
 
-    return new Transaction().add(ix);
+    const transaction = new Transaction().add(ix);
+    if (params.memo) {
+      transaction.add(createMemoInstruction(params.memo, params.caller));
+    }
+    return transaction;
   }
 
   /**
@@ -333,8 +419,9 @@ export class InstitutionEscrowProgramService {
     transaction.sign(this.adminKeypair);
 
     const rawTx = transaction.serialize();
+    const isDevnet = process.env.NODE_ENV !== 'production';
     const txSignature = await this.connection.sendRawTransaction(rawTx, {
-      skipPreflight: false,
+      skipPreflight: isDevnet,
       maxRetries: 3,
     });
 
@@ -342,6 +429,17 @@ export class InstitutionEscrowProgramService {
       { signature: txSignature, blockhash, lastValidBlockHeight },
       'confirmed'
     );
+
+    // Verify the transaction actually succeeded (confirmTransaction only checks inclusion, not success)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `Transaction ${txSignature} confirmed but failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
 
     return txSignature;
   }
@@ -361,6 +459,7 @@ export class InstitutionEscrowProgramService {
     conditionType: number | string;
     corridor: string;
     expiryTimestamp: number;
+    escrowCode?: string;
   }): Promise<{ txSignature: string; escrowPda: string; vaultPda: string }> {
     // Convert decimal amounts to micro-USDC strings safely (no float multiplication)
     const amountMicroUsdc = decimalToMicroUsdc(params.amount);
@@ -398,6 +497,7 @@ export class InstitutionEscrowProgramService {
       conditionType: params.conditionType,
       corridor: params.corridor,
       expiryTimestamp: params.expiryTimestamp,
+      memo: params.escrowCode ? `EasyEscrow:init:${params.escrowCode}` : undefined,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
@@ -410,17 +510,30 @@ export class InstitutionEscrowProgramService {
   }
 
   /**
-   * Release escrow on-chain: build, sign, and submit release transaction
+   * Release escrow on-chain: build, sign, and submit release transaction.
+   * For new escrows, fee was collected at deposit — vault only has recipient amount.
+   * For legacy escrows, any remaining vault balance after recipient transfer goes to fee collector.
    */
   async releaseEscrowOnChain(params: {
     escrowId: string;
     recipientWallet: PublicKey;
     feeCollector: PublicKey;
     usdcMint: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
   }): Promise<string> {
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:release:${params.escrowCode}`;
+      if (params.aiDigest) {
+        memo += `:${params.aiDigest}`;
+      }
+    }
+
     const transaction = await this.buildReleaseTransaction({
       ...params,
       authority: this.adminKeypair.publicKey,
+      memo,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
@@ -439,10 +552,30 @@ export class InstitutionEscrowProgramService {
     escrowId: string;
     payerWallet: PublicKey;
     usdcMint: PublicKey;
+    escrowCode?: string;
+    cancelReason?: string;
   }): Promise<string> {
+    // Map free-text reason to a bounded code for on-chain memo
+    const REASON_CODES: Record<string, string> = {
+      expired: 'expired', dispute: 'dispute', compliance: 'compliance',
+      'client-request': 'client-request', fraud: 'fraud',
+    };
+    const reasonCode = params.cancelReason
+      ? REASON_CODES[params.cancelReason.toLowerCase()] || 'other'
+      : undefined;
+
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:cancel:${params.escrowCode}`;
+      if (reasonCode) {
+        memo += `:reason=${reasonCode}`;
+      }
+    }
+
     const transaction = await this.buildCancelTransaction({
       ...params,
       caller: this.adminKeypair.publicKey,
+      memo,
     });
 
     const txSignature = await this.signAndSubmit(transaction);
@@ -451,6 +584,302 @@ export class InstitutionEscrowProgramService {
       `[InstitutionEscrowProgramService] Cancel escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
     );
 
+    return txSignature;
+  }
+
+  /**
+   * Release escrow with CDP as the settlement authority (multi-sign pattern).
+   * 1. Build release tx with CDP pubkey as authority
+   * 2. Admin partially signs as fee payer
+   * 3. CDP signs as settlement authority (after policy check)
+   * 4. Submit fully-signed tx to Solana RPC
+   */
+  async releaseEscrowWithCdp(params: {
+    escrowId: string;
+    cdpAuthorityPubkey: PublicKey;
+    recipientWallet: PublicKey;
+    feeCollector: PublicKey;
+    usdcMint: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:release:${params.escrowCode}`;
+      if (params.aiDigest) {
+        memo += `:${params.aiDigest}`;
+      }
+    }
+
+    const transaction = await this.buildReleaseTransaction({
+      ...params,
+      authority: params.cdpAuthorityPubkey,
+      rentPayer: this.adminKeypair.publicKey,
+      memo,
+    });
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash(
+      'confirmed'
+    );
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // Serialize with requireAllSignatures: false (CDP hasn't signed yet)
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+
+    // Send to CDP for authority signature
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit fully-signed transaction
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    // Verify on-chain execution succeeded (confirmTransaction only waits for inclusion)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `CDP release transaction failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
+
+    console.log(
+      `[InstitutionEscrowProgramService] CDP release escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
+    );
+
+    return txSignature;
+  }
+
+  /**
+   * Cancel escrow with CDP as the settlement authority (multi-sign pattern).
+   * Same pattern as releaseEscrowWithCdp: admin pays fees, CDP signs as caller (authority).
+   */
+  async cancelEscrowWithCdp(params: {
+    escrowId: string;
+    cdpCallerPubkey: PublicKey;
+    payerWallet: PublicKey;
+    usdcMint: PublicKey;
+    escrowCode?: string;
+    cancelReason?: string;
+  }): Promise<string> {
+    const REASON_CODES: Record<string, string> = {
+      expired: 'expired', dispute: 'dispute', compliance: 'compliance',
+      'client-request': 'client-request', fraud: 'fraud',
+    };
+    const reasonCode = params.cancelReason
+      ? REASON_CODES[params.cancelReason.toLowerCase()] || 'other'
+      : undefined;
+
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:cancel:${params.escrowCode}`;
+      if (reasonCode) {
+        memo += `:reason=${reasonCode}`;
+      }
+    }
+
+    const transaction = await this.buildCancelTransaction({
+      ...params,
+      caller: params.cdpCallerPubkey,
+      memo,
+    });
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash(
+      'confirmed'
+    );
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // Serialize with requireAllSignatures: false
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+
+    // Send to CDP for authority signature
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit fully-signed transaction
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    // Verify on-chain execution succeeded (confirmTransaction only waits for inclusion)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `CDP cancel transaction failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
+
+    console.log(
+      `[InstitutionEscrowProgramService] CDP cancel escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
+    );
+
+    return txSignature;
+  }
+
+  /**
+   * Direct USDC transfer (no escrow PDA) — admin signs as authority and fee payer.
+   * Used for direct settlement mode escrows where funds are transferred without a vault.
+   */
+  async transferUsdcDirect(params: {
+    recipientWallet: PublicKey;
+    usdcMint: PublicKey;
+    amount: number;
+    platformFee: number;
+    feeCollector: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    const { recipientWallet, usdcMint, amount, platformFee, feeCollector, escrowCode, aiDigest } = params;
+    const transaction = new Transaction();
+
+    // Admin ATA (source of funds)
+    const adminAta = await getAssociatedTokenAddress(usdcMint, this.adminKeypair.publicKey);
+
+    // Recipient ATA (create if needed)
+    const recipientAtaResult = await this.getOrCreateAta(usdcMint, recipientWallet, this.adminKeypair.publicKey);
+    if (recipientAtaResult.instruction) {
+      transaction.add(recipientAtaResult.instruction);
+    }
+
+    // Transfer net amount (amount - fee) to recipient
+    const netAmountMicro = BigInt(decimalToMicroUsdc(amount)) - BigInt(decimalToMicroUsdc(platformFee));
+    transaction.add(
+      createTransferInstruction(adminAta, recipientAtaResult.address, this.adminKeypair.publicKey, netAmountMicro)
+    );
+
+    // Transfer fee to fee collector (if fee > 0)
+    if (platformFee > 0) {
+      const feeCollectorAtaResult = await this.getOrCreateAta(usdcMint, feeCollector, this.adminKeypair.publicKey);
+      if (feeCollectorAtaResult.instruction) {
+        transaction.add(feeCollectorAtaResult.instruction);
+      }
+      const feeMicro = BigInt(decimalToMicroUsdc(platformFee));
+      transaction.add(
+        createTransferInstruction(adminAta, feeCollectorAtaResult.address, this.adminKeypair.publicKey, feeMicro)
+      );
+    }
+
+    // Add memo
+    if (escrowCode) {
+      let memo = `EasyEscrow:direct:${escrowCode}`;
+      if (aiDigest) memo += `:${aiDigest}`;
+      transaction.add(createMemoInstruction(memo, this.adminKeypair.publicKey));
+    }
+
+    const txSignature = await this.signAndSubmit(transaction);
+    console.log(`[InstitutionEscrowProgramService] Direct USDC transfer: ${txSignature}`);
+    return txSignature;
+  }
+
+  /**
+   * Direct USDC transfer with CDP as the authority (multi-sign pattern).
+   * CDP wallet holds the USDC and signs the transfer; admin pays fees.
+   */
+  async transferUsdcDirectWithCdp(params: {
+    cdpAuthorityPubkey: PublicKey;
+    recipientWallet: PublicKey;
+    usdcMint: PublicKey;
+    amount: number;
+    platformFee: number;
+    feeCollector: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    const { cdpAuthorityPubkey, recipientWallet, usdcMint, amount, platformFee, feeCollector, escrowCode, aiDigest } = params;
+    const transaction = new Transaction();
+
+    // CDP ATA (source of funds — CDP wallet holds the USDC)
+    const cdpAta = await getAssociatedTokenAddress(usdcMint, cdpAuthorityPubkey);
+
+    // Recipient ATA (create if needed, admin pays rent)
+    const recipientAtaResult = await this.getOrCreateAta(usdcMint, recipientWallet, this.adminKeypair.publicKey);
+    if (recipientAtaResult.instruction) {
+      transaction.add(recipientAtaResult.instruction);
+    }
+
+    // Transfer net amount from CDP ATA to recipient (CDP is the signer/authority)
+    const netAmountMicro = BigInt(decimalToMicroUsdc(amount)) - BigInt(decimalToMicroUsdc(platformFee));
+    transaction.add(
+      createTransferInstruction(cdpAta, recipientAtaResult.address, cdpAuthorityPubkey, netAmountMicro)
+    );
+
+    // Transfer fee from CDP ATA to fee collector
+    if (platformFee > 0) {
+      const feeCollectorAtaResult = await this.getOrCreateAta(usdcMint, feeCollector, this.adminKeypair.publicKey);
+      if (feeCollectorAtaResult.instruction) {
+        transaction.add(feeCollectorAtaResult.instruction);
+      }
+      const feeMicro = BigInt(decimalToMicroUsdc(platformFee));
+      transaction.add(
+        createTransferInstruction(cdpAta, feeCollectorAtaResult.address, cdpAuthorityPubkey, feeMicro)
+      );
+    }
+
+    // Add memo
+    if (escrowCode) {
+      let memo = `EasyEscrow:direct:${escrowCode}`;
+      if (aiDigest) memo += `:${aiDigest}`;
+      transaction.add(createMemoInstruction(memo, this.adminKeypair.publicKey));
+    }
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // CDP signs the transfer authority
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(`CDP direct transfer failed on-chain: ${JSON.stringify(txResult.meta.err)}`);
+    }
+
+    console.log(`[InstitutionEscrowProgramService] CDP direct USDC transfer: ${txSignature}`);
     return txSignature;
   }
 

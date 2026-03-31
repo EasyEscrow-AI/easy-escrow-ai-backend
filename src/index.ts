@@ -20,6 +20,7 @@ import {
   authorizedAppsRoutes,
   noncePoolAdminRoutes,
   institutionEscrowAdminRoutes,
+  adminAuthRoutes,
   assetsRoutes,
   institutionAuthRoutes,
   institutionSettingsRoutes,
@@ -37,7 +38,9 @@ import {
   institutionReportsRoutes,
   institutionDirectPaymentRoutes,
   institutionReferenceRoutes,
+  institutionBootstrapRoutes,
   institutionSearchRoutes,
+  privacyRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -57,6 +60,7 @@ import {
   getNonceReplenishmentScheduler,
 } from './services/nonce-schedulers.service';
 import { OfferExpiryScheduler } from './services/offer-expiry-scheduler.service';
+import { getInstitutionEscrowExpiryMonitor } from './services/institution-escrow-expiry-monitor.service';
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
@@ -131,6 +135,16 @@ const staleOfferCleanupScheduler = StaleOfferCleanupScheduler.getInstance(
   }
 );
 
+// Initialize institution escrow expiry monitor (gated by feature flag)
+const institutionEscrowExpiryMonitor =
+  process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true'
+    ? getInstitutionEscrowExpiryMonitor(prisma, {
+        schedule: '*/10 * * * *',
+        batchSize: 50,
+        timezone: process.env.TZ || 'America/Los_Angeles',
+      })
+    : null;
+
 // Security Middleware (apply first)
 app.use(helmetConfig);
 app.use(securityHeaders);
@@ -179,37 +193,7 @@ try {
   const openApiFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
   openApiDocument = YAML.load(openApiFilePath);
 
-  // 🔧 Environment-aware server configuration
-  const isProd = process.env.NODE_ENV === 'production';
-  const isStaging = process.env.NODE_ENV === 'staging';
-
-  if (isProd) {
-    openApiDocument.servers = [
-      {
-        url: 'https://api.easyescrow.ai',
-        description: 'Production server',
-      },
-    ];
-  } else if (isStaging) {
-    openApiDocument.servers = [
-      {
-        url: 'https://staging-api.easyescrow.ai',
-        description: 'Staging server',
-      },
-    ];
-  } else {
-    openApiDocument.servers = [
-      {
-        url: 'http://localhost:3000',
-        description: 'Development server',
-      },
-    ];
-  }
-
   console.log(`✅ API documentation loaded successfully from ${openApiFilePath}`);
-  console.log(
-    `🌐 API servers configured for environment: ${process.env.NODE_ENV || 'development'}`
-  );
 } catch (error: any) {
   console.warn('⚠️  Warning: Failed to load API documentation');
   console.warn(`   Error: ${error.message}`);
@@ -243,12 +227,14 @@ app.get('/', (_req: Request, res: Response) => {
     response.endpoints.institutionEscrow = '/api/v1/institution-escrow';
     response.endpoints.institutionClients = '/api/v1/institution/clients';
     response.endpoints.aiAnalysis = '/api/v1/ai';
+    response.endpoints.aiAnalyzeEscrow = '/api/v1/institution/ai/analyze-escrow';
     response.endpoints.aiAnalyzeEscrowDoc = '/api/v1/ai/analyze-escrow-doc/:escrow_id';
     response.endpoints.escrowDocAnalysis = '/api/v1/ai/escrow-doc-analysis/:escrow_id';
     response.endpoints.institutionReceipts = '/api/v1/institution-escrow/:escrowId/receipt';
     response.endpoints.institutionTokens = '/api/v1/institution/tokens';
     response.endpoints.institutionAccounts = '/api/v1/institution/accounts';
     response.endpoints.aiChat = '/api/v1/ai/chat';
+    response.endpoints.privacy = '/api/v1/privacy';
   }
 
   // Only include documentation field if OpenAPI spec loaded successfully
@@ -264,6 +250,12 @@ if (openApiDocument) {
   // Serve the OpenAPI spec as JSON for Redoc to consume
   app.get('/openapi.json', (_req: Request, res: Response) => {
     res.json(openApiDocument);
+  });
+
+  // Serve a servers-stripped copy for Redoc to hide the server dropdown
+  app.get('/openapi-redoc.json', (_req: Request, res: Response) => {
+    const { servers, ...rest } = openApiDocument;
+    res.json(rest);
   });
 
   // Serve Redoc documentation with custom dark theme
@@ -442,6 +434,9 @@ if (openApiDocument) {
     .redoc-wrap [class*="required"] { color: #f87171 !important; }
     /* Hide Redoc's built-in sidebar search (we have the topbar instead) */
     .redoc-wrap [role="search"] { display: none !important; }
+    /* Hide servers dropdown in endpoint operations */
+    .redoc-wrap [class*="servers"] { display: none !important; }
+    .redoc-wrap [class*="server-response-table"] { display: none !important; }
     /* Topbar search highlight */
     .topbar-search-highlight {
       outline: 2px solid #818cf8 !important;
@@ -477,7 +472,7 @@ if (openApiDocument) {
   <div id="redoc-container"></div>
   <script src="https://unpkg.com/redoc@2.1.3/bundles/redoc.standalone.js"></script>
   <script>
-    Redoc.init('/openapi.json', {
+    Redoc.init('/openapi-redoc.json', {
       theme: {
         colors: {
           primary: { main: '#818cf8' },
@@ -537,7 +532,7 @@ if (openApiDocument) {
       }
 
       // Build search index from the OpenAPI spec
-      fetch('/openapi.json').then(function(r) { return r.json(); }).then(function(spec) {
+      fetch('/openapi-redoc.json').then(function(r) { return r.json(); }).then(function(spec) {
         // Add tags (sections)
         (spec.tags || []).forEach(function(tag) {
           searchIndex.push({ type: 'tag', method: 'tag', title: tag.name, path: '', tag: tag.name });
@@ -755,6 +750,7 @@ app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with priva
 
 // Institution Escrow Routes (gated by feature flag)
 if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
+  app.use(adminAuthRoutes);
   app.use(institutionAuthRoutes);
   app.use(institutionSettingsRoutes);
   app.use(institutionFilesRoutes);
@@ -772,7 +768,9 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
   app.use(institutionReportsRoutes);
   app.use(institutionDirectPaymentRoutes);
   app.use(institutionReferenceRoutes);
+  app.use(institutionBootstrapRoutes);
   app.use(institutionSearchRoutes);
+  app.use(privacyRoutes);
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled
@@ -791,6 +789,13 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
     });
   });
   app.use('/api/v1/ai', (_req, res) => {
+    res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Institution escrow is not enabled on this server',
+      timestamp: new Date().toISOString(),
+    });
+  });
+  app.use('/api/v1/privacy', (_req, res) => {
     res.status(503).json({
       error: 'Service Unavailable',
       message: 'Institution escrow is not enabled on this server',
@@ -839,6 +844,11 @@ const gracefulShutdown = async (signal: string) => {
     // Dispose TransactionGroupBuilder (clears cache and intervals)
     console.log('Disposing TransactionGroupBuilder...');
     transactionGroupBuilder.dispose();
+
+    // Stop institution escrow expiry monitor
+    if (institutionEscrowExpiryMonitor) {
+      institutionEscrowExpiryMonitor.stop();
+    }
 
     // Disconnect Redis
     console.log('Disconnecting Redis...');
@@ -893,6 +903,12 @@ const startServer = async () => {
           console.log('Starting stale offer cleanup scheduler...');
           staleOfferCleanupScheduler.start();
           console.log('✅ Stale offer cleanup scheduler started (runs every 30 minutes)');
+
+          // Start institution escrow expiry monitor (if enabled)
+          if (institutionEscrowExpiryMonitor) {
+            institutionEscrowExpiryMonitor.start();
+            console.log('✅ Institution escrow expiry monitor started (runs every 10 minutes)');
+          }
 
           // DISABLED for BETA launch - Backup scheduler
           // Manual backups via CLI tools are sufficient for BETA phase

@@ -10,7 +10,7 @@ You need to add 5 secrets to your GitHub repository:
 |-------------|-------|---------|
 | `DIGITAL_OCEAN_API_KEY` | `dop_v1_xxxxx` | Access DigitalOcean databases |
 | `AWS_S3_BUCKET` | `easyescrow-backups` | S3 bucket name |
-| `AWS_S3_KEY` | `AKIA3O456Q45RSX43JUY` | AWS access key ID |
+| `AWS_S3_KEY` | `your-aws-access-key-id` | AWS access key ID |
 | `AWS_S3_SECRET` | `xxx...xxx` | AWS secret access key |
 | `AWS_S3_REGION` | `us-east-1` | S3 bucket region |
 
@@ -69,7 +69,7 @@ For each secret, click **New repository secret**:
 
 **Add to GitHub**:
 - Name: `AWS_S3_KEY`
-- Secret: Paste the access key ID (e.g., `AKIA3O456Q45RSX43JUY`)
+- Secret: Paste the access key ID (e.g., `AKIA...`)
 - Click **Add secret**
 
 ---

@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import ms from 'ms';
 import { PrismaClient } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { config } from '../config';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 import { redisClient } from '../config/redis';
@@ -23,7 +24,7 @@ export class InstitutionAuthService {
   private prisma: PrismaClient;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
   }
 
   /**
@@ -171,21 +172,23 @@ export class InstitutionAuthService {
     });
 
     if (!storedToken) {
-      throw new Error('Invalid refresh token');
+      const err = new Error('Invalid refresh token') as Error & { code: string };
+      err.code = 'REFRESH_TOKEN_INVALID';
+      throw err;
     }
 
     // Allow a 30-second grace period after revocation to handle race conditions
     // (e.g., multiple tabs or retry logic using the old token after rotation)
     if (storedToken.revokedAt) {
-      const gracePeriodExpired =
-        storedToken.revokedAt.getTime() < Date.now() - REFRESH_TOKEN_GRACE_PERIOD_MS;
-      if (gracePeriodExpired) {
-        throw new Error('Refresh token has been revoked');
-      }
+      const err = new Error('Refresh token has been revoked') as Error & { code: string };
+      err.code = 'REFRESH_TOKEN_REVOKED';
+      throw err;
     }
 
     if (storedToken.expiresAt < new Date()) {
-      throw new Error('Refresh token has expired');
+      const err = new Error('Refresh token has expired') as Error & { code: string };
+      err.code = 'REFRESH_TOKEN_EXPIRED';
+      throw err;
     }
 
     // Revoke old refresh token (skip if already revoked during grace period

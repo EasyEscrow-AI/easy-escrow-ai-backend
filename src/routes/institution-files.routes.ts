@@ -10,7 +10,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import {
@@ -32,7 +32,7 @@ const standardRateLimiter = rateLimit({
 router.post(
   '/api/v1/institution/files',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   institutionFileUpload.single('file'),
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
@@ -81,7 +81,7 @@ router.post(
 router.get(
   '/api/v1/institution/files',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionFileService();
@@ -109,7 +109,7 @@ router.get(
 router.get(
   '/api/v1/institution/files/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionFileService();
@@ -138,7 +138,7 @@ router.get(
 router.delete(
   '/api/v1/institution/files/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionFileService();

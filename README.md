@@ -43,6 +43,7 @@ Cross-border stablecoin escrow payments for institutional clients.
 - ✅ Full blockchain audit of payment escrows and downloadable compliance & audit reports
 - ✅ Supports KYC/KYB compliance integrations (not activated for hackathon)
 - ✅ Supports AMINA Payment Network (APN) integrations (not activated for hackathon)
+- ✅ CDP Settlement Authority: optional Coinbase Developer Platform (CDP) wallet as independent settlement authority with TEE-secured policy engine (feature-flagged: off by default -- enable via `CDP_ENABLED`)
 
 ### v1.0.0 — Atomic Swaps (October 2025)
 
@@ -80,6 +81,7 @@ Programmable cross-border stablecoin escrow payments, built for institutions com
 - **Token Support**: Primary support for USDC and AMINA-approved whitelist only tokens
 - **KYC/KYB Integrations**: Compliance integration support (not activated for hackathon)
 - **AMINA Payment Network**: APN integration support (not activated for hackathon)
+- **CDP Settlement Authority**: Optional independent settlement authority via Coinbase Developer Platform (CDP) wallet with TEE-secured policy engine. When enabled, the CDP wallet replaces the admin as the on-chain settlement authority, requiring policy approval before signing release/cancel transactions (feature-flagged: off by default -- enable via `CDP_ENABLED`)
 
 ### Escrow Lifecycle
 
@@ -114,6 +116,8 @@ Create --> Deposit --> Release / Cancel
 ### Settlement Authority
 
 Release operations require a separate settlement authority API key, enforcing separation of duties between escrow creation and fund release. This is validated via the `requireSettlementAuthority` middleware.
+
+Optionally, escrows can use a **CDP (Coinbase Developer Platform) wallet** as an independent settlement authority. When the `cdp_policy_approval` release condition is selected, the CDP wallet's public key is stored as the on-chain `settlement_authority` instead of the admin. Release and cancel transactions require multi-sign: the admin partially signs as fee payer, then CDP signs as authority after its TEE-secured policy engine validates the operation. See [CDP Settlement Authority Architecture](docs/architecture/CDP_SETTLEMENT_AUTHORITY.md) for details.
 
 ---
 
@@ -212,6 +216,7 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 | `ai-chat.service.ts` | AI-powered escrow assistant |
 | `allowlist.service.ts` | Wallet allowlist management (Redis + Prisma) |
 | `compliance.service.ts` | Corridor validation, risk scoring, volume limits |
+| `cdp-settlement.service.ts` | CDP wallet integration for independent settlement authority |
 
 ### Database Models
 
@@ -283,6 +288,7 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 │   │   ├── ai-chat.service.ts
 │   │   ├── allowlist.service.ts
 │   │   ├── compliance.service.ts
+│   │   ├── cdp-settlement.service.ts  # CDP wallet settlement authority
 │   │   └── solana.service.ts          # Blockchain ops
 │   ├── data/                  # Static data & knowledgebases
 │   ├── utils/                 # Utility functions
@@ -312,6 +318,8 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 ├── Dockerfile                 # Production Docker image
 └── package.json               # Node.js dependencies
 ```
+
+---
 
 ---
 
@@ -386,9 +394,10 @@ npm run docker:logs
 | Auth | `institutionAuthService`, `institutionJwtMiddleware` | 35 |
 | Client Settings | `institutionClientSettings` | 18 |
 | **Institution Escrow** | | |
-| Escrow Service | `institutionEscrowService`, `institutionEscrowStateMachine` | 51 |
-| Escrow Validation | `institutionEscrowValidation` | 57 |
-| Escrow Program | `institutionEscrowProgramService` | 28 |
+| Escrow Service | `institutionEscrowService`, `institutionEscrowStateMachine` | 59 |
+| Escrow Validation | `institutionEscrowValidation` | 74 |
+| Escrow Program | `institutionEscrowProgramService` | 47 |
+| CDP Settlement | `cdpSettlementService` | 10 |
 | Compliance & Allowlist | `complianceService`, `allowlistService` | 32 |
 | AI Analysis | `aiAnalysisService` | 37 |
 | File Service | `institutionFileService` | 57 |
@@ -473,6 +482,16 @@ DO_SPACES_BUCKET=
 DO_SPACES_REGION=
 ```
 
+### CDP Settlement Authority (optional, when `CDP_ENABLED=true`)
+
+```env
+CDP_ENABLED=false                         # Feature flag
+CDP_API_KEY_ID=                           # CDP API key ID
+CDP_API_KEY_SECRET=                       # CDP API key secret
+CDP_WALLET_SECRET=                        # CDP wallet secret
+CDP_ACCOUNT_NAME=easyescrow-settlement-devnet  # Named Solana account
+```
+
 See `.env.example` for the complete list of all configuration options.
 
 ---
@@ -499,13 +518,20 @@ Interactive API docs are available at `/docs` on each environment:
 - **Staging**: https://staging-api.easyescrow.ai/docs
 - **Production**: https://api.easyescrow.ai/docs
 
+OpenAPI spec (JSON):
+
+- **Staging**: https://staging-api.easyescrow.ai/openapi.json
+- **Production**: https://api.easyescrow.ai/openapi.json
+- **Redoc (Staging)**: https://staging-api.easyescrow.ai/openapi-redoc.json
+- **Redoc (Production)**: https://api.easyescrow.ai/openapi-redoc.json
+
 ---
 
 ## Security
 
 - **Rate Limiting**: Per-endpoint rate limits (5/15min for auth, 30/min standard, 10/min for sensitive operations)
 - **JWT Authentication**: Access + refresh token pattern for institution clients
-- **Settlement Authority**: Separate API key required for fund release operations
+- **Settlement Authority**: Separate API key required for fund release operations (optional CDP wallet for independent policy-gated signing)
 - **PDA Security**: Program Derived Addresses for on-chain asset custody
 - **Input Validation**: Express-validator chains on all endpoints
 - **AI Data Anonymisation**: PII redacted before document analysis
@@ -527,6 +553,7 @@ Interactive API docs are available at `/docs` on each environment:
 
 - [Swap Routing](docs/architecture/SWAP_ROUTING.md) — Jito vs escrow routing logic
 - [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) — Multi-NFT swap design
+- [CDP Settlement Authority](docs/architecture/CDP_SETTLEMENT_AUTHORITY.md) — Independent settlement authority via Coinbase CDP
 
 ### Deployment
 

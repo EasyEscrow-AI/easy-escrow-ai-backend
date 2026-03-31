@@ -67,6 +67,7 @@ describe('InstitutionEscrowProgramService', () => {
       }),
       sendRawTransaction: sandbox.stub().resolves('FakeTxSignature111111111111111111111111111111'),
       confirmTransaction: sandbox.stub().resolves({ value: { err: null } }),
+      getTransaction: sandbox.stub().resolves({ meta: { err: null } }),
     };
 
     // Create method chain stubs
@@ -354,16 +355,62 @@ describe('InstitutionEscrowProgramService', () => {
       // Fourth arg is condition type enum
       expect(args[3]).to.deep.equal({ complianceCheck: {} });
     });
+
+    it('should append SPL Memo instruction when memo is provided', async () => {
+      const result = await service.buildInitTransaction({
+        escrowId: TEST_UUID,
+        authority: PAYER_PUBKEY,
+        payerWallet: PAYER_PUBKEY,
+        recipientWallet: RECIPIENT_PUBKEY,
+        usdcMint: USDC_MINT,
+        feeCollector: PAYER_PUBKEY,
+        settlementAuthority: PAYER_PUBKEY,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
+        conditionType: 0,
+        corridor: 'US-MX',
+        expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
+        memo: 'EasyEscrow:init:EE-A3K7-9WFP',
+      });
+
+      // 1 init instruction + 1 memo instruction
+      expect(result.transaction.instructions.length).to.equal(2);
+      const memoIx = result.transaction.instructions[1];
+      expect(memoIx.programId.toBase58()).to.equal('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+      expect(memoIx.data.toString('utf-8')).to.equal('EasyEscrow:init:EE-A3K7-9WFP');
+    });
+
+    it('should not append memo when memo is omitted', async () => {
+      const result = await service.buildInitTransaction({
+        escrowId: TEST_UUID,
+        authority: PAYER_PUBKEY,
+        payerWallet: PAYER_PUBKEY,
+        recipientWallet: RECIPIENT_PUBKEY,
+        usdcMint: USDC_MINT,
+        feeCollector: PAYER_PUBKEY,
+        settlementAuthority: PAYER_PUBKEY,
+        amountMicroUsdc: '1000000000',
+        platformFeeMicroUsdc: '10000000',
+        conditionType: 0,
+        corridor: 'US-MX',
+        expiryTimestamp: Math.floor(Date.now() / 1000) + 86400,
+      });
+
+      expect(result.transaction.instructions.length).to.equal(1);
+    });
   });
 
   // ─── buildDepositTransaction ────────────────────────────────
 
   describe('buildDepositTransaction', () => {
     it('should return a Transaction with deposit instruction', async () => {
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
+
       const result = await service.buildDepositTransaction({
         escrowId: TEST_UUID,
         payer: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
+        feeCollector: PAYER_PUBKEY,
       });
 
       expect(result).to.be.instanceOf(Transaction);
@@ -371,10 +418,13 @@ describe('InstitutionEscrowProgramService', () => {
     });
 
     it('should pass escrow ID array as arg', async () => {
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
+
       await service.buildDepositTransaction({
         escrowId: TEST_UUID,
         payer: PAYER_PUBKEY,
         usdcMint: USDC_MINT,
+        feeCollector: PAYER_PUBKEY,
       });
 
       const args = programMethodsStub.depositInstitutionEscrow.firstCall.args;
@@ -400,7 +450,7 @@ describe('InstitutionEscrowProgramService', () => {
       expect(programMethodsStub.releaseInstitutionEscrow.calledOnce).to.be.true;
     });
 
-    it('should add ATA creation instructions when ATAs do not exist', async () => {
+    it('should add ATA creation instruction when recipient ATA does not exist', async () => {
       connectionStub.getAccountInfo.resolves(null);
 
       const result = await service.buildReleaseTransaction({
@@ -411,11 +461,11 @@ describe('InstitutionEscrowProgramService', () => {
         usdcMint: USDC_MINT,
       });
 
-      // 2 ATA create instructions + 1 release instruction
+      // 2 ATA create instructions (recipient + fee collector) + 1 release instruction
       expect(result.instructions.length).to.equal(3);
     });
 
-    it('should skip ATA creation instructions when ATAs already exist', async () => {
+    it('should skip ATA creation instruction when recipient ATA already exists', async () => {
       connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
 
       const result = await service.buildReleaseTransaction({
@@ -686,6 +736,169 @@ describe('InstitutionEscrowProgramService', () => {
 
       expect(adminPk).to.be.instanceOf(PublicKey);
       expect(adminPk.toBase58()).to.equal(testKeypair.publicKey.toBase58());
+    });
+  });
+
+  // ─── releaseEscrowWithCdp ─────────────────────────────────
+
+  describe('releaseEscrowWithCdp', () => {
+    const CDP_PUBKEY = new PublicKey('498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R');
+    let cdpServiceStub: any;
+
+    // Valid base58 blockhash (needed for transaction.partialSign)
+    const VALID_BLOCKHASH = '4uQeVj5tqViQh7yWWGStvkEG1Zmhx6uasJtWCJziofM';
+
+    beforeEach(() => {
+      // Use a valid base58 blockhash for partialSign
+      connectionStub.getLatestBlockhash.resolves({
+        blockhash: VALID_BLOCKHASH,
+        lastValidBlockHeight: 100,
+      });
+
+      // Mock getCdpSettlementService
+      cdpServiceStub = {
+        signTransaction: sandbox.stub().callsFake(async (serialized: Buffer) => {
+          // Return the same buffer (pretend CDP signed it)
+          return serialized;
+        }),
+        getPublicKey: sandbox.stub().resolves(CDP_PUBKEY),
+      };
+      // Stub the import
+      const cdpModule = require('../../../src/services/cdp-settlement.service');
+      sandbox.stub(cdpModule, 'getCdpSettlementService').returns(cdpServiceStub);
+    });
+
+    it('should build release tx with CDP pubkey as authority', async () => {
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
+
+      await service.releaseEscrowWithCdp({
+        escrowId: TEST_UUID,
+        cdpAuthorityPubkey: CDP_PUBKEY,
+        recipientWallet: RECIPIENT_PUBKEY,
+        feeCollector: PAYER_PUBKEY,
+        usdcMint: USDC_MINT,
+      });
+
+      // buildReleaseTransaction should use CDP pubkey as authority
+      expect(programMethodsStub.releaseInstitutionEscrow.calledOnce).to.be.true;
+    });
+
+    it('should set admin as fee payer and call CDP signTransaction', async () => {
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
+
+      await service.releaseEscrowWithCdp({
+        escrowId: TEST_UUID,
+        cdpAuthorityPubkey: CDP_PUBKEY,
+        recipientWallet: RECIPIENT_PUBKEY,
+        feeCollector: PAYER_PUBKEY,
+        usdcMint: USDC_MINT,
+      });
+
+      // Verify CDP service was called with serialized tx
+      expect(cdpServiceStub.signTransaction.calledOnce).to.be.true;
+      const serializedArg = cdpServiceStub.signTransaction.firstCall.args[0];
+      expect(serializedArg).to.be.instanceOf(Buffer);
+    });
+
+    it('should submit fully-signed tx to Solana RPC', async () => {
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
+
+      const result = await service.releaseEscrowWithCdp({
+        escrowId: TEST_UUID,
+        cdpAuthorityPubkey: CDP_PUBKEY,
+        recipientWallet: RECIPIENT_PUBKEY,
+        feeCollector: PAYER_PUBKEY,
+        usdcMint: USDC_MINT,
+      });
+
+      expect(connectionStub.sendRawTransaction.calledOnce).to.be.true;
+      expect(connectionStub.confirmTransaction.calledOnce).to.be.true;
+      expect(result).to.equal('FakeTxSignature111111111111111111111111111111');
+    });
+
+    it('should throw if CDP signing fails', async () => {
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(165), lamports: 1000 });
+      cdpServiceStub.signTransaction.rejects(new Error('CDP policy violation'));
+
+      try {
+        await service.releaseEscrowWithCdp({
+          escrowId: TEST_UUID,
+          cdpAuthorityPubkey: CDP_PUBKEY,
+          recipientWallet: RECIPIENT_PUBKEY,
+          feeCollector: PAYER_PUBKEY,
+          usdcMint: USDC_MINT,
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('CDP policy violation');
+      }
+    });
+  });
+
+  // ─── cancelEscrowWithCdp ──────────────────────────────────
+
+  describe('cancelEscrowWithCdp', () => {
+    const CDP_PUBKEY = new PublicKey('498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R');
+    let cdpServiceStub: any;
+
+    const VALID_BLOCKHASH = '4uQeVj5tqViQh7yWWGStvkEG1Zmhx6uasJtWCJziofM';
+
+    beforeEach(() => {
+      connectionStub.getLatestBlockhash.resolves({
+        blockhash: VALID_BLOCKHASH,
+        lastValidBlockHeight: 100,
+      });
+
+      cdpServiceStub = {
+        signTransaction: sandbox.stub().callsFake(async (serialized: Buffer) => serialized),
+        getPublicKey: sandbox.stub().resolves(CDP_PUBKEY),
+      };
+      const cdpModule = require('../../../src/services/cdp-settlement.service');
+      sandbox.stub(cdpModule, 'getCdpSettlementService').returns(cdpServiceStub);
+    });
+
+    it('should build cancel tx with CDP pubkey as caller', async () => {
+      await service.cancelEscrowWithCdp({
+        escrowId: TEST_UUID,
+        cdpCallerPubkey: CDP_PUBKEY,
+        payerWallet: PAYER_PUBKEY,
+        usdcMint: USDC_MINT,
+      });
+
+      expect(programMethodsStub.cancelInstitutionEscrow.calledOnce).to.be.true;
+    });
+
+    it('should follow same multi-sign pattern as release', async () => {
+      await service.cancelEscrowWithCdp({
+        escrowId: TEST_UUID,
+        cdpCallerPubkey: CDP_PUBKEY,
+        payerWallet: PAYER_PUBKEY,
+        usdcMint: USDC_MINT,
+      });
+
+      // CDP signs + RPC submit
+      expect(cdpServiceStub.signTransaction.calledOnce).to.be.true;
+      expect(connectionStub.sendRawTransaction.calledOnce).to.be.true;
+      expect(connectionStub.confirmTransaction.calledOnce).to.be.true;
+    });
+
+    it('should throw if CDP signing fails', async () => {
+      cdpServiceStub.signTransaction.rejects(new Error('CDP policy violation'));
+
+      try {
+        await service.cancelEscrowWithCdp({
+          escrowId: TEST_UUID,
+          cdpCallerPubkey: CDP_PUBKEY,
+          payerWallet: PAYER_PUBKEY,
+          usdcMint: USDC_MINT,
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('CDP policy violation');
+        // Verify downstream RPC methods were NOT called after signing failure
+        expect(connectionStub.sendRawTransaction.called).to.be.false;
+        expect(connectionStub.confirmTransaction.called).to.be.false;
+      }
     });
   });
 });

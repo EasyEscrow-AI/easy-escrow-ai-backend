@@ -7,8 +7,59 @@
 import { body, param, query } from 'express-validator';
 
 const SOLANA_ADDRESS_REGEX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const ESCROW_CODE_REGEX = /^EE-[A-Z0-9]{3,4}-[A-Z0-9]{3,4}$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Validate that a value is either a UUID or an escrow code (EE-XXX-XXX) */
+function isUuidOrEscrowCode(value: string) {
+  if (UUID_REGEX.test(value) || ESCROW_CODE_REGEX.test(value)) return true;
+  throw new Error('Must be a valid UUID or escrow code (EE-XXX-XXX)');
+}
+/** Reusable optional validators for party display name fields */
+const partyDisplayNameValidators = [
+  body('payerName')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('payerName must be 200 characters or less'),
+  body('payerAccountLabel')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('payerAccountLabel must be 200 characters or less'),
+  body('payerBranchName')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('payerBranchName must be 200 characters or less'),
+  body('recipientName')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('recipientName must be 200 characters or less'),
+  body('recipientAccountLabel')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('recipientAccountLabel must be 200 characters or less'),
+  body('recipientBranchName')
+    .optional()
+    .isString()
+    .isLength({ max: 200 })
+    .withMessage('recipientBranchName must be 200 characters or less'),
+];
+
 const CORRIDOR_REGEX = /^[A-Z]{2}-[A-Z]{2}$/;
 const CONDITION_TYPES = ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'];
+const SETTLEMENT_MODES = ['escrow', 'direct'];
+const RELEASE_MODES = ['manual', 'ai'];
+const VALID_RELEASE_CONDITIONS = [
+  'legal_compliance',
+  'invoice_amount_match',
+  'client_info_match',
+  'document_signature_verified',
+  'cdp_policy_approval',
+];
 
 /**
  * Validate create institution escrow request body
@@ -17,7 +68,13 @@ export const validateCreateInstitutionEscrow = [
   body('payerWallet')
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
-    .withMessage('payerWallet must be a valid Solana address (base58, 32-44 chars)'),
+    .withMessage('payerWallet must be a valid Solana address (base58, 32-44 chars)')
+    .custom((value, { req }) => {
+      if (value === req.body.recipientWallet) {
+        throw new Error('payerWallet and recipientWallet must be different');
+      }
+      return true;
+    }),
   body('recipientWallet')
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
@@ -42,12 +99,62 @@ export const validateCreateInstitutionEscrow = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
-  body('payerWallet').custom((value, { req }) => {
-    if (value === req.body.recipientWallet) {
-      throw new Error('payerWallet and recipientWallet must be different');
-    }
-    return true;
-  }),
+  body('tokenMint')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('tokenMint must be a valid Solana address (base58, 32-44 chars)'),
+  body('settlementMode')
+    .optional()
+    .isString()
+    .isIn(SETTLEMENT_MODES)
+    .withMessage(`settlementMode must be one of: ${SETTLEMENT_MODES.join(', ')}`),
+  body('releaseMode')
+    .optional()
+    .isString()
+    .isIn(RELEASE_MODES)
+    .withMessage(`releaseMode must be one of: ${RELEASE_MODES.join(', ')}`),
+  body('approvalParties')
+    .optional()
+    .isArray()
+    .withMessage('approvalParties must be an array of strings'),
+  body('approvalParties.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each approvalParties entry must be a non-empty string (max 100 chars)'),
+  body('releaseConditions')
+    .optional()
+    .isArray()
+    .withMessage('releaseConditions must be an array of strings'),
+  body('releaseConditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
+  body('approvalInstructions')
+    .optional()
+    .isString()
+    .isLength({ max: 2000 })
+    .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
+  ...partyDisplayNameValidators,
 ];
 
 /**
@@ -62,7 +169,13 @@ export const validateSaveDraft = [
     .optional()
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
-    .withMessage('recipientWallet must be a valid Solana address'),
+    .withMessage('recipientWallet must be a valid Solana address')
+    .custom((value, { req }) => {
+      if (value && value === req.body.payerWallet) {
+        throw new Error('recipientWallet must not equal payerWallet');
+      }
+      return true;
+    }),
   body('amount')
     .optional()
     .isFloat({ min: 0, max: 10000000 })
@@ -82,13 +195,69 @@ export const validateSaveDraft = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
+  body('tokenMint')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('tokenMint must be a valid Solana address (base58, 32-44 chars)'),
+  body('settlementMode')
+    .optional()
+    .isString()
+    .isIn(SETTLEMENT_MODES)
+    .withMessage(`settlementMode must be one of: ${SETTLEMENT_MODES.join(', ')}`),
+  body('releaseMode')
+    .optional()
+    .isString()
+    .isIn(RELEASE_MODES)
+    .withMessage(`releaseMode must be one of: ${RELEASE_MODES.join(', ')}`),
+  body('approvalParties')
+    .optional()
+    .isArray()
+    .withMessage('approvalParties must be an array of strings'),
+  body('approvalParties.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each approvalParties entry must be a non-empty string (max 100 chars)'),
+  body('releaseConditions')
+    .optional()
+    .isArray()
+    .withMessage('releaseConditions must be an array of strings'),
+  body('releaseConditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
+  body('approvalInstructions')
+    .optional()
+    .isString()
+    .isLength({ max: 2000 })
+    .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
+  ...partyDisplayNameValidators,
 ];
 
 /**
  * Validate update draft request body (all fields optional)
  */
 export const validateUpdateDraft = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('payerWallet')
     .optional()
     .isString()
@@ -98,7 +267,13 @@ export const validateUpdateDraft = [
     .optional()
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
-    .withMessage('recipientWallet must be a valid Solana address'),
+    .withMessage('recipientWallet must be a valid Solana address')
+    .custom((value, { req }) => {
+      if (value && req.body.payerWallet && value === req.body.payerWallet) {
+        throw new Error('recipientWallet must not equal payerWallet');
+      }
+      return true;
+    }),
   body('amount')
     .optional()
     .isFloat({ min: 0, max: 10000000 })
@@ -118,13 +293,69 @@ export const validateUpdateDraft = [
     .isString()
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('settlementAuthority must be a valid Solana address'),
+  body('tokenMint')
+    .optional()
+    .isString()
+    .matches(SOLANA_ADDRESS_REGEX)
+    .withMessage('tokenMint must be a valid Solana address (base58, 32-44 chars)'),
+  body('settlementMode')
+    .optional()
+    .isString()
+    .isIn(SETTLEMENT_MODES)
+    .withMessage(`settlementMode must be one of: ${SETTLEMENT_MODES.join(', ')}`),
+  body('releaseMode')
+    .optional()
+    .isString()
+    .isIn(RELEASE_MODES)
+    .withMessage(`releaseMode must be one of: ${RELEASE_MODES.join(', ')}`),
+  body('approvalParties')
+    .optional()
+    .isArray()
+    .withMessage('approvalParties must be an array of strings'),
+  body('approvalParties.*')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Each approvalParties entry must be a non-empty string (max 100 chars)'),
+  body('releaseConditions')
+    .optional()
+    .isArray()
+    .withMessage('releaseConditions must be an array of strings'),
+  body('releaseConditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
+  body('approvalInstructions')
+    .optional()
+    .isString()
+    .isLength({ max: 2000 })
+    .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
+  ...partyDisplayNameValidators,
 ];
 
 /**
  * Validate submit draft request
  */
 export const validateSubmitDraft = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('expiryHours')
     .optional()
     .isInt({ min: 1, max: 2160 })
@@ -135,7 +366,7 @@ export const validateSubmitDraft = [
  * Validate deposit recording
  */
 export const validateRecordDeposit = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('txSignature')
     .isString()
     .matches(/^[1-9A-HJ-NP-Za-km-z]{80,90}$/)
@@ -146,19 +377,23 @@ export const validateRecordDeposit = [
  * Validate release funds request
  */
 export const validateReleaseFunds = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('notes')
     .optional()
     .isString()
     .isLength({ max: 500 })
     .withMessage('notes must be 500 characters or less'),
+  body('forceRelease')
+    .optional()
+    .isBoolean()
+    .withMessage('forceRelease must be a boolean'),
 ];
 
 /**
  * Validate cancel escrow request
  */
 export const validateCancelEscrow = [
-  param('id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('id').custom(isUuidOrEscrowCode),
   body('reason')
     .optional()
     .isString()
@@ -170,7 +405,7 @@ export const validateCancelEscrow = [
  * Validate AI analysis request
  */
 export const validateAiAnalysis = [
-  param('escrow_id').isUUID().withMessage('Escrow ID must be a valid UUID'),
+  param('escrow_id').custom(isUuidOrEscrowCode),
   body('fileId').isUUID().withMessage('fileId must be a valid UUID'),
   body('context').optional().isObject().withMessage('context must be an object'),
   body('context.expectedAmount')
@@ -216,6 +451,11 @@ export const validateListEscrows = [
     .isInt({ min: 1, max: 100 })
     .withMessage('limit must be between 1 and 100'),
   query('offset').optional().isInt({ min: 0 }).withMessage('offset must be non-negative'),
+  query('role')
+    .optional()
+    .isString()
+    .isIn(['payer', 'recipient', 'all'])
+    .withMessage('role must be one of: payer, recipient, all'),
 ];
 
 /**

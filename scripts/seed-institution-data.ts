@@ -1,13 +1,20 @@
 /**
- * Seed Institution Escrow Data
+ * Seed Institution Escrow Data (v2 — 2026-03-26)
  *
- * Seeds corridors, demo clients, allowlist, and settings for development/staging.
+ * Seeds corridors, demo clients, settings, and simulated payments for development/staging.
  *
  * Usage: npx ts-node scripts/seed-institution-data.ts
+ *
+ * Run order:
+ *   1. npx ts-node prisma/seeds/corridor-config-seed.ts   (49 corridors)
+ *   2. npx ts-node scripts/seed-institution-data.ts        (clients + payments)
+ *   3. npx ts-node scripts/seed-optimus-exchange.ts        (full demo dataset)
  */
 
 import { PrismaClient } from '../src/generated/prisma';
+import { Decimal } from '@prisma/client/runtime/library';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -19,6 +26,7 @@ async function main() {
   const corridors = [
     {
       code: 'SG-CH',
+      name: 'Singapore → Switzerland',
       sourceCountry: 'SG',
       destCountry: 'CH',
       minAmount: 1,
@@ -30,6 +38,7 @@ async function main() {
     },
     {
       code: 'US-MX',
+      name: 'United States → Mexico',
       sourceCountry: 'US',
       destCountry: 'MX',
       minAmount: 100,
@@ -41,6 +50,7 @@ async function main() {
     },
     {
       code: 'US-PH',
+      name: 'United States → Philippines',
       sourceCountry: 'US',
       destCountry: 'PH',
       minAmount: 50,
@@ -52,6 +62,7 @@ async function main() {
     },
     {
       code: 'EU-UK',
+      name: 'EU → United Kingdom',
       sourceCountry: 'EU',
       destCountry: 'UK',
       minAmount: 500,
@@ -63,6 +74,7 @@ async function main() {
     },
     {
       code: 'SG-US',
+      name: 'Singapore → United States',
       sourceCountry: 'SG',
       destCountry: 'US',
       minAmount: 100,
@@ -95,6 +107,11 @@ async function main() {
     {
       email: 'demo-enterprise@bank.com',
       companyName: 'Demo Enterprise Bank',
+      legalName: 'Demo Enterprise Bank Pte. Ltd.',
+      contactFirstName: 'Alice',
+      contactLastName: 'Tan',
+      contactEmail: 'alice.tan@bank.com',
+      contactTitle: 'Head of Treasury',
       tier: 'ENTERPRISE' as const,
       status: 'ACTIVE' as const,
       kycStatus: 'VERIFIED',
@@ -105,6 +122,11 @@ async function main() {
     {
       email: 'demo-premium@trade.com',
       companyName: 'Demo Premium Trading Co',
+      legalName: 'Demo Premium Trading Co, Inc.',
+      contactFirstName: 'Bob',
+      contactLastName: 'Johnson',
+      contactEmail: 'bob.johnson@trade.com',
+      contactTitle: 'CFO',
       tier: 'PREMIUM' as const,
       status: 'ACTIVE' as const,
       kycStatus: 'VERIFIED',
@@ -115,6 +137,11 @@ async function main() {
     {
       email: 'demo-standard@company.com',
       companyName: 'Demo Standard LLC',
+      legalName: 'Demo Standard LLC',
+      contactFirstName: 'Charlie',
+      contactLastName: 'Smith',
+      contactEmail: 'charlie.smith@company.com',
+      contactTitle: 'Operations Manager',
       tier: 'STANDARD' as const,
       status: 'ACTIVE' as const,
       kycStatus: 'VERIFIED',
@@ -125,6 +152,11 @@ async function main() {
     {
       email: 'demo-pending@newco.com',
       companyName: 'Demo Pending Verification Inc',
+      legalName: 'Demo Pending Verification Inc.',
+      contactFirstName: 'Diana',
+      contactLastName: 'Garcia',
+      contactEmail: 'diana.garcia@newco.com',
+      contactTitle: 'Director',
       tier: 'STANDARD' as const,
       status: 'PENDING_VERIFICATION' as const,
       kycStatus: 'PENDING',
@@ -135,6 +167,11 @@ async function main() {
     {
       email: 'demo-suspended@risk.com',
       companyName: 'Demo Suspended Corp',
+      legalName: 'Demo Suspended Corporation',
+      contactFirstName: 'Eduardo',
+      contactLastName: 'Reyes',
+      contactEmail: 'eduardo.reyes@risk.com',
+      contactTitle: 'Compliance Officer',
       tier: 'STANDARD' as const,
       status: 'SUSPENDED' as const,
       kycStatus: 'VERIFIED',
@@ -161,6 +198,11 @@ async function main() {
         data: {
           settledWallets: merged,
           primaryWallet: c.primaryWallet ?? existing.primaryWallet,
+          legalName: c.legalName,
+          contactFirstName: c.contactFirstName,
+          contactLastName: c.contactLastName,
+          contactEmail: c.contactEmail,
+          contactTitle: c.contactTitle,
         },
       });
       console.log(`  ✅ Client ${c.email} updated (settledWallets: ${merged.length})`);
@@ -171,6 +213,11 @@ async function main() {
           email: c.email,
           passwordHash: demoPassword,
           companyName: c.companyName,
+          legalName: c.legalName,
+          contactFirstName: c.contactFirstName,
+          contactLastName: c.contactLastName,
+          contactEmail: c.contactEmail,
+          contactTitle: c.contactTitle,
           tier: c.tier,
           status: c.status,
           kycStatus: c.kycStatus,
@@ -197,9 +244,107 @@ async function main() {
     }
   }
 
+  // 3. Seed simulated direct payments (3 per client)
+  console.log('\n💸 Seeding simulated direct payments...');
+  await prisma.directPayment.deleteMany({
+    where: { paymentCode: { startsWith: 'EE-SEED' } },
+  });
+
+  function generatePaymentCode(index: number): string {
+    return `EE-SEED-${String(index).padStart(3, '0')}`;
+  }
+
+  function randomDate(daysAgo: number): Date {
+    const now = Date.now();
+    const offset = Math.random() * daysAgo * 24 * 60 * 60 * 1000;
+    return new Date(now - offset);
+  }
+
+  function randomTxHash(): string {
+    return crypto.randomBytes(32).toString('base64url');
+  }
+
+  // Counterparty wallets for realistic payment pairs
+  const counterparties = [
+    { name: 'Axis Capital AG', country: 'CH', wallet: 'CH1aXisCptl9qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg' },
+    { name: 'Pacific Rim Holdings', country: 'SG', wallet: 'SG2pCfRmHld8qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg' },
+    { name: 'Meridian Trade Corp', country: 'MX', wallet: 'MX3mRdTrdCrp7qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3H' },
+    { name: 'Northern Bridge Ltd', country: 'UK', wallet: 'UK4nRthBrdgLt6qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3H' },
+    { name: 'Gulf Star Finance', country: 'AE', wallet: 'AE5gLfStrFnc5qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg' },
+  ];
+
+  // Status pool: ~80% completed, ~5% each for the other four
+  // 15 payments total → 11 completed, 1 pending_approval, 1 pending_proof, 1 pending_release, 1 cancelled
+  const statusPool = [
+    'completed', 'completed', 'completed', 'completed',
+    'completed', 'completed', 'completed', 'completed',
+    'completed', 'completed', 'completed',
+    'pending_approval',
+    'pending_proof',
+    'pending_release',
+    'cancelled',
+  ];
+  // Shuffle deterministically so distribution is spread across clients
+  const shuffled = [...statusPool].sort(() => 0.5 - Math.random());
+
+  // Fetch all seeded clients
+  const seededClients = await prisma.institutionClient.findMany({
+    where: { email: { in: clients.map((c) => c.email) } },
+  });
+
+  const amounts = [2500, 5000, 7500, 10000, 15000, 25000, 50000, 75000, 100000, 250000];
+  let paymentIndex = 0;
+
+  for (const client of seededClients) {
+    const clientDef = clients.find((c) => c.email === client.email)!;
+    const senderWallet = client.primaryWallet || STAGING_SENDER_WALLET;
+
+    for (let i = 0; i < 3; i++) {
+      const status = shuffled[paymentIndex];
+      const counterparty = counterparties[paymentIndex % counterparties.length];
+      const amount = amounts[paymentIndex % amounts.length];
+      const feeBps = 20; // 0.20%
+      const fee = Math.max(0.20, Math.min(20, amount * feeBps / 10000));
+      const createdAt = randomDate(7);
+      const corridor = `${clientDef.jurisdiction}-${counterparty.country}`;
+
+      await prisma.directPayment.create({
+        data: {
+          paymentCode: generatePaymentCode(paymentIndex + 1),
+          clientId: client.id,
+          sender: clientDef.companyName,
+          senderCountry: clientDef.jurisdiction || 'US',
+          senderWallet,
+          recipient: counterparty.name,
+          recipientCountry: counterparty.country,
+          recipientWallet: counterparty.wallet,
+          amount: new Decimal(amount),
+          currency: 'USDC',
+          corridor,
+          status,
+          txHash: status === 'completed' ? randomTxHash() : null,
+          platformFee: new Decimal(fee),
+          riskScore: Math.floor(Math.random() * 40) + 10,
+          settlementMode: 'direct',
+          releaseMode: status === 'pending_approval' ? 'manual' : 'auto',
+          settledAt: status === 'completed' ? new Date(createdAt.getTime() + 30_000) : null,
+          createdAt,
+        },
+      });
+
+      paymentIndex++;
+    }
+
+    console.log(`  ✅ ${clientDef.companyName}: 3 payments created`);
+  }
+
+  const statusCounts = shuffled.reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {} as Record<string, number>);
+  console.log(`  📊 Status distribution: ${Object.entries(statusCounts).map(([k, v]) => `${k}=${v}`).join(', ')}`);
+
   console.log('\n✅ Institution escrow seed data complete!');
   console.log(`   ${corridors.length} corridors configured`);
   console.log(`   ${clients.length} demo clients created`);
+  console.log(`   ${paymentIndex} direct payments created`);
   console.log('\n   Demo login: demo-enterprise@bank.com / DemoPass123!');
 }
 

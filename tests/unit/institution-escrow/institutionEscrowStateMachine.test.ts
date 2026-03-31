@@ -6,7 +6,7 @@
  * - FUNDED -> RELEASED, CANCELLED
  * - RELEASED -> (terminal, no valid transitions)
  * - CANCELLED -> (terminal, no valid transitions)
- * - COMPLIANCE_HOLD -> CREATED, CANCELLED
+ * - COMPLIANCE_HOLD -> RELEASING, CANCELLED (post-funding hold)
  *
  * These tests validate the state transition rules enforced by
  * InstitutionEscrowService methods (recordDeposit, releaseFunds, cancelEscrow).
@@ -26,10 +26,10 @@ import { InstitutionEscrowService } from '../../../src/services/institution-escr
  * Encodes the business rules tested below.
  */
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  DRAFT: ['CREATED', 'COMPLIANCE_HOLD', 'CANCELLED'],
+  DRAFT: ['CREATED', 'CANCELLED'],
   CREATED: ['FUNDED', 'CANCELLED', 'EXPIRED'],
-  FUNDED: ['RELEASING', 'CANCELLED'],
-  COMPLIANCE_HOLD: ['CREATED', 'CANCELLED'],
+  FUNDED: ['RELEASING', 'COMPLIANCE_HOLD', 'CANCELLED'],
+  COMPLIANCE_HOLD: ['RELEASING', 'CANCELLED'],
   RELEASING: ['RELEASED', 'INSUFFICIENT_FUNDS'],
   INSUFFICIENT_FUNDS: ['RELEASING', 'CANCELLED'],
   RELEASED: ['COMPLETE'],
@@ -100,19 +100,41 @@ describe('InstitutionEscrowStateMachine', () => {
       institutionClient: {
         findUnique: sandbox.stub().resolves({
           id: CLIENT_ID,
+          companyName: 'Test Corp',
           status: 'ACTIVE',
           kycStatus: 'VERIFIED',
           primaryWallet: PAYER_WALLET,
+          settledWallets: [],
         }),
+        findFirst: sandbox.stub().resolves({
+          id: CLIENT_ID,
+          companyName: 'Test Corp',
+          primaryWallet: PAYER_WALLET,
+        }),
+        findMany: sandbox.stub().resolves([]),
       },
       institutionDeposit: {
         create: sandbox.stub().resolves({}),
       },
       institutionAuditLog: {
         create: sandbox.stub().resolves({}),
+        findMany: sandbox.stub().resolves([]),
       },
       institutionNotification: {
         create: sandbox.stub().resolves({}),
+      },
+      institutionAccount: {
+        findMany: sandbox.stub().resolves([]),
+      },
+      institutionAiAnalysis: {
+        findMany: sandbox.stub().resolves([]),
+        findFirst: sandbox.stub().resolves(null),
+      },
+      institutionFile: {
+        findMany: sandbox.stub().resolves([]),
+      },
+      institutionCorridor: {
+        findUnique: sandbox.stub().resolves(null),
       },
     };
 
@@ -233,14 +255,14 @@ describe('InstitutionEscrowStateMachine', () => {
       expect(result).to.have.property('status', 'COMPLETE');
     });
 
-    it('FUNDED -> RELEASED (when COMPLETE transition fails)', async () => {
+    it('FUNDED -> COMPLETE (notification failure is non-fatal)', async () => {
       prismaStub.institutionEscrow.findUnique.resolves(makeEscrow('FUNDED'));
-      // Override: notification creation fails → stays at RELEASED
+      // Notification failure is caught internally — release still completes
       prismaStub.institutionNotification.create = sandbox.stub().rejects(new Error('DB error'));
 
       const result = await service.releaseFunds(CLIENT_ID, ESCROW_ID);
 
-      expect(result).to.have.property('status', 'RELEASED');
+      expect(result).to.have.property('status', 'COMPLETE');
     });
 
     it('FUNDED -> CANCELLED (via cancel)', async () => {
@@ -442,16 +464,16 @@ describe('InstitutionEscrowStateMachine', () => {
       }
     });
 
-    it('should have DRAFT leading to CREATED, COMPLIANCE_HOLD, CANCELLED', () => {
-      expect(VALID_TRANSITIONS['DRAFT']).to.include.members(['CREATED', 'COMPLIANCE_HOLD', 'CANCELLED']);
+    it('should have DRAFT leading to CREATED, CANCELLED', () => {
+      expect(VALID_TRANSITIONS['DRAFT']).to.include.members(['CREATED', 'CANCELLED']);
     });
 
     it('should have CREATED leading to FUNDED, CANCELLED, EXPIRED', () => {
       expect(VALID_TRANSITIONS['CREATED']).to.include.members(['FUNDED', 'CANCELLED', 'EXPIRED']);
     });
 
-    it('should have FUNDED leading to RELEASING, CANCELLED', () => {
-      expect(VALID_TRANSITIONS['FUNDED']).to.include.members(['RELEASING', 'CANCELLED']);
+    it('should have FUNDED leading to RELEASING, COMPLIANCE_HOLD, CANCELLED', () => {
+      expect(VALID_TRANSITIONS['FUNDED']).to.include.members(['RELEASING', 'COMPLIANCE_HOLD', 'CANCELLED']);
     });
 
     it('should have RELEASING leading to RELEASED, INSUFFICIENT_FUNDS', () => {
@@ -466,8 +488,8 @@ describe('InstitutionEscrowStateMachine', () => {
       expect(VALID_TRANSITIONS['INSUFFICIENT_FUNDS']).to.include.members(['RELEASING', 'CANCELLED']);
     });
 
-    it('should have COMPLIANCE_HOLD leading to CREATED, CANCELLED', () => {
-      expect(VALID_TRANSITIONS['COMPLIANCE_HOLD']).to.include.members(['CREATED', 'CANCELLED']);
+    it('should have COMPLIANCE_HOLD leading to RELEASING, CANCELLED', () => {
+      expect(VALID_TRANSITIONS['COMPLIANCE_HOLD']).to.include.members(['RELEASING', 'CANCELLED']);
     });
 
     it('should only allow cancel from DRAFT, CREATED, FUNDED, COMPLIANCE_HOLD, INSUFFICIENT_FUNDS', () => {

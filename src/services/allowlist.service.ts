@@ -7,6 +7,7 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
+import { prisma } from '../config/database';
 import { redisClient } from '../config/redis';
 
 const ALLOWLIST_SET_KEY = 'institution:allowlist';
@@ -25,7 +26,7 @@ export class AllowlistService {
   private prisma: PrismaClient;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
   }
 
   /**
@@ -45,10 +46,7 @@ export class AllowlistService {
     // Fallback: check if wallet belongs to an active, verified client
     const client = await this.prisma.institutionClient.findFirst({
       where: {
-        OR: [
-          { primaryWallet: wallet },
-          { settledWallets: { has: wallet } },
-        ],
+        OR: [{ primaryWallet: wallet }, { settledWallets: { has: wallet } }],
         status: 'ACTIVE',
         kycStatus: 'VERIFIED',
       },
@@ -80,7 +78,7 @@ export class AllowlistService {
   async addToAllowlist(
     wallet: string,
     clientId: string,
-    metadata?: Partial<AllowlistMetadata>,
+    metadata?: Partial<AllowlistMetadata>
   ): Promise<void> {
     if (!isValidSolanaAddress(wallet)) {
       throw new Error(`Invalid Solana address: ${wallet}`);
@@ -177,10 +175,7 @@ export class AllowlistService {
 
     let count = 0;
     for (const client of clients) {
-      const wallets = [
-        client.primaryWallet,
-        ...client.settledWallets,
-      ].filter(Boolean) as string[];
+      const wallets = [client.primaryWallet, ...client.settledWallets].filter(Boolean) as string[];
 
       for (const wallet of wallets) {
         await this.addToAllowlist(wallet, client.id);
@@ -191,10 +186,7 @@ export class AllowlistService {
     return count;
   }
 
-  private async setWalletMetadata(
-    wallet: string,
-    metadata: AllowlistMetadata,
-  ): Promise<void> {
+  private async setWalletMetadata(wallet: string, metadata: AllowlistMetadata): Promise<void> {
     const key = `${ALLOWLIST_META_PREFIX}${wallet}`;
     await redisClient.hset(key, metadata as unknown as Record<string, string>);
     await redisClient.expire(key, ALLOWLIST_META_TTL);

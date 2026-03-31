@@ -685,6 +685,7 @@ enum InstitutionEscrowStatus {
   DRAFT
   CREATED
   FUNDED
+  PENDING_RELEASE
   COMPLIANCE_HOLD
   RELEASING
   RELEASED
@@ -909,16 +910,19 @@ model InstitutionClient {
   isArchived            Boolean   @default(false) @map("is_archived")
 
   // Relations
-  refreshTokens InstitutionRefreshToken[]
-  settings      InstitutionClientSettings?
-  apiKeys       InstitutionApiKey[]
-  escrows       InstitutionEscrow[]
-  auditLogs     InstitutionAuditLog[]
-  files         InstitutionFile[]
-  wallets       InstitutionWallet[]
-  accounts      InstitutionAccount[]
-  aiAnalyses    InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
-  notifications InstitutionNotification[]
+  refreshTokens        InstitutionRefreshToken[]
+  settings             InstitutionClientSettings?
+  apiKeys              InstitutionApiKey[]
+  escrows              InstitutionEscrow[]
+  auditLogs            InstitutionAuditLog[]
+  files                InstitutionFile[]
+  wallets              InstitutionWallet[]
+  accounts             InstitutionAccount[]
+  aiAnalyses           InstitutionAiAnalysis[]    @relation("ClientAiAnalyses")
+  notifications        InstitutionNotification[]
+  branches             InstitutionBranch[]
+  directPayments       DirectPayment[]
+  stealthMetaAddresses StealthMetaAddress[]
 
   @@index([email])
   @@index([status])
@@ -1001,16 +1005,27 @@ model InstitutionAccount {
   notifyOnEscrowReleased  Boolean @default(true) @map("notify_on_escrow_released")
   notifyOnComplianceAlert Boolean @default(true) @map("notify_on_compliance_alert")
 
+  // Account preferences
+  defaultCurrency String @default("USDC") @map("default_currency")
+
   // Status
   isDefault Boolean @default(false) @map("is_default")
   isActive  Boolean @default(true) @map("is_active")
+
+  // Stealth / Privacy
+  stealthMetaAddressId String? @unique @map("stealth_meta_address_id")
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Branch association (optional)
+  branchId String? @map("branch_id")
+
   // Relations
-  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client             InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  branch             InstitutionBranch?  @relation(fields: [branchId], references: [id])
+  stealthMetaAddress StealthMetaAddress? @relation(fields: [stealthMetaAddressId], references: [id])
 
   @@unique([clientId, name])
   @@index([clientId])
@@ -1018,7 +1033,73 @@ model InstitutionAccount {
   @@index([accountType])
   @@index([verificationStatus])
   @@index([isActive])
+  @@index([branchId])
   @@map("institution_accounts")
+}
+
+// Institution branch (sub-entity of client for geographic presence)
+model InstitutionBranch {
+  id               String   @id @default(uuid())
+  clientId         String   @map("client_id")
+  name             String
+  label            String?
+  city             String
+  country          String
+  countryCode      String   @map("country_code") // ISO 3166-1 alpha-2
+  address          String?
+  timezone         String   @default("UTC")
+  riskScore        Int      @default(0) @map("risk_score")
+  complianceStatus String   @default("ACTIVE") @map("compliance_status") // ACTIVE, SUSPENDED, UNDER_REVIEW, BLOCKED
+  complianceNote   String?  @map("compliance_note")
+  regulatoryBody   String?  @map("regulatory_body")
+  isSanctioned     Boolean  @default(false) @map("is_sanctioned")
+  sanctionReason   String?  @map("sanction_reason")
+  isHeadquarters   Boolean  @default(false) @map("is_headquarters")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  client   InstitutionClient    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  accounts InstitutionAccount[]
+
+  @@index([clientId])
+  @@index([countryCode])
+  @@index([complianceStatus])
+  @@map("institution_branches")
+}
+
+// Direct payments (non-escrow transfers between institutions)
+model DirectPayment {
+  id               String    @id @default(uuid())
+  paymentCode      String?   @unique @map("payment_code") // Human-readable ID: EE-XXX-XXX
+  clientId         String    @map("client_id")
+  sender           String // sender name/label
+  senderCountry    String    @map("sender_country")
+  senderWallet     String    @map("sender_wallet")
+  recipient        String // recipient name
+  recipientCountry String    @map("recipient_country")
+  recipientWallet  String    @map("recipient_wallet")
+  amount           Decimal   @db.Decimal(20, 6)
+  currency         String    @default("USDC")
+  corridor         String
+  status           String    @default("processing") // completed, processing, failed
+  txHash           String?   @map("tx_hash")
+  platformFee      Decimal   @default(0) @map("platform_fee") @db.Decimal(20, 6)
+  riskScore        Int?      @map("risk_score")
+  settlementMode   String    @default("direct") @map("settlement_mode")
+  releaseMode      String    @default("manual") @map("release_mode")
+  settledAt        DateTime? @map("settled_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([paymentCode])
+  @@index([status])
+  @@index([corridor])
+  @@index([createdAt])
+  @@map("direct_payments")
 }
 
 // Refresh token storage (hashed)
@@ -1052,6 +1133,22 @@ model InstitutionClientSettings {
   settlementAuthorityWallet String?  @map("settlement_authority_wallet")
   timezone                  String   @default("UTC")
   autoApproveThreshold      Decimal? @map("auto_approve_threshold") @db.Decimal(20, 6)
+  manualReviewThreshold     Decimal? @map("manual_review_threshold") @db.Decimal(20, 6)
+  autoTravelRule            Boolean  @default(true) @map("auto_travel_rule")
+  activeSanctionsLists      String[] @default(["OFAC SDN", "EU Consolidated", "UN Sanctions"]) @map("active_sanctions_lists")
+  aiAutoRelease             Boolean  @default(false) @map("ai_auto_release")
+  riskTolerance             String   @default("low") @map("risk_tolerance") // low, medium, high
+  defaultTimelockHours      Int?     @map("default_timelock_hours")
+  defaultToken              String   @default("usdc") @map("default_token")
+  emailNotifications        Boolean  @default(true) @map("email_notifications")
+  language                  String? // en, de, fr, ar, zh, es
+  theme                     String? // light, dark, system
+  twoFactorEnabled          Boolean  @default(false) @map("two_factor_enabled")
+  aiRecommendations         Boolean  @default(true) @map("ai_recommendations")
+  feeBps                    Int      @default(20) @map("fee_bps") // Fee in basis points (default 0.20%)
+  minFeeUsdc                Decimal  @default(0.20) @map("min_fee_usdc") @db.Decimal(20, 6) // Minimum fee in USDC
+  maxFeeUsdc                Decimal  @default(20.00) @map("max_fee_usdc") @db.Decimal(20, 6) // Maximum fee in USDC
+  notificationPreferences   Json?    @map("notification_preferences") // Per-event notification prefs [{event, inApp, email, sms}]
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
 
@@ -1087,12 +1184,21 @@ model InstitutionApiKey {
 
 // Core institution escrow record
 model InstitutionEscrow {
-  id                  String                    @id @default(uuid())
-  escrowId            String                    @unique @map("escrow_id") // UUID for on-chain PDA derivation
-  escrowCode          String                    @unique @map("escrow_code") // Human-readable ID: EE-XXXX-XXXX
-  clientId            String                    @map("client_id")
-  payerWallet         String                    @map("payer_wallet")
-  recipientWallet     String?                   @map("recipient_wallet")
+  id              String  @id @default(uuid())
+  escrowId        String  @unique @map("escrow_id") // UUID for on-chain PDA derivation
+  escrowCode      String  @unique @map("escrow_code") // Human-readable ID: EE-XXX-XXX
+  clientId        String  @map("client_id")
+  payerWallet     String  @map("payer_wallet")
+  recipientWallet String? @map("recipient_wallet")
+
+  // Party display names (optional, set at creation for receipts/audit/detail views)
+  payerName             String? @map("payer_name")
+  payerAccountLabel     String? @map("payer_account_label")
+  payerBranchName       String? @map("payer_branch_name")
+  recipientName         String? @map("recipient_name")
+  recipientAccountLabel String? @map("recipient_account_label")
+  recipientBranchName   String? @map("recipient_branch_name")
+
   usdcMint            String                    @map("usdc_mint")
   amount              Decimal                   @db.Decimal(20, 6) // USDC amount (6 decimal precision)
   platformFee         Decimal                   @map("platform_fee") @db.Decimal(20, 6)
@@ -1102,20 +1208,34 @@ model InstitutionEscrow {
   settlementAuthority String                    @map("settlement_authority")
   riskScore           Int?                      @map("risk_score")
 
+  // Settlement & release configuration
+  settlementMode       String?  @map("settlement_mode") // "escrow" | "direct"
+  releaseMode          String?  @map("release_mode") // "manual" | "ai"
+  approvalParties      String[] @default([]) @map("approval_parties")
+  releaseConditions    String[] @default([]) @map("release_conditions")
+  approvalInstructions String?  @map("approval_instructions")
+
+  // Privacy
+  privacyLevel     PrivacyLevel? @default(STEALTH) @map("privacy_level")
+  stealthPaymentId String?       @map("stealth_payment_id")
+
   // On-chain references
   escrowPda          String? @map("escrow_pda")
   vaultPda           String? @map("vault_pda")
   nonceAccount       String? @map("nonce_account")
+  initTxSignature    String? @map("init_tx_signature")
   depositTxSignature String? @map("deposit_tx_signature")
   releaseTxSignature String? @map("release_tx_signature")
   cancelTxSignature  String? @map("cancel_tx_signature")
 
   // Timestamps
-  expiresAt  DateTime? @map("expires_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-  resolvedAt DateTime? @map("resolved_at")
-  fundedAt   DateTime? @map("funded_at")
+  expiresAt     DateTime? @map("expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  resolvedAt    DateTime? @map("resolved_at")
+  fundedAt      DateTime? @map("funded_at")
+  unlockAt      DateTime? @map("unlock_at")
+  timelockHours Int?      @map("timelock_hours")
 
   // Relations
   client     InstitutionClient       @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -1135,6 +1255,7 @@ model InstitutionEscrow {
   @@index([createdAt])
   @@index([status, expiresAt], name: "idx_inst_escrow_status_expiry")
   @@index([clientId, status], name: "idx_inst_escrow_client_status")
+  @@index([unlockAt], name: "idx_inst_escrow_unlock_at")
   @@map("institution_escrows")
 }
 
@@ -1212,24 +1333,57 @@ enum AiAnalysisType {
 
 // Corridor configuration
 model InstitutionCorridor {
-  id                String         @id @default(uuid())
-  sourceCountry     String         @map("source_country")
-  destCountry       String         @map("dest_country")
-  code              String         @unique // e.g. 'SG-CH'
-  minAmount         Decimal        @map("min_amount") @db.Decimal(20, 6)
-  maxAmount         Decimal        @map("max_amount") @db.Decimal(20, 6)
-  dailyLimit        Decimal        @map("daily_limit") @db.Decimal(20, 6)
-  monthlyLimit      Decimal        @map("monthly_limit") @db.Decimal(20, 6)
-  requiredDocuments String[]       @default([]) @map("required_documents")
-  riskLevel         String         @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
-  status            CorridorStatus @default(ACTIVE)
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @updatedAt @map("updated_at")
+  id                  String         @id @default(uuid())
+  sourceCountry       String         @map("source_country")
+  destCountry         String         @map("dest_country")
+  code                String         @unique // e.g. 'SG-CH'
+  name                String? // Display name e.g. 'Switzerland → Singapore'
+  compliance          String? // Regulatory bodies e.g. 'FINMA + MAS'
+  description         String? // Human-readable description
+  riskReason          String?        @map("risk_reason") // Explanation of risk classification
+  travelRuleThreshold Decimal        @default(1000) @map("travel_rule_threshold") @db.Decimal(18, 2)
+  eddThreshold        Decimal        @default(10000) @map("edd_threshold") @db.Decimal(18, 2)
+  reportingThreshold  Decimal        @default(15000) @map("reporting_threshold") @db.Decimal(18, 2)
+  minAmount           Decimal        @map("min_amount") @db.Decimal(20, 6)
+  maxAmount           Decimal        @map("max_amount") @db.Decimal(20, 6)
+  dailyLimit          Decimal        @map("daily_limit") @db.Decimal(20, 6)
+  monthlyLimit        Decimal        @map("monthly_limit") @db.Decimal(20, 6)
+  requiredDocuments   String[]       @default([]) @map("required_documents")
+  riskLevel           String         @default("MEDIUM") @map("risk_level") // LOW, MEDIUM, HIGH
+  status              CorridorStatus @default(ACTIVE)
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  thresholdRules CorridorThresholdRule[]
 
   @@index([code])
   @@index([status])
   @@index([sourceCountry, destCountry], name: "idx_corridor_countries")
   @@map("institution_corridors")
+}
+
+// Per-corridor compliance threshold rules for amount-based risk evaluation
+model CorridorThresholdRule {
+  id              String   @id @default(uuid())
+  corridorCode    String   @map("corridor_code")
+  ruleId          String   @map("rule_id") // travel_rule, edd, reporting, round_number, structuring, large_transaction
+  label           String // Display label
+  riskLevel       String   @map("risk_level") // low, medium, high
+  thresholdAmount Decimal? @map("threshold_amount") @db.Decimal(18, 2)
+  thresholdType   String   @map("threshold_type") // gte, range, pattern
+  thresholdMax    Decimal? @map("threshold_max") @db.Decimal(18, 2)
+  currency        String   @default("USD")
+  detailTemplate  String   @map("detail_template") @db.Text
+  regulationRef   String   @map("regulation_ref")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  corridor InstitutionCorridor @relation(fields: [corridorCode], references: [code])
+
+  @@unique([corridorCode, ruleId], name: "idx_corridor_rule_unique")
+  @@index([corridorCode, isActive])
+  @@map("corridor_threshold_rules")
 }
 
 // ============================================
@@ -1403,4 +1557,61 @@ model SystemSetting {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("system_settings")
+}
+
+// ============================================
+// STEALTH ADDRESS / PRIVACY MODELS
+// ============================================
+
+enum PrivacyLevel {
+  NONE
+  STEALTH
+}
+
+// Stealth meta-address for institution clients (scan + spend keypairs)
+model StealthMetaAddress {
+  id                  String   @id @default(uuid())
+  institutionClientId String   @map("institution_client_id")
+  label               String?
+  scanPublicKey       String   @map("scan_public_key")
+  spendPublicKey      String   @map("spend_public_key")
+  encryptedScanKey    String   @map("encrypted_scan_key")
+  encryptedSpendKey   String   @map("encrypted_spend_key")
+  viewingKeyShared    Boolean  @default(false) @map("viewing_key_shared")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  stealthPayments StealthPayment[]
+  accounts        InstitutionAccount[]
+  client          InstitutionClient    @relation(fields: [institutionClientId], references: [id])
+
+  @@unique([institutionClientId, label])
+  @@index([institutionClientId])
+  @@map("stealth_meta_addresses")
+}
+
+// Stealth payment tracking (one-time addresses derived from meta-addresses)
+model StealthPayment {
+  id                 String    @id @default(uuid())
+  metaAddressId      String    @map("meta_address_id")
+  stealthAddress     String    @map("stealth_address")
+  ephemeralPublicKey String    @map("ephemeral_public_key")
+  escrowId           String?   @map("escrow_id")
+  tokenMint          String    @map("token_mint")
+  amountRaw          BigInt    @map("amount_raw")
+  status             String    @default("PENDING") // PENDING, CONFIRMED, SWEPT, FAILED
+  releaseTxSignature String?   @map("release_tx_signature")
+  sweepTxSignature   String?   @map("sweep_tx_signature")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  confirmedAt        DateTime? @map("confirmed_at")
+  sweptAt            DateTime? @map("swept_at")
+
+  metaAddress StealthMetaAddress @relation(fields: [metaAddressId], references: [id], onDelete: Cascade)
+
+  @@index([metaAddressId])
+  @@index([stealthAddress])
+  @@index([escrowId])
+  @@index([status])
+  @@map("stealth_payments")
 }

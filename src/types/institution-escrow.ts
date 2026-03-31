@@ -34,6 +34,9 @@ export enum InstitutionEscrowStatus {
   FAILED = 'FAILED',
 }
 
+export type SettlementMode = 'escrow' | 'direct';
+export type ReleaseMode = 'manual' | 'ai';
+
 /**
  * Condition that must be met before funds can be released.
  */
@@ -54,7 +57,7 @@ export interface InstitutionEscrowRecord {
   clientId: string;
   /** UUID used for on-chain PDA derivation */
   escrowId: string;
-  /** Human-readable escrow code: EE-XXXX-XXXX */
+  /** Human-readable escrow code: EE-XXX-XXX */
   escrowCode: string;
   payerWallet: string;
   recipientWallet: string;
@@ -68,6 +71,16 @@ export interface InstitutionEscrowRecord {
   status: InstitutionEscrowStatus;
   settlementAuthority: string;
   riskScore: number | null;
+  /** "escrow" (PDA) or "direct" atomic settlement */
+  settlementMode: SettlementMode | null;
+  /** "manual" approval or "ai" compliance check */
+  releaseMode: ReleaseMode | null;
+  /** Party IDs who must approve for manual release */
+  approvalParties: string[];
+  /** Condition IDs for AI release */
+  releaseConditions: string[];
+  /** Free-text instructions for manual reviewers */
+  approvalInstructions: string | null;
   escrowPda: string | null;
   vaultPda: string | null;
   nonceAccount: string | null;
@@ -121,6 +134,8 @@ export interface ComplianceResult {
   corridorValid: boolean;
   walletsAllowlisted: boolean;
   limitsWithinRange: boolean;
+  checks: import('../services/compliance.service').ComplianceCheckItem[];
+  riskLevel: import('../services/compliance.service').RiskLevel;
 }
 
 /**

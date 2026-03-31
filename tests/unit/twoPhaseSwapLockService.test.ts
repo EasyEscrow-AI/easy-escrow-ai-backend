@@ -37,6 +37,7 @@ function uuidToBuffer(uuid: string): Buffer {
 // Test keys
 const mockProgramId = Keypair.generate().publicKey;
 const mockFeeCollector = Keypair.generate().publicKey;
+const mockDelegateAuthority = Keypair.generate().publicKey;
 const partyAWallet = Keypair.generate().publicKey;
 const partyBWallet = Keypair.generate().publicKey;
 const mockAssetId1 = 'mock-cnft-asset-1';
@@ -62,7 +63,8 @@ describe('TwoPhaseSwapLockService', () => {
         connection,
         mockPrisma,
         mockProgramId,
-        mockFeeCollector
+        mockFeeCollector,
+        mockDelegateAuthority
       );
     });
 
@@ -197,7 +199,8 @@ describe('TwoPhaseSwapLockService', () => {
         connection,
         mockPrisma,
         mockProgramId,
-        mockFeeCollector
+        mockFeeCollector,
+        mockDelegateAuthority
       );
     });
 

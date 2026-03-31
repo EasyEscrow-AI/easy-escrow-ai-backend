@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { getInstitutionEscrowPauseService } from '../services/institution-escrow-pause.service';
 
+const PAUSE_CHECK_TIMEOUT_MS = 3000;
+
 export async function requireNotPaused(
   req: Request,
   res: Response,
@@ -8,7 +10,13 @@ export async function requireNotPaused(
 ): Promise<void> {
   try {
     const pauseService = getInstitutionEscrowPauseService();
-    const state = await pauseService.isPaused();
+    let timer: ReturnType<typeof setTimeout>;
+    const state = await Promise.race([
+      pauseService.isPaused().finally(() => clearTimeout(timer)),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Pause check timed out')), PAUSE_CHECK_TIMEOUT_MS);
+      }),
+    ]);
 
     if (state.paused) {
       res.status(503).json({
@@ -25,7 +33,7 @@ export async function requireNotPaused(
 
     next();
   } catch (err) {
-    // Fail-open: if pause check fails, allow request through
+    // Fail-open: if pause check fails or times out, allow request through
     console.warn('[PauseMiddleware] Pause check failed, failing open:', (err as Error).message);
     next();
   }

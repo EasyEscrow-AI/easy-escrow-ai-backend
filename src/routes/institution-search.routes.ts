@@ -8,7 +8,7 @@ import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { query, validationResult } from 'express-validator';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionSearchService } from '../services/institution-search.service';
@@ -21,6 +21,7 @@ const searchRateLimiter = rateLimit({
   message: { error: 'Rate limit exceeded', message: 'Too many search requests' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req: any) => req.institutionClient?.clientId || req.ip,
 });
 
 const VALID_CATEGORIES = ['escrow', 'client', 'account', 'notification', 'payment'];
@@ -46,7 +47,7 @@ const validateSearch = [
 router.get(
   '/api/v1/institution/search',
   searchRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateSearch,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);

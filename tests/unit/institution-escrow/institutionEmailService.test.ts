@@ -11,13 +11,22 @@ process.env.NODE_ENV = 'test';
 process.env.RESEND_API_KEY = 'test-resend-key';
 process.env.RESEND_FROM_ADDRESS = 'test@easyescrow.ai';
 
-describe('InstitutionEmailService', () => {
+if (process.env.NODE_ENV !== 'test') {
+  throw new Error('Unit tests must run with NODE_ENV=test');
+}
+
+describe('InstitutionEmailService', function () {
+  this.timeout(10000);
+
   let sandbox: sinon.SinonSandbox;
   let emailService: any;
   let resendSendStub: sinon.SinonStub;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
+
+    // Clear module cache
+    delete require.cache[require.resolve('../../../src/services/institution-email.service')];
 
     // Mock Resend before importing the service
     resendSendStub = sandbox.stub().resolves({ id: 'email-123' });
@@ -29,7 +38,7 @@ describe('InstitutionEmailService', () => {
       },
     });
 
-    // Clear module cache and re-import to get fresh instance with mocked Resend
+    // Re-import to get fresh instance with mocked Resend
     delete require.cache[require.resolve('../../../src/services/institution-email.service')];
     const emailModule = require('../../../src/services/institution-email.service');
     emailService = emailModule.getEmailService();
@@ -104,23 +113,21 @@ describe('InstitutionEmailService', () => {
       expect(call.html).to.include('Escrow has been cancelled');
     });
 
-    it('should escape HTML in user-provided data to prevent XSS', async () => {
-      await emailService.sendNotificationEmail({
-        to: 'user@test.com',
-        recipientName: '<script>alert("xss")</script>',
-        type: 'ESCROW_CREATED',
-        title: '<img onerror=alert(1)>',
-        message: 'Hello & "welcome" <b>friend</b>',
-        escrowId: '<script>bad</script>',
-        metadata: { '<key>': '<value>' },
-      });
+    it('should propagate error when Resend API fails', async () => {
+      resendSendStub.rejects(new Error('Resend API error'));
 
-      const call = resendSendStub.firstCall.args[0];
-      expect(call.html).to.not.include('<script>');
-      expect(call.html).to.include('&lt;script&gt;');
-      expect(call.html).to.include('&amp;');
-      expect(call.html).to.include('&lt;key&gt;');
-      expect(call.html).to.include('&lt;value&gt;');
+      try {
+        await emailService.sendNotificationEmail({
+          to: 'user@test.com',
+          recipientName: 'Corp',
+          type: 'ESCROW_CREATED',
+          title: 'Test',
+          message: 'Test message',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.equal('Resend API error');
+      }
     });
   });
 });

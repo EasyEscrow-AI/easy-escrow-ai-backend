@@ -16,6 +16,8 @@ import { isValidSolanaAddress } from '../models/validators/solana.validator';
 import { getSolanaService } from './solana.service';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 import { getEffectiveMint, normalizeSymbol } from '../utils/token-env-mapping';
+import { isPrivacyEnabled } from '../utils/featureFlags';
+import { getStealthAddressService } from './privacy/stealth-address.service';
 import type {
   PrismaClient,
   Prisma,
@@ -28,9 +30,19 @@ const MAX_ACCOUNTS_PER_CLIENT = 10;
 const BALANCE_CACHE_TTL = 300; // 5 minutes — balance refreshable via POST /refresh-balance
 const BALANCE_CACHE_PREFIX = 'institution:account:balance:';
 
+const VALID_ACCOUNT_TYPES: InstitutionAccountType[] = [
+  'TREASURY',
+  'OPERATIONS',
+  'SETTLEMENT',
+  'COLLATERAL',
+  'GENERAL',
+];
+
 // Fields allowed to be updated
 const ALLOWED_UPDATE_FIELDS = [
   'label',
+  'accountType',
+  'walletAddress',
   'description',
   'walletProvider',
   'custodyType',
@@ -52,6 +64,23 @@ const ALLOWED_UPDATE_FIELDS = [
   'notifyOnComplianceAlert',
 ] as const;
 
+// Fields exposed in the per-account settings view
+const ACCOUNT_SETTINGS_FIELDS = [
+  'defaultCurrency',
+  'notifyOnEscrowCreated',
+  'notifyOnEscrowFunded',
+  'notifyOnEscrowReleased',
+  'notifyOnComplianceAlert',
+  'notificationEmail',
+  'webhookUrl',
+  'approvalMode',
+  'approvalThreshold',
+  'whitelistEnforced',
+  'isActive',
+] as const;
+
+const VALID_CURRENCIES = ['USDC', 'USDT', 'EURC'] as const;
+
 interface CreateAccountInput {
   name: string;
   label?: string;
@@ -69,6 +98,8 @@ interface ListAccountsFilters {
   accountType?: InstitutionAccountType;
   verificationStatus?: AccountVerificationStatus;
   isActive?: boolean;
+  branchId?: string;
+  includeBalances?: boolean;
 }
 
 interface TokenBalance {
@@ -140,6 +171,24 @@ export class InstitutionAccountService {
       },
     });
 
+    // Auto-generate stealth meta-address for the account (privacy-by-default)
+    if (isPrivacyEnabled()) {
+      try {
+        const stealthService = getStealthAddressService();
+        const meta = await stealthService.registerMetaAddress(clientId, `account:${account.id}`);
+        await this.prisma.institutionAccount.update({
+          where: { id: account.id },
+          data: { stealthMetaAddressId: meta.id },
+        });
+        console.log(
+          `[InstitutionAccount] Auto-generated stealth meta-address ${meta.id} for account ${account.id}`
+        );
+      } catch (error) {
+        // Non-critical: account still works without stealth
+        console.warn('[InstitutionAccount] Failed to auto-generate stealth meta-address:', error);
+      }
+    }
+
     return account;
   }
 
@@ -158,8 +207,98 @@ export class InstitutionAccountService {
     return { ...account, balance };
   }
 
-  async listAccounts(clientId: string, filters?: ListAccountsFilters) {
-    const where: Prisma.InstitutionAccountWhereInput = { clientId };
+  async getAccountTransactions(clientId: string, accountId: string, limit: number = 20, offset: number = 0) {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { id: accountId, clientId },
+      select: { walletAddress: true },
+    });
+    if (!account) throw new Error('Account not found');
+
+    const wallet = account.walletAddress;
+
+    const [escrows, directPayments] = await Promise.all([
+      this.prisma.institutionEscrow.findMany({
+        where: {
+          clientId,
+          OR: [{ payerWallet: wallet }, { recipientWallet: wallet }],
+        },
+        select: {
+          escrowId: true, escrowCode: true, amount: true, status: true,
+          payerWallet: true, recipientWallet: true,
+          fundedAt: true, resolvedAt: true, createdAt: true,
+          depositTxSignature: true, releaseTxSignature: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit + offset,
+      }),
+      this.prisma.directPayment.findMany({
+        where: {
+          clientId,
+          OR: [{ senderWallet: wallet }, { recipientWallet: wallet }],
+        },
+        select: {
+          id: true, paymentCode: true, amount: true, currency: true, status: true,
+          sender: true, recipient: true, txHash: true, settledAt: true, createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit + offset,
+      }),
+    ]);
+
+    const txs: Array<{
+      id: string; type: string; date: string; amount: number;
+      currency: string; counterparty: string; txHash: string | null; status: string;
+    }> = [];
+
+    for (const e of escrows) {
+      const isDeposit = e.payerWallet === wallet && e.fundedAt;
+      const isRelease = e.recipientWallet === wallet && ['RELEASED', 'COMPLETE'].includes(e.status);
+      if (isDeposit) {
+        txs.push({
+          id: e.escrowCode || e.escrowId,
+          type: 'deposit',
+          date: (e.fundedAt || e.createdAt).toISOString(),
+          amount: Number(e.amount),
+          currency: 'USDC',
+          counterparty: e.recipientWallet || '',
+          txHash: e.depositTxSignature,
+          status: 'completed',
+        });
+      }
+      if (isRelease) {
+        txs.push({
+          id: e.escrowCode || e.escrowId,
+          type: 'release',
+          date: (e.resolvedAt || e.createdAt).toISOString(),
+          amount: Number(e.amount),
+          currency: 'USDC',
+          counterparty: e.payerWallet || '',
+          txHash: e.releaseTxSignature,
+          status: 'completed',
+        });
+      }
+    }
+
+    for (const p of directPayments) {
+      txs.push({
+        id: p.paymentCode || p.id,
+        type: 'direct',
+        date: (p.settledAt || p.createdAt).toISOString(),
+        amount: Number(p.amount),
+        currency: p.currency || 'USDC',
+        counterparty: p.recipient || p.sender || '',
+        txHash: p.txHash,
+        status: p.status || 'completed',
+      });
+    }
+
+    txs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return txs.slice(offset, offset + limit);
+  }
+
+  async listAccounts(clientId: string | null, filters?: ListAccountsFilters) {
+    const where: Prisma.InstitutionAccountWhereInput = clientId ? { clientId } : {};
 
     if (filters?.accountType) {
       where.accountType = filters.accountType;
@@ -170,17 +309,27 @@ export class InstitutionAccountService {
     if (filters?.isActive !== undefined) {
       where.isActive = filters.isActive;
     }
+    if (filters?.branchId) {
+      where.branchId = filters.branchId;
+    }
 
     const accounts = await this.prisma.institutionAccount.findMany({
       where,
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
     });
 
-    // Fetch balances for all accounts in parallel
+    // includeBalances=true → live RPC fetch (expensive)
+    // default → return cached balances from Redis (cheap, no RPC calls)
     const accountsWithBalances = await Promise.all(
       accounts.map(async (account) => {
         try {
-          const balance = await this.getAccountBalance(account.walletAddress);
+          if (filters?.includeBalances) {
+            // Live RPC fetch + cache update
+            const balance = await this.getAccountBalance(account.walletAddress);
+            return { ...account, balance };
+          }
+          // Return cached balance (fast, no RPC) — null if never fetched
+          const balance = await this.getCachedBalance(account.walletAddress);
           return { ...account, balance };
         } catch {
           return {
@@ -213,6 +362,25 @@ export class InstitutionAccountService {
 
     if (Object.keys(filteredUpdates).length === 0) {
       throw new Error('No valid fields to update');
+    }
+
+    // Validate accountType if provided
+    if (filteredUpdates.accountType) {
+      if (!VALID_ACCOUNT_TYPES.includes(filteredUpdates.accountType)) {
+        throw new Error(
+          `Invalid accountType. Must be one of: ${VALID_ACCOUNT_TYPES.join(', ')}`
+        );
+      }
+    }
+
+    // Validate walletAddress if provided; reset verification when changed
+    if (filteredUpdates.walletAddress !== undefined) {
+      if (!isValidSolanaAddress(filteredUpdates.walletAddress)) {
+        throw new Error('Invalid Solana wallet address');
+      }
+      if (filteredUpdates.walletAddress !== account.walletAddress) {
+        filteredUpdates.verificationStatus = 'PENDING';
+      }
     }
 
     // Validate whitelistedAddresses if provided
@@ -280,6 +448,178 @@ export class InstitutionAccountService {
     ]);
 
     return this.prisma.institutionAccount.findUnique({ where: { id: accountId } });
+  }
+
+  async getClientProfile(clientId: string) {
+    const client = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+      select: {
+        id: true,
+        companyName: true,
+        legalName: true,
+        tradingName: true,
+        tier: true,
+        status: true,
+        kycStatus: true,
+        kybStatus: true,
+        jurisdiction: true,
+        entityType: true,
+        registrationNumber: true,
+        registrationCountry: true,
+        industry: true,
+        websiteUrl: true,
+        businessDescription: true,
+        yearEstablished: true,
+        contactFirstName: true,
+        contactLastName: true,
+        contactEmail: true,
+        contactTitle: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        state: true,
+        postalCode: true,
+        country: true,
+        riskRating: true,
+        isRegulatedEntity: true,
+        regulatoryStatus: true,
+        licenseType: true,
+        regulatoryBody: true,
+        accountManagerName: true,
+        accountManagerEmail: true,
+        onboardingCompletedAt: true,
+        nextReviewDate: true,
+        createdAt: true,
+        updatedAt: true,
+        settings: {
+          select: {
+            defaultCurrency: true,
+            defaultCorridor: true,
+            timezone: true,
+            emailNotifications: true,
+            language: true,
+            theme: true,
+            twoFactorEnabled: true,
+            aiRecommendations: true,
+            riskTolerance: true,
+            defaultToken: true,
+          },
+        },
+        accounts: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            label: true,
+            accountType: true,
+            walletAddress: true,
+            verificationStatus: true,
+            defaultCurrency: true,
+            isDefault: true,
+            isActive: true,
+          },
+          orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+        },
+      },
+    });
+
+    if (!client) {
+      throw new Error('Client not found');
+    }
+
+    return client;
+  }
+
+  async getAccountSettings(clientId: string, accountId: string) {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { id: accountId, clientId },
+      select: {
+        id: true,
+        name: true,
+        label: true,
+        accountType: true,
+        defaultCurrency: true,
+        isActive: true,
+        isDefault: true,
+        notifyOnEscrowCreated: true,
+        notifyOnEscrowFunded: true,
+        notifyOnEscrowReleased: true,
+        notifyOnComplianceAlert: true,
+        notificationEmail: true,
+        webhookUrl: true,
+        approvalMode: true,
+        approvalThreshold: true,
+        whitelistEnforced: true,
+      },
+    });
+
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    return account;
+  }
+
+  async updateAccountSettings(clientId: string, accountId: string, data: Record<string, any>) {
+    const account = await this.prisma.institutionAccount.findFirst({
+      where: { id: accountId, clientId },
+    });
+
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    // Filter to only settings fields
+    const updates: Record<string, any> = {};
+    for (const field of ACCOUNT_SETTINGS_FIELDS) {
+      if (field in data) {
+        updates[field] = data[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      throw new Error('No valid settings fields to update');
+    }
+
+    // Validate defaultCurrency
+    if (updates.defaultCurrency) {
+      const currency = updates.defaultCurrency.toUpperCase();
+      if (!VALID_CURRENCIES.includes(currency as any)) {
+        throw new Error(
+          `Invalid currency: ${updates.defaultCurrency}. Supported: ${VALID_CURRENCIES.join(', ')}`
+        );
+      }
+      updates.defaultCurrency = currency;
+    }
+
+    // Validate boolean toggles
+    const booleanFields = [
+      'notifyOnEscrowCreated',
+      'notifyOnEscrowFunded',
+      'notifyOnEscrowReleased',
+      'notifyOnComplianceAlert',
+      'whitelistEnforced',
+      'isActive',
+    ];
+    for (const field of booleanFields) {
+      if (field in updates && typeof updates[field] !== 'boolean') {
+        throw new Error(`${field} must be a boolean`);
+      }
+    }
+
+    // Prevent deactivating default account
+    if (updates.isActive === false && account.isDefault) {
+      throw new Error(
+        'Cannot deactivate the default account. Set another account as default first.'
+      );
+    }
+
+    const updated = await this.prisma.institutionAccount.update({
+      where: { id: accountId },
+      data: updates,
+    });
+
+    return updated;
   }
 
   async getAccountBalance(walletAddress: string): Promise<AccountBalance> {
@@ -376,6 +716,24 @@ export class InstitutionAccountService {
     }
 
     return balance;
+  }
+
+  /** Return cached balance from Redis without RPC call. Returns default zeros if not cached. */
+  private async getCachedBalance(walletAddress: string): Promise<AccountBalance> {
+    const cacheKey = `${BALANCE_CACHE_PREFIX}${walletAddress}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch { /* Redis unavailable */ }
+    return { sol: 0, usdc: 0, tokens: [], lastUpdated: new Date().toISOString() };
+  }
+
+  /** Bust the balance cache for a wallet so the next fetch gets fresh data from RPC. */
+  async invalidateBalanceCache(walletAddress: string): Promise<void> {
+    const cacheKey = `${BALANCE_CACHE_PREFIX}${walletAddress}`;
+    try {
+      await redisClient.del(cacheKey);
+    } catch { /* Redis unavailable */ }
   }
 
   async refreshAccountBalance(clientId: string, accountId: string) {

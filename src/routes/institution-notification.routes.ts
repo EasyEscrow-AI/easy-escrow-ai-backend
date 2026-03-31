@@ -8,9 +8,9 @@
 
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { query, validationResult } from 'express-validator';
+import { param, query, validationResult } from 'express-validator';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionNotificationService } from '../services/institution-notification.service';
@@ -24,19 +24,6 @@ const standardRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-function handleValidation(req: any, res: Response): boolean {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(400).json({
-      error: 'Validation Error',
-      details: errors.array(),
-      timestamp: new Date().toISOString(),
-    });
-    return true;
-  }
-  return false;
-}
 
 const validateListNotifications = [
   query('limit')
@@ -53,11 +40,28 @@ const validateListNotifications = [
     .withMessage('unreadOnly must be true or false'),
 ];
 
+const validateNotificationId = [
+  param('id').isUUID().withMessage('Notification ID must be a valid UUID'),
+];
+
+function handleValidation(req: any, res: Response): boolean {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({
+      error: 'Validation Error',
+      details: errors.array(),
+      timestamp: new Date().toISOString(),
+    });
+    return true;
+  }
+  return false;
+}
+
 // GET /api/v1/institution-notifications
 router.get(
   '/api/v1/institution-notifications',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateListNotifications,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
@@ -89,7 +93,7 @@ router.get(
 router.post(
   '/api/v1/institution-notifications/read-all',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionNotificationService();
@@ -114,8 +118,11 @@ router.post(
 router.post(
   '/api/v1/institution-notifications/:id/read',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
+  validateNotificationId,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    if (handleValidation(req, res)) return;
+
     try {
       const service = getInstitutionNotificationService();
       const notification = await service.markAsRead(req.institutionClient!.clientId, req.params.id);
@@ -126,11 +133,11 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      const status = error.message.includes('not found')
-        ? 404
-        : error.message.includes('Access denied')
-        ? 403
-        : 400;
+      const status = error.statusCode || (
+        error.message?.includes('not found') ? 404
+        : error.message?.includes('Access denied') ? 403
+        : 500
+      );
       res.status(status).json({
         error: 'Error',
         message: error.message,

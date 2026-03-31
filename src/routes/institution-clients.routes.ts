@@ -10,7 +10,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { prisma } from '../config/database';
@@ -45,7 +45,7 @@ const PUBLIC_PROFILE_SELECT = {
 
 // Shared visibility filter: active, non-archived clients
 function getVisibilityFilter(includeArchived = false) {
-  const where: any = { status: 'ACTIVE' };
+  const where: any = { status: { in: ['ACTIVE', 'PENDING_VERIFICATION'] } };
   if (!includeArchived) {
     where.isArchived = false;
   }
@@ -56,7 +56,7 @@ function getVisibilityFilter(includeArchived = false) {
 router.get(
   '/api/v1/institution/clients/search',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { q, industry, country } = req.query;
@@ -106,7 +106,7 @@ router.get(
 router.get(
   '/api/v1/institution/clients',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
@@ -162,7 +162,7 @@ const COUNTRY_CODE_MAP: Record<string, string> = {
 router.get(
   '/api/v1/institution/clients/:id/profile',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const client = await prisma.institutionClient.findFirst({
@@ -247,7 +247,7 @@ router.get(
 router.put(
   '/api/v1/institution/clients/:id/archive',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { archive } = req.body;

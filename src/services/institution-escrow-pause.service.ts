@@ -1,11 +1,11 @@
 import { prisma } from '../config/database';
 import { redisClient } from '../config/redis';
-import { Prisma } from '../generated/prisma';
 
 const REDIS_KEY = 'institution:escrow:system:paused';
 const REDIS_TTL_SECONDS = 300; // 5 minutes
 const DB_KEY = 'institution_escrow_pause';
-const MAX_SERIALIZATION_RETRIES = 5;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 100;
 
 export interface PauseState {
   paused: boolean;
@@ -31,39 +31,37 @@ class InstitutionEscrowPauseService {
       const setting = await prisma.systemSetting.findUnique({
         where: { key: DB_KEY },
       });
-
-      const state: PauseState = setting && (setting.value as any)?.paused
-        ? {
+      if (setting) {
+        const value = setting.value as any;
+        if (value.paused) {
+          const state: PauseState = {
             paused: true,
-            reason: (setting.value as any).reason,
+            reason: value.reason,
             pausedBy: setting.updatedBy || undefined,
-            pausedAt: (setting.value as any).pausedAt,
+            pausedAt: value.pausedAt,
+          };
+          // Re-populate Redis cache with TTL
+          try {
+            await redisClient.set(REDIS_KEY, JSON.stringify(state), 'EX', REDIS_TTL_SECONDS);
+          } catch {
+            // Ignore Redis write failure
           }
-        : { paused: false };
-
-      // Cache the result (both paused and unpaused) to reduce DB lookups
-      try {
-        await redisClient.set(REDIS_KEY, JSON.stringify(state), 'EX', REDIS_TTL_SECONDS);
-      } catch {
-        // Ignore Redis write failure
+          return state;
+        }
       }
-
-      return state;
     } catch (err) {
-      // Fail-closed: treat DB errors as paused to prevent operations during indeterminate state
-      console.error('[PauseService] DB read failed, failing closed:', (err as Error).message);
-      return { paused: true, reason: 'System state indeterminate — DB read failed' };
+      console.warn('[PauseService] DB read failed, failing open:', (err as Error).message);
     }
+
+    return { paused: false };
   }
 
   async pause(reason: string, adminIdentifier: string): Promise<PauseState> {
     const pausedAt = new Date().toISOString();
 
-    // Atomic check-and-set with serialization retry
+    // Atomic check-and-set with retry for serialization conflicts (P2034)
     let state: PauseState | null = null;
-    let lastError: Error | null = null;
-
-    for (let attempt = 0; attempt < MAX_SERIALIZATION_RETRIES; attempt++) {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         state = await prisma.$transaction(
           async (tx) => {
@@ -97,21 +95,15 @@ class InstitutionEscrowPauseService {
           },
           { isolationLevel: 'Serializable' }
         );
-        lastError = null;
-        break;
-      } catch (err) {
-        if (
-          err instanceof Prisma.PrismaClientKnownRequestError &&
-          err.code === 'P2034'
-        ) {
-          lastError = err;
+        break; // Success
+      } catch (err: any) {
+        if (err?.code === 'P2034' && attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
           continue;
         }
         throw err;
       }
     }
-
-    if (lastError) throw lastError;
 
     if (!state) {
       const error = new Error('Institution escrow operations are already paused');
@@ -143,11 +135,9 @@ class InstitutionEscrowPauseService {
   }
 
   async unpause(adminIdentifier: string): Promise<void> {
-    // Atomic check-and-set with serialization retry
+    // Atomic check-and-set with retry for serialization conflicts (P2034)
     let wasPaused = false;
-    let lastError: Error | null = null;
-
-    for (let attempt = 0; attempt < MAX_SERIALIZATION_RETRIES; attempt++) {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         wasPaused = await prisma.$transaction(
           async (tx) => {
@@ -171,21 +161,15 @@ class InstitutionEscrowPauseService {
           },
           { isolationLevel: 'Serializable' }
         );
-        lastError = null;
         break;
-      } catch (err) {
-        if (
-          err instanceof Prisma.PrismaClientKnownRequestError &&
-          err.code === 'P2034'
-        ) {
-          lastError = err;
+      } catch (err: any) {
+        if (err?.code === 'P2034' && attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
           continue;
         }
         throw err;
       }
     }
-
-    if (lastError) throw lastError;
 
     if (!wasPaused) {
       const error = new Error('Institution escrow operations are not currently paused');
@@ -193,12 +177,11 @@ class InstitutionEscrowPauseService {
       throw error;
     }
 
-    // Write unpaused state to Redis (keeps cache warm)
-    const unpausedState: PauseState = { paused: false };
+    // Clear Redis cache
     try {
-      await redisClient.set(REDIS_KEY, JSON.stringify(unpausedState), 'EX', REDIS_TTL_SECONDS);
+      await redisClient.del(REDIS_KEY);
     } catch (err) {
-      console.warn('[PauseService] Redis write failed on unpause:', (err as Error).message);
+      console.warn('[PauseService] Redis delete failed on unpause:', (err as Error).message);
     }
 
     // Audit log

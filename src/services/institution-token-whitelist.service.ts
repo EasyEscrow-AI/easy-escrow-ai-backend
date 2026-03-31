@@ -10,6 +10,7 @@
  */
 
 import { PrismaClient } from '../generated/prisma';
+import { prisma as sharedPrisma } from '../config/database';
 import { getEffectiveMint, normalizeSymbol } from '../utils/token-env-mapping';
 
 export interface ApprovedToken {
@@ -32,7 +33,7 @@ export class InstitutionTokenWhitelistService {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor(prisma?: PrismaClient) {
-    this.prisma = prisma || new PrismaClient();
+    this.prisma = prisma || sharedPrisma;
   }
 
   private async loadCache(): Promise<Map<string, ApprovedToken>> {
