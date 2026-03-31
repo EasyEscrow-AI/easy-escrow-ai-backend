@@ -200,7 +200,7 @@ export function validateInstitutionEscrowConfig(cfg?: InstitutionEscrowConfig): 
     throw new ConfigurationError('ANTHROPIC_API_KEY appears invalid (too short).');
   }
 
-  // DO Spaces: validate all-or-nothing (if any field is set, all must be set)
+  // DO Spaces: warn on incomplete config (non-fatal — file uploads will fail gracefully)
   const spacesFieldMap: Record<string, string> = {
     DO_SPACES_KEY: escrowConfig.doSpaces.key,
     DO_SPACES_SECRET: escrowConfig.doSpaces.secret,
@@ -211,8 +211,8 @@ export function validateInstitutionEscrowConfig(cfg?: InstitutionEscrowConfig): 
   const spacesSet = Object.entries(spacesFieldMap).filter(([, v]) => v.length > 0);
   const spacesMissing = Object.entries(spacesFieldMap).filter(([, v]) => v.length === 0);
   if (spacesSet.length > 0 && spacesMissing.length > 0) {
-    throw new ConfigurationError(
-      'DO Spaces configuration is incomplete. ' +
+    console.warn(
+      `⚠️ DO Spaces configuration incomplete — file uploads will be disabled. ` +
         `Set: ${spacesSet.map(([k]) => k).join(', ')}. ` +
         `Missing: ${spacesMissing.map(([k]) => k).join(', ')}.`
     );
