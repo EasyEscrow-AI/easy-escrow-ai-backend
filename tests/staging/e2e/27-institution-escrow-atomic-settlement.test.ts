@@ -28,6 +28,7 @@
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
 import axios, { AxiosInstance } from 'axios';
+import { cleanupE2ETestClients } from './shared-test-utils';
 import {
   Connection,
   Keypair,
@@ -109,6 +110,9 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
   let nonceValueBeforeRelease: string;
   let nonceValueAfterRelease: string;
 
+  // Track registered client IDs for cleanup
+  const registeredClientIds: string[] = [];
+
   // Release tracking
   let releasedWithoutKey = false;
 
@@ -145,6 +149,7 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
     });
     if (reg.status === 201 || reg.status === 200) {
       const data = reg.data.data;
+      if (data.client?.id) registeredClientIds.push(data.client.id);
       console.log(`    ${label}: registered as ${regEmail}`);
       return {
         token: data.tokens.accessToken,
@@ -168,7 +173,9 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
       }
     }
 
-    throw new Error(`Failed to authenticate ${label}: demo=${demoLogin.status}, reg=${reg.status}`);
+    throw new Error(
+      `Failed to authenticate ${label}: demo=${demoLogin.status}, reg=${reg.status}`,
+    );
   }
 
   // ─── Helper: read nonce account value ─────────────────────────
@@ -994,8 +1001,15 @@ describe('Institution Escrow Atomic Settlement E2E (Staging + Devnet)', function
   // ─────────────────────────────────────────────────────────────
 
   after(async function () {
-    const buyerWallet = buyerKeypair?.publicKey?.toBase58() || BUYER_WALLET_ADDRESS;
-    const supplierWallet = supplierPublicKey?.toBase58() || SUPPLIER_WALLET_ADDRESS;
+    // Clean up any fallback-registered test clients
+    if (registeredClientIds.length > 0) {
+      await cleanupE2ETestClients(registeredClientIds);
+    }
+
+    const buyerWallet =
+      buyerKeypair?.publicKey?.toBase58() || BUYER_WALLET_ADDRESS;
+    const supplierWallet =
+      supplierPublicKey?.toBase58() || SUPPLIER_WALLET_ADDRESS;
 
     console.log('\n' + '='.repeat(80));
     console.log('  Institution Escrow Atomic Settlement E2E — Summary');
