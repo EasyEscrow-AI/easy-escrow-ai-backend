@@ -434,6 +434,7 @@ router.post(
         req.body.notes,
         req.institutionClient!.email,
         privacyPreferences,
+        undefined,
         { forceRelease: req.body.forceRelease === true }
       );
 
