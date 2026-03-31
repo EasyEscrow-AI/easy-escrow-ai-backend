@@ -521,10 +521,10 @@ exports.Prisma.InstitutionAccountScalarFieldEnum = {
   defaultCurrency: 'defaultCurrency',
   isDefault: 'isDefault',
   isActive: 'isActive',
+  branchId: 'branchId',
   stealthMetaAddressId: 'stealthMetaAddressId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  branchId: 'branchId'
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.InstitutionBranchScalarFieldEnum = {

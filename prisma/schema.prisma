@@ -1012,6 +1012,9 @@ model InstitutionAccount {
   isDefault Boolean @default(false) @map("is_default")
   isActive  Boolean @default(true)  @map("is_active")
 
+  // Branch
+  branchId String? @map("branch_id")
+
   // Stealth / Privacy
   stealthMetaAddressId String? @unique @map("stealth_meta_address_id")
 
