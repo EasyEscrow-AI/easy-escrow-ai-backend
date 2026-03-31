@@ -498,10 +498,10 @@ router.get(
       const { getPrivacyAnalysisService } = await import('../services/privacy-analysis.service');
       const service = getPrivacyAnalysisService();
       const clientId = req.institutionClient?.clientId;
-      const result = clientId
-        ? await service.analyze(clientId, req.params.escrowId)
-        : req.isAdmin
-          ? await service.analyzeAdmin(req.params.escrowId)
+      const result = req.isAdmin
+        ? await service.analyzeAdmin(req.params.escrowId)
+        : clientId
+          ? await service.analyze(clientId, req.params.escrowId)
           : (() => { throw Object.assign(new Error('Authentication required'), { status: 403 }); })();
 
       res.status(200).json({
@@ -528,12 +528,12 @@ router.get(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionEscrowService();
-      // Admin users without a scoped clientId can view any escrow
+      // Admin users can view any escrow regardless of ownership
       const clientId = req.institutionClient?.clientId;
-      const escrow = clientId
-        ? await service.getEscrow(clientId, req.params.id)
-        : req.isAdmin
-          ? await service.getEscrowAdmin(req.params.id)
+      const escrow = req.isAdmin
+        ? await service.getEscrowAdmin(req.params.id)
+        : clientId
+          ? await service.getEscrow(clientId, req.params.id)
           : (() => { throw new Error('Authentication required'); })();
 
       res.status(200).json({
