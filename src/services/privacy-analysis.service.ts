@@ -131,25 +131,21 @@ export class PrivacyAnalysisService {
         return { passed: false, detail: 'No recipient wallet set', recipientWallet: null, derivationVerified: false, addresses: null };
       }
 
-      // Verify the wallet exists on-chain
-      const pubkey = new PublicKey(recipientWallet);
-      const accountInfo = await this.connection.getAccountInfo(pubkey);
-      if (!accountInfo) {
-        return {
-          passed: false,
-          detail: 'Recipient wallet not found on-chain',
-          recipientWallet,
-          derivationVerified: false,
-          addresses: null,
-        };
-      }
-
       // Check if this escrow used stealth privacy (has a stealthPaymentId)
       const isStealthDerived = !!escrow.stealthPaymentId;
 
-      // If stealth: verify it's not reused across escrows for this client
-      let derivationVerified = isStealthDerived;
+      // For stealth escrows, verify via StealthPayment record — the on-chain account
+      // may no longer exist after the recipient sweeps funds and the ATA is closed
       if (isStealthDerived) {
+        const stealthPayment = await this.prisma.stealthPayment.findUnique({
+          where: { id: escrow.stealthPaymentId },
+          select: { status: true, stealthAddress: true, sweepTxSignature: true, releaseTxSignature: true },
+        });
+
+        const paymentVerified = !!stealthPayment &&
+          (stealthPayment.status === 'CONFIRMED' || stealthPayment.status === 'SWEPT');
+
+        // Check address reuse across escrows for this client
         const reuseCount = await this.prisma.institutionEscrow.count({
           where: {
             clientId: escrow.clientId,
@@ -157,13 +153,51 @@ export class PrivacyAnalysisService {
             escrowId: { not: escrow.escrowId },
           },
         });
-        derivationVerified = reuseCount === 0;
+        const noReuse = reuseCount === 0;
+        const derivationVerified = paymentVerified && noReuse;
+
+        // Build address mapping
+        const onChainAddresses = await this.extractOnChainAddresses(escrow);
+        const payerReal = escrow.payerWallet;
+        const addresses = {
+          payer: {
+            real: payerReal,
+            onChain: onChainAddresses.payer || payerReal,
+            match: payerReal === (onChainAddresses.payer || payerReal),
+          },
+          recipient: {
+            real: recipientWallet,
+            onChain: stealthPayment?.stealthAddress || onChainAddresses.recipient || recipientWallet,
+            match: false, // stealth addresses never match the real wallet
+          },
+          note: 'On-chain addresses are derived per-transaction for privacy. Funds are routed to the correct real wallets via the escrow program.',
+        };
+
+        const detail = !stealthPayment
+          ? 'Stealth payment record not found'
+          : !paymentVerified
+            ? `Stealth payment not yet confirmed (status: ${stealthPayment.status})`
+            : !noReuse
+              ? 'Stealth address reused across multiple escrows'
+              : stealthPayment.status === 'SWEPT'
+                ? 'Stealth address verified — funds swept to recipient wallet'
+                : 'Stealth address verified — funds successfully settled to derived wallet';
+
+        return {
+          passed: derivationVerified,
+          detail,
+          recipientWallet,
+          derivationVerified,
+          addresses,
+        };
       }
 
-      // Build real vs on-chain address mapping
+      // Non-stealth: verify the wallet exists on-chain
+      const pubkey = new PublicKey(recipientWallet);
+      const accountInfo = await this.connection.getAccountInfo(pubkey);
+
       const onChainAddresses = await this.extractOnChainAddresses(escrow);
       const payerReal = escrow.payerWallet;
-      const recipientReal = recipientWallet;
       const addresses = {
         payer: {
           real: payerReal,
@@ -171,25 +205,21 @@ export class PrivacyAnalysisService {
           match: payerReal === (onChainAddresses.payer || payerReal),
         },
         recipient: {
-          real: recipientReal,
-          onChain: onChainAddresses.recipient || recipientReal,
-          match: recipientReal === (onChainAddresses.recipient || recipientReal),
+          real: recipientWallet,
+          onChain: onChainAddresses.recipient || recipientWallet,
+          match: recipientWallet === (onChainAddresses.recipient || recipientWallet),
         },
-        note: isStealthDerived
-          ? 'On-chain addresses are derived per-transaction for privacy. Funds are routed to the correct real wallets via the escrow program.'
-          : 'Standard addresses used — real and on-chain addresses match.',
+        note: 'Standard addresses used — real and on-chain addresses match.',
       };
 
       return {
-        passed: isStealthDerived && derivationVerified,
-        detail: isStealthDerived
-          ? derivationVerified
-            ? 'Stealth address verified — funds successfully settled to derived wallet'
-            : 'Stealth address reused across multiple escrows'
-          : 'Standard wallet used (no stealth derivation)',
+        passed: false,
+        detail: accountInfo
+          ? 'Standard wallet used (no stealth derivation)'
+          : 'Recipient wallet not found on-chain',
         recipientWallet,
-        derivationVerified,
-        addresses,
+        derivationVerified: false,
+        addresses: accountInfo ? addresses : null,
       };
     } catch (err) {
       logger.error(`${LOG_PREFIX} Stealth address check failed`, { error: (err as Error).message });

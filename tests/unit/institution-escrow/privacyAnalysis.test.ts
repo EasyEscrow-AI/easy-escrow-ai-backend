@@ -79,6 +79,9 @@ describe('PrivacyAnalysisService', () => {
       transactionPool: {
         findUnique: sandbox.stub(),
       },
+      stealthPayment: {
+        findUnique: sandbox.stub(),
+      },
     };
     (service as any).prisma = prismaStub;
 
@@ -93,6 +96,14 @@ describe('PrivacyAnalysisService', () => {
       set: sandbox.stub().resolves(true),
     };
     (service as any).cache = cacheStub;
+
+    // Default: stealth payment is CONFIRMED (tests override as needed)
+    prismaStub.stealthPayment.findUnique.resolves({
+      status: 'CONFIRMED',
+      stealthAddress: 'stealth-address-default',
+      releaseTxSignature: 'releaseSig789',
+      sweepTxSignature: null,
+    });
   });
 
   afterEach(() => {
@@ -137,6 +148,12 @@ describe('PrivacyAnalysisService', () => {
       const escrow = makeEscrow();
       prismaStub.institutionEscrow.findUnique.resolves(escrow);
       prismaStub.institutionEscrow.count.resolves(0); // no reuse
+      prismaStub.stealthPayment.findUnique.resolves({
+        status: 'CONFIRMED',
+        stealthAddress: escrow.recipientWallet,
+        releaseTxSignature: 'releaseSig789',
+        sweepTxSignature: null,
+      });
       prismaStub.institutionAuditLog.findMany.resolves([
         {
           id: 'audit-001',
@@ -167,10 +184,16 @@ describe('PrivacyAnalysisService', () => {
   });
 
   describe('checkStealthAddress', () => {
-    it('should pass when stealth derived and not reused', async () => {
+    it('should pass when stealth payment is CONFIRMED and not reused', async () => {
       const escrow = makeEscrow();
       prismaStub.institutionEscrow.findUnique.resolves(escrow);
       prismaStub.institutionEscrow.count.resolves(0);
+      prismaStub.stealthPayment.findUnique.resolves({
+        status: 'CONFIRMED',
+        stealthAddress: escrow.recipientWallet,
+        releaseTxSignature: 'releaseSig789',
+        sweepTxSignature: null,
+      });
       connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
       connectionStub.getTransaction.resolves({ meta: { err: null } });
       prismaStub.institutionAuditLog.findMany.resolves([]);
@@ -178,9 +201,86 @@ describe('PrivacyAnalysisService', () => {
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.true;
       expect(result.checks.stealthAddress.derivationVerified).to.be.true;
+      expect(result.checks.stealthAddress.detail).to.include('settled to derived wallet');
     });
 
-    it('should fail when no stealth payment ID', async () => {
+    it('should pass when stealth payment is SWEPT (account closed on-chain)', async () => {
+      const escrow = makeEscrow();
+      prismaStub.institutionEscrow.findUnique.resolves(escrow);
+      prismaStub.institutionEscrow.count.resolves(0);
+      prismaStub.stealthPayment.findUnique.resolves({
+        status: 'SWEPT',
+        stealthAddress: escrow.recipientWallet,
+        releaseTxSignature: 'releaseSig789',
+        sweepTxSignature: 'sweepSig999',
+      });
+      // On-chain account no longer exists after sweep
+      connectionStub.getAccountInfo.callsFake(async (pubkey: any) => {
+        const addr = pubkey.toBase58();
+        // Stealth recipient wallet is gone, but PDAs still exist
+        if (addr === escrow.recipientWallet) return null;
+        return { data: Buffer.alloc(100), owner: Keypair.generate().publicKey };
+      });
+      connectionStub.getTransaction.resolves({ meta: { err: null } });
+      prismaStub.institutionAuditLog.findMany.resolves([]);
+
+      const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
+      expect(result.checks.stealthAddress.passed).to.be.true;
+      expect(result.checks.stealthAddress.derivationVerified).to.be.true;
+      expect(result.checks.stealthAddress.detail).to.include('swept to recipient');
+    });
+
+    it('should fail when stealth payment record not found', async () => {
+      const escrow = makeEscrow();
+      prismaStub.institutionEscrow.findUnique.resolves(escrow);
+      prismaStub.stealthPayment.findUnique.resolves(null);
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
+      connectionStub.getTransaction.resolves({ meta: { err: null } });
+      prismaStub.institutionAuditLog.findMany.resolves([]);
+
+      const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
+      expect(result.checks.stealthAddress.passed).to.be.false;
+      expect(result.checks.stealthAddress.detail).to.include('record not found');
+    });
+
+    it('should fail when stealth payment is still PENDING', async () => {
+      const escrow = makeEscrow();
+      prismaStub.institutionEscrow.findUnique.resolves(escrow);
+      prismaStub.stealthPayment.findUnique.resolves({
+        status: 'PENDING',
+        stealthAddress: escrow.recipientWallet,
+        releaseTxSignature: null,
+        sweepTxSignature: null,
+      });
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
+      connectionStub.getTransaction.resolves({ meta: { err: null } });
+      prismaStub.institutionAuditLog.findMany.resolves([]);
+
+      const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
+      expect(result.checks.stealthAddress.passed).to.be.false;
+      expect(result.checks.stealthAddress.detail).to.include('not yet confirmed');
+    });
+
+    it('should fail when stealth address is reused', async () => {
+      const escrow = makeEscrow();
+      prismaStub.institutionEscrow.findUnique.resolves(escrow);
+      prismaStub.institutionEscrow.count.resolves(1); // reused
+      prismaStub.stealthPayment.findUnique.resolves({
+        status: 'CONFIRMED',
+        stealthAddress: escrow.recipientWallet,
+        releaseTxSignature: 'releaseSig789',
+        sweepTxSignature: null,
+      });
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
+      connectionStub.getTransaction.resolves({ meta: { err: null } });
+      prismaStub.institutionAuditLog.findMany.resolves([]);
+
+      const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
+      expect(result.checks.stealthAddress.passed).to.be.false;
+      expect(result.checks.stealthAddress.detail).to.include('reused');
+    });
+
+    it('should fail when no stealth payment ID (standard wallet)', async () => {
       const escrow = makeEscrow({ stealthPaymentId: null });
       prismaStub.institutionEscrow.findUnique.resolves(escrow);
       connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
@@ -198,7 +298,7 @@ describe('PrivacyAnalysisService', () => {
       const escrow = makeEscrow();
       prismaStub.institutionEscrow.findUnique.resolves(escrow);
       prismaStub.institutionEscrow.count.resolves(0);
-      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100), owner: Keypair.generate().publicKey });
       connectionStub.getTransaction.resolves({ meta: { err: null } });
       prismaStub.institutionAuditLog.findMany.resolves([]);
 
@@ -335,10 +435,25 @@ describe('PrivacyAnalysisService', () => {
 
       // Should still return a result (not throw)
       expect(result.escrowId).to.equal(ESCROW_CODE);
+      // Stealth check uses DB (not RPC), so it still works — but PDA and custody fail
+      expect(result.checks.pdaReceipts.passed).to.be.false;
+      expect(result.checks.pdaReceipts.detail).to.include('unavailable');
+      expect(result.checks.encryptedCustody.passed).to.be.false;
+      expect(result.checks.encryptedCustody.allVerified).to.be.false;
+    });
+
+    it('should mark stealth check as failed when DB query throws', async () => {
+      const escrow = makeEscrow();
+      prismaStub.institutionEscrow.findUnique.resolves(escrow);
+      prismaStub.stealthPayment.findUnique.rejects(new Error('DB connection lost'));
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100), owner: Keypair.generate().publicKey });
+      connectionStub.getTransaction.resolves({ meta: { err: null } });
+      prismaStub.institutionAuditLog.findMany.resolves([]);
+
+      const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
+
       expect(result.checks.stealthAddress.passed).to.be.false;
       expect(result.checks.stealthAddress.detail).to.include('unavailable');
-      expect(result.checks.pdaReceipts.passed).to.be.false;
-      expect(result.checks.encryptedCustody.passed).to.be.false;
     });
   });
 });
