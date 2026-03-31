@@ -5406,6 +5406,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/institution-escrow/{escrowId}/privacy-analysis:
+    get:
+      tags: [Institution Escrow]
+      summary: Privacy analysis
+      description: |
+        Perform real-time on-chain privacy verification for an escrow transaction.
+        Returns a structured report with 5 independent checks: stealth address derivation,
+        PDA receipt verification, encrypted chain-of-custody, compliance audit trail,
+        and transaction pool shielding. Results are cached for 60 seconds.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: escrowId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Escrow ID (UUID) or escrow code (EE-XXX-XXX)
+      responses:
+        '200':
+          description: Privacy analysis report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    $ref: '#/components/schemas/PrivacyAnalysisResult'
+                  timestamp: { type: string, format: date-time }
+        '403':
+          description: Access denied
+        '404':
+          description: Escrow not found
+
   # ── Institution Bootstrap ──────────────────────────────────────────────
 
   /api/v1/institution/bootstrap:
@@ -5782,6 +5817,63 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    PrivacyAnalysisResult:
+      type: object
+      properties:
+        escrowId:
+          type: string
+          example: EE-7UA-HGK
+        analyzedAt:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            stealthAddress:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                recipientWallet: { type: string, nullable: true }
+                derivationVerified: { type: boolean }
+            pdaReceipts:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                escrowPda: { type: string, nullable: true }
+                vaultPda: { type: string, nullable: true }
+                accountExists: { type: boolean }
+                metadataEncrypted: { type: boolean }
+            encryptedCustody:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                signatures: { type: array, items: { type: string } }
+                allVerified: { type: boolean }
+            complianceAuditTrail:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                riskScore: { type: integer, nullable: true }
+                kytReportId: { type: string, nullable: true }
+                sanctionsCleared: { type: boolean }
+            transactionPoolShielding:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                shieldedPoolBatchId: { type: string, nullable: true }
+                batchSize: { type: integer }
+        overallScore:
+          type: integer
+          example: 5
+        maxScore:
+          type: integer
+          example: 5
 
     # Asset schemas
     SupportedAsset:
