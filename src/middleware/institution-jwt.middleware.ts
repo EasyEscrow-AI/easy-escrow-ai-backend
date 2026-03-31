@@ -1,6 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
+import { prisma } from '../config/database';
+
+// Renew access token when it has less than this many seconds remaining
+const SLIDING_RENEWAL_THRESHOLD_SEC = 10 * 60; // 10 minutes
 
 export interface InstitutionAuthenticatedRequest extends Request {
   institutionClient?: {
@@ -8,6 +13,12 @@ export interface InstitutionAuthenticatedRequest extends Request {
     email: string;
     tier: string;
   };
+  adminUser?: {
+    adminId: string;
+    email: string;
+    role: string;
+  };
+  isAdmin?: boolean;
 }
 
 interface InstitutionJwtPayload {
@@ -80,6 +91,10 @@ function extractAndVerifyToken(req: Request, res: Response): InstitutionJwtPaylo
 /**
  * Requires a valid institution JWT token.
  * Attaches decoded payload to req.institutionClient.
+ *
+ * Sliding renewal: when the access token is within 10 minutes of expiry,
+ * a fresh token is issued and returned via the X-New-Access-Token header
+ * so the frontend can transparently refresh without hitting /auth/refresh.
  */
 export const requireInstitutionAuth = (
   req: InstitutionAuthenticatedRequest,
@@ -95,6 +110,26 @@ export const requireInstitutionAuth = (
       email: payload.email,
       tier: payload.tier,
     };
+
+    // Sliding renewal: issue a fresh token when close to expiry
+    if (payload.exp) {
+      const remainingSec = payload.exp - Math.floor(Date.now() / 1000);
+      if (remainingSec > 0 && remainingSec < SLIDING_RENEWAL_THRESHOLD_SEC) {
+        try {
+          const secret = getJwtSecret();
+          const originalLifetime = payload.exp - (payload.iat || payload.exp);
+          const expirySec = originalLifetime > 0 ? originalLifetime : 3600;
+          const newToken = jwt.sign(
+            { clientId: payload.clientId, email: payload.email, tier: payload.tier },
+            secret,
+            { expiresIn: expirySec }
+          );
+          res.setHeader('X-New-Access-Token', newToken);
+        } catch {
+          // Non-fatal — just skip renewal
+        }
+      }
+    }
 
     next();
   } catch (error) {
@@ -145,6 +180,135 @@ export const optionalInstitutionAuth = (
 };
 
 /**
+ * Accepts either a valid institution JWT or admin JWT.
+ * - Institution JWT: populates req.institutionClient with clientId/email/tier
+ * - Admin JWT: populates req.adminUser with adminId/email/role.
+ *   If the admin provides a ?clientId query param, req.institutionClient is
+ *   also populated so downstream handlers work unchanged.
+ */
+export const requireInstitutionOrAdminAuth = async (
+  req: InstitutionAuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'No authentication token provided',
+        code: 'TOKEN_MISSING',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const token = authHeader.slice(7);
+
+    let decoded: any;
+    try {
+      const secret = getJwtSecret();
+      decoded = jwt.verify(token, secret);
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication token has expired',
+          code: 'TOKEN_EXPIRED',
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Invalid authentication token',
+          code: 'TOKEN_INVALID',
+          timestamp: new Date().toISOString(),
+        });
+      }
+      return;
+    }
+
+    // Institution JWT path (has clientId)
+    if (decoded.clientId) {
+      req.institutionClient = {
+        clientId: decoded.clientId,
+        email: decoded.email,
+        tier: decoded.tier,
+      };
+
+      // Check if this institution client is an admin (e.g. Amina Bank)
+      try {
+        const client = await prisma.institutionClient.findUnique({
+          where: { id: decoded.clientId },
+          select: { companyName: true },
+        });
+        req.isAdmin = client?.companyName?.toLowerCase().includes('amina') ?? false;
+      } catch {
+        req.isAdmin = false;
+      }
+
+      next();
+      return;
+    }
+
+    // Admin JWT path (has adminId)
+    if (decoded.adminId) {
+      req.adminUser = {
+        adminId: decoded.adminId,
+        email: decoded.email,
+        role: decoded.role,
+      };
+      req.isAdmin = true;
+
+      // Admin can scope to a specific client via ?clientId query param
+      const clientId = req.query.clientId as string | undefined;
+      if (clientId) {
+        req.institutionClient = {
+          clientId,
+          email: decoded.email,
+          tier: 'admin',
+        };
+      }
+
+      next();
+      return;
+    }
+
+    // Token has neither clientId nor adminId
+    res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Invalid authentication token',
+      code: 'TOKEN_INVALID',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to authenticate request',
+      timestamp: new Date().toISOString(),
+    });
+  }
+};
+
+/**
+ * Returns the effective clientId for data filtering.
+ * - Admin JWT with explicit ?clientId scope → that clientId
+ * - Admin (any path) without scope → null (aggregate across all clients)
+ * - Regular client → their clientId
+ */
+export function getEffectiveClientId(req: InstitutionAuthenticatedRequest): string | null {
+  if (req.isAdmin) {
+    // Admin JWT path: institutionClient is only set when ?clientId was explicitly provided
+    if (req.adminUser) return req.institutionClient?.clientId ?? null;
+    // Institution JWT admin (detected by companyName): always aggregate
+    return null;
+  }
+  return req.institutionClient!.clientId;
+}
+
+/**
  * Requires a valid settlement authority key.
  * Must be used after requireInstitutionAuth (expects req.institutionClient to be set).
  * Validates the X-Settlement-Authority-Key header against SETTLEMENT_AUTHORITY_API_KEY.
@@ -165,38 +329,46 @@ export const requireSettlementAuthority = (
       return;
     }
 
-    const settlementKey = req.headers['x-settlement-authority-key'] as string;
+    // When CDP is enabled, the CDP wallet's policy engine provides independent
+    // transaction-level verification, so the API key check is not required for
+    // JWT-authenticated users (institution or admin). The API key is still
+    // required when CDP is disabled (original settlement flow).
+    const cdpEnabled = getInstitutionEscrowConfig().cdp.enabled;
 
-    if (!settlementKey) {
-      res.status(403).json({
-        error: 'Forbidden',
-        message: 'Invalid settlement authority key',
-        code: 'SETTLEMENT_UNAUTHORIZED',
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
+    if (!cdpEnabled) {
+      const settlementKey = req.headers['x-settlement-authority-key'] as string;
 
-    const expectedKey = process.env.SETTLEMENT_AUTHORITY_API_KEY;
+      if (!settlementKey) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Invalid settlement authority key',
+          code: 'SETTLEMENT_UNAUTHORIZED',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
 
-    if (!expectedKey) {
-      console.error('SETTLEMENT_AUTHORITY_API_KEY environment variable is not configured');
-      res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'Settlement authority is not configured',
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
+      const expectedKey = process.env.SETTLEMENT_AUTHORITY_API_KEY;
 
-    if (!constantTimeCompare(settlementKey, expectedKey)) {
-      res.status(403).json({
-        error: 'Forbidden',
-        message: 'Invalid settlement authority key',
-        code: 'SETTLEMENT_UNAUTHORIZED',
-        timestamp: new Date().toISOString(),
-      });
-      return;
+      if (!expectedKey) {
+        console.error('SETTLEMENT_AUTHORITY_API_KEY environment variable is not configured');
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Settlement authority is not configured',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!constantTimeCompare(settlementKey, expectedKey)) {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Invalid settlement authority key',
+          code: 'SETTLEMENT_UNAUTHORIZED',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
     }
 
     next();

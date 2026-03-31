@@ -20,6 +20,7 @@ import {
   authorizedAppsRoutes,
   noncePoolAdminRoutes,
   institutionEscrowAdminRoutes,
+  adminAuthRoutes,
   assetsRoutes,
   institutionAuthRoutes,
   institutionSettingsRoutes,
@@ -762,6 +763,7 @@ app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with priva
 
 // Institution Escrow Routes (gated by feature flag)
 if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
+  app.use(adminAuthRoutes);
   app.use(institutionAuthRoutes);
   app.use(institutionSettingsRoutes);
   app.use(institutionFilesRoutes);

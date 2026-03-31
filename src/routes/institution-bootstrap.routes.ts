@@ -7,7 +7,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionBootstrapService } from '../services/institution-bootstrap.service';
@@ -26,7 +26,7 @@ const bootstrapRateLimiter = rateLimit({
 router.get(
   '/api/v1/institution/bootstrap',
   bootstrapRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionBootstrapService();

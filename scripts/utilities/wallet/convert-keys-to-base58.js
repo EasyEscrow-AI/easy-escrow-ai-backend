@@ -49,7 +49,7 @@ DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY=${base58Keys['staging-fee-collector']}
 DEVNET_STAGING_USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 
 # Redis (STAGING)
-REDIS_URL=redis://default:C2FFCNjuy43x5U0GwWCdMIFjNoLpbEQJ@redis-19320.c1.ap-southeast-1-1.ec2.redns.redis-cloud.com:19320
+REDIS_URL=redis://default:your-redis-password@your-redis-host:19320
 
 # Database (to be configured in Task 67)
 # DATABASE_URL=

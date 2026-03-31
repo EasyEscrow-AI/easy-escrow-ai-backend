@@ -32875,6 +32875,7 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgAggregateOutputType = {
     autoApproveThreshold: Decimal | null
     manualReviewThreshold: Decimal | null
+    defaultTimelockHours: number | null
     feeBps: number | null
     minFeeUsdc: Decimal | null
     maxFeeUsdc: Decimal | null
@@ -32883,6 +32884,7 @@ export namespace Prisma {
   export type InstitutionClientSettingsSumAggregateOutputType = {
     autoApproveThreshold: Decimal | null
     manualReviewThreshold: Decimal | null
+    defaultTimelockHours: number | null
     feeBps: number | null
     minFeeUsdc: Decimal | null
     maxFeeUsdc: Decimal | null
@@ -32903,6 +32905,7 @@ export namespace Prisma {
     autoTravelRule: boolean | null
     aiAutoRelease: boolean | null
     riskTolerance: string | null
+    defaultTimelockHours: number | null
     defaultToken: string | null
     emailNotifications: boolean | null
     language: string | null
@@ -32931,6 +32934,7 @@ export namespace Prisma {
     autoTravelRule: boolean | null
     aiAutoRelease: boolean | null
     riskTolerance: string | null
+    defaultTimelockHours: number | null
     defaultToken: string | null
     emailNotifications: boolean | null
     language: string | null
@@ -32960,6 +32964,7 @@ export namespace Prisma {
     activeSanctionsLists: number
     aiAutoRelease: number
     riskTolerance: number
+    defaultTimelockHours: number
     defaultToken: number
     emailNotifications: number
     language: number
@@ -32979,6 +32984,7 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgAggregateInputType = {
     autoApproveThreshold?: true
     manualReviewThreshold?: true
+    defaultTimelockHours?: true
     feeBps?: true
     minFeeUsdc?: true
     maxFeeUsdc?: true
@@ -32987,6 +32993,7 @@ export namespace Prisma {
   export type InstitutionClientSettingsSumAggregateInputType = {
     autoApproveThreshold?: true
     manualReviewThreshold?: true
+    defaultTimelockHours?: true
     feeBps?: true
     minFeeUsdc?: true
     maxFeeUsdc?: true
@@ -33007,6 +33014,7 @@ export namespace Prisma {
     autoTravelRule?: true
     aiAutoRelease?: true
     riskTolerance?: true
+    defaultTimelockHours?: true
     defaultToken?: true
     emailNotifications?: true
     language?: true
@@ -33035,6 +33043,7 @@ export namespace Prisma {
     autoTravelRule?: true
     aiAutoRelease?: true
     riskTolerance?: true
+    defaultTimelockHours?: true
     defaultToken?: true
     emailNotifications?: true
     language?: true
@@ -33064,6 +33073,7 @@ export namespace Prisma {
     activeSanctionsLists?: true
     aiAutoRelease?: true
     riskTolerance?: true
+    defaultTimelockHours?: true
     defaultToken?: true
     emailNotifications?: true
     language?: true
@@ -33181,6 +33191,7 @@ export namespace Prisma {
     activeSanctionsLists: string[]
     aiAutoRelease: boolean
     riskTolerance: string
+    defaultTimelockHours: number | null
     defaultToken: string
     emailNotifications: boolean
     language: string | null
@@ -33230,6 +33241,7 @@ export namespace Prisma {
     activeSanctionsLists?: boolean
     aiAutoRelease?: boolean
     riskTolerance?: boolean
+    defaultTimelockHours?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
     language?: boolean
@@ -33261,6 +33273,7 @@ export namespace Prisma {
     activeSanctionsLists?: boolean
     aiAutoRelease?: boolean
     riskTolerance?: boolean
+    defaultTimelockHours?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
     language?: boolean
@@ -33292,6 +33305,7 @@ export namespace Prisma {
     activeSanctionsLists?: boolean
     aiAutoRelease?: boolean
     riskTolerance?: boolean
+    defaultTimelockHours?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
     language?: boolean
@@ -33323,6 +33337,7 @@ export namespace Prisma {
     activeSanctionsLists?: boolean
     aiAutoRelease?: boolean
     riskTolerance?: boolean
+    defaultTimelockHours?: boolean
     defaultToken?: boolean
     emailNotifications?: boolean
     language?: boolean
@@ -33337,7 +33352,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultToken" | "emailNotifications" | "language" | "theme" | "twoFactorEnabled" | "aiRecommendations" | "feeBps" | "minFeeUsdc" | "maxFeeUsdc" | "notificationPreferences" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
+  export type InstitutionClientSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientId" | "defaultCorridor" | "defaultCurrency" | "notificationEmail" | "webhookUrl" | "webhookSecret" | "settlementAuthorityWallet" | "timezone" | "autoApproveThreshold" | "manualReviewThreshold" | "autoTravelRule" | "activeSanctionsLists" | "aiAutoRelease" | "riskTolerance" | "defaultTimelockHours" | "defaultToken" | "emailNotifications" | "language" | "theme" | "twoFactorEnabled" | "aiRecommendations" | "feeBps" | "minFeeUsdc" | "maxFeeUsdc" | "notificationPreferences" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionClientSettings"]>
   export type InstitutionClientSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }
@@ -33369,6 +33384,7 @@ export namespace Prisma {
       activeSanctionsLists: string[]
       aiAutoRelease: boolean
       riskTolerance: string
+      defaultTimelockHours: number | null
       defaultToken: string
       emailNotifications: boolean
       language: string | null
@@ -33820,6 +33836,7 @@ export namespace Prisma {
     readonly activeSanctionsLists: FieldRef<"InstitutionClientSettings", 'String[]'>
     readonly aiAutoRelease: FieldRef<"InstitutionClientSettings", 'Boolean'>
     readonly riskTolerance: FieldRef<"InstitutionClientSettings", 'String'>
+    readonly defaultTimelockHours: FieldRef<"InstitutionClientSettings", 'Int'>
     readonly defaultToken: FieldRef<"InstitutionClientSettings", 'String'>
     readonly emailNotifications: FieldRef<"InstitutionClientSettings", 'Boolean'>
     readonly language: FieldRef<"InstitutionClientSettings", 'String'>
@@ -35381,12 +35398,14 @@ export namespace Prisma {
     amount: Decimal | null
     platformFee: Decimal | null
     riskScore: number | null
+    timelockHours: number | null
   }
 
   export type InstitutionEscrowSumAggregateOutputType = {
     amount: Decimal | null
     platformFee: Decimal | null
     riskScore: number | null
+    timelockHours: number | null
   }
 
   export type InstitutionEscrowMinAggregateOutputType = {
@@ -35427,6 +35446,8 @@ export namespace Prisma {
     updatedAt: Date | null
     resolvedAt: Date | null
     fundedAt: Date | null
+    unlockAt: Date | null
+    timelockHours: number | null
   }
 
   export type InstitutionEscrowMaxAggregateOutputType = {
@@ -35467,6 +35488,8 @@ export namespace Prisma {
     updatedAt: Date | null
     resolvedAt: Date | null
     fundedAt: Date | null
+    unlockAt: Date | null
+    timelockHours: number | null
   }
 
   export type InstitutionEscrowCountAggregateOutputType = {
@@ -35509,6 +35532,8 @@ export namespace Prisma {
     updatedAt: number
     resolvedAt: number
     fundedAt: number
+    unlockAt: number
+    timelockHours: number
     _all: number
   }
 
@@ -35517,12 +35542,14 @@ export namespace Prisma {
     amount?: true
     platformFee?: true
     riskScore?: true
+    timelockHours?: true
   }
 
   export type InstitutionEscrowSumAggregateInputType = {
     amount?: true
     platformFee?: true
     riskScore?: true
+    timelockHours?: true
   }
 
   export type InstitutionEscrowMinAggregateInputType = {
@@ -35563,6 +35590,8 @@ export namespace Prisma {
     updatedAt?: true
     resolvedAt?: true
     fundedAt?: true
+    unlockAt?: true
+    timelockHours?: true
   }
 
   export type InstitutionEscrowMaxAggregateInputType = {
@@ -35603,6 +35632,8 @@ export namespace Prisma {
     updatedAt?: true
     resolvedAt?: true
     fundedAt?: true
+    unlockAt?: true
+    timelockHours?: true
   }
 
   export type InstitutionEscrowCountAggregateInputType = {
@@ -35645,6 +35676,8 @@ export namespace Prisma {
     updatedAt?: true
     resolvedAt?: true
     fundedAt?: true
+    unlockAt?: true
+    timelockHours?: true
     _all?: true
   }
 
@@ -35774,6 +35807,8 @@ export namespace Prisma {
     updatedAt: Date
     resolvedAt: Date | null
     fundedAt: Date | null
+    unlockAt: Date | null
+    timelockHours: number | null
     _count: InstitutionEscrowCountAggregateOutputType | null
     _avg: InstitutionEscrowAvgAggregateOutputType | null
     _sum: InstitutionEscrowSumAggregateOutputType | null
@@ -35835,6 +35870,8 @@ export namespace Prisma {
     updatedAt?: boolean
     resolvedAt?: boolean
     fundedAt?: boolean
+    unlockAt?: boolean
+    timelockHours?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
     auditLogs?: boolean | InstitutionEscrow$auditLogsArgs<ExtArgs>
@@ -35883,6 +35920,8 @@ export namespace Prisma {
     updatedAt?: boolean
     resolvedAt?: boolean
     fundedAt?: boolean
+    unlockAt?: boolean
+    timelockHours?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionEscrow"]>
 
@@ -35926,6 +35965,8 @@ export namespace Prisma {
     updatedAt?: boolean
     resolvedAt?: boolean
     fundedAt?: boolean
+    unlockAt?: boolean
+    timelockHours?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionEscrow"]>
 
@@ -35969,9 +36010,11 @@ export namespace Prisma {
     updatedAt?: boolean
     resolvedAt?: boolean
     fundedAt?: boolean
+    unlockAt?: boolean
+    timelockHours?: boolean
   }
 
-  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "payerName" | "payerAccountLabel" | "payerBranchName" | "recipientName" | "recipientAccountLabel" | "recipientBranchName" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "settlementMode" | "releaseMode" | "approvalParties" | "releaseConditions" | "approvalInstructions" | "privacyLevel" | "stealthPaymentId" | "escrowPda" | "vaultPda" | "nonceAccount" | "initTxSignature" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt", ExtArgs["result"]["institutionEscrow"]>
+  export type InstitutionEscrowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "escrowId" | "escrowCode" | "clientId" | "payerWallet" | "recipientWallet" | "payerName" | "payerAccountLabel" | "payerBranchName" | "recipientName" | "recipientAccountLabel" | "recipientBranchName" | "usdcMint" | "amount" | "platformFee" | "corridor" | "conditionType" | "status" | "settlementAuthority" | "riskScore" | "settlementMode" | "releaseMode" | "approvalParties" | "releaseConditions" | "approvalInstructions" | "privacyLevel" | "stealthPaymentId" | "escrowPda" | "vaultPda" | "nonceAccount" | "initTxSignature" | "depositTxSignature" | "releaseTxSignature" | "cancelTxSignature" | "expiresAt" | "createdAt" | "updatedAt" | "resolvedAt" | "fundedAt" | "unlockAt" | "timelockHours", ExtArgs["result"]["institutionEscrow"]>
   export type InstitutionEscrowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     deposits?: boolean | InstitutionEscrow$depositsArgs<ExtArgs>
@@ -36036,6 +36079,8 @@ export namespace Prisma {
       updatedAt: Date
       resolvedAt: Date | null
       fundedAt: Date | null
+      unlockAt: Date | null
+      timelockHours: number | null
     }, ExtArgs["result"]["institutionEscrow"]>
     composites: {}
   }
@@ -36503,6 +36548,8 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"InstitutionEscrow", 'DateTime'>
     readonly resolvedAt: FieldRef<"InstitutionEscrow", 'DateTime'>
     readonly fundedAt: FieldRef<"InstitutionEscrow", 'DateTime'>
+    readonly unlockAt: FieldRef<"InstitutionEscrow", 'DateTime'>
+    readonly timelockHours: FieldRef<"InstitutionEscrow", 'Int'>
   }
     
 
@@ -52606,6 +52653,7 @@ export namespace Prisma {
     activeSanctionsLists: 'activeSanctionsLists',
     aiAutoRelease: 'aiAutoRelease',
     riskTolerance: 'riskTolerance',
+    defaultTimelockHours: 'defaultTimelockHours',
     defaultToken: 'defaultToken',
     emailNotifications: 'emailNotifications',
     language: 'language',
@@ -52678,7 +52726,9 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     resolvedAt: 'resolvedAt',
-    fundedAt: 'fundedAt'
+    fundedAt: 'fundedAt',
+    unlockAt: 'unlockAt',
+    timelockHours: 'timelockHours'
   };
 
   export type InstitutionEscrowScalarFieldEnum = (typeof InstitutionEscrowScalarFieldEnum)[keyof typeof InstitutionEscrowScalarFieldEnum]
@@ -56330,6 +56380,7 @@ export namespace Prisma {
     activeSanctionsLists?: StringNullableListFilter<"InstitutionClientSettings">
     aiAutoRelease?: BoolFilter<"InstitutionClientSettings"> | boolean
     riskTolerance?: StringFilter<"InstitutionClientSettings"> | string
+    defaultTimelockHours?: IntNullableFilter<"InstitutionClientSettings"> | number | null
     defaultToken?: StringFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolFilter<"InstitutionClientSettings"> | boolean
     language?: StringNullableFilter<"InstitutionClientSettings"> | string | null
@@ -56361,6 +56412,7 @@ export namespace Prisma {
     activeSanctionsLists?: SortOrder
     aiAutoRelease?: SortOrder
     riskTolerance?: SortOrder
+    defaultTimelockHours?: SortOrderInput | SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
     language?: SortOrderInput | SortOrder
@@ -56395,6 +56447,7 @@ export namespace Prisma {
     activeSanctionsLists?: StringNullableListFilter<"InstitutionClientSettings">
     aiAutoRelease?: BoolFilter<"InstitutionClientSettings"> | boolean
     riskTolerance?: StringFilter<"InstitutionClientSettings"> | string
+    defaultTimelockHours?: IntNullableFilter<"InstitutionClientSettings"> | number | null
     defaultToken?: StringFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolFilter<"InstitutionClientSettings"> | boolean
     language?: StringNullableFilter<"InstitutionClientSettings"> | string | null
@@ -56426,6 +56479,7 @@ export namespace Prisma {
     activeSanctionsLists?: SortOrder
     aiAutoRelease?: SortOrder
     riskTolerance?: SortOrder
+    defaultTimelockHours?: SortOrderInput | SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
     language?: SortOrderInput | SortOrder
@@ -56464,6 +56518,7 @@ export namespace Prisma {
     activeSanctionsLists?: StringNullableListFilter<"InstitutionClientSettings">
     aiAutoRelease?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
     riskTolerance?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
+    defaultTimelockHours?: IntNullableWithAggregatesFilter<"InstitutionClientSettings"> | number | null
     defaultToken?: StringWithAggregatesFilter<"InstitutionClientSettings"> | string
     emailNotifications?: BoolWithAggregatesFilter<"InstitutionClientSettings"> | boolean
     language?: StringNullableWithAggregatesFilter<"InstitutionClientSettings"> | string | null
@@ -56601,6 +56656,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
     fundedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    unlockAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    timelockHours?: IntNullableFilter<"InstitutionEscrow"> | number | null
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
     deposits?: InstitutionDepositListRelationFilter
     auditLogs?: InstitutionAuditLogListRelationFilter
@@ -56648,6 +56705,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     resolvedAt?: SortOrderInput | SortOrder
     fundedAt?: SortOrderInput | SortOrder
+    unlockAt?: SortOrderInput | SortOrder
+    timelockHours?: SortOrderInput | SortOrder
     client?: InstitutionClientOrderByWithRelationInput
     deposits?: InstitutionDepositOrderByRelationAggregateInput
     auditLogs?: InstitutionAuditLogOrderByRelationAggregateInput
@@ -56698,6 +56757,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
     fundedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    unlockAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    timelockHours?: IntNullableFilter<"InstitutionEscrow"> | number | null
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
     deposits?: InstitutionDepositListRelationFilter
     auditLogs?: InstitutionAuditLogListRelationFilter
@@ -56745,6 +56806,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     resolvedAt?: SortOrderInput | SortOrder
     fundedAt?: SortOrderInput | SortOrder
+    unlockAt?: SortOrderInput | SortOrder
+    timelockHours?: SortOrderInput | SortOrder
     _count?: InstitutionEscrowCountOrderByAggregateInput
     _avg?: InstitutionEscrowAvgOrderByAggregateInput
     _max?: InstitutionEscrowMaxOrderByAggregateInput
@@ -56795,6 +56858,8 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionEscrow"> | Date | string
     resolvedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionEscrow"> | Date | string | null
     fundedAt?: DateTimeNullableWithAggregatesFilter<"InstitutionEscrow"> | Date | string | null
+    unlockAt?: DateTimeNullableWithAggregatesFilter<"InstitutionEscrow"> | Date | string | null
+    timelockHours?: IntNullableWithAggregatesFilter<"InstitutionEscrow"> | number | null
   }
 
   export type InstitutionDepositWhereInput = {
@@ -61248,6 +61313,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
     aiAutoRelease?: boolean
     riskTolerance?: string
+    defaultTimelockHours?: number | null
     defaultToken?: string
     emailNotifications?: boolean
     language?: string | null
@@ -61279,6 +61345,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
     aiAutoRelease?: boolean
     riskTolerance?: string
+    defaultTimelockHours?: number | null
     defaultToken?: string
     emailNotifications?: boolean
     language?: string | null
@@ -61308,6 +61375,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
     aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
     riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultTimelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     language?: NullableStringFieldUpdateOperationsInput | string | null
@@ -61339,6 +61407,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
     aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
     riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultTimelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     language?: NullableStringFieldUpdateOperationsInput | string | null
@@ -61369,6 +61438,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
     aiAutoRelease?: boolean
     riskTolerance?: string
+    defaultTimelockHours?: number | null
     defaultToken?: string
     emailNotifications?: boolean
     language?: string | null
@@ -61398,6 +61468,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
     aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
     riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultTimelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     language?: NullableStringFieldUpdateOperationsInput | string | null
@@ -61428,6 +61499,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
     aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
     riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultTimelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     language?: NullableStringFieldUpdateOperationsInput | string | null
@@ -61571,6 +61643,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     client: InstitutionClientCreateNestedOneWithoutEscrowsInput
     deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
@@ -61618,6 +61692,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
@@ -61663,6 +61739,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
     deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
@@ -61710,6 +61788,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
@@ -61756,6 +61836,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
   }
 
   export type InstitutionEscrowUpdateManyMutationInput = {
@@ -61797,6 +61879,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type InstitutionEscrowUncheckedUpdateManyInput = {
@@ -61839,6 +61923,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type InstitutionDepositCreateInput = {
@@ -65824,6 +65910,7 @@ export namespace Prisma {
     activeSanctionsLists?: SortOrder
     aiAutoRelease?: SortOrder
     riskTolerance?: SortOrder
+    defaultTimelockHours?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
     language?: SortOrder
@@ -65841,6 +65928,7 @@ export namespace Prisma {
   export type InstitutionClientSettingsAvgOrderByAggregateInput = {
     autoApproveThreshold?: SortOrder
     manualReviewThreshold?: SortOrder
+    defaultTimelockHours?: SortOrder
     feeBps?: SortOrder
     minFeeUsdc?: SortOrder
     maxFeeUsdc?: SortOrder
@@ -65861,6 +65949,7 @@ export namespace Prisma {
     autoTravelRule?: SortOrder
     aiAutoRelease?: SortOrder
     riskTolerance?: SortOrder
+    defaultTimelockHours?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
     language?: SortOrder
@@ -65889,6 +65978,7 @@ export namespace Prisma {
     autoTravelRule?: SortOrder
     aiAutoRelease?: SortOrder
     riskTolerance?: SortOrder
+    defaultTimelockHours?: SortOrder
     defaultToken?: SortOrder
     emailNotifications?: SortOrder
     language?: SortOrder
@@ -65905,6 +65995,7 @@ export namespace Prisma {
   export type InstitutionClientSettingsSumOrderByAggregateInput = {
     autoApproveThreshold?: SortOrder
     manualReviewThreshold?: SortOrder
+    defaultTimelockHours?: SortOrder
     feeBps?: SortOrder
     minFeeUsdc?: SortOrder
     maxFeeUsdc?: SortOrder
@@ -66018,12 +66109,15 @@ export namespace Prisma {
     updatedAt?: SortOrder
     resolvedAt?: SortOrder
     fundedAt?: SortOrder
+    unlockAt?: SortOrder
+    timelockHours?: SortOrder
   }
 
   export type InstitutionEscrowAvgOrderByAggregateInput = {
     amount?: SortOrder
     platformFee?: SortOrder
     riskScore?: SortOrder
+    timelockHours?: SortOrder
   }
 
   export type InstitutionEscrowMaxOrderByAggregateInput = {
@@ -66064,6 +66158,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     resolvedAt?: SortOrder
     fundedAt?: SortOrder
+    unlockAt?: SortOrder
+    timelockHours?: SortOrder
   }
 
   export type InstitutionEscrowMinOrderByAggregateInput = {
@@ -66104,12 +66200,15 @@ export namespace Prisma {
     updatedAt?: SortOrder
     resolvedAt?: SortOrder
     fundedAt?: SortOrder
+    unlockAt?: SortOrder
+    timelockHours?: SortOrder
   }
 
   export type InstitutionEscrowSumOrderByAggregateInput = {
     amount?: SortOrder
     platformFee?: SortOrder
     riskScore?: SortOrder
+    timelockHours?: SortOrder
   }
 
   export type EnumInstitutionConditionTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -73403,6 +73502,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
     aiAutoRelease?: boolean
     riskTolerance?: string
+    defaultTimelockHours?: number | null
     defaultToken?: string
     emailNotifications?: boolean
     language?: string | null
@@ -73432,6 +73532,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsCreateactiveSanctionsListsInput | string[]
     aiAutoRelease?: boolean
     riskTolerance?: string
+    defaultTimelockHours?: number | null
     defaultToken?: string
     emailNotifications?: boolean
     language?: string | null
@@ -73524,6 +73625,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
@@ -73569,6 +73672,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
@@ -74051,6 +74156,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
     aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
     riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultTimelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     language?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74080,6 +74186,7 @@ export namespace Prisma {
     activeSanctionsLists?: InstitutionClientSettingsUpdateactiveSanctionsListsInput | string[]
     aiAutoRelease?: BoolFieldUpdateOperationsInput | boolean
     riskTolerance?: StringFieldUpdateOperationsInput | string
+    defaultTimelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     defaultToken?: StringFieldUpdateOperationsInput | string
     emailNotifications?: BoolFieldUpdateOperationsInput | boolean
     language?: NullableStringFieldUpdateOperationsInput | string | null
@@ -74185,6 +74292,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"InstitutionEscrow"> | Date | string
     resolvedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
     fundedAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    unlockAt?: DateTimeNullableFilter<"InstitutionEscrow"> | Date | string | null
+    timelockHours?: IntNullableFilter<"InstitutionEscrow"> | number | null
   }
 
   export type InstitutionAuditLogUpsertWithWhereUniqueWithoutClientInput = {
@@ -77644,6 +77753,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     client: InstitutionClientCreateNestedOneWithoutEscrowsInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
@@ -77690,6 +77801,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
@@ -77750,6 +77863,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
@@ -77796,6 +77911,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
@@ -77840,6 +77957,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     client: InstitutionClientCreateNestedOneWithoutEscrowsInput
     deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
@@ -77886,6 +78005,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
@@ -78105,6 +78226,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
     deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
@@ -78151,6 +78274,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
@@ -78360,6 +78485,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     client: InstitutionClientCreateNestedOneWithoutEscrowsInput
     deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
@@ -78406,6 +78533,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
@@ -78625,6 +78754,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
     deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
@@ -78671,6 +78802,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
@@ -79343,6 +79476,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     client: InstitutionClientCreateNestedOneWithoutEscrowsInput
     deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
@@ -79389,6 +79524,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
     deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
@@ -79614,6 +79751,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
     deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
@@ -79660,6 +79799,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
@@ -81772,6 +81913,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     resolvedAt?: Date | string | null
     fundedAt?: Date | string | null
+    unlockAt?: Date | string | null
+    timelockHours?: number | null
   }
 
   export type InstitutionAuditLogCreateManyClientInput = {
@@ -82036,6 +82179,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
@@ -82081,6 +82226,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
     deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
@@ -82126,6 +82273,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type InstitutionAuditLogUpdateWithoutClientInput = {

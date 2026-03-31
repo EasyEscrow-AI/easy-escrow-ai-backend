@@ -16,7 +16,7 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionClientSettingsService } from '../services/institution-client-settings.service';
@@ -35,7 +35,7 @@ const standardRateLimiter = rateLimit({
 router.get(
   '/api/v1/institution/settings',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -89,7 +89,7 @@ async function handleUpdateSettings(req: InstitutionAuthenticatedRequest, res: R
 router.put(
   '/api/v1/institution/settings',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   handleUpdateSettings,
 );
 
@@ -97,7 +97,7 @@ router.put(
 router.patch(
   '/api/v1/institution/settings',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   handleUpdateSettings,
 );
 
@@ -105,7 +105,7 @@ router.patch(
 router.put(
   '/api/v1/institution/settings/wallets',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -133,7 +133,7 @@ router.put(
 router.put(
   '/api/v1/institution/settings/wallets/manage',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -161,7 +161,7 @@ router.put(
 router.get(
   '/api/v1/institution/settings/wallets/list',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -186,7 +186,7 @@ router.get(
 router.delete(
   '/api/v1/institution/settings/wallets/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -214,7 +214,7 @@ router.delete(
 router.post(
   '/api/v1/institution/api-keys',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { name, permissions } = req.body;
@@ -255,7 +255,7 @@ router.post(
 router.delete(
   '/api/v1/institution/api-keys/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();
@@ -283,7 +283,7 @@ router.delete(
 router.get(
   '/api/v1/institution/api-keys',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionClientSettingsService();

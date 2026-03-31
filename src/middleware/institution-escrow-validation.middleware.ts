@@ -58,6 +58,7 @@ const VALID_RELEASE_CONDITIONS = [
   'invoice_amount_match',
   'client_info_match',
   'document_signature_verified',
+  'cdp_policy_approval',
 ];
 
 /**
@@ -104,10 +105,12 @@ export const validateCreateInstitutionEscrow = [
     .matches(SOLANA_ADDRESS_REGEX)
     .withMessage('tokenMint must be a valid Solana address (base58, 32-44 chars)'),
   body('settlementMode')
+    .optional()
     .isString()
     .isIn(SETTLEMENT_MODES)
     .withMessage(`settlementMode must be one of: ${SETTLEMENT_MODES.join(', ')}`),
   body('releaseMode')
+    .optional()
     .isString()
     .isIn(RELEASE_MODES)
     .withMessage(`releaseMode must be one of: ${RELEASE_MODES.join(', ')}`),
@@ -131,11 +134,26 @@ export const validateCreateInstitutionEscrow = [
     .withMessage(
       `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
     ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
   body('approvalInstructions')
     .optional()
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
   ...partyDisplayNameValidators,
 ];
 
@@ -212,11 +230,26 @@ export const validateSaveDraft = [
     .withMessage(
       `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
     ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
   body('approvalInstructions')
     .optional()
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
   ...partyDisplayNameValidators,
 ];
 
@@ -295,11 +328,26 @@ export const validateUpdateDraft = [
     .withMessage(
       `Each releaseConditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
     ),
+  body('conditions')
+    .optional()
+    .isArray()
+    .withMessage('conditions must be an array of strings'),
+  body('conditions.*')
+    .optional()
+    .isString()
+    .isIn(VALID_RELEASE_CONDITIONS)
+    .withMessage(
+      `Each conditions entry must be one of: ${VALID_RELEASE_CONDITIONS.join(', ')}`
+    ),
   body('approvalInstructions')
     .optional()
     .isString()
     .isLength({ max: 2000 })
     .withMessage('approvalInstructions must be 2000 characters or less'),
+  body('timelockHours')
+    .optional()
+    .isInt({ min: 0, max: 72 })
+    .withMessage('timelockHours must be between 0 and 72 hours'),
   ...partyDisplayNameValidators,
 ];
 
@@ -335,6 +383,10 @@ export const validateReleaseFunds = [
     .isString()
     .isLength({ max: 500 })
     .withMessage('notes must be 500 characters or less'),
+  body('forceRelease')
+    .optional()
+    .isBoolean()
+    .withMessage('forceRelease must be a boolean'),
 ];
 
 /**
@@ -399,6 +451,11 @@ export const validateListEscrows = [
     .isInt({ min: 1, max: 100 })
     .withMessage('limit must be between 1 and 100'),
   query('offset').optional().isInt({ min: 0 }).withMessage('offset must be non-negative'),
+  query('role')
+    .optional()
+    .isString()
+    .isIn(['payer', 'recipient', 'all'])
+    .withMessage('role must be one of: payer, recipient, all'),
 ];
 
 /**

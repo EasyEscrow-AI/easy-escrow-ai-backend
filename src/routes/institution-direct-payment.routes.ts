@@ -1,12 +1,12 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { requireInstitutionAuth, InstitutionAuthenticatedRequest } from '../middleware/institution-jwt.middleware';
+import { requireInstitutionOrAdminAuth, InstitutionAuthenticatedRequest } from '../middleware/institution-jwt.middleware';
 import { getInstitutionDirectPaymentService } from '../services/institution-direct-payment.service';
 
 const router = Router();
 const standardRateLimiter = rateLimit({ windowMs: 60 * 1000, max: 30, message: { error: 'Rate limit exceeded', message: 'Too many requests' }, standardHeaders: true, legacyHeaders: false });
 
-router.get('/api/v1/institution/direct-payments', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/direct-payments', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDirectPaymentService();
@@ -21,7 +21,7 @@ router.get('/api/v1/institution/direct-payments', standardRateLimiter, requireIn
     }
   });
 
-router.get('/api/v1/institution/direct-payments/:id', standardRateLimiter, requireInstitutionAuth,
+router.get('/api/v1/institution/direct-payments/:id', standardRateLimiter, requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionDirectPaymentService();

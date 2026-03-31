@@ -677,4 +677,62 @@ describe('Institution Escrow Validation Middleware', () => {
       expect(getErrorFields(result)).to.include('expiryHours');
     });
   });
+
+  // ─── CDP release condition ──────────────────────────────────
+
+  describe('validateCreateInstitutionEscrow - CDP condition', () => {
+    const validBody = {
+      payerWallet: VALID_WALLET,
+      recipientWallet: VALID_WALLET_2,
+      amount: 5000,
+      corridor: 'US-MX',
+      conditionType: 'ADMIN_RELEASE',
+      settlementMode: 'escrow',
+      releaseMode: 'ai',
+    };
+
+    it('should accept cdp_policy_approval in releaseConditions', async () => {
+      const result = await runValidation(validateCreateInstitutionEscrow, {
+        body: {
+          ...validBody,
+          releaseConditions: ['legal_compliance', 'cdp_policy_approval'],
+        },
+      });
+      expect(result.isEmpty()).to.be.true;
+    });
+
+    it('should reject invalid condition names', async () => {
+      const result = await runValidation(validateCreateInstitutionEscrow, {
+        body: {
+          ...validBody,
+          releaseConditions: ['not_a_real_condition'],
+        },
+      });
+      expect(result.isEmpty()).to.be.false;
+    });
+  });
+
+  describe('validateSaveDraft - CDP condition', () => {
+    it('should accept cdp_policy_approval in draft releaseConditions', async () => {
+      const result = await runValidation(validateSaveDraft, {
+        body: {
+          payerWallet: VALID_WALLET,
+          releaseConditions: ['cdp_policy_approval'],
+        },
+      });
+      expect(result.isEmpty()).to.be.true;
+    });
+  });
+
+  describe('validateUpdateDraft - CDP condition', () => {
+    it('should accept cdp_policy_approval in draft update', async () => {
+      const result = await runValidation(validateUpdateDraft, {
+        params: { id: VALID_UUID },
+        body: {
+          releaseConditions: ['legal_compliance', 'cdp_policy_approval'],
+        },
+      });
+      expect(result.isEmpty()).to.be.true;
+    });
+  });
 });

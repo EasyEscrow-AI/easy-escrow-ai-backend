@@ -18,6 +18,7 @@ import {
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
+  createTransferInstruction,
 } from '@solana/spl-token';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import { BN } from 'bn.js';
@@ -25,6 +26,7 @@ import { createHash } from 'crypto';
 import { config } from '../config';
 import { getEscrowIdl } from '../utils/idl-loader';
 import { loadAdminKeypair } from '../utils/loadAdminKeypair';
+import { getCdpSettlementService } from './cdp-settlement.service';
 
 // PDA seeds matching the Rust program
 const INST_ESCROW_SEED = Buffer.from('inst_escrow');
@@ -315,6 +317,7 @@ export class InstitutionEscrowProgramService {
     feeCollector: PublicKey;
     usdcMint: PublicKey;
     memo?: string;
+    rentPayer?: PublicKey;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -323,11 +326,15 @@ export class InstitutionEscrowProgramService {
 
     const transaction = new Transaction();
 
+    // Use rentPayer for ATA creation (defaults to authority for backward compat).
+    // For CDP multi-sign, rentPayer is the admin so the CDP wallet doesn't pay rent.
+    const ataPayer = params.rentPayer ?? params.authority;
+
     // Ensure recipient ATA exists
     const recipientAta = await this.getOrCreateAta(
       params.usdcMint,
       params.recipientWallet,
-      params.authority
+      ataPayer
     );
     if (recipientAta.instruction) {
       transaction.add(recipientAta.instruction);
@@ -337,7 +344,7 @@ export class InstitutionEscrowProgramService {
     const feeCollectorAta = await this.getOrCreateAta(
       params.usdcMint,
       params.feeCollector,
-      params.authority
+      ataPayer
     );
     if (feeCollectorAta.instruction) {
       transaction.add(feeCollectorAta.instruction);
@@ -422,6 +429,17 @@ export class InstitutionEscrowProgramService {
       { signature: txSignature, blockhash, lastValidBlockHeight },
       'confirmed'
     );
+
+    // Verify the transaction actually succeeded (confirmTransaction only checks inclusion, not success)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `Transaction ${txSignature} confirmed but failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
 
     return txSignature;
   }
@@ -566,6 +584,302 @@ export class InstitutionEscrowProgramService {
       `[InstitutionEscrowProgramService] Cancel escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
     );
 
+    return txSignature;
+  }
+
+  /**
+   * Release escrow with CDP as the settlement authority (multi-sign pattern).
+   * 1. Build release tx with CDP pubkey as authority
+   * 2. Admin partially signs as fee payer
+   * 3. CDP signs as settlement authority (after policy check)
+   * 4. Submit fully-signed tx to Solana RPC
+   */
+  async releaseEscrowWithCdp(params: {
+    escrowId: string;
+    cdpAuthorityPubkey: PublicKey;
+    recipientWallet: PublicKey;
+    feeCollector: PublicKey;
+    usdcMint: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:release:${params.escrowCode}`;
+      if (params.aiDigest) {
+        memo += `:${params.aiDigest}`;
+      }
+    }
+
+    const transaction = await this.buildReleaseTransaction({
+      ...params,
+      authority: params.cdpAuthorityPubkey,
+      rentPayer: this.adminKeypair.publicKey,
+      memo,
+    });
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash(
+      'confirmed'
+    );
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // Serialize with requireAllSignatures: false (CDP hasn't signed yet)
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+
+    // Send to CDP for authority signature
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit fully-signed transaction
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    // Verify on-chain execution succeeded (confirmTransaction only waits for inclusion)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `CDP release transaction failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
+
+    console.log(
+      `[InstitutionEscrowProgramService] CDP release escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
+    );
+
+    return txSignature;
+  }
+
+  /**
+   * Cancel escrow with CDP as the settlement authority (multi-sign pattern).
+   * Same pattern as releaseEscrowWithCdp: admin pays fees, CDP signs as caller (authority).
+   */
+  async cancelEscrowWithCdp(params: {
+    escrowId: string;
+    cdpCallerPubkey: PublicKey;
+    payerWallet: PublicKey;
+    usdcMint: PublicKey;
+    escrowCode?: string;
+    cancelReason?: string;
+  }): Promise<string> {
+    const REASON_CODES: Record<string, string> = {
+      expired: 'expired', dispute: 'dispute', compliance: 'compliance',
+      'client-request': 'client-request', fraud: 'fraud',
+    };
+    const reasonCode = params.cancelReason
+      ? REASON_CODES[params.cancelReason.toLowerCase()] || 'other'
+      : undefined;
+
+    let memo: string | undefined;
+    if (params.escrowCode) {
+      memo = `EasyEscrow:cancel:${params.escrowCode}`;
+      if (reasonCode) {
+        memo += `:reason=${reasonCode}`;
+      }
+    }
+
+    const transaction = await this.buildCancelTransaction({
+      ...params,
+      caller: params.cdpCallerPubkey,
+      memo,
+    });
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash(
+      'confirmed'
+    );
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // Serialize with requireAllSignatures: false
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+
+    // Send to CDP for authority signature
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit fully-signed transaction
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    // Verify on-chain execution succeeded (confirmTransaction only waits for inclusion)
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(
+        `CDP cancel transaction failed on-chain: ${JSON.stringify(txResult.meta.err)}`
+      );
+    }
+
+    console.log(
+      `[InstitutionEscrowProgramService] CDP cancel escrow on-chain: ${params.escrowId}, tx: ${txSignature}`
+    );
+
+    return txSignature;
+  }
+
+  /**
+   * Direct USDC transfer (no escrow PDA) — admin signs as authority and fee payer.
+   * Used for direct settlement mode escrows where funds are transferred without a vault.
+   */
+  async transferUsdcDirect(params: {
+    recipientWallet: PublicKey;
+    usdcMint: PublicKey;
+    amount: number;
+    platformFee: number;
+    feeCollector: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    const { recipientWallet, usdcMint, amount, platformFee, feeCollector, escrowCode, aiDigest } = params;
+    const transaction = new Transaction();
+
+    // Admin ATA (source of funds)
+    const adminAta = await getAssociatedTokenAddress(usdcMint, this.adminKeypair.publicKey);
+
+    // Recipient ATA (create if needed)
+    const recipientAtaResult = await this.getOrCreateAta(usdcMint, recipientWallet, this.adminKeypair.publicKey);
+    if (recipientAtaResult.instruction) {
+      transaction.add(recipientAtaResult.instruction);
+    }
+
+    // Transfer net amount (amount - fee) to recipient
+    const netAmountMicro = BigInt(decimalToMicroUsdc(amount)) - BigInt(decimalToMicroUsdc(platformFee));
+    transaction.add(
+      createTransferInstruction(adminAta, recipientAtaResult.address, this.adminKeypair.publicKey, netAmountMicro)
+    );
+
+    // Transfer fee to fee collector (if fee > 0)
+    if (platformFee > 0) {
+      const feeCollectorAtaResult = await this.getOrCreateAta(usdcMint, feeCollector, this.adminKeypair.publicKey);
+      if (feeCollectorAtaResult.instruction) {
+        transaction.add(feeCollectorAtaResult.instruction);
+      }
+      const feeMicro = BigInt(decimalToMicroUsdc(platformFee));
+      transaction.add(
+        createTransferInstruction(adminAta, feeCollectorAtaResult.address, this.adminKeypair.publicKey, feeMicro)
+      );
+    }
+
+    // Add memo
+    if (escrowCode) {
+      let memo = `EasyEscrow:direct:${escrowCode}`;
+      if (aiDigest) memo += `:${aiDigest}`;
+      transaction.add(createMemoInstruction(memo, this.adminKeypair.publicKey));
+    }
+
+    const txSignature = await this.signAndSubmit(transaction);
+    console.log(`[InstitutionEscrowProgramService] Direct USDC transfer: ${txSignature}`);
+    return txSignature;
+  }
+
+  /**
+   * Direct USDC transfer with CDP as the authority (multi-sign pattern).
+   * CDP wallet holds the USDC and signs the transfer; admin pays fees.
+   */
+  async transferUsdcDirectWithCdp(params: {
+    cdpAuthorityPubkey: PublicKey;
+    recipientWallet: PublicKey;
+    usdcMint: PublicKey;
+    amount: number;
+    platformFee: number;
+    feeCollector: PublicKey;
+    escrowCode?: string;
+    aiDigest?: string;
+  }): Promise<string> {
+    const { cdpAuthorityPubkey, recipientWallet, usdcMint, amount, platformFee, feeCollector, escrowCode, aiDigest } = params;
+    const transaction = new Transaction();
+
+    // CDP ATA (source of funds — CDP wallet holds the USDC)
+    const cdpAta = await getAssociatedTokenAddress(usdcMint, cdpAuthorityPubkey);
+
+    // Recipient ATA (create if needed, admin pays rent)
+    const recipientAtaResult = await this.getOrCreateAta(usdcMint, recipientWallet, this.adminKeypair.publicKey);
+    if (recipientAtaResult.instruction) {
+      transaction.add(recipientAtaResult.instruction);
+    }
+
+    // Transfer net amount from CDP ATA to recipient (CDP is the signer/authority)
+    const netAmountMicro = BigInt(decimalToMicroUsdc(amount)) - BigInt(decimalToMicroUsdc(platformFee));
+    transaction.add(
+      createTransferInstruction(cdpAta, recipientAtaResult.address, cdpAuthorityPubkey, netAmountMicro)
+    );
+
+    // Transfer fee from CDP ATA to fee collector
+    if (platformFee > 0) {
+      const feeCollectorAtaResult = await this.getOrCreateAta(usdcMint, feeCollector, this.adminKeypair.publicKey);
+      if (feeCollectorAtaResult.instruction) {
+        transaction.add(feeCollectorAtaResult.instruction);
+      }
+      const feeMicro = BigInt(decimalToMicroUsdc(platformFee));
+      transaction.add(
+        createTransferInstruction(cdpAta, feeCollectorAtaResult.address, cdpAuthorityPubkey, feeMicro)
+      );
+    }
+
+    // Add memo
+    if (escrowCode) {
+      let memo = `EasyEscrow:direct:${escrowCode}`;
+      if (aiDigest) memo += `:${aiDigest}`;
+      transaction.add(createMemoInstruction(memo, this.adminKeypair.publicKey));
+    }
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // CDP signs the transfer authority
+    const serialized = transaction.serialize({ requireAllSignatures: false });
+    const cdpService = getCdpSettlementService();
+    const signedBuffer = await cdpService.signTransaction(serialized);
+
+    // Submit
+    const isDevnet = process.env.NODE_ENV !== 'production';
+    const txSignature = await this.connection.sendRawTransaction(signedBuffer, {
+      skipPreflight: isDevnet,
+      maxRetries: 3,
+    });
+
+    await this.connection.confirmTransaction(
+      { signature: txSignature, blockhash, lastValidBlockHeight },
+      'confirmed'
+    );
+
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+    if (txResult?.meta?.err) {
+      throw new Error(`CDP direct transfer failed on-chain: ${JSON.stringify(txResult.meta.err)}`);
+    }
+
+    console.log(`[InstitutionEscrowProgramService] CDP direct USDC transfer: ${txSignature}`);
     return txSignature;
   }
 

@@ -5,8 +5,15 @@
  */
 
 import { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { getOrCreateAssociatedTokenAccount, getAccount, createMint, mintTo } from '@solana/spl-token';
+import {
+  getOrCreateAssociatedTokenAccount,
+  getAccount,
+  createMint,
+  mintTo,
+} from '@solana/spl-token';
+import { PrismaClient } from '../../../src/generated/prisma';
 import axios from 'axios';
+import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 
@@ -126,6 +133,61 @@ export async function getTokenBalance(
     return Number(accountInfo.amount) / Math.pow(10, decimals);
   } catch (error) {
     return 0;
+  }
+}
+
+// ============================================================================
+// E2E TEST CLEANUP
+// ============================================================================
+
+/**
+ * Delete E2E test clients from the staging database.
+ * Uses Prisma with the staging DATABASE_URL (loaded from .env.staging if needed).
+ * Cascade deletes handle related records (refresh tokens, settings, accounts, etc.).
+ */
+export async function cleanupE2ETestClients(
+  clientIds: string[],
+): Promise<void> {
+  if (!clientIds.length) return;
+
+  // Load DATABASE_URL from .env.staging if not already set
+  if (!process.env.DATABASE_URL) {
+    const envPath = path.resolve(process.cwd(), '.env.staging');
+    if (fs.existsSync(envPath)) {
+      dotenv.config({ path: envPath });
+    }
+  }
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.log('  [Cleanup] DATABASE_URL not available — skipping DB cleanup');
+    return;
+  }
+
+  const prisma = new PrismaClient({
+    datasources: { db: { url: databaseUrl } },
+  });
+
+  try {
+    await prisma.$connect();
+
+    // Nullify audit log references (onDelete: SetNull, won't cascade)
+    await prisma.institutionAuditLog.updateMany({
+      where: { clientId: { in: clientIds } },
+      data: { clientId: null },
+    });
+
+    const deleted = await prisma.institutionClient.deleteMany({
+      where: { id: { in: clientIds } },
+    });
+
+    if (deleted.count > 0) {
+      console.log(`  [Cleanup] Deleted ${deleted.count} E2E test client(s)`);
+    }
+  } catch (err: any) {
+    console.log(`  [Cleanup] Best-effort cleanup failed: ${err.message}`);
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

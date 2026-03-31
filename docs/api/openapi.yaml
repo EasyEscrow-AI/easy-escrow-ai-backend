@@ -2099,10 +2099,21 @@ paths:
       tags:
         - Institution Escrow
       summary: List escrows
-      description: List escrows for the authenticated client with optional filters and pagination.
+      description: |
+        List escrows for the authenticated institution with optional filters and pagination.
+
+        By default returns escrows where the institution is the **payer** or the **recipient**.
+        Use the `role` query param to filter by relationship.
       security:
         - BearerAuth: []
       parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [payer, recipient, all]
+            default: all
+          description: Filter by institution's role — payer (created by), recipient (received), or all (both)
         - in: query
           name: status
           schema:
@@ -2503,7 +2514,7 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    $ref: '#/components/schemas/InstitutionEscrow'
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
                   timestamp:
                     type: string
                     format: date-time
@@ -2601,10 +2612,16 @@ paths:
         Release escrowed USDC to the recipient wallet. This endpoint requires **both**
         a valid JWT token and a settlement authority API key (`X-Settlement-Authority-Key` header).
 
+        When `cdp_policy_approval` is included in the escrow's release conditions, the release
+        transaction is routed through the CDP (Coinbase Developer Platform) wallet and must pass
+        the configured CDP policy validation before funds are transferred. This requires the
+        `CDP_ENABLED=true` environment flag; if `cdp_policy_approval` is present on an escrow
+        but CDP is disabled, the release request is rejected (there is no fallback to admin signing).
+
         **Rate Limited**: 10 requests per minute.
       security:
         - BearerAuth: []
-        - SettlementAuthority: []
+          SettlementAuthority: []
       parameters:
         - in: path
           name: id
@@ -2624,6 +2641,10 @@ paths:
                   type: string
                   maxLength: 500
                   description: Optional release notes
+                forceRelease:
+                  type: boolean
+                  description: Override active payment timelock (logged in audit trail)
+                  default: false
             example:
               notes: "Invoice verified, releasing payment"
       responses:
@@ -4203,6 +4224,10 @@ paths:
         Send a message to the EasyEscrow AI assistant. Supports multi-turn conversations
         via the `history` parameter.
 
+        Optionally pass `escrowId` to pre-load escrow context into the conversation,
+        enabling faster and more specific answers about a particular escrow without
+        requiring tool call round-trips.
+
         All messages are processed through a PII anonymization pipeline before reaching
         the AI model. Responses are de-anonymized before returning.
 
@@ -4224,6 +4249,18 @@ paths:
                   maxLength: 4000
                   description: The message to send to the AI assistant
                   example: "What are the compliance requirements for a cross-border escrow between Singapore and the EU?"
+                escrowId:
+                  type: string
+                  description: |
+                    Optional escrow code (EE-XXX-XXX) or UUID. When provided, the backend
+                    pre-fetches escrow details and injects them as context, enabling faster
+                    and more specific answers about that escrow.
+                  oneOf:
+                    - pattern: '^EE-[A-Z0-9]{3,4}-[A-Z0-9]{3,4}$'
+                      description: Escrow code format
+                    - format: uuid
+                      description: Escrow UUID
+                  example: "EE-A1B-C2D"
                 history:
                   type: array
                   maxItems: 50
@@ -4261,15 +4298,33 @@ paths:
                     example: true
                   data:
                     type: object
+                    required:
+                      - reply
                     properties:
-                      response:
+                      reply:
                         type: string
-                        description: AI assistant's response
+                        description: AI assistant's response text
                         example: "For cross-border escrow between Singapore and the EU, the key compliance requirements include..."
-                      anonymized:
-                        type: boolean
-                        description: Whether PII anonymization was applied
-                        example: true
+                      toolsUsed:
+                        type: array
+                        items:
+                          type: string
+                        description: Database tools invoked to answer the question (e.g. search_escrows, get_escrow_details)
+                        example: ["get_escrow_details"]
+                      faqId:
+                        type: string
+                        description: FAQ entry ID if the response was served from the FAQ fast-path
+                        example: "platform-fees"
+                      usage:
+                        type: object
+                        description: Token usage for the AI API call (0/0 for FAQ fast-path responses)
+                        properties:
+                          inputTokens:
+                            type: integer
+                            example: 1250
+                          outputTokens:
+                            type: integer
+                            example: 180
                   timestamp:
                     type: string
                     format: date-time
@@ -7210,6 +7265,14 @@ components:
             recipientWallet:
               type: string
               nullable: true
+        defaultTimelockHours:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 2160
+          description: |
+            Default payment timelock in hours for new escrows created by this client.
+            0 or null = disabled (falls back to global config). Values are in hours.
         createdAt:
           type: string
           format: date-time
@@ -7226,6 +7289,13 @@ components:
         webhookUrl:
           type: string
           description: Webhook URL for escrow status notifications
+        defaultTimelockHours:
+          type: integer
+          minimum: 0
+          maximum: 2160
+          description: |
+            Default payment timelock in hours for new escrows. 0 = disabled (falls back to global config).
+            Per-escrow `timelockHours` takes precedence over this client-level default.
 
     InstitutionWalletsUpdate:
       type: object
@@ -7402,6 +7472,15 @@ components:
             Optional SPL token mint address. Must be on the AMINA-approved whitelist.
             Defaults to USDC if omitted. Use `GET /api/v1/institution/tokens` to list available tokens.
           example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        timelockHours:
+          type: integer
+          minimum: 0
+          maximum: 2160
+          description: |
+            Payment timelock in hours (cooling-off period between funding and release).
+            0 = disabled. Falls back to client `defaultTimelockHours` setting, then global config (default 24h).
+            Must be less than `expiryHours` to prevent un-releasable escrows.
+          example: 24
         settlementMode:
           type: string
           enum: [escrow, direct]
@@ -7416,14 +7495,22 @@ components:
           type: array
           items:
             type: string
-            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified, cdp_policy_approval]
           description: |
             AI release conditions to evaluate when releaseMode is 'ai'.
+            `legal_compliance` is always auto-included for AI mode.
             - **legal_compliance**: All legal compliance checks pass (always required for AI mode)
             - **invoice_amount_match**: Invoice amount matches escrow amount exactly
             - **client_info_match**: Client information matches exactly
             - **document_signature_verified**: Document signature is verified (via DocuSign)
+            - **cdp_policy_approval**: Release requires CDP (Coinbase Developer Platform) wallet policy approval
           example: ["legal_compliance", "invoice_amount_match"]
+        conditions:
+          type: array
+          items:
+            type: string
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified, cdp_policy_approval]
+          description: Alias for `releaseConditions` — either field is accepted.
         approvalParties:
           type: array
           items:
@@ -7529,9 +7616,45 @@ components:
           type: string
           nullable: true
           description: Release transaction signature
-        settlementAuthority:
-          type: string
+        settlement:
+          type: object
+          description: Settlement infrastructure details (on-chain accounts and authority)
+          properties:
+            mode:
+              type: string
+              enum: [escrow, direct]
+              description: "Settlement mode: 'escrow' for PDA vault, 'direct' for direct transfer"
+            tokenMint:
+              type: string
+              description: USDC token mint address used for this escrow
+            escrowPda:
+              type: string
+              nullable: true
+              description: On-chain escrow PDA address
+            vaultPda:
+              type: string
+              nullable: true
+              description: On-chain token vault PDA address
+            nonceAccount:
+              type: string
+              nullable: true
+              description: Durable nonce account for atomic settlement
+            authority:
+              type: string
+              nullable: true
+              description: Settlement authority wallet address (admin or CDP wallet)
+            isCdpAuthority:
+              type: boolean
+              description: Whether the settlement authority is a CDP (Coinbase Developer Platform) wallet
+        timelockHours:
+          type: integer
           nullable: true
+          description: Payment timelock in hours (null if not configured)
+        unlockAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the payment timelock expires (null if no timelock or not yet funded)
         releaseMode:
           type: string
           enum: [manual, ai]
@@ -7540,7 +7663,7 @@ components:
           type: array
           items:
             type: string
-            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified]
+            enum: [legal_compliance, invoice_amount_match, client_info_match, document_signature_verified, cdp_policy_approval]
           description: AI release conditions to evaluate (only used when releaseMode is 'ai')
         releaseConditionLabels:
           type: array
@@ -7733,6 +7856,15 @@ components:
         tokenMint:
           type: string
           description: Optional SPL token mint address (defaults to USDC)
+        timelockHours:
+          type: integer
+          minimum: 0
+          maximum: 2160
+          description: |
+            Payment timelock in hours. 0 = disabled.
+            Falls back to client `defaultTimelockHours` setting, then global config (default 24h).
+            Must be less than `expiryHours` to prevent un-releasable escrows.
+          example: 24
         payerName:
           type: string
           maxLength: 200
@@ -7786,6 +7918,13 @@ components:
         tokenMint:
           type: string
           description: SPL token mint address
+        timelockHours:
+          type: integer
+          minimum: 0
+          maximum: 2160
+          description: |
+            Payment timelock in hours. 0 = disabled.
+            Must be less than `expiryHours` to prevent un-releasable escrows.
         payerName:
           type: string
           maxLength: 200

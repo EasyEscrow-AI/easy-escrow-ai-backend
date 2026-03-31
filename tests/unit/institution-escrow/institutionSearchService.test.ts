@@ -82,6 +82,9 @@ describe('InstitutionSearchService', () => {
       institutionNotification: {
         findMany: sandbox.stub().resolves([makeNotification()]),
       },
+      directPayment: {
+        findMany: sandbox.stub().resolves([]),
+      },
     };
 
     setMockPrismaClient(prismaStub as any);

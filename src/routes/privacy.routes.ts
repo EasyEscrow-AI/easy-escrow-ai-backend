@@ -7,7 +7,7 @@
 
 import { Router, Response, NextFunction } from 'express';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getStealthAddressService } from '../services/privacy/stealth-address.service';
@@ -51,7 +51,7 @@ function requirePrivacyEnabled(
 router.post(
   '/api/v1/privacy/meta-address',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requirePrivacyEnabled,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
@@ -100,7 +100,7 @@ router.post(
 router.get(
   '/api/v1/privacy/meta-address/:clientId',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requirePrivacyEnabled,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
@@ -136,7 +136,7 @@ router.get(
 router.delete(
   '/api/v1/privacy/meta-address/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requirePrivacyEnabled,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
@@ -163,7 +163,7 @@ router.delete(
 router.post(
   '/api/v1/privacy/scan',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requirePrivacyEnabled,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
@@ -189,7 +189,7 @@ router.post(
 router.post(
   '/api/v1/privacy/sweep/:paymentId',
   strictRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requirePrivacyEnabled,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
@@ -228,7 +228,7 @@ router.post(
 router.get(
   '/api/v1/privacy/payments',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requirePrivacyEnabled,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
@@ -260,7 +260,7 @@ router.get(
 router.get(
   '/api/v1/privacy/payments/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requirePrivacyEnabled,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {

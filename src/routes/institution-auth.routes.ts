@@ -14,16 +14,17 @@ import rateLimit from 'express-rate-limit';
 import { validationResult } from 'express-validator';
 import { getInstitutionAuthService } from '../services/institution-auth.service';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 
 const router = Router();
 
-// Rate limiter for auth endpoints: 15 requests per 15 minutes
+// Rate limiter for auth endpoints: 15 requests per 15 minutes (production), 100 in staging/dev
+const isProduction = process.env.NODE_ENV === 'production';
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: isProduction ? 15 : 100,
   message: { error: 'Too many attempts', message: 'Please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -156,7 +157,7 @@ router.post(
       res.status(401).json({
         error: 'Token Refresh Failed',
         message: error.message,
-        code: 'REFRESH_FAILED',
+        code: error.code || 'REFRESH_FAILED',
         timestamp: new Date().toISOString(),
       });
     }
@@ -167,7 +168,7 @@ router.post(
 router.post(
   '/api/v1/institution/auth/logout',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: Request, res: Response) => {
     try {
       const { refreshToken } = req.body;
@@ -203,7 +204,7 @@ router.post(
 router.get(
   '/api/v1/institution/auth/me',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const authService = getInstitutionAuthService();
@@ -230,7 +231,7 @@ router.get(
 router.put(
   '/api/v1/institution/auth/password',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { oldPassword, newPassword } = req.body;

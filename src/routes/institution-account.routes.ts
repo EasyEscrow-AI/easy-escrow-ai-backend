@@ -18,7 +18,8 @@
 import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
+  getEffectiveClientId,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { getInstitutionAccountService } from '../services/institution-account.service';
@@ -41,7 +42,7 @@ const standardRateLimiter = rateLimit({
 router.get(
   '/api/v1/institution/account/profile',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -68,7 +69,7 @@ router.get(
 router.post(
   '/api/v1/institution/accounts',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -94,7 +95,7 @@ router.post(
 router.get(
   '/api/v1/institution/accounts',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -137,7 +138,8 @@ router.get(
         filters.includeBalances = val === 'true';
       }
 
-      const accounts = await service.listAccounts(req.institutionClient!.clientId, filters);
+      const clientId = getEffectiveClientId(req);
+      const accounts = await service.listAccounts(clientId, filters);
 
       res.status(200).json({
         success: true,
@@ -160,7 +162,7 @@ router.get(
 router.get(
   '/api/v1/institution/accounts/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -187,7 +189,7 @@ router.get(
 router.put(
   '/api/v1/institution/accounts/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -218,7 +220,7 @@ router.put(
 router.delete(
   '/api/v1/institution/accounts/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -245,7 +247,7 @@ router.delete(
 router.put(
   '/api/v1/institution/accounts/:id/default',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -276,7 +278,7 @@ router.put(
 router.get(
   '/api/v1/institution/accounts/:id/transactions',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -313,7 +315,7 @@ router.get(
 router.get(
   '/api/v1/institution/accounts/:id/balance',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -342,7 +344,7 @@ router.get(
 router.post(
   '/api/v1/institution/accounts/:id/refresh-balance',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -372,7 +374,7 @@ router.post(
 router.get(
   '/api/v1/institution/accounts/:id/settings',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();
@@ -402,7 +404,7 @@ router.get(
 router.patch(
   '/api/v1/institution/accounts/:id/settings',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionAccountService();

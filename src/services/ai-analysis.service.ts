@@ -497,6 +497,8 @@ export class AiAnalysisService {
 
 IMPORTANT: This escrow may not be created yet — it could be a DRAFT or pre-submission review. Analyze the data AS-IS without assuming on-chain state exists. Focus on whether the escrow SHOULD proceed.
 
+CRITICAL: You MUST base your analysis ONLY on the data provided. Do NOT invent, assume, or hallucinate any values. If a field is missing, say "not provided" — never guess. When comparing numbers (e.g. amount vs corridor min/max), perform the comparison correctly. $600 is GREATER than $500, not less. Double-check all numeric comparisons before writing your finding.
+
 Evaluate exactly 5 sections. Each section gets ONE risk level and ONE sentence.
 
 RISK LEVELS (per section):
@@ -508,8 +510,8 @@ RISK LEVELS (per section):
 SECTIONS:
 1. overall: Aggregate. If ANY section is "blocked", overall is "blocked". If any "high_risk", overall is "high_risk". One sentence verdict.
 2. account_verifications: Payer KYC must be VERIFIED (blocked if not). Payer risk rating HIGH/CRITICAL = blocked. Check recipient wallet is different from payer. Recipient KYC if available.
-3. transaction_amount: ≤$50K = AI auto-approval eligible (low_risk). $50K-$100K = standard review (medium_risk). ≥$100K = manual approval required (high_risk). ≥$1M = high scrutiny (high_risk). Unknown/unwhitelisted token = blocked. Check if receiver accepts this token.
-4. payment_corridor: Validate corridor exists in availableCorridors. Corridor not found = blocked. Amount outside corridor min/max = blocked. HIGH risk corridor = high_risk. No corridor selected yet = medium_risk.
+3. transaction_amount: ≤$50K = AI auto-approval eligible (low_risk). $50K-$100K = standard review (medium_risk). ≥$100K = manual approval required (high_risk). ≥$1M = high scrutiny (high_risk). Token mint is validated separately by the rules engine — do NOT flag tokens as unwhitelisted.
+4. payment_corridor: Validate corridor exists in availableCorridors. Corridor not found = blocked. Compare amount to corridor min/max CAREFULLY — if amount >= minAmount, it passes. Amount outside corridor min/max = blocked. HIGH risk corridor = high_risk. No corridor selected yet = medium_risk.
 5. release_conditions: ≥$100K with non-ADMIN_RELEASE = blocked. Expiry <24h = medium_risk. No expiry on non-DRAFT = medium_risk.
 
 RESPONSE FORMAT (valid JSON only, no other text):
@@ -537,6 +539,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
     const response = await client.messages.create({
       model,
       max_tokens: maxTokens,
+      temperature: 0,
       system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       messages: [
         {
@@ -634,14 +637,34 @@ RESPONSE FORMAT (valid JSON only, no other text):
         'payment_corridor',
         'release_conditions',
       ] as const;
+
+      // Rules engine produces deterministic, factual verdicts — always prefer
+      // its findings over AI for sections where the rules engine has a result.
+      // This prevents AI hallucinations on factual checks (e.g. "$600 below $500").
+      const RISK_SEVERITY: Record<string, number> = {
+        low_risk: 0, medium_risk: 1, high_risk: 2, blocked: 3,
+      };
       for (const key of sectionKeys) {
         const ruleSection = rulesResult.sections[key];
         const aiSection = (result.sections as any)[key];
-        if (ruleSection?.risk === 'blocked' && aiSection && aiSection.risk !== 'blocked') {
-          aiSection.risk = 'blocked';
+        if (!ruleSection || !aiSection) continue;
+
+        const ruleSeverity = RISK_SEVERITY[ruleSection.risk] ?? 0;
+        const aiSeverity = RISK_SEVERITY[aiSection.risk] ?? 0;
+
+        if (ruleSeverity > aiSeverity) {
+          // Rules engine is stricter — override AI (e.g. rules says blocked, AI says low)
+          aiSection.risk = ruleSection.risk;
+          aiSection.finding = ruleSection.finding;
+        } else if (ruleSeverity < aiSeverity) {
+          // AI is stricter than rules engine — use rules engine finding to correct
+          // hallucinated risks (e.g. AI says corridor blocked but rules says low_risk)
+          aiSection.risk = ruleSection.risk;
           aiSection.finding = ruleSection.finding;
         }
+        // Equal severity: keep AI's more descriptive finding
       }
+
       // Recalculate overall: if any section is blocked, overall must be blocked
       const allSections = sectionKeys.map((k) => (result.sections as any)[k]).filter(Boolean);
       if (allSections.some((s: any) => s.risk === 'blocked')) {
@@ -656,10 +679,31 @@ RESPONSE FORMAT (valid JSON only, no other text):
         result.risk = 'blocked';
         result.riskScore = 95;
         result.recommendation = 'REJECT';
+      } else {
+        // Recalculate overall from corrected sections
+        const worstRisk = allSections.reduce(
+          (worst: string, s: any) =>
+            (RISK_SEVERITY[s.risk] ?? 0) > (RISK_SEVERITY[worst] ?? 0) ? s.risk : worst,
+          'low_risk'
+        );
+        (result.sections as any).overall = {
+          risk: worstRisk,
+          title: 'Overall Compliance',
+          finding: rulesResult.sections.overall?.finding || (result.sections as any).overall?.finding || 'Compliant.',
+        };
+        result.risk = worstRisk as any;
+        result.riskScore =
+          worstRisk === 'low_risk' ? 15 : worstRisk === 'medium_risk' ? 45 : worstRisk === 'high_risk' ? 75 : 95;
+        result.recommendation =
+          worstRisk === 'low_risk' ? 'APPROVE' : worstRisk === 'blocked' ? 'REJECT' : 'REVIEW';
       }
     }
 
-    // Store
+    // Store — persist sections alongside extractedFields for the escrow detail endpoint
+    const storedExtractedFields = {
+      ...(result.extractedFields as Record<string, unknown>),
+      ...(result.sections && { _sections: result.sections }),
+    };
     await this.prisma.institutionAiAnalysis.create({
       data: {
         analysisType: 'ESCROW',
@@ -668,7 +712,7 @@ RESPONSE FORMAT (valid JSON only, no other text):
         riskScore: result.riskScore,
         factors: result.factors,
         recommendation: result.recommendation,
-        extractedFields: result.extractedFields as any,
+        extractedFields: storedExtractedFields as any,
         summary: result.summary,
         model,
       },
@@ -1215,6 +1259,8 @@ Respond with ONLY the JSON object, no additional text.`;
 
     const systemPrompt = `You are a compliance analyst reviewing trade documents for cross-border escrow payments. Analyze the provided document and return a JSON assessment.
 
+CRITICAL: Extract the sender (FROM) and recipient (BILL TO / TO) company names exactly as they appear in the document. These are used to verify the document matches the escrow parties. Do NOT guess or invent names — if not found, use null.
+
 Your response MUST be valid JSON with this exact structure:
 {
   "risk_score": <number 0-100>,
@@ -1223,7 +1269,9 @@ Your response MUST be valid JSON with this exact structure:
     "document_type": "<string>",
     "total_amount": <number|null>,
     "currency": "<string|null>",
-    "counterparty_name": "<string|null>",
+    "sender_name": "<string|null — the FROM/sender company name>",
+    "recipient_name": "<string|null — the BILL TO/recipient company name>",
+    "counterparty_name": "<string|null — legacy, use sender_name/recipient_name instead>",
     "date": "<string|null>",
     "reference_number": "<string|null>",
     "description": "<string|null>"
@@ -1331,9 +1379,10 @@ Respond with ONLY the JSON object, no additional text.`;
    */
   private async extractPdfText(buffer: Buffer): Promise<string> {
     try {
-      const pdfParse = require('pdf-parse');
-      const data = await pdfParse(buffer);
-      return data.text || '';
+      const { PDFParse } = require('pdf-parse');
+      const parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
+      return result.text || '';
     } catch (error) {
       console.error('[AiAnalysisService] PDF extraction failed:', error);
       return '[PDF text extraction failed]';

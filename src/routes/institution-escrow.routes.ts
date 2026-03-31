@@ -20,8 +20,9 @@ import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { param, validationResult } from 'express-validator';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireSettlementAuthority,
+  getEffectiveClientId,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import {
@@ -73,7 +74,7 @@ function handleValidation(req: any, res: Response): boolean {
 router.post(
   '/api/v1/institution-escrow',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireNotPaused,
   validateCreateInstitutionEscrow,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
@@ -94,7 +95,7 @@ router.post(
         settlementMode: req.body.settlementMode,
         releaseMode: req.body.releaseMode,
         approvalParties: req.body.approvalParties,
-        releaseConditions: req.body.releaseConditions,
+        releaseConditions: req.body.releaseConditions || req.body.conditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
         payerName: req.body.payerName,
@@ -103,6 +104,7 @@ router.post(
         recipientName: req.body.recipientName,
         recipientAccountLabel: req.body.recipientAccountLabel,
         recipientBranchName: req.body.recipientBranchName,
+        timelockHours: req.body.timelockHours,
       });
 
       res.status(201).json({
@@ -125,7 +127,7 @@ router.post(
 router.post(
   '/api/v1/institution-escrow/draft',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireNotPaused,
   validateSaveDraft,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
@@ -145,7 +147,7 @@ router.post(
         settlementMode: req.body.settlementMode,
         releaseMode: req.body.releaseMode,
         approvalParties: req.body.approvalParties,
-        releaseConditions: req.body.releaseConditions,
+        releaseConditions: req.body.releaseConditions || req.body.conditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
         payerName: req.body.payerName,
@@ -154,6 +156,7 @@ router.post(
         recipientName: req.body.recipientName,
         recipientAccountLabel: req.body.recipientAccountLabel,
         recipientBranchName: req.body.recipientBranchName,
+        timelockHours: req.body.timelockHours,
       });
 
       res.status(201).json({
@@ -175,7 +178,7 @@ router.post(
 router.put(
   '/api/v1/institution-escrow/:id/draft',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireNotPaused,
   validateUpdateDraft,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
@@ -194,7 +197,7 @@ router.put(
         settlementMode: req.body.settlementMode,
         releaseMode: req.body.releaseMode,
         approvalParties: req.body.approvalParties,
-        releaseConditions: req.body.releaseConditions,
+        releaseConditions: req.body.releaseConditions || req.body.conditions,
         approvalInstructions: req.body.approvalInstructions,
         actorEmail: req.institutionClient!.email,
         payerName: req.body.payerName,
@@ -203,6 +206,7 @@ router.put(
         recipientName: req.body.recipientName,
         recipientAccountLabel: req.body.recipientAccountLabel,
         recipientBranchName: req.body.recipientBranchName,
+        timelockHours: req.body.timelockHours,
       });
 
       res.status(200).json({
@@ -224,7 +228,7 @@ router.put(
 router.post(
   '/api/v1/institution-escrow/:id/submit',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireNotPaused,
   validateSubmitDraft,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
@@ -260,7 +264,7 @@ router.get(
   '/api/v1/institution-escrow/:id/deposit-tx',
   standardRateLimiter,
   param('id').notEmpty().withMessage('Escrow ID or code is required'),
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
 
@@ -295,7 +299,7 @@ router.get(
 router.post(
   '/api/v1/institution-escrow/:id/deposit',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireNotPaused,
   validateRecordDeposit,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
@@ -330,7 +334,7 @@ router.post(
 router.post(
   '/api/v1/institution-escrow/:id/fulfill',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireNotPaused,
   param('id').notEmpty().withMessage('Escrow ID or code is required'),
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
@@ -369,7 +373,7 @@ router.post(
 router.post(
   '/api/v1/institution-escrow/:id/notify-recipient',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   param('id').notEmpty().withMessage('Escrow ID or code is required'),
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
@@ -407,7 +411,7 @@ router.post(
 router.post(
   '/api/v1/institution-escrow/:id/release',
   strictRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireSettlementAuthority,
   requireNotPaused,
   validateReleaseFunds,
@@ -429,7 +433,8 @@ router.post(
         req.params.id,
         req.body.notes,
         req.institutionClient!.email,
-        privacyPreferences
+        privacyPreferences,
+        { forceRelease: req.body.forceRelease === true }
       );
 
       res.status(200).json({
@@ -451,7 +456,7 @@ router.post(
 router.post(
   '/api/v1/institution-escrow/:id/cancel',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   requireNotPaused,
   validateCancelEscrow,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
@@ -485,7 +490,7 @@ router.post(
 router.get(
   '/api/v1/institution-escrow/:id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionEscrowService();
@@ -515,19 +520,21 @@ router.get(
 router.get(
   '/api/v1/institution-escrow',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateListEscrows,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     if (handleValidation(req, res)) return;
 
     try {
       const service = getInstitutionEscrowService();
+      const clientId = getEffectiveClientId(req);
       const result = await service.listEscrows({
-        clientId: req.institutionClient!.clientId,
+        clientId,
         status: req.query.status as string | undefined,
         corridor: req.query.corridor as string | undefined,
         limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
         offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+        role: (req.query.role as 'payer' | 'recipient' | 'all') || undefined,
       });
 
       res.status(200).json({
@@ -551,7 +558,7 @@ router.get(
 router.get(
   '/api/v1/institution/corridors',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (_req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { prisma } = await import('../config/database');
@@ -604,7 +611,7 @@ router.get(
 router.get(
   '/api/v1/institution-escrow/corridors/:code/threshold-rules',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const { code } = req.params;

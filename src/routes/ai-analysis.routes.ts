@@ -26,7 +26,7 @@ import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { body, param, query, validationResult } from 'express-validator';
 import {
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   InstitutionAuthenticatedRequest,
 } from '../middleware/institution-jwt.middleware';
 import { validateAiAnalysis } from '../middleware/institution-escrow-validation.middleware';
@@ -296,7 +296,7 @@ async function handleGetDocumentAnalysis(req: InstitutionAuthenticatedRequest, r
 router.post(
   '/api/v1/ai/analyze-escrow/:escrow_id',
   strictRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateEscrowIdParam,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);
@@ -354,7 +354,7 @@ router.post(
 router.get(
   '/api/v1/ai/escrow-analysis/:escrow_id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateEscrowIdParam,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);
@@ -406,7 +406,7 @@ const validateEscrowIdBody = [
 router.post(
   '/api/v1/institution/ai/analyze-escrow',
   strictRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateEscrowIdBody,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);
@@ -466,7 +466,7 @@ router.post(
 router.post(
   '/api/v1/ai/analyze-escrow-doc/:escrow_id',
   strictRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateAiAnalysis,
   handleAnalyzeDocument
 );
@@ -475,7 +475,7 @@ router.post(
 router.get(
   '/api/v1/ai/escrow-doc-analysis/:escrow_id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateEscrowIdParam,
   handleGetDocumentAnalysis
 );
@@ -484,7 +484,7 @@ router.get(
 router.post(
   '/api/v1/ai/analyze/:escrow_id',
   strictRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateAiAnalysis,
   handleAnalyzeDocument
 );
@@ -492,7 +492,7 @@ router.post(
 router.get(
   '/api/v1/ai/analysis/:escrow_id',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateEscrowIdParam,
   handleGetDocumentAnalysis
 );
@@ -524,7 +524,7 @@ const validateCorridorAnalysis = [
 router.get(
   '/api/v1/institution/ai/analyze-corridor',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   validateCorridorAnalysis,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     const errors = validationResult(req);
@@ -572,7 +572,7 @@ router.get(
 router.post(
   '/api/v1/ai/analyze-client',
   strictRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getAiAnalysisService();
@@ -606,7 +606,7 @@ router.post(
 router.get(
   '/api/v1/ai/client-analysis',
   standardRateLimiter,
-  requireInstitutionAuth,
+  requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getAiAnalysisService();

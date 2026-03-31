@@ -27,9 +27,10 @@
  *     tests/staging/e2e/25-institution-escrow-primary-path.test.ts --timeout 180000
  */
 
-import { describe, it, before } from 'mocha';
+import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
 import axios, { AxiosInstance } from 'axios';
+import { cleanupE2ETestClients } from './shared-test-utils';
 import {
   Connection,
   Keypair,
@@ -103,6 +104,9 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
   let depositTxSignature: string;
   let uploadedFileId: string;
 
+  // Track registered client IDs for cleanup
+  const registeredClientIds: string[] = [];
+
   // ─── Helper: authenticate a client ────────────────────────────
 
   async function authenticateClient(
@@ -132,6 +136,7 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     });
     if (reg.status === 201 || reg.status === 200) {
       const data = reg.data.data;
+      if (data.client?.id) registeredClientIds.push(data.client.id);
       console.log(`    ${label}: registered as ${regEmail}`);
       return {
         token: data.tokens.accessToken,
@@ -155,7 +160,9 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
       }
     }
 
-    throw new Error(`Failed to authenticate ${label}: demo=${demoLogin.status}, reg=${reg.status}`);
+    throw new Error(
+      `Failed to authenticate ${label}: demo=${demoLogin.status}, reg=${reg.status}`,
+    );
   }
 
   // ─── Pre-test setup ──────────────────────────────────────────
@@ -731,9 +738,16 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
 
   // ─── Summary ──────────────────────────────────────────────────
 
-  after(function () {
-    const buyerWallet = buyerKeypair?.publicKey?.toBase58() || BUYER_WALLET_ADDRESS;
-    const supplierWallet = supplierKeypair?.publicKey?.toBase58() || SUPPLIER_WALLET_ADDRESS;
+  after(async function () {
+    // Clean up any fallback-registered test clients
+    if (registeredClientIds.length > 0) {
+      await cleanupE2ETestClients(registeredClientIds);
+    }
+
+    const buyerWallet =
+      buyerKeypair?.publicKey?.toBase58() || BUYER_WALLET_ADDRESS;
+    const supplierWallet =
+      supplierKeypair?.publicKey?.toBase58() || SUPPLIER_WALLET_ADDRESS;
 
     console.log('\n' + '='.repeat(80));
     console.log('  Institution Escrow Two-Party E2E — Summary');
@@ -758,9 +772,10 @@ describe('Institution Escrow Two-Party E2E (Staging + Devnet)', function () {
     console.log(`  Supplier Account:   ${supplierAccountId || '(not created)'}`);
     console.log('');
     if (depositTxSignature) {
-      console.log(`  Solscan:            https://solscan.io/tx/${depositTxSignature}?cluster=devnet`);
+      console.log(
+        `  Solscan:            https://solscan.io/tx/${depositTxSignature}?cluster=devnet`,
+      );
     }
     console.log('');
-    // No cleanup — escrow is RELEASED (terminal state)
   });
 });

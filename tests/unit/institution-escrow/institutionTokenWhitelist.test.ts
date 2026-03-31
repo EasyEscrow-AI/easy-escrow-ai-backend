@@ -111,12 +111,13 @@ describe('InstitutionTokenWhitelistService', () => {
 
     it('should fallback to env var if no default in DB', async () => {
       prismaStub.institutionApprovedToken.findMany.resolves([
+        { ...mockTokens[0], isDefault: false }, // USDC in whitelist, but not default
         { ...mockTokens[1], isDefault: false }, // USDT, not default
       ]);
       service.clearCache();
 
       const mint = await service.getDefaultMint();
-      expect(mint).to.equal(USDC_MINT); // from env var
+      expect(mint).to.equal(USDC_MINT); // from env var (found in cache)
     });
   });
 
