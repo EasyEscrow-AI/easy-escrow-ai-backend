@@ -9,7 +9,26 @@ import Redis, { RedisOptions } from 'ioredis';
  */
 
 // Read Redis URL directly to avoid circular dependency
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const RAW_REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+
+/**
+ * Encode special characters in Redis URL password so URL parsers don't choke.
+ * Handles passwords with ^, @, $, % etc that break `new URL()` and ioredis.
+ */
+function sanitizeRedisUrl(raw: string): string {
+  try {
+    new URL(raw);
+    return raw; // Already valid
+  } catch {
+    // Manually extract and encode the password
+    const match = raw.match(/^(rediss?):\/\/([^:]*):(.+)@([^@]+)$/);
+    if (!match) return raw;
+    const [, protocol, user, password, hostPort] = match;
+    return `${protocol}://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${hostPort}`;
+  }
+}
+
+const REDIS_URL = sanitizeRedisUrl(RAW_REDIS_URL);
 
 // Redis connection options with resilient error handling
 const redisOptions: RedisOptions = {
