@@ -794,6 +794,9 @@ if (process.env.INSTITUTION_ESCROW_ENABLED?.toLowerCase() === 'true') {
     console.log('✅ Transaction pool routes enabled');
   }
 
+  // Internal account-to-account transfer routes
+  app.use(institutionTransferRoutes);
+
   console.log('✅ Institution escrow routes enabled');
 } else {
   // Return 503 for institution endpoints when disabled

@@ -495,7 +495,13 @@ router.get(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionEscrowService();
-      const escrow = await service.getEscrow(req.institutionClient!.clientId, req.params.id);
+      // Admin users without a scoped clientId can view any escrow
+      const clientId = req.institutionClient?.clientId;
+      const escrow = clientId
+        ? await service.getEscrow(clientId, req.params.id)
+        : req.isAdmin
+          ? await service.getEscrowAdmin(req.params.id)
+          : (() => { throw new Error('Authentication required'); })();
 
       res.status(200).json({
         success: true,
@@ -505,7 +511,7 @@ router.get(
     } catch (error: any) {
       const status = error.message.includes('not found')
         ? 404
-        : error.message.includes('Access denied')
+        : error.message.includes('Access denied') || error.message.includes('Authentication required')
         ? 403
         : 400;
       res.status(status).json({

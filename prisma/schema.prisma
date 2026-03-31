@@ -1777,9 +1777,10 @@ model InstitutionTransfer {
   amount          Decimal  @db.Decimal(20, 6)
   signerPublicKey String   @map("signer_public_key")
   txSignature     String?  @map("tx_signature")
-  status          String   @default("pending") // pending, completed, failed
+  status          String   @default("pending") // pending, completed, failed, expired
   note            String?
   failureReason   String?  @map("failure_reason")
+  expiresAt       DateTime? @map("expires_at")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 

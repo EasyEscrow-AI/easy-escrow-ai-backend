@@ -2608,6 +2608,20 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Get a single escrow by code or ID (admin — no ownership check)
+   */
+  async getEscrowAdmin(idOrCode: string): Promise<Record<string, unknown>> {
+    const isCode = idOrCode.startsWith('EE-');
+    const escrow = await this.prisma.institutionEscrow.findUnique({
+      where: isCode ? { escrowCode: idOrCode } : { escrowId: idOrCode },
+    });
+    if (!escrow) {
+      throw new Error(`Escrow not found: ${idOrCode}`);
+    }
+    return this.formatEscrowEnriched(escrow, escrow.clientId);
+  }
+
+  /**
    * List escrows for a client with filters
    */
   async listEscrows(params: ListEscrowsParams): Promise<{
