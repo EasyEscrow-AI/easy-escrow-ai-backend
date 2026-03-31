@@ -3856,6 +3856,83 @@ paths:
         '404':
           description: Payment not found
 
+  # ── Institution Account Transfers ──────────────────────────────────
+
+  /api/v1/institution/accounts/transfer:
+    post:
+      tags:
+        - Institution Account Transfers
+      summary: Internal account transfer
+      description: |
+        Move SPL tokens between two accounts belonging to the same institution.
+        Requires a wallet-signed message for verification.
+      security:
+        - InstitutionBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fromAccountId
+                - toAccountId
+                - tokenSymbol
+                - amount
+                - walletSignature
+                - signerPublicKey
+                - timestamp
+              properties:
+                fromAccountId:
+                  type: string
+                  description: Source account UUID
+                toAccountId:
+                  type: string
+                  description: Destination account UUID
+                tokenSymbol:
+                  type: string
+                  enum: [USDC, EURC, USDT, PYUSD]
+                  description: SPL token symbol
+                amount:
+                  type: number
+                  description: Amount in token units
+                walletSignature:
+                  type: string
+                  description: Base64-encoded wallet signature
+                signerPublicKey:
+                  type: string
+                  description: Signer's Solana public key (base58)
+                timestamp:
+                  type: string
+                  format: date-time
+                  description: ISO 8601 timestamp used in the signed message (must be within 5 minutes)
+                note:
+                  type: string
+                  description: Optional memo
+      responses:
+        '200':
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TransferReceipt'
+                  timestamp:
+                    type: string
+        '400':
+          description: Validation error, insufficient balance, or signature verification failed
+        '403':
+          description: Account does not belong to authenticated institution
+        '404':
+          description: Account not found
+        '409':
+          description: Transfer already in progress
+
   # ── Institution Accounts ─────────────────────────────────────────────
 
   /api/v1/institution/accounts:
@@ -5589,6 +5666,40 @@ components:
             description: Sort order
 
   schemas:
+    # Transfer schemas
+    TransferReceipt:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Transfer code (TXF-XXX-XXX)
+          example: TXF-A3K-9NZ
+        fromAccountId:
+          type: string
+        fromAccountLabel:
+          type: string
+          description: Human-readable source account name
+        toAccountId:
+          type: string
+        toAccountLabel:
+          type: string
+          description: Human-readable destination account name
+        tokenSymbol:
+          type: string
+          example: USDC
+        amount:
+          type: number
+          example: 500.00
+        txSignature:
+          type: string
+          description: On-chain transaction signature (base58)
+        status:
+          type: string
+          enum: [completed, pending]
+        createdAt:
+          type: string
+          format: date-time
+
     # Asset schemas
     SupportedAsset:
       type: object
