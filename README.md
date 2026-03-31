@@ -8,17 +8,17 @@ Non-custodial digital escrow platform on Solana. Backend API service powering in
 
 ## Environments
 
-| Environment | Institutional Portal | Backend API |
-|-------------|---------------------|-------------|
-| **STAGING** | [staging-portal.easyescrow.ai](https://staging-portal.easyescrow.ai) | [staging-api.easyescrow.ai/docs](https://staging-api.easyescrow.ai/docs) |
-| **PRODUCTION** | [portal.easyescrow.ai](https://portal.easyescrow.ai) | [api.easyescrow.ai/docs](https://api.easyescrow.ai/docs) |
+| Environment    | Institutional Portal                                                 | Backend API                                                              |
+| -------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **STAGING**    | [staging-portal.easyescrow.ai](https://staging-portal.easyescrow.ai) | [staging-api.easyescrow.ai/docs](https://staging-api.easyescrow.ai/docs) |
+| **PRODUCTION** | [portal.easyescrow.ai](https://portal.easyescrow.ai)                 | [api.easyescrow.ai/docs](https://api.easyescrow.ai/docs)                 |
 
 ## Solana Program
 
-| Environment | Network | Program ID | Status |
-|-------------|---------|------------|--------|
-| **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | ✅ ACTIVE |
-| **PRODUCTION** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | ✅ LIVE |
+| Environment    | Network | Program ID                                     | Status    |
+| -------------- | ------- | ---------------------------------------------- | --------- |
+| **STAGING**    | Devnet  | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | ✅ ACTIVE |
+| **PRODUCTION** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | ✅ LIVE   |
 
 ---
 
@@ -43,6 +43,7 @@ Cross-border stablecoin escrow payments for institutional clients.
 - ✅ Full blockchain audit of payment escrows and downloadable compliance & audit reports
 - ✅ Supports KYC/KYB compliance integrations (not activated for hackathon)
 - ✅ Supports AMINA Payment Network (APN) integrations (not activated for hackathon)
+- ✅ Transaction Pools: batch multiple escrow settlements into pooled operations with sequential/parallel settlement modes (feature-flagged: off by default -- enable via `TRANSACTION_POOLS_ENABLED`)
 - ✅ CDP Settlement Authority: optional Coinbase Developer Platform (CDP) wallet as independent settlement authority with TEE-secured policy engine (feature-flagged: off by default -- enable via `CDP_ENABLED`)
 
 ### v1.0.0 — Atomic Swaps (October 2025)
@@ -81,6 +82,7 @@ Programmable cross-border stablecoin escrow payments, built for institutions com
 - **Token Support**: Primary support for USDC and AMINA-approved whitelist only tokens
 - **KYC/KYB Integrations**: Compliance integration support (not activated for hackathon)
 - **AMINA Payment Network**: APN integration support (not activated for hackathon)
+- **Transaction Pools**: Batch multiple escrow settlements into pooled operations with configurable settlement modes (sequential/parallel) (feature-flagged: off by default -- enable via `TRANSACTION_POOLS_ENABLED`)
 - **CDP Settlement Authority**: Optional independent settlement authority via Coinbase Developer Platform (CDP) wallet with TEE-secured policy engine. When enabled, the CDP wallet replaces the admin as the on-chain settlement authority, requiring policy approval before signing release/cancel transactions (feature-flagged: off by default -- enable via `CDP_ENABLED`)
 
 ### Escrow Lifecycle
@@ -101,17 +103,17 @@ Create --> Deposit --> Release / Cancel
 
 ### Institution API Endpoints
 
-| Category | Endpoints | Description |
-|----------|-----------|-------------|
-| **Auth** | register, login, refresh, logout, me, password | JWT authentication with rate limiting |
-| **Settings** | get/update settings, wallet management, API keys | Client configuration |
-| **Clients** | search, list, profile, archive | Client discovery and management |
-| **Files** | upload, list, download, delete | Document management for compliance |
-| **Escrow** | create, deposit, release, cancel, get, list | USDC escrow payment lifecycle |
-| **AI Analysis** | analyze document, get results | AI compliance risk scoring |
-| **AI Chat** | chat with AI assistant | AI-powered escrow assistant |
-| **Receipts** | get, list, download | Settlement receipt management |
-| **Admin** | allowlist CRUD, corridor configuration | Administrative operations |
+| Category        | Endpoints                                        | Description                           |
+| --------------- | ------------------------------------------------ | ------------------------------------- |
+| **Auth**        | register, login, refresh, logout, me, password   | JWT authentication with rate limiting |
+| **Settings**    | get/update settings, wallet management, API keys | Client configuration                  |
+| **Clients**     | search, list, profile, archive                   | Client discovery and management       |
+| **Files**       | upload, list, download, delete                   | Document management for compliance    |
+| **Escrow**      | create, deposit, release, cancel, get, list      | USDC escrow payment lifecycle         |
+| **AI Analysis** | analyze document, get results                    | AI compliance risk scoring            |
+| **AI Chat**     | chat with AI assistant                           | AI-powered escrow assistant           |
+| **Receipts**    | get, list, download                              | Settlement receipt management         |
+| **Admin**       | allowlist CRUD, corridor configuration           | Administrative operations             |
 
 ### Settlement Authority
 
@@ -127,24 +129,24 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 
 ### Supported Swap Types
 
-| Type | Description | Status |
-|------|-------------|--------|
-| **NFT <> SOL** | Exchange NFT for SOL tokens | ✅ Supported |
-| **NFT <> NFT (fee)** | NFT for NFT with platform fee | ✅ Supported |
-| **NFT <> NFT + SOL** | NFT for another NFT plus SOL | ✅ Supported |
-| **cNFT <> SOL** | Compressed NFT for SOL | ✅ Supported |
-| **NFT <> cNFT** | Standard NFT for compressed NFT | ✅ Supported |
-| **Bulk Swaps** | Multiple NFTs (up to 4 total) | ✅ Supported |
+| Type                 | Description                     | Status       |
+| -------------------- | ------------------------------- | ------------ |
+| **NFT <> SOL**       | Exchange NFT for SOL tokens     | ✅ Supported |
+| **NFT <> NFT (fee)** | NFT for NFT with platform fee   | ✅ Supported |
+| **NFT <> NFT + SOL** | NFT for another NFT plus SOL    | ✅ Supported |
+| **cNFT <> SOL**      | Compressed NFT for SOL          | ✅ Supported |
+| **NFT <> cNFT**      | Standard NFT for compressed NFT | ✅ Supported |
+| **Bulk Swaps**       | Multiple NFTs (up to 4 total)   | ✅ Supported |
 
 ### Supported Assets
 
-| Asset | Description | Status |
-|-------|-------------|--------|
-| **SPL NFT** | Solana SPL Token NFT (Metaplex standard) | ✅ Supported |
-| **Core NFT** | Solana Metaplex Core NFT | ✅ Supported |
-| **cNFT** | Solana Compressed NFT (Metaplex Bubblegum) | ✅ Supported |
-| **pNFT** | Programmable NFT (on-chain royalty enforcement) | ✅ Supported |
-| **SOL** | Solana native token | ✅ Supported |
+| Asset        | Description                                     | Status       |
+| ------------ | ----------------------------------------------- | ------------ |
+| **SPL NFT**  | Solana SPL Token NFT (Metaplex standard)        | ✅ Supported |
+| **Core NFT** | Solana Metaplex Core NFT                        | ✅ Supported |
+| **cNFT**     | Solana Compressed NFT (Metaplex Bubblegum)      | ✅ Supported |
+| **pNFT**     | Programmable NFT (on-chain royalty enforcement) | ✅ Supported |
+| **SOL**      | Solana native token                             | ✅ Supported |
 
 ### Bulk Swap & cNFT Features
 
@@ -156,16 +158,16 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 
 ### Platform Fees & Limits
 
-| Parameter | Value |
-|-----------|-------|
-| NFT-only swaps | 0.005 SOL flat fee |
-| Swaps with SOL | 1% of total SOL amount |
-| Minimum fee | 0.001 SOL |
-| Maximum fee | 0.5 SOL (fee cap) |
-| Min SOL | 0.1 SOL |
-| Max SOL | 15 SOL (~$5,000 AUD limit) |
-| Max NFTs per swap | 4 (Jito bundle limit) |
-| Offer expiry | 1 hour to 30 days (default: 7 days) |
+| Parameter         | Value                               |
+| ----------------- | ----------------------------------- |
+| NFT-only swaps    | 0.005 SOL flat fee                  |
+| Swaps with SOL    | 1% of total SOL amount              |
+| Minimum fee       | 0.001 SOL                           |
+| Maximum fee       | 0.5 SOL (fee cap)                   |
+| Min SOL           | 0.1 SOL                             |
+| Max SOL           | 15 SOL (~$5,000 AUD limit)          |
+| Max NFTs per swap | 4 (Jito bundle limit)               |
+| Offer expiry      | 1 hour to 30 days (default: 7 days) |
 
 ### Offer Management
 
@@ -191,32 +193,32 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 
 ### Core Services
 
-| Service | Purpose |
-|---------|---------|
-| `offerManager.ts` | Atomic swap offer lifecycle (create/accept/cancel) |
-| `transactionBuilder.ts` | Builds swap transaction instructions |
-| `transactionGroupBuilder.ts` | Multi-transaction bundles for bulk swaps |
-| `bulkSwapExecutor.ts` | Jito bundle execution with TwoPhase fallback |
-| `assetValidator.ts` | NFT/cNFT/SOL ownership and metadata validation |
-| `cnftService.ts` | DAS API integration for cNFT Merkle proofs |
-| `feeCalculator.ts` | Dynamic platform fee calculation |
-| `noncePoolManager.ts` | Durable nonce account management |
+| Service                      | Purpose                                            |
+| ---------------------------- | -------------------------------------------------- |
+| `offerManager.ts`            | Atomic swap offer lifecycle (create/accept/cancel) |
+| `transactionBuilder.ts`      | Builds swap transaction instructions               |
+| `transactionGroupBuilder.ts` | Multi-transaction bundles for bulk swaps           |
+| `bulkSwapExecutor.ts`        | Jito bundle execution with TwoPhase fallback       |
+| `assetValidator.ts`          | NFT/cNFT/SOL ownership and metadata validation     |
+| `cnftService.ts`             | DAS API integration for cNFT Merkle proofs         |
+| `feeCalculator.ts`           | Dynamic platform fee calculation                   |
+| `noncePoolManager.ts`        | Durable nonce account management                   |
 
 ### Institution Escrow Services
 
-| Service | Purpose |
-|---------|---------|
-| `institution-auth.service.ts` | JWT authentication (access + refresh tokens) |
-| `institution-escrow.service.ts` | USDC escrow lifecycle (create/fund/release/cancel) |
-| `institution-escrow-program.service.ts` | On-chain transaction building (PDA derivation, ATA management) |
-| `institution-client-settings.service.ts` | Client settings, wallet, and API key management |
-| `institution-file.service.ts` | Document uploads to DigitalOcean Spaces |
-| `institution-receipt.service.ts` | Settlement receipt generation and management |
-| `ai-analysis.service.ts` | AI compliance analysis via Claude API |
-| `ai-chat.service.ts` | AI-powered escrow assistant |
-| `allowlist.service.ts` | Wallet allowlist management (Redis + Prisma) |
-| `compliance.service.ts` | Corridor validation, risk scoring, volume limits |
-| `cdp-settlement.service.ts` | CDP wallet integration for independent settlement authority |
+| Service                                  | Purpose                                                        |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `institution-auth.service.ts`            | JWT authentication (access + refresh tokens)                   |
+| `institution-escrow.service.ts`          | USDC escrow lifecycle (create/fund/release/cancel)             |
+| `institution-escrow-program.service.ts`  | On-chain transaction building (PDA derivation, ATA management) |
+| `institution-client-settings.service.ts` | Client settings, wallet, and API key management                |
+| `institution-file.service.ts`            | Document uploads to DigitalOcean Spaces                        |
+| `institution-receipt.service.ts`         | Settlement receipt generation and management                   |
+| `ai-analysis.service.ts`                 | AI compliance analysis via Claude API                          |
+| `ai-chat.service.ts`                     | AI-powered escrow assistant                                    |
+| `allowlist.service.ts`                   | Wallet allowlist management (Redis + Prisma)                   |
+| `compliance.service.ts`                  | Corridor validation, risk scoring, volume limits               |
+| `cdp-settlement.service.ts`              | CDP wallet integration for independent settlement authority    |
 
 ### Database Models
 
@@ -372,47 +374,47 @@ npm run docker:logs
 
 ## Testing
 
-| Test Type | Command | Timeout |
-|-----------|---------|---------|
-| Unit tests | `npm run test:unit` | 10s |
-| Single test file | `npx cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/YOUR_TEST.test.ts --timeout 10000` | 10s |
-| Integration tests | `npm run test:integration` | 20s |
-| Staging E2E (atomic) | `npm run test:staging:e2e:atomic:all` | 180s |
-| Staging E2E (institution) | Individual test files (`20-` through `26-`) | 180s |
-| Production smoke | `npm run test:production:smoke:all` | 180s |
-| Production E2E | `npm run test:production:e2e:01-nft-for-sol` | 180s |
+| Test Type                 | Command                                                                                                                 | Timeout |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------- |
+| Unit tests                | `npm run test:unit`                                                                                                     | 10s     |
+| Single test file          | `npx cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/YOUR_TEST.test.ts --timeout 10000` | 10s     |
+| Integration tests         | `npm run test:integration`                                                                                              | 20s     |
+| Staging E2E (atomic)      | `npm run test:staging:e2e:atomic:all`                                                                                   | 180s    |
+| Staging E2E (institution) | Individual test files (`20-` through `26-`)                                                                             | 180s    |
+| Production smoke          | `npm run test:production:smoke:all`                                                                                     | 180s    |
+| Production E2E            | `npm run test:production:e2e:01-nft-for-sol`                                                                            | 180s    |
 
 ### Test Coverage
 
-| Area | Files | Tests |
-|------|-------|-------|
-| **Atomic Swaps** | | |
-| Swap Routing | `swapFlowRouterIntegration`, `swapMethodSelection`, `apiDelegationRouting` | 98 |
-| **Institution Client** | | |
-| Auth | `institutionAuthService`, `institutionJwtMiddleware` | 35 |
-| Client Settings | `institutionClientSettings` | 18 |
-| **Institution Escrow** | | |
-| Escrow Service | `institutionEscrowService`, `institutionEscrowStateMachine` | 59 |
-| Escrow Validation | `institutionEscrowValidation` | 74 |
-| Escrow Program | `institutionEscrowProgramService` | 47 |
-| CDP Settlement | `cdpSettlementService` | 10 |
-| Compliance & Allowlist | `complianceService`, `allowlistService` | 32 |
-| AI Analysis | `aiAnalysisService` | 37 |
-| File Service | `institutionFileService` | 57 |
-| Receipt Service | `institutionReceiptService` | 34 |
-| Token Whitelist | `institutionTokenWhitelist` | 19 |
-| Data Anonymizer | `dataAnonymizer` | 26 |
-| Solana Validators | `solanaValidator` | 49 |
-| **Admin** | | |
-| Admin Auth | `adminAuthService` | 17 |
-| **Staging E2E** | | |
-| Atomic Swaps | `01-atomic-nft-for-sol`, `03-atomic-nft-for-nft`, `06-admin-cancel`, `09-api-key-zero-fee` | 4 suites |
-| Institution Auth | `20-institution-auth-registration` | 1 suite |
-| Institution Escrow | `21-create-deposit`, `22-settlement`, `23-cancellation-refund`, `25-primary-path` | 4 suites |
-| Institution AI | `24-institution-escrow-ai-analysis`, `26-ai-chat-guardrails` | 2 suites |
-| **Production** | | |
-| Smoke Tests | `01-health`, `02-api-health`, `03-database-redis`, `04-service-initialization` | 4 suites |
-| E2E Tests | `01` through `14` (NFT, cNFT, Core NFT, bulk, admin) | 14 suites |
+| Area                   | Files                                                                                      | Tests     |
+| ---------------------- | ------------------------------------------------------------------------------------------ | --------- |
+| **Atomic Swaps**       |                                                                                            |           |
+| Swap Routing           | `swapFlowRouterIntegration`, `swapMethodSelection`, `apiDelegationRouting`                 | 98        |
+| **Institution Client** |                                                                                            |           |
+| Auth                   | `institutionAuthService`, `institutionJwtMiddleware`                                       | 35        |
+| Client Settings        | `institutionClientSettings`                                                                | 18        |
+| **Institution Escrow** |                                                                                            |           |
+| Escrow Service         | `institutionEscrowService`, `institutionEscrowStateMachine`                                | 59        |
+| Escrow Validation      | `institutionEscrowValidation`                                                              | 74        |
+| Escrow Program         | `institutionEscrowProgramService`                                                          | 47        |
+| CDP Settlement         | `cdpSettlementService`                                                                     | 10        |
+| Compliance & Allowlist | `complianceService`, `allowlistService`                                                    | 32        |
+| AI Analysis            | `aiAnalysisService`                                                                        | 37        |
+| File Service           | `institutionFileService`                                                                   | 57        |
+| Receipt Service        | `institutionReceiptService`                                                                | 34        |
+| Token Whitelist        | `institutionTokenWhitelist`                                                                | 19        |
+| Data Anonymizer        | `dataAnonymizer`                                                                           | 26        |
+| Solana Validators      | `solanaValidator`                                                                          | 49        |
+| **Admin**              |                                                                                            |           |
+| Admin Auth             | `adminAuthService`                                                                         | 17        |
+| **Staging E2E**        |                                                                                            |           |
+| Atomic Swaps           | `01-atomic-nft-for-sol`, `03-atomic-nft-for-nft`, `06-admin-cancel`, `09-api-key-zero-fee` | 4 suites  |
+| Institution Auth       | `20-institution-auth-registration`                                                         | 1 suite   |
+| Institution Escrow     | `21-create-deposit`, `22-settlement`, `23-cancellation-refund`, `25-primary-path`          | 4 suites  |
+| Institution AI         | `24-institution-escrow-ai-analysis`, `26-ai-chat-guardrails`                               | 2 suites  |
+| **Production**         |                                                                                            |           |
+| Smoke Tests            | `01-health`, `02-api-health`, `03-database-redis`, `04-service-initialization`             | 4 suites  |
+| E2E Tests              | `01` through `14` (NFT, cNFT, Core NFT, bulk, admin)                                       | 14 suites |
 
 ---
 

@@ -139,7 +139,7 @@ const corridors: CorridorSeed[] = [
       'FINMA Payment Instrument Institution license (CH) + OCC Permitted Payment Stablecoin Issuer (US). Strict AML/KYC under BSA. Foreign issuers prohibited in US until July 18 2028 unless OCC-registered.',
     description:
       'Institutional corridor under 2026 regulatory framework. CH: FINMA Payment Instrument Institution license (replaces Fintech license), no deposit cap (CHF 100M limit removed late 2025), 1:1 reserves in segregated bankruptcy-remote accounts, yield prohibited. US: OCC PPSI license, $10B issuance cap for state-regulated issuers, 1:1 reserves in fiat or HQLA, yield prohibited. Travel Rule: CHF 1,000 (CH) / $3,000 (US). Cross-border access via supervised custodians (CH); foreign issuers prohibited until July 18 2028 unless OCC-registered.',
-    minAmount: 500,
+    minAmount: 10,
   },
   {
     code: 'CH-GB',

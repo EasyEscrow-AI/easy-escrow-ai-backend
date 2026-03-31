@@ -33,6 +33,21 @@ pub use instructions::institution_escrow::{
 };
 pub use state::institution_escrow::InstitutionConditionType;
 
+// Re-export pool vault types for use in program module
+pub use instructions::pool_vault::{
+    InitPoolVault, DepositToPool,
+    ReleasePoolMember, ReleasePoolFees,
+    ClosePoolVault, CancelPoolVault,
+    ClosePoolReceipt,
+    handle_init_pool_vault as pool_vault_init,
+    handle_deposit_to_pool as pool_vault_deposit,
+    handle_release_pool_member as pool_vault_release_member,
+    handle_release_pool_fees as pool_vault_release_fees,
+    handle_close_pool_vault as pool_vault_close,
+    handle_cancel_pool_vault as pool_vault_cancel,
+    handle_close_pool_receipt as pool_vault_close_receipt,
+};
+
 // Environment-specific Program IDs
 // Automatically selected based on build features
 // Build with: anchor build --features <environment>
@@ -1727,6 +1742,70 @@ pub mod escrow {
         inst_escrow_cancel(ctx, escrow_id)
     }
 
+    // ================================================================
+    // Pool Vault Instructions
+    // ================================================================
+
+    pub fn init_pool_vault(
+        ctx: Context<InitPoolVault>,
+        pool_id: [u8; 32],
+        corridor: [u8; 8],
+        expiry_timestamp: i64,
+    ) -> Result<()> {
+        pool_vault_init(ctx, pool_id, corridor, expiry_timestamp)
+    }
+
+    pub fn deposit_to_pool(
+        ctx: Context<DepositToPool>,
+        pool_id: [u8; 32],
+        amount: u64,
+        platform_fee: u64,
+    ) -> Result<()> {
+        pool_vault_deposit(ctx, pool_id, amount, platform_fee)
+    }
+
+    pub fn release_pool_member(
+        ctx: Context<ReleasePoolMember>,
+        pool_id: [u8; 32],
+        escrow_id: [u8; 32],
+        amount: u64,
+        receipt_id: [u8; 16],
+        commitment_hash: [u8; 32],
+        encrypted_payload: [u8; 512],
+    ) -> Result<()> {
+        pool_vault_release_member(ctx, pool_id, escrow_id, amount, receipt_id, commitment_hash, encrypted_payload)
+    }
+
+    pub fn release_pool_fees(
+        ctx: Context<ReleasePoolFees>,
+        pool_id: [u8; 32],
+    ) -> Result<()> {
+        pool_vault_release_fees(ctx, pool_id)
+    }
+
+    pub fn close_pool_vault(
+        ctx: Context<ClosePoolVault>,
+        pool_id: [u8; 32],
+    ) -> Result<()> {
+        pool_vault_close(ctx, pool_id)
+    }
+
+    pub fn cancel_pool_vault(
+        ctx: Context<CancelPoolVault>,
+        pool_id: [u8; 32],
+        amount: u64,
+    ) -> Result<()> {
+        pool_vault_cancel(ctx, pool_id, amount)
+    }
+
+    pub fn close_pool_receipt(
+        ctx: Context<ClosePoolReceipt>,
+        pool_id: [u8; 32],
+        escrow_id: [u8; 32],
+    ) -> Result<()> {
+        pool_vault_close_receipt(ctx, pool_id, escrow_id)
+    }
+
 }
 
 // Account Structures
@@ -1871,6 +1950,24 @@ pub enum EscrowError {
     InstitutionExpiryTooLong,
     #[msg("Institution escrow: time lock period not reached")]
     InstitutionTimeLockNotReached,
+
+    // Pool Vault errors
+    #[msg("Pool vault: not in active/created state for this operation")]
+    PoolVaultNotActive,
+    #[msg("Pool vault: pool has expired")]
+    PoolVaultExpired,
+    #[msg("Pool vault: pool must be settled or cancelled")]
+    PoolNotSettledOrCancelled,
+    #[msg("Pool vault: vault token account is not empty")]
+    PoolVaultNotEmpty,
+    #[msg("Pool vault: invalid amount")]
+    PoolInvalidAmount,
+    #[msg("Pool vault: expiry too short (minimum 1 hour)")]
+    PoolExpiryTooShort,
+    #[msg("Pool vault: expiry too long (maximum 90 days)")]
+    PoolExpiryTooLong,
+    #[msg("Pool vault: token mint does not match pool vault mint")]
+    PoolMintMismatch,
 }
 
 // ============================================================================

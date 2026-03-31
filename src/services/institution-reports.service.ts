@@ -1,6 +1,8 @@
 import { prisma } from '../config/database';
 import type { PrismaClient } from '../generated/prisma';
 
+const POOL_AUDIT_ACTIONS = ['POOL_CREATED', 'POOL_LOCKED', 'POOL_SETTLED', 'POOL_FAILED', 'POOL_CANCELLED', 'POOL_RELEASE_DEFERRED'] as const;
+
 export class InstitutionReportsService {
   private prisma: PrismaClient;
 
@@ -27,6 +29,7 @@ export class InstitutionReportsService {
           'ESCROW_CANCELLED',
           'ESCROW_COMPLETED',
           'INSUFFICIENT_FUNDS',
+          ...POOL_AUDIT_ACTIONS,
         ],
       },
     };
@@ -246,6 +249,7 @@ export class InstitutionReportsService {
           'INSUFFICIENT_FUNDS',
           'ESCROW_FULFILLED',
           'PROOF_SUBMITTED',
+          ...POOL_AUDIT_ACTIONS,
         ],
       },
     };

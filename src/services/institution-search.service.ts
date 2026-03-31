@@ -15,7 +15,7 @@ export interface SearchParams {
 }
 
 export interface SearchResult {
-  category: 'escrow' | 'client' | 'account' | 'notification' | 'payment';
+  category: 'escrow' | 'client' | 'account' | 'notification' | 'payment' | 'pool';
   id: string;
   title: string;
   subtitle: string;
@@ -32,6 +32,7 @@ export interface SearchResponse {
     accounts: number;
     notifications: number;
     payments: number;
+    pools: number;
     total: number;
   };
 }
@@ -46,15 +47,16 @@ class InstitutionSearchService {
 
     const shouldSearch = (cat: string) => !categories || categories.includes(cat);
 
-    const [escrows, clients, accounts, notifications, payments] = await Promise.all([
+    const [escrows, clients, accounts, notifications, payments, pools] = await Promise.all([
       shouldSearch('escrow') ? this.searchEscrows(clientId, q, perCategory) : [],
       shouldSearch('client') ? this.searchClients(clientId, q, perCategory) : [],
       shouldSearch('account') ? this.searchAccounts(clientId, q, perCategory) : [],
       shouldSearch('notification') ? this.searchNotifications(clientId, q, perCategory) : [],
       shouldSearch('payment') ? this.searchPayments(clientId, q, perCategory) : [],
+      shouldSearch('pool') ? this.searchPools(clientId, q, perCategory) : [],
     ]);
 
-    const results = [...escrows, ...clients, ...accounts, ...notifications, ...payments];
+    const results = [...escrows, ...clients, ...accounts, ...notifications, ...payments, ...pools];
 
     return {
       query: q,
@@ -65,6 +67,7 @@ class InstitutionSearchService {
         accounts: accounts.length,
         notifications: notifications.length,
         payments: payments.length,
+        pools: pools.length,
         total: results.length,
       },
     };
@@ -335,6 +338,55 @@ class InstitutionSearchService {
         createdAt: p.createdAt,
       },
     }));
+  }
+
+  private async searchPools(clientId: string, q: string, limit: number): Promise<SearchResult[]> {
+    if (process.env.TRANSACTION_POOLS_ENABLED !== 'true') return [];
+    const or: any[] = [
+      { poolCode: { contains: q, mode: 'insensitive' } },
+      { corridor: { contains: q, mode: 'insensitive' } },
+    ];
+
+    const statusMatch = this.matchPoolStatus(q);
+    if (statusMatch) {
+      or.push({ status: statusMatch });
+    }
+
+    const pools = await prisma.transactionPool.findMany({
+      where: { clientId, OR: or },
+      select: {
+        id: true,
+        poolCode: true,
+        status: true,
+        totalAmount: true,
+        memberCount: true,
+        corridor: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return pools.map((p) => ({
+      category: 'pool' as const,
+      id: p.id,
+      title: `${p.poolCode} — ${Number(p.totalAmount)} USDC (${p.memberCount} members)`,
+      subtitle: p.corridor || 'No corridor',
+      status: p.status,
+      metadata: {
+        poolCode: p.poolCode,
+        totalAmount: Number(p.totalAmount),
+        memberCount: p.memberCount,
+        corridor: p.corridor,
+        createdAt: p.createdAt,
+      },
+    }));
+  }
+
+  private matchPoolStatus(q: string): string | null {
+    const statuses = ['OPEN', 'LOCKED', 'SETTLING', 'SETTLED', 'PARTIAL_FAIL', 'FAILED', 'CANCELLED'];
+    const upper = q.toUpperCase().replace(/[\s-]+/g, '_');
+    return statuses.find((s) => s === upper || s.startsWith(upper)) || null;
   }
 
   private matchPaymentStatus(q: string): string | null {

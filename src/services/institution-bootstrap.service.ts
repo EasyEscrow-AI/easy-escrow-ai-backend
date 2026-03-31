@@ -16,6 +16,7 @@
 
 import { prisma } from '../config/database';
 import { getComplianceService } from './compliance.service';
+import { isTransactionPoolsEnabled } from '../utils/featureFlags';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 import {
   InstitutionEscrowStatus,
@@ -131,6 +132,11 @@ export class InstitutionBootstrapService {
           defaultExpiryHours: escrowConfig.defaultExpiryHours,
           feeBps: parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '20', 10),
         },
+      },
+      pools: {
+        enabled: isTransactionPoolsEnabled(),
+        maxMembers: parseInt(process.env.POOL_MAX_MEMBERS || '50', 10),
+        defaultExpiryHours: parseInt(process.env.POOL_DEFAULT_EXPIRY_HOURS || '24', 10),
       },
       enums: {
         escrowStatus: Object.values(InstitutionEscrowStatus),

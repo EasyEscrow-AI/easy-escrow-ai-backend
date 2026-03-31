@@ -41,6 +41,7 @@ import { resolveReleaseDestination } from './privacy/privacy-router.service';
 import { getStealthAddressService } from './privacy/stealth-address.service';
 import { PrivacyLevel, PrivacyPreferences } from './privacy/privacy.types';
 import { isPrivacyEnabled } from '../utils/featureFlags';
+import type { PoolContext } from '../types/transaction-pool';
 import { getCdpSettlementService } from './cdp-settlement.service';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 
@@ -1864,6 +1865,7 @@ export class InstitutionEscrowService {
     notes?: string,
     actorEmail?: string,
     privacyPreferences?: PrivacyPreferences,
+    poolContext?: PoolContext,
     options?: { skipAiCheck?: boolean; aiMemoData?: AiMemoData; forceRelease?: boolean }
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
@@ -1880,6 +1882,16 @@ export class InstitutionEscrowService {
       throw new Error(
         `Cannot release: escrow status is ${escrow.status}, expected ${expected}`
       );
+    }
+
+    // Pool context: validate pool membership if provided
+    if (poolContext?.poolId) {
+      const poolMember = await prisma.transactionPoolMember.findFirst({
+        where: { poolId: poolContext.poolId, escrowId },
+      });
+      if (!poolMember) {
+        throw new Error(`Escrow ${escrowId} is not a member of pool ${poolContext.poolId}`);
+      }
     }
 
     // Timelock gate: prevent release before cooling-off period expires
@@ -1908,6 +1920,7 @@ export class InstitutionEscrowService {
     let aiAnalysisForMemo: AiMemoData | null = options?.aiMemoData || null;
 
     // Gate by releaseMode: if AI, run AI compliance checks before proceeding
+    // Must run BEFORE pool deferral to ensure compliance even for batched settlements
     // Skip if caller already performed the check (e.g. fulfillEscrow auto-release)
     if (escrow.releaseMode === 'ai' && !options?.skipAiCheck) {
       const aiResult = await this.performAiReleaseCheck(escrow, clientId);
@@ -1964,6 +1977,16 @@ export class InstitutionEscrowService {
         recommendation: aiResult.aiAnalysis.recommendation,
         message: `AI approved release — risk score ${aiResult.aiAnalysis.riskScore / 100}`,
       });
+    }
+
+    // Pool context: skip on-chain release when pool handles batched settlement
+    if (poolContext?.skipOnChainRelease) {
+      await this.createKytAuditLog(escrow, 'POOL_RELEASE_DEFERRED', actorEmail || 'system', {
+        poolId: poolContext.poolId,
+        memberId: poolContext.memberId,
+        message: 'On-chain release deferred to pool settlement',
+      });
+      return { escrowId, status: escrow.status, poolDeferral: true };
     }
 
     // Update status to RELEASING

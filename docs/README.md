@@ -5,6 +5,7 @@ Welcome to the EasyEscrow.ai backend documentation. This directory contains comp
 ## 📁 Documentation Structure
 
 ### 🚀 Setup & Installation
+
 Located in `/docs/setup/`
 
 - **[Setup Instructions](setup/SETUP_INSTRUCTIONS.md)** - Complete setup guide for the backend
@@ -16,6 +17,7 @@ Located in `/docs/setup/`
 - **[Install Tools Quick](setup/INSTALL_TOOLS_QUICK.md)** - Quick installation reference
 
 ### 🧪 Testing
+
 Located in `/docs/testing/`
 
 - **[Testing Strategy](testing/TESTING_STRATEGY.md)** - Overall testing approach and methodology
@@ -25,6 +27,7 @@ Located in `/docs/testing/`
 - **[E2E Test Alignment Needed](testing/E2E_TEST_ALIGNMENT_NEEDED.md)** - Test alignment requirements
 
 ### 🏗️ Architecture & Design
+
 Located in `/docs/architecture/`
 
 - **[API Documentation](architecture/API_DOCUMENTATION.md)** - REST API endpoints and usage
@@ -37,6 +40,7 @@ Located in `/docs/architecture/`
 - **[NFT Mint Terminology](architecture/NFT_MINT_TERMINOLOGY_CLARIFICATION.md)** - NFT terminology clarification
 
 ### 🚢 Deployment
+
 Located in `/docs/deployment/`
 
 - **[Deployment Guide](deployment/DEPLOYMENT_GUIDE.md)** - Complete deployment instructions
@@ -50,6 +54,7 @@ Located in `/docs/deployment/`
 - **[Staging Deployment Guide](deployment/STAGING_DEPLOYMENT_GUIDE.md)** - Staging environment deployment
 
 ### 🌍 Environments
+
 Located in `/docs/environments/`
 
 - **[Environment Setup](environments/ENVIRONMENT_SETUP.md)** - General environment configuration
@@ -59,6 +64,7 @@ Located in `/docs/environments/`
 - **[Program IDs](environments/PROGRAM_IDS.md)** - Program ID reference
 
 #### Staging Environment
+
 Located in `/docs/environments/staging/`
 
 - **[Staging Reference](environments/staging/STAGING_REFERENCE.md)** - Staging environment overview
@@ -67,12 +73,14 @@ Located in `/docs/environments/staging/`
 - **[Staging Migration Steps](environments/staging/STAGING_MIGRATION_STEPS.md)** - Migration procedures
 
 #### Devnet Environment
+
 Located in `/docs/environments/devnet/`
 
 - **[Devnet Wallet Standardization](environments/devnet/DEVNET_WALLET_STANDARDIZATION.md)** - Wallet standards
 - **[Static Devnet Wallets](environments/devnet/STATIC_DEVNET_WALLETS.md)** - Static wallet configuration
 
 ### 🗄️ Database
+
 Located in `/docs/database/`
 
 - **[Migration Guide](database/MIGRATION_GUIDE.md)** - Database migration procedures
@@ -80,6 +88,7 @@ Located in `/docs/database/`
 - **[Zero Downtime Migrations](database/ZERO_DOWNTIME_MIGRATIONS.md)** - Production-safe migrations
 
 ### 🔒 Security
+
 Located in `/docs/security/`
 
 - **[Secrets Management](security/SECRETS_MANAGEMENT.md)** - Comprehensive secrets management guide
@@ -88,6 +97,7 @@ Located in `/docs/security/`
 - **[Wallet Generation Guardrails](security/WALLET_GENERATION_GUARDRAILS.md)** - Safe wallet generation practices
 
 ### 🏢 Infrastructure
+
 Located in `/docs/infrastructure/`
 
 - **[Spaces Setup](infrastructure/SPACES_SETUP.md)** - DigitalOcean Spaces configuration
@@ -96,6 +106,7 @@ Located in `/docs/infrastructure/`
 - **[Staging RPC Setup](infrastructure/STAGING_RPC_SETUP.md)** - RPC endpoint configuration
 
 #### Docker
+
 Located in `/docs/infrastructure/docker/`
 
 - **[Docker Deployment](infrastructure/docker/DOCKER_DEPLOYMENT.md)** - Docker-based deployment
@@ -104,6 +115,7 @@ Located in `/docs/infrastructure/docker/`
 - **[Docker Cache Elimination](infrastructure/docker/DOCKER_CACHE_ELIMINATION.md)** - Cache management
 
 ### 🛠️ Development
+
 Located in `/docs/development/`
 
 - **[CLI Tools Setup](development/CLI_TOOLS_SETUP.md)** - Command-line tools configuration
@@ -112,17 +124,20 @@ Located in `/docs/development/`
 - **[Cursor Hanging Fix](development/CURSOR_HANGING_FIX.md)** - IDE-specific fixes
 
 ### 🔧 Troubleshooting
+
 Located in `/docs/troubleshooting/`
 
 - **[Bug Fix - Incorrect Subdomain](troubleshooting/BUG_FIX_INCORRECT_SUBDOMAIN.md)** - Subdomain configuration fix
 - **[Solana RPC Validation Fix](troubleshooting/SOLANA_RPC_VALIDATION_FIX.md)** - RPC validation issues
 
 ### 📋 Task Documentation
+
 Located in `/docs/tasks/`
 
 Contains completion reports and test results for completed development tasks. See [Task Documentation README](tasks/README.md) for details.
 
 ### 🎛️ API Documentation
+
 Located in `/docs/api/`
 
 - **[API README](api/README.md)** - API overview and getting started
@@ -131,8 +146,16 @@ Located in `/docs/api/`
 - **[Webhook Events](api/WEBHOOK_EVENTS.md)** - Webhook event types and payloads
 - **[Manual Trigger Endpoints](api/MANUAL_TRIGGER_ENDPOINTS.md)** - Manual trigger API reference
 - **[OpenAPI Specification](api/openapi.yaml)** - OpenAPI 3.0 specification
+- **[Privacy API](api/PRIVACY_API.md)** - Privacy and stealth address API reference
+
+### 🏊 Transaction Pools
+
+Located in `/docs/api/`
+
+- **[Transaction Pool API](api/TRANSACTION_POOLS_API.md)** - Batch escrow settlement endpoints (see OpenAPI spec)
 
 ### ⚙️ Operations
+
 Located in `/docs/operations/`
 
 - **[Staging Resource Tracking](operations/STAGING_RESOURCE_TRACKING.md)** - Resource monitoring and tracking
@@ -140,12 +163,14 @@ Located in `/docs/operations/`
 ## 🔗 Quick Links
 
 ### For New Developers
+
 1. [Setup Instructions](setup/SETUP_INSTRUCTIONS.md)
 2. [Database Setup](setup/DATABASE_SETUP.md)
 3. [Environment Variables](environments/ENVIRONMENT_VARIABLES.md)
 4. [Testing Strategy](testing/TESTING_STRATEGY.md)
 
 ### For DevOps/Deployment
+
 1. [Deployment Guide](deployment/DEPLOYMENT_GUIDE.md)
 2. [Docker Deployment](infrastructure/docker/DOCKER_DEPLOYMENT.md)
 3. [DigitalOcean Setup](deployment/DIGITALOCEAN_SETUP.md)
@@ -153,6 +178,7 @@ Located in `/docs/operations/`
 5. [Secrets Management](security/SECRETS_MANAGEMENT.md)
 
 ### For API Integration
+
 1. [API Documentation](architecture/API_DOCUMENTATION.md)
 2. [Integration Guide](api/INTEGRATION_GUIDE.md)
 3. [Security Middleware](architecture/SECURITY_MIDDLEWARE.md)
@@ -160,6 +186,7 @@ Located in `/docs/operations/`
 5. [Error Codes](api/ERROR_CODES.md)
 
 ### For Testing
+
 1. [Quick Start E2E Testing](testing/QUICK_START_E2E_TESTING.md)
 2. [Testing Strategy](testing/TESTING_STRATEGY.md)
 3. [Devnet E2E Manual Funding Guide](testing/DEVNET_E2E_MANUAL_FUNDING_GUIDE.md)
@@ -176,6 +203,7 @@ Located in `/docs/operations/`
 ## 📝 Contributing to Documentation
 
 When adding new documentation:
+
 1. Place setup guides in `/docs/setup/`
 2. Place testing guides in `/docs/testing/`
 3. Place architecture docs in `/docs/architecture/`
@@ -193,11 +221,11 @@ When adding new documentation:
 ## 📞 Support
 
 For questions or issues:
+
 - Check the relevant documentation section above
 - Review task completion documents for implementation details
 - Refer to inline code comments for specific functionality
 
 ---
 
-*Last Updated: October 27, 2025*
-
+_Last Updated: October 27, 2025_

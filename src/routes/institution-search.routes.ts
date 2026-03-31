@@ -24,7 +24,7 @@ const searchRateLimiter = rateLimit({
   keyGenerator: (req: any) => req.institutionClient?.clientId || req.ip,
 });
 
-const VALID_CATEGORIES = ['escrow', 'client', 'account', 'notification', 'payment'];
+const VALID_CATEGORIES = ['escrow', 'client', 'account', 'notification', 'payment', 'pool'];
 
 const validateSearch = [
   query('q')
