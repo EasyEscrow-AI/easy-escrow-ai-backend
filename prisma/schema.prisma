@@ -924,6 +924,7 @@ model InstitutionClient {
   directPayments       DirectPayment[]
   stealthMetaAddresses StealthMetaAddress[]
   transactionPools     TransactionPool[]
+  transfers            InstitutionTransfer[]
 
   @@index([email])
   @@index([status])
@@ -1027,6 +1028,8 @@ model InstitutionAccount {
   client             InstitutionClient   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   branch             InstitutionBranch?  @relation(fields: [branchId], references: [id])
   stealthMetaAddress StealthMetaAddress? @relation(fields: [stealthMetaAddressId], references: [id])
+  transfersOut       InstitutionTransfer[]  @relation("TransferFrom")
+  transfersIn        InstitutionTransfer[]  @relation("TransferTo")
 
   @@unique([clientId, name])
   @@index([clientId])
@@ -1761,4 +1764,34 @@ model TransactionPoolAuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("transaction_pool_audit_logs")
+}
+
+// Internal account-to-account SPL token transfers within the same institution
+model InstitutionTransfer {
+  id              String   @id @default(uuid())
+  transferCode    String   @unique @map("transfer_code") // TXF-XXX-XXX
+  clientId        String   @map("client_id")
+  fromAccountId   String   @map("from_account_id")
+  toAccountId     String   @map("to_account_id")
+  tokenSymbol     String   @map("token_symbol") // USDC, EURC, USDT, PYUSD
+  amount          Decimal  @db.Decimal(20, 6)
+  signerPublicKey String   @map("signer_public_key")
+  txSignature     String?  @map("tx_signature")
+  status          String   @default("pending") // pending, completed, failed, expired
+  note            String?
+  failureReason   String?  @map("failure_reason")
+  expiresAt       DateTime? @map("expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  client      InstitutionClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  fromAccount InstitutionAccount @relation("TransferFrom", fields: [fromAccountId], references: [id])
+  toAccount   InstitutionAccount @relation("TransferTo", fields: [toAccountId], references: [id])
+
+  @@index([clientId])
+  @@index([fromAccountId])
+  @@index([toAccountId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("institution_transfers")
 }
