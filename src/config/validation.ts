@@ -200,20 +200,21 @@ export function validateInstitutionEscrowConfig(cfg?: InstitutionEscrowConfig): 
     throw new ConfigurationError('ANTHROPIC_API_KEY appears invalid (too short).');
   }
 
-  // DO Spaces: validate all-or-nothing (if any field is set, all must be set)
-  const spacesFields = [
-    escrowConfig.doSpaces.key,
-    escrowConfig.doSpaces.secret,
-    escrowConfig.doSpaces.endpoint,
-    escrowConfig.doSpaces.bucket,
-    escrowConfig.doSpaces.region,
-  ];
-  const spacesSet = spacesFields.filter((f) => f.length > 0);
-  if (spacesSet.length > 0 && spacesSet.length < spacesFields.length) {
-    throw new ConfigurationError(
-      'DO Spaces configuration is incomplete. When any DO_SPACES_* variable is set, ' +
-        'all must be provided: DO_SPACES_KEY, DO_SPACES_SECRET, DO_SPACES_ENDPOINT, ' +
-        'DO_SPACES_BUCKET, DO_SPACES_REGION.'
+  // DO Spaces: warn on incomplete config (non-fatal — file uploads will fail gracefully)
+  const spacesFieldMap: Record<string, string> = {
+    DO_SPACES_KEY: escrowConfig.doSpaces.key,
+    DO_SPACES_SECRET: escrowConfig.doSpaces.secret,
+    DO_SPACES_ENDPOINT: escrowConfig.doSpaces.endpoint,
+    DO_SPACES_BUCKET: escrowConfig.doSpaces.bucket,
+    DO_SPACES_REGION: escrowConfig.doSpaces.region,
+  };
+  const spacesSet = Object.entries(spacesFieldMap).filter(([, v]) => v.length > 0);
+  const spacesMissing = Object.entries(spacesFieldMap).filter(([, v]) => v.length === 0);
+  if (spacesSet.length > 0 && spacesMissing.length > 0) {
+    console.warn(
+      `⚠️ DO Spaces configuration incomplete — file uploads will be disabled. ` +
+        `Set: ${spacesSet.map(([k]) => k).join(', ')}. ` +
+        `Missing: ${spacesMissing.map(([k]) => k).join(', ')}.`
     );
   }
 
