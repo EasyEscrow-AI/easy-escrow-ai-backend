@@ -17,8 +17,10 @@
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
 import axios, { AxiosInstance } from 'axios';
+import { cleanupE2ETestClients } from './shared-test-utils';
 
-const STAGING_API = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
+const STAGING_API =
+  process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 
 describe('Institution Auth & Registration - E2E Staging', function () {
   this.timeout(180000);
@@ -26,6 +28,7 @@ describe('Institution Auth & Registration - E2E Staging', function () {
   let api: AxiosInstance;
   let accessToken: string;
   let refreshTokenValue: string;
+  let createdClientId: string;
 
   // Unique test account per run
   const testEmail = `e2e-auth-${Date.now()}@test-institution.com`;
@@ -91,8 +94,9 @@ describe('Institution Auth & Registration - E2E Staging', function () {
 
     accessToken = res.data.data.tokens.accessToken;
     refreshTokenValue = res.data.data.tokens.refreshToken;
+    createdClientId = res.data.data.client.id;
 
-    console.log(`    Client ID: ${res.data.data.client.id || 'returned'}`);
+    console.log(`    Client ID: ${createdClientId}`);
     console.log('    Access token received');
     console.log('    Refresh token received');
   });
@@ -338,7 +342,12 @@ describe('Institution Auth & Registration - E2E Staging', function () {
   // Cleanup
   // ---------------------------------------------------------------------------
 
-  after(function () {
+  after(async function () {
+    // Clean up the test client from the staging database
+    if (createdClientId) {
+      await cleanupE2ETestClients([createdClientId]);
+    }
+
     console.log('\n' + '='.repeat(80));
     console.log('  Institution Auth & Registration - Tests Complete');
     console.log('='.repeat(80));

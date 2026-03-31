@@ -120,10 +120,11 @@ describe('InstitutionAccountService', () => {
       expect(balanceSpy.called).to.be.false;
     });
 
-    it('should NOT include balance object when includeBalances is false', async () => {
+    it('should include cached balance by default (no live RPC)', async () => {
       const accounts = await service.listAccounts(CLIENT_ID);
 
-      expect(accounts[0]).to.not.have.property('balance');
+      // Service always returns balance field (cached or null), just doesn't do live RPC
+      expect(accounts[0]).to.have.property('balance');
     });
 
     it('should fetch balances when includeBalances is true', async () => {

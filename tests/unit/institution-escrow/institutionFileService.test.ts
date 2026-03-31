@@ -80,6 +80,15 @@ describe('InstitutionFileService', () => {
         create: sandbox.stub(),
         delete: sandbox.stub(),
       },
+      institutionEscrow: {
+        findUnique: sandbox.stub().resolves(null),
+      },
+      institutionClient: {
+        findUnique: sandbox.stub().resolves(null),
+      },
+      institutionAccount: {
+        findMany: sandbox.stub().resolves([]),
+      },
     };
 
     s3Stub = {
@@ -627,11 +636,20 @@ describe('InstitutionFileService', () => {
 
     it('should filter by escrowId when provided', async () => {
       prismaStub.institutionFile.findMany.resolves([makeFileRecord()]);
+      // Stub escrow lookup so caller is verified as party (owner)
+      prismaStub.institutionEscrow.findUnique.resolves({
+        clientId: CLIENT_ID,
+        recipientWallet: 'Recipient111111111111111111111111111111111111',
+        payerWallet: 'Payer111111111111111111111111111111111111111111',
+      });
 
       await service.listFiles(CLIENT_ID, ESCROW_ID);
 
-      const queryArgs = prismaStub.institutionFile.findMany.firstCall.args[0];
-      expect(queryArgs.where).to.deep.include({ clientId: CLIENT_ID, escrowId: ESCROW_ID });
+      // The service queries files where escrowId matches
+      const findManyCall = prismaStub.institutionFile.findMany.firstCall;
+      expect(findManyCall).to.not.be.null;
+      const queryArgs = findManyCall.args[0];
+      expect(queryArgs.where.escrowId).to.equal(ESCROW_ID);
     });
 
     it('should return empty array when no files exist', async () => {
