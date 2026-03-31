@@ -923,6 +923,7 @@ model InstitutionClient {
   branches             InstitutionBranch[]
   directPayments       DirectPayment[]
   stealthMetaAddresses StealthMetaAddress[]
+  transactionPools     TransactionPool[]
 
   @@index([email])
   @@index([status])
@@ -1123,34 +1124,37 @@ model InstitutionRefreshToken {
 
 // Per-client settings
 model InstitutionClientSettings {
-  id                        String   @id @default(uuid())
-  clientId                  String   @unique @map("client_id")
-  defaultCorridor           String?  @map("default_corridor")
-  defaultCurrency           String   @default("USDC") @map("default_currency")
-  notificationEmail         String?  @map("notification_email")
-  webhookUrl                String?  @map("webhook_url")
-  webhookSecret             String?  @map("webhook_secret")
-  settlementAuthorityWallet String?  @map("settlement_authority_wallet")
-  timezone                  String   @default("UTC")
-  autoApproveThreshold      Decimal? @map("auto_approve_threshold") @db.Decimal(20, 6)
-  manualReviewThreshold     Decimal? @map("manual_review_threshold") @db.Decimal(20, 6)
-  autoTravelRule            Boolean  @default(true) @map("auto_travel_rule")
-  activeSanctionsLists      String[] @default(["OFAC SDN", "EU Consolidated", "UN Sanctions"]) @map("active_sanctions_lists")
-  aiAutoRelease             Boolean  @default(false) @map("ai_auto_release")
-  riskTolerance             String   @default("low") @map("risk_tolerance") // low, medium, high
-  defaultTimelockHours      Int?     @map("default_timelock_hours")
-  defaultToken              String   @default("usdc") @map("default_token")
-  emailNotifications        Boolean  @default(true) @map("email_notifications")
+  id                        String              @id @default(uuid())
+  clientId                  String              @unique @map("client_id")
+  defaultCorridor           String?             @map("default_corridor")
+  defaultCurrency           String              @default("USDC") @map("default_currency")
+  notificationEmail         String?             @map("notification_email")
+  webhookUrl                String?             @map("webhook_url")
+  webhookSecret             String?             @map("webhook_secret")
+  settlementAuthorityWallet String?             @map("settlement_authority_wallet")
+  timezone                  String              @default("UTC")
+  autoApproveThreshold      Decimal?            @map("auto_approve_threshold") @db.Decimal(20, 6)
+  manualReviewThreshold     Decimal?            @map("manual_review_threshold") @db.Decimal(20, 6)
+  autoTravelRule            Boolean             @default(true) @map("auto_travel_rule")
+  activeSanctionsLists      String[]            @default(["OFAC SDN", "EU Consolidated", "UN Sanctions"]) @map("active_sanctions_lists")
+  aiAutoRelease             Boolean             @default(false) @map("ai_auto_release")
+  riskTolerance             String              @default("low") @map("risk_tolerance") // low, medium, high
+  defaultTimelockHours      Int?                @map("default_timelock_hours")
+  defaultToken              String              @default("usdc") @map("default_token")
+  emailNotifications        Boolean             @default(true) @map("email_notifications")
   language                  String? // en, de, fr, ar, zh, es
   theme                     String? // light, dark, system
-  twoFactorEnabled          Boolean  @default(false) @map("two_factor_enabled")
-  aiRecommendations         Boolean  @default(true) @map("ai_recommendations")
-  feeBps                    Int      @default(20) @map("fee_bps") // Fee in basis points (default 0.20%)
-  minFeeUsdc                Decimal  @default(0.20) @map("min_fee_usdc") @db.Decimal(20, 6) // Minimum fee in USDC
-  maxFeeUsdc                Decimal  @default(20.00) @map("max_fee_usdc") @db.Decimal(20, 6) // Maximum fee in USDC
-  notificationPreferences   Json?    @map("notification_preferences") // Per-event notification prefs [{event, inApp, email, sms}]
-  createdAt                 DateTime @default(now()) @map("created_at")
-  updatedAt                 DateTime @updatedAt @map("updated_at")
+  twoFactorEnabled          Boolean             @default(false) @map("two_factor_enabled")
+  aiRecommendations         Boolean             @default(true) @map("ai_recommendations")
+  feeBps                    Int                 @default(20) @map("fee_bps") // Fee in basis points (default 0.20%)
+  minFeeUsdc                Decimal             @default(0.20) @map("min_fee_usdc") @db.Decimal(20, 6) // Minimum fee in USDC
+  maxFeeUsdc                Decimal             @default(20.00) @map("max_fee_usdc") @db.Decimal(20, 6) // Maximum fee in USDC
+  notificationPreferences   Json?               @map("notification_preferences") // Per-event notification prefs [{event, inApp, email, sms}]
+  poolMaxMembers            Int?                @map("pool_max_members")
+  poolDefaultSettlementMode PoolSettlementMode? @map("pool_default_settlement_mode")
+  poolDefaultExpiryHours    Int?                @map("pool_default_expiry_hours")
+  createdAt                 DateTime            @default(now()) @map("created_at")
+  updatedAt                 DateTime            @updatedAt @map("updated_at")
 
   client InstitutionClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
@@ -1237,12 +1241,17 @@ model InstitutionEscrow {
   unlockAt      DateTime? @map("unlock_at")
   timelockHours Int?      @map("timelock_hours")
 
+  // Pool association (optional)
+  poolId String? @map("pool_id")
+
   // Relations
-  client     InstitutionClient       @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  deposits   InstitutionDeposit[]
-  auditLogs  InstitutionAuditLog[]
-  aiAnalyses InstitutionAiAnalysis[]
-  files      InstitutionFile[]
+  client      InstitutionClient       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  pool        TransactionPool?        @relation(fields: [poolId], references: [id])
+  deposits    InstitutionDeposit[]
+  auditLogs   InstitutionAuditLog[]
+  aiAnalyses  InstitutionAiAnalysis[]
+  files       InstitutionFile[]
+  poolMembers TransactionPoolMember[]
 
   @@index([clientId])
   @@index([escrowId])
@@ -1253,6 +1262,7 @@ model InstitutionEscrow {
   @@index([recipientWallet])
   @@index([expiresAt])
   @@index([createdAt])
+  @@index([poolId])
   @@index([status, expiresAt], name: "idx_inst_escrow_status_expiry")
   @@index([clientId, status], name: "idx_inst_escrow_client_status")
   @@index([unlockAt], name: "idx_inst_escrow_unlock_at")
@@ -1512,6 +1522,13 @@ enum NotificationType {
   SETTLEMENT_COMPLETE
   SYSTEM_MAINTENANCE
   SECURITY_ALERT
+  POOL_CREATED
+  POOL_LOCKED
+  POOL_SETTLED
+  POOL_PARTIAL_FAIL
+  POOL_FAILED
+  POOL_CANCELLED
+  POOL_EXPIRED
 }
 
 enum NotificationPriority {
@@ -1614,4 +1631,134 @@ model StealthPayment {
   @@index([escrowId])
   @@index([status])
   @@map("stealth_payments")
+}
+
+// ============================================
+// TRANSACTION POOL MODELS
+// ============================================
+
+enum TransactionPoolStatus {
+  OPEN
+  LOCKED
+  SETTLING
+  SETTLED
+  PARTIAL_FAIL
+  FAILED
+  CANCELLED
+}
+
+enum PoolMemberStatus {
+  PENDING
+  SETTLING
+  SETTLED
+  FAILED
+  REMOVED
+}
+
+enum PoolSettlementMode {
+  SEQUENTIAL
+  PARALLEL
+}
+
+model TransactionPool {
+  id             String                @id @default(uuid())
+  poolCode       String                @unique @map("pool_code")
+  clientId       String                @map("client_id")
+  status         TransactionPoolStatus @default(OPEN)
+  settlementMode PoolSettlementMode    @default(SEQUENTIAL) @map("settlement_mode")
+  corridor       String?
+
+  // Denormalized totals
+  totalAmount  Decimal @default(0) @map("total_amount") @db.Decimal(20, 6)
+  totalFees    Decimal @default(0) @map("total_fees") @db.Decimal(20, 6)
+  memberCount  Int     @default(0) @map("member_count")
+  settledCount Int     @default(0) @map("settled_count")
+  failedCount  Int     @default(0) @map("failed_count")
+
+  // On-chain references
+  poolVaultPda          String? @map("pool_vault_pda")
+  poolVaultTokenAccount String? @map("pool_vault_token_account")
+
+  // Compliance
+  poolRiskScore    Decimal? @map("pool_risk_score") @db.Decimal(5, 2)
+  compliancePassed Boolean? @map("compliance_passed")
+
+  // Settlement
+  settledBy String?   @map("settled_by")
+  settledAt DateTime? @map("settled_at")
+  lockedAt  DateTime? @map("locked_at")
+
+  // Timestamps
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  expiresAt DateTime? @map("expires_at")
+
+  // Relations
+  members   TransactionPoolMember[]
+  auditLogs TransactionPoolAuditLog[]
+  client    InstitutionClient         @relation(fields: [clientId], references: [id])
+  escrows   InstitutionEscrow[]
+
+  @@index([clientId, status])
+  @@index([status])
+  @@index([status, expiresAt])
+  @@index([corridor])
+  @@index([createdAt])
+  @@map("transaction_pools")
+}
+
+model TransactionPoolMember {
+  id          String           @id @default(uuid())
+  poolId      String           @map("pool_id")
+  escrowId    String           @map("escrow_id")
+  status      PoolMemberStatus @default(PENDING)
+  amount      Decimal          @db.Decimal(20, 6)
+  platformFee Decimal          @map("platform_fee") @db.Decimal(20, 6)
+  corridor    String?
+
+  // Settlement tracking
+  releaseTxSignature String?   @map("release_tx_signature")
+  releasedAt         DateTime? @map("released_at")
+  errorMessage       String?   @map("error_message")
+  retryCount         Int       @default(0) @map("retry_count")
+
+  // On-chain receipt
+  receiptPda     String? @map("receipt_pda")
+  commitmentHash String? @map("commitment_hash")
+
+  // Privacy tracking
+  privacyLevel     PrivacyLevel? @map("privacy_level")
+  stealthPaymentId String?       @map("stealth_payment_id")
+
+  sequenceNumber Int      @default(0) @map("sequence_number")
+  addedAt        DateTime @default(now()) @map("added_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pool   TransactionPool   @relation(fields: [poolId], references: [id])
+  escrow InstitutionEscrow @relation(fields: [escrowId], references: [escrowId])
+
+  @@unique([poolId, escrowId])
+  @@index([poolId])
+  @@index([escrowId])
+  @@map("transaction_pool_members")
+}
+
+model TransactionPoolAuditLog {
+  id        String   @id @default(uuid())
+  poolId    String   @map("pool_id")
+  escrowId  String?  @map("escrow_id")
+  action    String
+  actor     String?
+  details   Json?
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  pool TransactionPool @relation(fields: [poolId], references: [id])
+
+  @@index([poolId])
+  @@index([escrowId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("transaction_pool_audit_logs")
 }

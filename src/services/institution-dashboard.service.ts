@@ -101,8 +101,8 @@ export class InstitutionDashboardService {
       this.prisma.institutionClient.count(),
       this.prisma.institutionClient.count({ where: { kycStatus: 'VERIFIED' } }),
       this.prisma.institutionClient.count({ where: { kycStatus: 'PENDING' } }),
-      this.prisma.transactionPool.count({ where: { clientId } }),
-      this.prisma.transactionPool.count({ where: { clientId, status: 'OPEN' } }),
+      this.prisma.transactionPool.count({ where: { clientId: clientId ?? undefined } }),
+      this.prisma.transactionPool.count({ where: { clientId: clientId ?? undefined, status: 'OPEN' } }),
     ]);
 
     const totalEscrowVolume = escrows.reduce((sum: number, e: any) => sum + Number(e.amount), 0);
