@@ -11,6 +11,7 @@
  * POST   /api/v1/institution-escrow/:id/notify-recipient → notifyRecipient
  * POST   /api/v1/institution-escrow/:id/release  → releaseFunds
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
+ * GET    /api/v1/institution-escrow/:id/privacy-analysis → privacyAnalysis
  * GET    /api/v1/institution-escrow/:id          → getEscrow
  * GET    /api/v1/institution-escrow              → listEscrows
  * GET    /api/v1/institution/corridors           → listCorridors
@@ -480,6 +481,38 @@ router.post(
     } catch (error: any) {
       res.status(400).json({
         error: 'Cancellation Failed',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// GET /api/v1/institution-escrow/:escrowId/privacy-analysis
+router.get(
+  '/api/v1/institution-escrow/:escrowId/privacy-analysis',
+  standardRateLimiter,
+  requireInstitutionOrAdminAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const { getPrivacyAnalysisService } = await import('../services/privacy-analysis.service');
+      const service = getPrivacyAnalysisService();
+      const clientId = req.institutionClient?.clientId;
+      const result = clientId
+        ? await service.analyze(clientId, req.params.escrowId)
+        : req.isAdmin
+          ? await service.analyzeAdmin(req.params.escrowId)
+          : (() => { throw Object.assign(new Error('Authentication required'), { status: 403 }); })();
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.status || (error.message?.includes('not found') ? 404 : 400);
+      res.status(status).json({
+        error: 'Privacy Analysis Error',
         message: error.message,
         timestamp: new Date().toISOString(),
       });
