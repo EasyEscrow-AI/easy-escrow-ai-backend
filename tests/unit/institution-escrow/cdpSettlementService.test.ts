@@ -57,7 +57,7 @@ describe('CdpSettlementService', () => {
     mockAccount = {
       address: FAKE_CDP_ADDRESS,
       signTransaction: sandbox.stub().resolves({
-        signedTransaction: new Uint8Array([1, 2, 3, 4]),
+        signedTransaction: Buffer.from([1, 2, 3, 4]).toString('base64'),
       }),
     };
 
@@ -165,7 +165,7 @@ describe('CdpSettlementService', () => {
 
       expect(mockAccount.signTransaction.calledOnce).to.be.true;
       expect(mockAccount.signTransaction.firstCall.args[0]).to.deep.equal({
-        transaction: fakeTx,
+        transaction: fakeTx.toString('base64'),
       });
       expect(result).to.be.instanceOf(Buffer);
       expect(result).to.deep.equal(Buffer.from([1, 2, 3, 4]));

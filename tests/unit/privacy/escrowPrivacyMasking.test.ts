@@ -213,6 +213,10 @@ describe('Privacy-Aware Wallet Masking', () => {
         },
         institutionAuditLog: {
           findMany: sandbox.stub().resolves([]),
+          findFirst: sandbox.stub().resolves(null),
+        },
+        institutionFile: {
+          findMany: sandbox.stub().resolves([]),
         },
       };
       (service as any).prisma = prismaStub;

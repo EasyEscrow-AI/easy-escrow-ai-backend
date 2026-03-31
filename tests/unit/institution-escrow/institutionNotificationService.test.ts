@@ -86,6 +86,9 @@ describe('InstitutionNotificationService', function () {
         update: sandbox.stub().resolves(makeNotification({ isRead: true, readAt: new Date() })),
         updateMany: sandbox.stub().resolves({ count: 3 }),
       },
+      institutionEscrow: {
+        findMany: sandbox.stub().resolves([]),
+      },
     };
 
     setMockPrismaClient(prismaStub as any);
