@@ -1,17 +1,11 @@
 /**
- * Unit Tests for InstitutionTransferService
+ * Unit Tests for InstitutionTransferService (Two-Step Flow)
  *
  * Tests internal account-to-account SPL token transfers:
- * - Input validation (missing fields, same account, negative amount)
- * - Account ownership and verification checks
- * - Signer wallet validation
- * - Token support validation
- * - Wallet signature verification
- * - Idempotency (duplicate transfer detection)
- * - Insufficient balance check
- * - Successful transfer flow
- * - On-chain failure handling
  * - Transfer code generation format
+ * - prepareTransfer: input validation, account checks, signer/token/signature validation,
+ *   idempotency, balance check, successful preparation
+ * - submitTransfer: happy path, expired transfer, not found, on-chain error, already completed
  */
 
 import { expect } from 'chai';
@@ -118,6 +112,31 @@ describe('InstitutionTransferService', () => {
     };
   }
 
+  /** Stub all DB + RPC dependencies so prepareTransfer passes validation */
+  function setupPassingStubs() {
+    prismaStub.institutionAccount.findUnique
+      .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
+      .resolves(makeAccount(FROM_ACCOUNT_ID))
+      .withArgs(sinon.match({ where: { id: TO_ACCOUNT_ID } }))
+      .resolves(makeAccount(TO_ACCOUNT_ID));
+    prismaStub.institutionWallet.findFirst.resolves({ id: 'w1', address: SIGNER_PUBKEY });
+    prismaStub.institutionApprovedToken.findFirst.resolves(VALID_TOKEN);
+    prismaStub.institutionTransfer.findFirst.resolves(null);
+    prismaStub.institutionTransfer.create.resolves({
+      id: 'txf-001',
+      transferCode: 'TXF-ABC-DEF',
+      createdAt: new Date(),
+    });
+    prismaStub.institutionAuditLog.create.resolves({});
+
+    // Mock balance (1000 USDC)
+    const balanceData = Buffer.alloc(165);
+    balanceData.writeBigUInt64LE(BigInt(1000_000000), 64);
+    connectionStub.getTokenAccountsByOwner.resolves({
+      value: [{ account: { data: balanceData } }],
+    });
+  }
+
   beforeEach(() => {
     sandbox = sinon.createSandbox();
     service = new InstitutionTransferService();
@@ -153,8 +172,6 @@ describe('InstitutionTransferService', () => {
         blockhash: 'fakeblockhash',
         lastValidBlockHeight: 100,
       }),
-      sendRawTransaction: sandbox.stub().resolves('fakesig123'),
-      confirmTransaction: sandbox.stub().resolves(),
       getTransaction: sandbox.stub().resolves({ meta: { err: null } }),
       getAccountInfo: sandbox.stub().resolves(null),
     };
@@ -177,10 +194,12 @@ describe('InstitutionTransferService', () => {
     });
   });
 
-  describe('transfer - input validation', () => {
+  // ─── prepareTransfer ─────────────────────────────────────────────
+
+  describe('prepareTransfer - input validation', () => {
     it('should reject when source and destination are the same', async () => {
       try {
-        await service.transfer(CLIENT_ID, {
+        await service.prepareTransfer(CLIENT_ID, {
           fromAccountId: FROM_ACCOUNT_ID,
           toAccountId: FROM_ACCOUNT_ID,
           tokenSymbol: 'USDC',
@@ -198,7 +217,7 @@ describe('InstitutionTransferService', () => {
 
     it('should reject zero amount', async () => {
       try {
-        await service.transfer(CLIENT_ID, {
+        await service.prepareTransfer(CLIENT_ID, {
           fromAccountId: FROM_ACCOUNT_ID,
           toAccountId: TO_ACCOUNT_ID,
           tokenSymbol: 'USDC',
@@ -216,7 +235,7 @@ describe('InstitutionTransferService', () => {
 
     it('should reject negative amount', async () => {
       try {
-        await service.transfer(CLIENT_ID, {
+        await service.prepareTransfer(CLIENT_ID, {
           fromAccountId: FROM_ACCOUNT_ID,
           toAccountId: TO_ACCOUNT_ID,
           tokenSymbol: 'USDC',
@@ -234,7 +253,7 @@ describe('InstitutionTransferService', () => {
 
     it('should reject invalid signer public key', async () => {
       try {
-        await service.transfer(CLIENT_ID, {
+        await service.prepareTransfer(CLIENT_ID, {
           fromAccountId: FROM_ACCOUNT_ID,
           toAccountId: TO_ACCOUNT_ID,
           tokenSymbol: 'USDC',
@@ -251,7 +270,7 @@ describe('InstitutionTransferService', () => {
     });
   });
 
-  describe('transfer - account checks', () => {
+  describe('prepareTransfer - account checks', () => {
     it('should return 404 when source account not found', async () => {
       prismaStub.institutionAccount.findUnique
         .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
@@ -260,7 +279,7 @@ describe('InstitutionTransferService', () => {
         .resolves(makeAccount(TO_ACCOUNT_ID));
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('Source account not found');
@@ -276,7 +295,7 @@ describe('InstitutionTransferService', () => {
         .resolves(null);
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('Destination account not found');
@@ -292,7 +311,7 @@ describe('InstitutionTransferService', () => {
         .resolves(makeAccount(TO_ACCOUNT_ID));
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('does not belong to your institution');
@@ -308,7 +327,7 @@ describe('InstitutionTransferService', () => {
         .resolves(makeAccount(TO_ACCOUNT_ID, { clientId: 'other-client' }));
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('does not belong to your institution');
@@ -324,7 +343,7 @@ describe('InstitutionTransferService', () => {
         .resolves(makeAccount(TO_ACCOUNT_ID));
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('Source account is not verified');
@@ -340,7 +359,7 @@ describe('InstitutionTransferService', () => {
         .resolves(makeAccount(TO_ACCOUNT_ID, { isActive: false }));
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('Destination account is not verified or active');
@@ -349,7 +368,7 @@ describe('InstitutionTransferService', () => {
     });
   });
 
-  describe('transfer - signer validation', () => {
+  describe('prepareTransfer - signer validation', () => {
     it('should reject signer not associated with institution', async () => {
       prismaStub.institutionAccount.findUnique
         .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
@@ -359,7 +378,7 @@ describe('InstitutionTransferService', () => {
       prismaStub.institutionWallet.findFirst.resolves(null);
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('not associated with your institution');
@@ -368,7 +387,7 @@ describe('InstitutionTransferService', () => {
     });
   });
 
-  describe('transfer - token validation', () => {
+  describe('prepareTransfer - token validation', () => {
     it('should reject unsupported token', async () => {
       prismaStub.institutionAccount.findUnique
         .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
@@ -379,7 +398,7 @@ describe('InstitutionTransferService', () => {
       prismaStub.institutionApprovedToken.findFirst.resolves(null);
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams({ tokenSymbol: 'FAKECOIN' }));
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams({ tokenSymbol: 'FAKECOIN' }));
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('not supported');
@@ -388,7 +407,7 @@ describe('InstitutionTransferService', () => {
     });
   });
 
-  describe('transfer - signature verification', () => {
+  describe('prepareTransfer - signature verification', () => {
     it('should reject invalid signature', async () => {
       prismaStub.institutionAccount.findUnique
         .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
@@ -401,7 +420,7 @@ describe('InstitutionTransferService', () => {
       const badSig = Buffer.from(new Uint8Array(64)).toString('base64');
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams({ walletSignature: badSig }));
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams({ walletSignature: badSig }));
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('signature verification failed');
@@ -422,54 +441,16 @@ describe('InstitutionTransferService', () => {
       const oldTimestamp = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams({ timestamp: oldTimestamp }));
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams({ timestamp: oldTimestamp }));
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('expired');
         expect(err.status).to.equal(400);
       }
     });
-
-    it('should accept valid signature with current timestamp', async () => {
-      prismaStub.institutionAccount.findUnique
-        .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
-        .resolves(makeAccount(FROM_ACCOUNT_ID))
-        .withArgs(sinon.match({ where: { id: TO_ACCOUNT_ID } }))
-        .resolves(makeAccount(TO_ACCOUNT_ID));
-      prismaStub.institutionWallet.findFirst.resolves({ id: 'w1', address: SIGNER_PUBKEY });
-      prismaStub.institutionApprovedToken.findFirst.resolves(VALID_TOKEN);
-      prismaStub.institutionTransfer.findFirst.resolves(null);
-      prismaStub.institutionTransfer.create.resolves({
-        id: 'txf-001',
-        transferCode: 'TXF-ABC-DEF',
-        createdAt: new Date(),
-      });
-      prismaStub.institutionTransfer.update.resolves({});
-      prismaStub.institutionAuditLog.create.resolves({});
-
-      // Mock balance (1000 USDC)
-      const balanceData = Buffer.alloc(165);
-      balanceData.writeBigUInt64LE(BigInt(1000_000000), 64);
-      connectionStub.getTokenAccountsByOwner.resolves({
-        value: [{ account: { data: balanceData } }],
-      });
-
-      // Stub executeOnChainTransfer to avoid real Solana calls
-      sandbox.stub(service as any, 'executeOnChainTransfer').resolves('fakesig123');
-
-      const params = buildSignedTransferParams();
-      const result = await service.transfer(CLIENT_ID, params);
-
-      expect(result.status).to.equal('completed');
-      expect(result.fromAccountId).to.equal(FROM_ACCOUNT_ID);
-      expect(result.toAccountId).to.equal(TO_ACCOUNT_ID);
-      expect(result.tokenSymbol).to.equal('USDC');
-      expect(result.amount).to.equal(100);
-      expect(result.txSignature).to.equal('fakesig123');
-    });
   });
 
-  describe('transfer - idempotency', () => {
+  describe('prepareTransfer - idempotency', () => {
     it('should reject duplicate transfer within 60 seconds', async () => {
       prismaStub.institutionAccount.findUnique
         .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
@@ -484,7 +465,7 @@ describe('InstitutionTransferService', () => {
       });
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('already in progress');
@@ -493,7 +474,7 @@ describe('InstitutionTransferService', () => {
     });
   });
 
-  describe('transfer - balance check', () => {
+  describe('prepareTransfer - balance check', () => {
     it('should reject when source has insufficient balance', async () => {
       prismaStub.institutionAccount.findUnique
         .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
@@ -512,7 +493,7 @@ describe('InstitutionTransferService', () => {
       });
 
       try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
+        await service.prepareTransfer(CLIENT_ID, buildSignedTransferParams());
         expect.fail('Should have thrown');
       } catch (err: any) {
         expect(err.message).to.include('Insufficient');
@@ -521,59 +502,30 @@ describe('InstitutionTransferService', () => {
     });
   });
 
-  describe('transfer - on-chain failure', () => {
-    it('should mark transfer as failed and create audit log on tx error', async () => {
-      prismaStub.institutionAccount.findUnique
-        .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
-        .resolves(makeAccount(FROM_ACCOUNT_ID))
-        .withArgs(sinon.match({ where: { id: TO_ACCOUNT_ID } }))
-        .resolves(makeAccount(TO_ACCOUNT_ID));
-      prismaStub.institutionWallet.findFirst.resolves({ id: 'w1', address: SIGNER_PUBKEY });
-      prismaStub.institutionApprovedToken.findFirst.resolves(VALID_TOKEN);
-      prismaStub.institutionTransfer.findFirst.resolves(null);
-      prismaStub.institutionTransfer.create.resolves({
-        id: 'txf-fail-001',
-        transferCode: 'TXF-FAI-L01',
-        createdAt: new Date(),
-      });
-      prismaStub.institutionTransfer.update.resolves({});
-      prismaStub.institutionAuditLog.create.resolves({});
+  describe('prepareTransfer - successful flow', () => {
+    it('should return transaction, transferCode, and expiresAt', async () => {
+      setupPassingStubs();
 
-      // Mock sufficient balance
-      const balanceData = Buffer.alloc(165);
-      balanceData.writeBigUInt64LE(BigInt(1000_000000), 64);
-      connectionStub.getTokenAccountsByOwner.resolves({
-        value: [{ account: { data: balanceData } }],
-      });
-
-      // Stub executeOnChainTransfer to simulate failure
+      // Stub buildTransferTransaction to avoid real Solana calls
       sandbox
-        .stub(service as any, 'executeOnChainTransfer')
-        .rejects(new Error('Simulation failed: custom error'));
+        .stub(service as any, 'buildTransferTransaction')
+        .resolves('base64-serialized-tx-data');
 
-      try {
-        await service.transfer(CLIENT_ID, buildSignedTransferParams());
-        expect.fail('Should have thrown');
-      } catch (err: any) {
-        expect(err.message).to.include('On-chain transfer failed');
-        expect(err.status).to.equal(400);
-      }
+      const params = buildSignedTransferParams();
+      const result = await service.prepareTransfer(CLIENT_ID, params);
 
-      // Verify the transfer was marked as failed
-      expect(prismaStub.institutionTransfer.update.calledOnce).to.be.true;
-      const updateCall = prismaStub.institutionTransfer.update.firstCall.args[0];
-      expect(updateCall.data.status).to.equal('failed');
-      expect(updateCall.data.failureReason).to.include('Simulation failed');
-
-      // Verify audit log was created
-      expect(prismaStub.institutionAuditLog.create.calledOnce).to.be.true;
-      const auditCall = prismaStub.institutionAuditLog.create.firstCall.args[0];
-      expect(auditCall.data.action).to.equal('TRANSFER_FAILED');
+      expect(result.transferCode).to.be.a('string');
+      expect(result.transaction).to.equal('base64-serialized-tx-data');
+      expect(result.expiresAt).to.be.a('string');
+      expect(result.fromAccountId).to.equal(FROM_ACCOUNT_ID);
+      expect(result.toAccountId).to.equal(TO_ACCOUNT_ID);
+      expect(result.tokenSymbol).to.equal('USDC');
+      expect(result.amount).to.equal(100);
+      expect(result.fromAccountLabel).to.be.a('string');
+      expect(result.toAccountLabel).to.be.a('string');
     });
-  });
 
-  describe('transfer - successful flow', () => {
-    it('should return complete receipt with account labels', async () => {
+    it('should return account labels from prepare', async () => {
       prismaStub.institutionAccount.findUnique
         .withArgs(sinon.match({ where: { id: FROM_ACCOUNT_ID } }))
         .resolves(makeAccount(FROM_ACCOUNT_ID, { label: 'Treasury Singapore' }))
@@ -582,27 +534,23 @@ describe('InstitutionTransferService', () => {
       prismaStub.institutionWallet.findFirst.resolves({ id: 'w1', address: SIGNER_PUBKEY });
       prismaStub.institutionApprovedToken.findFirst.resolves(VALID_TOKEN);
       prismaStub.institutionTransfer.findFirst.resolves(null);
-
-      const now = new Date();
       prismaStub.institutionTransfer.create.resolves({
         id: 'txf-ok',
         transferCode: 'TXF-OK1-234',
-        createdAt: now,
+        createdAt: new Date(),
       });
-      prismaStub.institutionTransfer.update.resolves({});
       prismaStub.institutionAuditLog.create.resolves({});
 
-      // Mock sufficient balance
       const balanceData = Buffer.alloc(165);
       balanceData.writeBigUInt64LE(BigInt(5000_000000), 64);
       connectionStub.getTokenAccountsByOwner.resolves({
         value: [{ account: { data: balanceData } }],
       });
 
-      // Stub executeOnChainTransfer
-      sandbox.stub(service as any, 'executeOnChainTransfer').resolves('tx-sig-receipt-abc');
+      sandbox
+        .stub(service as any, 'buildTransferTransaction')
+        .resolves('base64-tx');
 
-      // Build signature with the right labels
       const timestamp = new Date().toISOString();
       const message = [
         'EasyEscrow Internal Transfer',
@@ -613,7 +561,7 @@ describe('InstitutionTransferService', () => {
       ].join('\n');
       const sig = signMessage(message);
 
-      const result = await service.transfer(CLIENT_ID, {
+      const result = await service.prepareTransfer(CLIENT_ID, {
         fromAccountId: FROM_ACCOUNT_ID,
         toAccountId: TO_ACCOUNT_ID,
         tokenSymbol: 'USDC',
@@ -621,23 +569,232 @@ describe('InstitutionTransferService', () => {
         walletSignature: sig,
         signerPublicKey: SIGNER_PUBKEY,
         timestamp,
-        note: 'Quarterly rebalance',
       });
 
       expect(result.fromAccountLabel).to.equal('Treasury Singapore');
       expect(result.toAccountLabel).to.equal('Operations Dubai');
-      expect(result.tokenSymbol).to.equal('USDC');
-      expect(result.amount).to.equal(250);
-      expect(result.status).to.equal('completed');
-      expect(result.txSignature).to.be.a('string');
-      expect(result.createdAt).to.equal(now.toISOString());
 
-      // Verify audit log recorded completion
+      // Verify TRANSFER_PREPARED audit log
+      const auditCalls = prismaStub.institutionAuditLog.create.getCalls();
+      const preparedLog = auditCalls.find(
+        (c: any) => c.args[0].data.action === 'TRANSFER_PREPARED'
+      );
+      expect(preparedLog).to.exist;
+    });
+  });
+
+  // ─── submitTransfer ───────────────────────────────────────────────
+
+  describe('submitTransfer - happy path', () => {
+    it('should complete a pending transfer with valid txSignature', async () => {
+      const now = new Date();
+      prismaStub.institutionTransfer.findFirst.resolves({
+        id: 'txf-001',
+        transferCode: 'TXF-OK1-234',
+        clientId: CLIENT_ID,
+        fromAccountId: FROM_ACCOUNT_ID,
+        toAccountId: TO_ACCOUNT_ID,
+        tokenSymbol: 'USDC',
+        amount: 100,
+        signerPublicKey: SIGNER_PUBKEY,
+        status: 'pending',
+        expiresAt: new Date(Date.now() + 60_000), // not expired
+        createdAt: now,
+        fromAccount: makeAccount(FROM_ACCOUNT_ID),
+        toAccount: makeAccount(TO_ACCOUNT_ID),
+      });
+      prismaStub.institutionTransfer.update.resolves({});
+      prismaStub.institutionAuditLog.create.resolves({});
+      connectionStub.getTransaction.resolves({ meta: { err: null } });
+
+      const result = await service.submitTransfer(CLIENT_ID, {
+        transferCode: 'TXF-OK1-234',
+        txSignature: 'realSolanaSignature123',
+      });
+
+      expect(result.status).to.equal('completed');
+      expect(result.txSignature).to.equal('realSolanaSignature123');
+      expect(result.transferCode).to.equal('TXF-OK1-234');
+      expect(result.amount).to.equal(100);
+
+      // Verify DB update
+      expect(prismaStub.institutionTransfer.update.calledOnce).to.be.true;
+      const updateCall = prismaStub.institutionTransfer.update.firstCall.args[0];
+      expect(updateCall.data.status).to.equal('completed');
+      expect(updateCall.data.txSignature).to.equal('realSolanaSignature123');
+
+      // Verify TRANSFER_COMPLETED audit log
       const auditCalls = prismaStub.institutionAuditLog.create.getCalls();
       const completedLog = auditCalls.find(
         (c: any) => c.args[0].data.action === 'TRANSFER_COMPLETED'
       );
       expect(completedLog).to.exist;
+    });
+  });
+
+  describe('submitTransfer - error cases', () => {
+    it('should return 404 when transfer not found', async () => {
+      prismaStub.institutionTransfer.findFirst.resolves(null);
+
+      try {
+        await service.submitTransfer(CLIENT_ID, {
+          transferCode: 'TXF-NON-EXI',
+          txSignature: 'sig123',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('Transfer not found');
+        expect(err.status).to.equal(404);
+      }
+    });
+
+    it('should return 410 when transfer has expired', async () => {
+      prismaStub.institutionTransfer.findFirst.resolves({
+        id: 'txf-exp',
+        transferCode: 'TXF-EXP-001',
+        clientId: CLIENT_ID,
+        status: 'pending',
+        expiresAt: new Date(Date.now() - 60_000), // already expired
+        fromAccount: makeAccount(FROM_ACCOUNT_ID),
+        toAccount: makeAccount(TO_ACCOUNT_ID),
+      });
+      prismaStub.institutionTransfer.update.resolves({});
+
+      try {
+        await service.submitTransfer(CLIENT_ID, {
+          transferCode: 'TXF-EXP-001',
+          txSignature: 'sig123',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('expired');
+        expect(err.status).to.equal(410);
+      }
+
+      // Verify status was updated to 'expired'
+      expect(prismaStub.institutionTransfer.update.calledOnce).to.be.true;
+      const updateCall = prismaStub.institutionTransfer.update.firstCall.args[0];
+      expect(updateCall.data.status).to.equal('expired');
+    });
+
+    it('should return 404 when tx not found on-chain', async () => {
+      prismaStub.institutionTransfer.findFirst.resolves({
+        id: 'txf-nf',
+        transferCode: 'TXF-NF1-234',
+        clientId: CLIENT_ID,
+        status: 'pending',
+        expiresAt: new Date(Date.now() + 60_000),
+        fromAccount: makeAccount(FROM_ACCOUNT_ID),
+        toAccount: makeAccount(TO_ACCOUNT_ID),
+      });
+      connectionStub.getTransaction.resolves(null);
+
+      try {
+        await service.submitTransfer(CLIENT_ID, {
+          transferCode: 'TXF-NF1-234',
+          txSignature: 'nonexistentSig',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('not found or not yet confirmed');
+        expect(err.status).to.equal(404);
+      }
+    });
+
+    it('should mark failed when tx has on-chain error', async () => {
+      prismaStub.institutionTransfer.findFirst.resolves({
+        id: 'txf-fail',
+        transferCode: 'TXF-FAI-L01',
+        clientId: CLIENT_ID,
+        fromAccountId: FROM_ACCOUNT_ID,
+        toAccountId: TO_ACCOUNT_ID,
+        tokenSymbol: 'USDC',
+        amount: 100,
+        signerPublicKey: SIGNER_PUBKEY,
+        status: 'pending',
+        expiresAt: new Date(Date.now() + 60_000),
+        fromAccount: makeAccount(FROM_ACCOUNT_ID),
+        toAccount: makeAccount(TO_ACCOUNT_ID),
+      });
+      prismaStub.institutionTransfer.update.resolves({});
+      prismaStub.institutionAuditLog.create.resolves({});
+      connectionStub.getTransaction.resolves({
+        meta: { err: { InstructionError: [0, 'InvalidAccountData'] } },
+      });
+
+      try {
+        await service.submitTransfer(CLIENT_ID, {
+          transferCode: 'TXF-FAI-L01',
+          txSignature: 'failedSig456',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('failed on-chain');
+        expect(err.status).to.equal(400);
+      }
+
+      // Verify transfer was marked failed
+      expect(prismaStub.institutionTransfer.update.calledOnce).to.be.true;
+      const updateCall = prismaStub.institutionTransfer.update.firstCall.args[0];
+      expect(updateCall.data.status).to.equal('failed');
+      expect(updateCall.data.failureReason).to.include('InvalidAccountData');
+
+      // Verify TRANSFER_FAILED audit log
+      const auditCalls = prismaStub.institutionAuditLog.create.getCalls();
+      const failedLog = auditCalls.find(
+        (c: any) => c.args[0].data.action === 'TRANSFER_FAILED'
+      );
+      expect(failedLog).to.exist;
+    });
+
+    it('should return already-completed transfer idempotently', async () => {
+      prismaStub.institutionTransfer.findFirst.resolves({
+        id: 'txf-done',
+        transferCode: 'TXF-DON-E01',
+        clientId: CLIENT_ID,
+        fromAccountId: FROM_ACCOUNT_ID,
+        toAccountId: TO_ACCOUNT_ID,
+        tokenSymbol: 'USDC',
+        amount: 100,
+        signerPublicKey: SIGNER_PUBKEY,
+        txSignature: 'existingSig789',
+        status: 'completed',
+        createdAt: new Date(),
+        fromAccount: makeAccount(FROM_ACCOUNT_ID),
+        toAccount: makeAccount(TO_ACCOUNT_ID),
+      });
+
+      const result = await service.submitTransfer(CLIENT_ID, {
+        transferCode: 'TXF-DON-E01',
+        txSignature: 'existingSig789',
+      });
+
+      expect(result.status).to.equal('completed');
+      expect(result.txSignature).to.equal('existingSig789');
+      // No DB update should have been called
+      expect(prismaStub.institutionTransfer.update.called).to.be.false;
+    });
+
+    it('should reject non-pending transfer status', async () => {
+      prismaStub.institutionTransfer.findFirst.resolves({
+        id: 'txf-fail2',
+        transferCode: 'TXF-BAD-STA',
+        clientId: CLIENT_ID,
+        status: 'failed',
+        fromAccount: makeAccount(FROM_ACCOUNT_ID),
+        toAccount: makeAccount(TO_ACCOUNT_ID),
+      });
+
+      try {
+        await service.submitTransfer(CLIENT_ID, {
+          transferCode: 'TXF-BAD-STA',
+          txSignature: 'sig123',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.include('expected pending');
+        expect(err.status).to.equal(400);
+      }
     });
   });
 });

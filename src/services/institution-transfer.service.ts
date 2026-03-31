@@ -11,7 +11,7 @@ import {
 } from '@solana/web3.js';
 import {
   getAssociatedTokenAddress,
-  createAssociatedTokenAccountInstruction,
+  createAssociatedTokenAccountIdempotentInstruction,
   createTransferInstruction,
 } from '@solana/spl-token';
 import { config } from '../config';
@@ -23,6 +23,7 @@ import type { PrismaClient } from '../generated/prisma';
 
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const SIGNATURE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const TRANSACTION_EXPIRY_MS = 120 * 1000; // 2 minutes (Solana blockhash validity ~60-90s)
 
 function decimalToSmallestUnit(amount: number, decimals: number): bigint {
   if (amount < 0) throw new Error('Amount cannot be negative');
@@ -54,7 +55,12 @@ export class InstitutionTransferService {
     return code;
   }
 
-  async transfer(
+  /**
+   * Step 1: Validate the transfer and return a partially-signed Solana transaction.
+   * The frontend must sign with the account owner's wallet and submit to the chain,
+   * then call submitTransfer() with the resulting txSignature.
+   */
+  async prepareTransfer(
     clientId: string,
     params: {
       fromAccountId: string;
@@ -200,6 +206,7 @@ export class InstitutionTransferService {
 
     // Create transfer record
     const transferCode = this.generateTransferCode();
+    const expiresAt = new Date(Date.now() + TRANSACTION_EXPIRY_MS);
     const transfer = await this.prisma.institutionTransfer.create({
       data: {
         transferCode,
@@ -211,34 +218,125 @@ export class InstitutionTransferService {
         signerPublicKey,
         status: 'pending',
         note: note || null,
+        expiresAt,
       },
     });
 
-    // Execute on-chain transfer
-    let txSignature: string;
-    try {
-      txSignature = await this.executeOnChainTransfer(
-        fromPubkey,
-        new PublicKey(toAccount.walletAddress),
-        mint,
-        decimalToSmallestUnit(amount, approvedToken.decimals),
-        transferCode
+    // Build partially-signed transaction
+    const toWallet = new PublicKey(toAccount.walletAddress);
+    const serializedTx = await this.buildTransferTransaction(
+      fromPubkey,
+      toWallet,
+      mint,
+      decimalToSmallestUnit(amount, approvedToken.decimals),
+      transferCode
+    );
+
+    await this.createAuditLog(clientId, transfer.id, 'TRANSFER_PREPARED', signerPublicKey, {
+      transferCode,
+      fromAccountId,
+      fromLabel,
+      toAccountId,
+      toLabel,
+      tokenSymbol: normalizedSymbol,
+      amount,
+    });
+
+    return {
+      transferCode,
+      transaction: serializedTx,
+      fromAccountId,
+      fromAccountLabel: fromLabel,
+      toAccountId,
+      toAccountLabel: toLabel,
+      tokenSymbol: normalizedSymbol,
+      amount,
+      expiresAt: expiresAt.toISOString(),
+    };
+  }
+
+  /**
+   * Step 2: After the frontend signs and submits the transaction to Solana,
+   * verify the on-chain result and mark the transfer as completed.
+   */
+  async submitTransfer(
+    clientId: string,
+    params: { transferCode: string; txSignature: string }
+  ) {
+    const { transferCode, txSignature } = params;
+
+    const transfer = await this.prisma.institutionTransfer.findFirst({
+      where: { transferCode, clientId },
+      include: { fromAccount: true, toAccount: true },
+    });
+
+    if (!transfer) {
+      throw Object.assign(new Error(`Transfer not found: ${transferCode}`), { status: 404 });
+    }
+
+    if (transfer.status === 'completed') {
+      return {
+        transferCode: transfer.transferCode,
+        txSignature: transfer.txSignature,
+        status: 'completed' as const,
+        fromAccountId: transfer.fromAccountId,
+        fromAccountLabel: transfer.fromAccount.label || transfer.fromAccount.name,
+        toAccountId: transfer.toAccountId,
+        toAccountLabel: transfer.toAccount.label || transfer.toAccount.name,
+        tokenSymbol: transfer.tokenSymbol,
+        amount: Number(transfer.amount),
+        createdAt: transfer.createdAt.toISOString(),
+      };
+    }
+
+    if (transfer.status !== 'pending') {
+      throw Object.assign(
+        new Error(`Transfer ${transferCode} is ${transfer.status}, expected pending`),
+        { status: 400 }
       );
-    } catch (err) {
-      const reason = err instanceof Error ? err.message : String(err);
+    }
+
+    // Check expiry
+    if (transfer.expiresAt && new Date() > transfer.expiresAt) {
       await this.prisma.institutionTransfer.update({
         where: { id: transfer.id },
-        data: { status: 'failed', failureReason: reason },
+        data: { status: 'expired' },
       });
-      await this.createAuditLog(clientId, transfer.id, 'TRANSFER_FAILED', signerPublicKey, {
-        transferCode,
-        fromAccountId,
-        toAccountId,
-        tokenSymbol: normalizedSymbol,
-        amount,
-        reason,
+      throw Object.assign(
+        new Error(`Transfer ${transferCode} has expired — call /prepare again`),
+        { status: 410 }
+      );
+    }
+
+    // Verify on-chain
+    const txResult = await this.connection.getTransaction(txSignature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+
+    if (!txResult) {
+      throw Object.assign(
+        new Error('Transaction not found or not yet confirmed on-chain'),
+        { status: 404 }
+      );
+    }
+
+    if (txResult.meta?.err) {
+      const reason = `On-chain error: ${JSON.stringify(txResult.meta.err)}`;
+      await this.prisma.institutionTransfer.update({
+        where: { id: transfer.id },
+        data: { status: 'failed', txSignature, failureReason: reason },
       });
-      throw Object.assign(new Error(`On-chain transfer failed: ${reason}`), { status: 400 });
+      await this.createAuditLog(
+        clientId,
+        transfer.id,
+        'TRANSFER_FAILED',
+        transfer.signerPublicKey,
+        { transferCode, txSignature, reason }
+      );
+      throw Object.assign(new Error(`Transfer transaction failed on-chain: ${reason}`), {
+        status: 400,
+      });
     }
 
     // Mark completed
@@ -247,30 +345,94 @@ export class InstitutionTransferService {
       data: { status: 'completed', txSignature },
     });
 
-    // Audit log
-    await this.createAuditLog(clientId, transfer.id, 'TRANSFER_COMPLETED', signerPublicKey, {
-      transferCode,
-      fromAccountId,
-      fromLabel,
-      toAccountId,
-      toLabel,
-      tokenSymbol: normalizedSymbol,
-      amount,
-      txSignature,
-    });
+    const fromLabel = transfer.fromAccount.label || transfer.fromAccount.name;
+    const toLabel = transfer.toAccount.label || transfer.toAccount.name;
+
+    await this.createAuditLog(
+      clientId,
+      transfer.id,
+      'TRANSFER_COMPLETED',
+      transfer.signerPublicKey,
+      {
+        transferCode,
+        fromAccountId: transfer.fromAccountId,
+        fromLabel,
+        toAccountId: transfer.toAccountId,
+        toLabel,
+        tokenSymbol: transfer.tokenSymbol,
+        amount: Number(transfer.amount),
+        txSignature,
+      }
+    );
 
     return {
-      id: transferCode,
-      fromAccountId,
-      fromAccountLabel: fromLabel,
-      toAccountId,
-      toAccountLabel: toLabel,
-      tokenSymbol: normalizedSymbol,
-      amount,
+      transferCode: transfer.transferCode,
       txSignature,
       status: 'completed' as const,
+      fromAccountId: transfer.fromAccountId,
+      fromAccountLabel: fromLabel,
+      toAccountId: transfer.toAccountId,
+      toAccountLabel: toLabel,
+      tokenSymbol: transfer.tokenSymbol,
+      amount: Number(transfer.amount),
       createdAt: transfer.createdAt.toISOString(),
     };
+  }
+
+  /**
+   * Build a Solana transaction for the SPL token transfer.
+   * Admin partially signs as fee payer; the account owner must sign as transfer authority.
+   */
+  private async buildTransferTransaction(
+    fromWallet: PublicKey,
+    toWallet: PublicKey,
+    mint: PublicKey,
+    amountSmallest: bigint,
+    transferCode: string
+  ): Promise<string> {
+    const transaction = new Transaction();
+
+    // Source ATA (must exist since we verified balance)
+    const sourceAta = await getAssociatedTokenAddress(mint, fromWallet);
+
+    // Destination ATA (create idempotently — admin pays rent if needed)
+    const destAta = await getAssociatedTokenAddress(mint, toWallet);
+    transaction.add(
+      createAssociatedTokenAccountIdempotentInstruction(
+        this.adminKeypair.publicKey, // payer
+        destAta,
+        toWallet, // owner
+        mint
+      )
+    );
+
+    // SPL transfer — fromWallet is the authority (account owner signs this)
+    transaction.add(
+      createTransferInstruction(
+        sourceAta,
+        destAta,
+        fromWallet, // authority = account owner, NOT admin
+        amountSmallest
+      )
+    );
+
+    // Memo — admin signs as memo signer (already signing as fee payer)
+    transaction.add(
+      new TransactionInstruction({
+        keys: [{ pubkey: this.adminKeypair.publicKey, isSigner: true, isWritable: false }],
+        programId: MEMO_PROGRAM_ID,
+        data: Buffer.from(`EasyEscrow:transfer:${transferCode}`, 'utf-8'),
+      })
+    );
+
+    // Admin partially signs as fee payer
+    transaction.feePayer = this.adminKeypair.publicKey;
+    const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.partialSign(this.adminKeypair);
+
+    // Serialize without requiring all signatures (account owner hasn't signed yet)
+    return transaction.serialize({ requireAllSignatures: false }).toString('base64');
   }
 
   private verifyWalletSignature(
@@ -346,94 +508,6 @@ export class InstitutionTransferService {
     } catch {
       return 0;
     }
-  }
-
-  private async getOrCreateAta(
-    mint: PublicKey,
-    owner: PublicKey,
-    payer: PublicKey
-  ): Promise<{ address: PublicKey; instruction?: TransactionInstruction }> {
-    const ata = await getAssociatedTokenAddress(mint, owner);
-    try {
-      const account = await this.connection.getAccountInfo(ata);
-      if (account) return { address: ata };
-    } catch {
-      // Account doesn't exist
-    }
-    const instruction = createAssociatedTokenAccountInstruction(payer, ata, owner, mint);
-    return { address: ata, instruction };
-  }
-
-  private async executeOnChainTransfer(
-    fromWallet: PublicKey,
-    toWallet: PublicKey,
-    mint: PublicKey,
-    amountSmallest: bigint,
-    transferCode: string
-  ): Promise<string> {
-    const transaction = new Transaction();
-
-    // Source ATA (must exist since we verified balance)
-    const sourceAta = await getAssociatedTokenAddress(mint, fromWallet);
-
-    // Destination ATA (create if needed)
-    const destAtaResult = await this.getOrCreateAta(mint, toWallet, this.adminKeypair.publicKey);
-    if (destAtaResult.instruction) {
-      transaction.add(destAtaResult.instruction);
-    }
-
-    // SPL transfer — admin is the authority (custodial model)
-    transaction.add(
-      createTransferInstruction(
-        sourceAta,
-        destAtaResult.address,
-        this.adminKeypair.publicKey,
-        amountSmallest
-      )
-    );
-
-    // Memo
-    transaction.add(
-      new TransactionInstruction({
-        keys: [{ pubkey: this.adminKeypair.publicKey, isSigner: true, isWritable: false }],
-        programId: MEMO_PROGRAM_ID,
-        data: Buffer.from(`EasyEscrow:transfer:${transferCode}`, 'utf-8'),
-      })
-    );
-
-    // Sign and submit
-    transaction.feePayer = this.adminKeypair.publicKey;
-    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash(
-      'confirmed'
-    );
-    transaction.recentBlockhash = blockhash;
-    transaction.sign(this.adminKeypair);
-
-    const rawTx = transaction.serialize();
-    const isDevnet = process.env.NODE_ENV !== 'production';
-    const txSignature = await this.connection.sendRawTransaction(rawTx, {
-      skipPreflight: isDevnet,
-      maxRetries: 3,
-    });
-
-    await this.connection.confirmTransaction(
-      { signature: txSignature, blockhash, lastValidBlockHeight },
-      'confirmed'
-    );
-
-    // Verify on-chain success
-    const txResult = await this.connection.getTransaction(txSignature, {
-      commitment: 'confirmed',
-      maxSupportedTransactionVersion: 0,
-    });
-    if (txResult?.meta?.err) {
-      throw new Error(
-        `Transaction confirmed but failed on-chain: ${JSON.stringify(txResult.meta.err)}`
-      );
-    }
-
-    logger.info('Internal transfer submitted', { transferCode, txSignature });
-    return txSignature;
   }
 
   private async createAuditLog(

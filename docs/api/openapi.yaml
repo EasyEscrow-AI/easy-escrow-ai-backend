@@ -3858,14 +3858,16 @@ paths:
 
   # ── Institution Account Transfers ──────────────────────────────────
 
-  /api/v1/institution/accounts/transfer:
+  /api/v1/institution/accounts/transfer/prepare:
     post:
       tags:
         - Institution Account Transfers
-      summary: Internal account transfer
+      summary: Prepare internal account transfer
       description: |
-        Move SPL tokens between two accounts belonging to the same institution.
-        Requires a wallet-signed message for verification.
+        Validate the transfer, build a Solana transaction with admin as fee payer,
+        and return the partially-signed transaction for the account owner to sign.
+        The frontend must sign with the account owner's wallet, submit to Solana,
+        then call /submit with the resulting txSignature.
       security:
         - InstitutionBearerAuth: []
       requestBody:
@@ -3911,6 +3913,58 @@ paths:
                   description: Optional memo
       responses:
         '200':
+          description: Transfer prepared — partially-signed transaction returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TransferPrepareResponse'
+                  timestamp:
+                    type: string
+        '400':
+          description: Validation error, insufficient balance, or signature verification failed
+        '403':
+          description: Account does not belong to authenticated institution
+        '404':
+          description: Account not found
+        '409':
+          description: Transfer already in progress
+
+  /api/v1/institution/accounts/transfer/submit:
+    post:
+      tags:
+        - Institution Account Transfers
+      summary: Submit signed transfer transaction
+      description: |
+        After the account owner signs the prepared transaction and submits it to Solana,
+        call this endpoint with the transfer code and on-chain transaction signature
+        to finalize the transfer record.
+      security:
+        - InstitutionBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transferCode
+                - txSignature
+              properties:
+                transferCode:
+                  type: string
+                  description: Transfer code returned by /prepare
+                  example: TXF-A3K-9NZ
+                txSignature:
+                  type: string
+                  description: On-chain transaction signature (base58)
+      responses:
+        '200':
           description: Transfer completed
           content:
             application/json:
@@ -3925,13 +3979,11 @@ paths:
                   timestamp:
                     type: string
         '400':
-          description: Validation error, insufficient balance, or signature verification failed
-        '403':
-          description: Account does not belong to authenticated institution
+          description: Transaction failed on-chain or transfer in wrong status
         '404':
-          description: Account not found
-        '409':
-          description: Transfer already in progress
+          description: Transfer not found or transaction not yet confirmed
+        '410':
+          description: Transfer expired — call /prepare again
 
   # ── Institution Accounts ─────────────────────────────────────────────
 
@@ -5667,10 +5719,41 @@ components:
 
   schemas:
     # Transfer schemas
+    TransferPrepareResponse:
+      type: object
+      properties:
+        transferCode:
+          type: string
+          description: Transfer code (TXF-XXX-XXX)
+          example: TXF-A3K-9NZ
+        transaction:
+          type: string
+          description: Base64-encoded partially-signed Solana transaction
+        fromAccountId:
+          type: string
+        fromAccountLabel:
+          type: string
+          description: Human-readable source account name
+        toAccountId:
+          type: string
+        toAccountLabel:
+          type: string
+          description: Human-readable destination account name
+        tokenSymbol:
+          type: string
+          example: USDC
+        amount:
+          type: number
+          example: 500.00
+        expiresAt:
+          type: string
+          format: date-time
+          description: Transaction expires after this time (blockhash validity ~2 min)
+
     TransferReceipt:
       type: object
       properties:
-        id:
+        transferCode:
           type: string
           description: Transfer code (TXF-XXX-XXX)
           example: TXF-A3K-9NZ
@@ -5695,7 +5778,7 @@ components:
           description: On-chain transaction signature (base58)
         status:
           type: string
-          enum: [completed, pending]
+          enum: [completed]
         createdAt:
           type: string
           format: date-time

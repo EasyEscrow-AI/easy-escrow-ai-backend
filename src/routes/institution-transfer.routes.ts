@@ -18,11 +18,13 @@ const strictRateLimiter = rateLimit({
 });
 
 /**
- * POST /api/v1/institution/accounts/transfer
- * Internal SPL token transfer between two accounts of the same institution.
+ * POST /api/v1/institution/accounts/transfer/prepare
+ * Validate the transfer, build a Solana transaction, and return it partially signed.
+ * The frontend must sign with the account owner's wallet, submit to Solana,
+ * then call /submit with the txSignature.
  */
 router.post(
-  '/api/v1/institution/accounts/transfer',
+  '/api/v1/institution/accounts/transfer/prepare',
   strictRateLimiter,
   requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
@@ -74,7 +76,7 @@ router.post(
       }
 
       const service = getInstitutionTransferService();
-      const result = await service.transfer(clientId, {
+      const result = await service.prepareTransfer(clientId, {
         fromAccountId,
         toAccountId,
         tokenSymbol,
@@ -93,7 +95,50 @@ router.post(
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       const status = (error as any)?.status || 500;
-      logger.error('Account transfer failed', { error: message });
+      logger.error('Transfer prepare failed', { error: message });
+      res.status(status).json({
+        error: status === 500 ? 'Internal Error' : 'Transfer Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/v1/institution/accounts/transfer/submit
+ * After signing and submitting the transaction to Solana,
+ * call this endpoint with the transferCode and txSignature to finalize.
+ */
+router.post(
+  '/api/v1/institution/accounts/transfer/submit',
+  strictRateLimiter,
+  requireInstitutionOrAdminAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const clientId = req.institutionClient!.clientId;
+      const { transferCode, txSignature } = req.body;
+
+      if (!transferCode || !txSignature) {
+        return res.status(400).json({
+          error: 'Validation Error',
+          message: 'Missing required fields: transferCode, txSignature',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      const service = getInstitutionTransferService();
+      const result = await service.submitTransfer(clientId, { transferCode, txSignature });
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = (error as any)?.status || 500;
+      logger.error('Transfer submit failed', { error: message });
       res.status(status).json({
         error: status === 500 ? 'Internal Error' : 'Transfer Error',
         message,
