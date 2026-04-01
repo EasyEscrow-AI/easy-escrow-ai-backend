@@ -318,6 +318,7 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     memo?: string;
     rentPayer?: PublicKey;
+    stealthRecipient?: PublicKey;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -351,7 +352,7 @@ export class InstitutionEscrowProgramService {
     }
 
     const ix = await (this.program.methods as any)
-      .releaseInstitutionEscrow(escrowIdArray)
+      .releaseInstitutionEscrow(escrowIdArray, params.stealthRecipient || null)
       .accounts({
         authority: params.authority,
         escrowState: escrowPda,
@@ -521,6 +522,7 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     escrowCode?: string;
     aiDigest?: string;
+    stealthRecipient?: PublicKey;
   }): Promise<string> {
     let memo: string | undefined;
     if (params.escrowCode) {
@@ -602,6 +604,7 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     escrowCode?: string;
     aiDigest?: string;
+    stealthRecipient?: PublicKey;
   }): Promise<string> {
     let memo: string | undefined;
     if (params.escrowCode) {

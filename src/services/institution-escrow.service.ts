@@ -2128,6 +2128,13 @@ export class InstitutionEscrowService {
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         const aiDigest = buildAiDigest(aiAnalysisForMemo);
 
+        // When stealth privacy is active, the on-chain program needs the stealth
+        // recipient passed as instruction data so it can validate the token account
+        // owner (the original recipient stored on-chain won't match).
+        const onChainStealthRecipient = actualPrivacyLevel === PrivacyLevel.STEALTH
+          ? toPublicKey(releaseRecipient, 'stealthRecipient')
+          : undefined;
+
         if (useCdpRelease) {
           // CDP multi-sign path: admin as fee payer, CDP as settlement authority
           const cdpPubkey = await getCdpSettlementService().getPublicKey();
@@ -2139,6 +2146,7 @@ export class InstitutionEscrowService {
             usdcMint,
             escrowCode: escrow.escrowCode,
             aiDigest,
+            stealthRecipient: onChainStealthRecipient,
           });
           await this.createKytAuditLog(escrow, 'CDP_POLICY_CHECK', 'CDP Settlement Authority', {
             passed: true,
@@ -2154,6 +2162,7 @@ export class InstitutionEscrowService {
             usdcMint,
             escrowCode: escrow.escrowCode,
             aiDigest,
+            stealthRecipient: onChainStealthRecipient,
           });
         }
         console.log(

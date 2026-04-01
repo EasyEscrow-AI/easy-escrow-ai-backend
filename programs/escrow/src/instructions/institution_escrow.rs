@@ -135,11 +135,12 @@ pub struct ReleaseInstitutionEscrow<'info> {
     )]
     pub token_vault: Account<'info, TokenAccount>,
 
-    /// Recipient's USDC token account (receives escrow amount)
+    /// Recipient's USDC token account (receives escrow amount).
+    /// Owner is validated in the handler body — either escrow_state.recipient (standard)
+    /// or stealth_recipient (when stealth privacy is enabled).
     #[account(
         mut,
         constraint = recipient_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
-        constraint = recipient_token_account.owner == escrow_state.recipient @ EscrowError::InstitutionUnauthorized,
     )]
     pub recipient_token_account: Account<'info, TokenAccount>,
 
@@ -336,9 +337,19 @@ pub fn deposit_institution_escrow(
 pub fn release_institution_escrow(
     ctx: Context<ReleaseInstitutionEscrow>,
     escrow_id: [u8; 32],
+    stealth_recipient: Option<Pubkey>,
 ) -> Result<()> {
     let clock = Clock::get()?;
     let escrow_state = &ctx.accounts.escrow_state;
+
+    // Validate recipient: use stealth_recipient if provided (settlement authority
+    // approves the stealth destination by signing this transaction), otherwise
+    // enforce the original recipient stored at init time.
+    let expected_recipient = stealth_recipient.unwrap_or(escrow_state.recipient);
+    require!(
+        ctx.accounts.recipient_token_account.owner == expected_recipient,
+        EscrowError::InstitutionUnauthorized
+    );
 
     let amount = escrow_state.amount;
     let platform_fee = escrow_state.platform_fee;
