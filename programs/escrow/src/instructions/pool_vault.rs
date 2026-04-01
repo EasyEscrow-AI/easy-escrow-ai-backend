@@ -104,7 +104,8 @@ pub struct ReleasePoolMember<'info> {
         seeds = [PoolVault::SEED_PREFIX, pool_id.as_ref()],
         bump = pool_vault.bump,
         has_one = authority @ EscrowError::Unauthorized,
-        constraint = pool_vault.status == PoolVaultStatus::Active
+        constraint = pool_vault.status == PoolVaultStatus::Created
+            || pool_vault.status == PoolVaultStatus::Active
             || pool_vault.status == PoolVaultStatus::Settling
             @ EscrowError::PoolVaultNotActive,
     )]
@@ -419,31 +420,32 @@ pub fn handle_release_pool_member(
         EscrowError::PoolVaultExpired
     );
 
-    require!(amount > 0, EscrowError::PoolInvalidAmount);
-
     let bump = pool_vault.bump;
 
-    // PDA-signed transfer from vault to recipient
-    let signer_seeds: &[&[&[u8]]] = &[&[
-        PoolVault::SEED_PREFIX,
-        pool_id.as_ref(),
-        &[bump],
-    ]];
+    // Transfer from pool vault to recipient (skip if amount == 0 for receipt-only mode,
+    // where funds were already released from individual escrow vaults)
+    if amount > 0 {
+        let signer_seeds: &[&[&[u8]]] = &[&[
+            PoolVault::SEED_PREFIX,
+            pool_id.as_ref(),
+            &[bump],
+        ]];
 
-    transfer_checked(
-        CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            TransferChecked {
-                from: ctx.accounts.vault_token_account.to_account_info(),
-                to: ctx.accounts.recipient_token_account.to_account_info(),
-                authority: ctx.accounts.pool_vault.to_account_info(),
-                mint: ctx.accounts.mint.to_account_info(),
-            },
-            signer_seeds,
-        ),
-        amount,
-        ctx.accounts.mint.decimals,
-    )?;
+        transfer_checked(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                TransferChecked {
+                    from: ctx.accounts.vault_token_account.to_account_info(),
+                    to: ctx.accounts.recipient_token_account.to_account_info(),
+                    authority: ctx.accounts.pool_vault.to_account_info(),
+                    mint: ctx.accounts.mint.to_account_info(),
+                },
+                signer_seeds,
+            ),
+            amount,
+            ctx.accounts.mint.decimals,
+        )?;
+    }
 
     // Update pool vault state
     let pool_vault = &mut ctx.accounts.pool_vault;
