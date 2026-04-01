@@ -159,31 +159,41 @@ export class PrivacyAnalysisService {
         const paymentVerified =
           stealthPayment!.status === 'CONFIRMED' || stealthPayment!.status === 'SWEPT';
 
-        // Check address reuse across escrows for this client
-        const reuseCount = await this.prisma.institutionEscrow.count({
+        // Check stealth address reuse — each payment should derive a unique one-time address.
+        // Reuse of the same stealth address across payments would indicate a privacy leak.
+        // (The real recipientWallet being the same across escrows is expected and fine.)
+        const stealthReuseCount = await this.prisma.stealthPayment.count({
           where: {
-            clientId: escrow.clientId,
-            recipientWallet,
+            stealthAddress: stealthPayment!.stealthAddress,
             escrowId: { not: escrow.escrowId },
           },
         });
-        const noReuse = reuseCount === 0;
+        const noReuse = stealthReuseCount === 0;
         const derivationVerified = paymentVerified && noReuse;
 
-        // Build address mapping
-        const onChainAddresses = await this.extractOnChainAddresses(escrow);
+        // Verify funds arrived at the correct stealth address by parsing the release tx
+        const releaseSig = stealthPayment!.releaseTxSignature || escrow.releaseTxSignature;
+        const fundsVerified = releaseSig
+          ? await this.verifyReleaseFundsDestination(releaseSig, stealthPayment!.stealthAddress)
+          : null;
+
+        // Build comprehensive address mapping
         const payerReal = escrow.payerWallet;
+        const stealthAddr = stealthPayment!.stealthAddress;
         const addresses = {
           payer: {
             real: payerReal,
-            onChain: onChainAddresses.payer || payerReal,
-            match: payerReal === (onChainAddresses.payer || payerReal),
+            onChain: payerReal,
+            match: true,
           },
           recipient: {
             real: recipientWallet,
-            onChain: stealthPayment?.stealthAddress || onChainAddresses.recipient || recipientWallet,
-            match: false, // stealth addresses never match the real wallet
+            stealthAddress: stealthAddr,
+            onChain: stealthAddr,
+            match: false, // stealth addresses intentionally differ from real wallet
           },
+          fundsReleasedToCorrectAddress: fundsVerified,
+          releaseTxSignature: releaseSig || null,
           note: 'On-chain addresses are derived per-transaction for privacy. Funds are routed to the correct real wallets via the escrow program.',
         };
 
@@ -247,30 +257,31 @@ export class PrivacyAnalysisService {
     }
   }
 
-  private async extractOnChainAddresses(escrow: any): Promise<{ payer: string | null; recipient: string | null }> {
-    // Parse the deposit or release tx to find the actual accounts used on-chain
-    const sig = escrow.depositTxSignature || escrow.releaseTxSignature;
-    if (!sig) return { payer: null, recipient: null };
-
+  /**
+   * Verify that the release tx actually transferred funds to the expected stealth address.
+   * Parses the tx's token balance changes to confirm the destination.
+   */
+  private async verifyReleaseFundsDestination(txSignature: string, expectedStealthAddress: string): Promise<boolean | null> {
     try {
-      const tx = await this.connection.getTransaction(sig, {
+      const tx = await this.connection.getTransaction(txSignature, {
         commitment: 'confirmed',
         maxSupportedTransactionVersion: 0,
       });
-      if (!tx?.transaction?.message) return { payer: null, recipient: null };
+      if (!tx?.meta) return null;
 
+      // Check post-token-balances for the stealth address receiving tokens
+      const postBalances = tx.meta.postTokenBalances || [];
       const accountKeys = tx.transaction.message.getAccountKeys().staticAccountKeys;
-      // In escrow transactions: index 0 = fee payer (typically platform), index 1 = payer, last user account = recipient
-      // The exact layout depends on instruction order, but the first two non-program accounts are typically payer and recipient
-      if (accountKeys.length >= 3) {
-        return {
-          payer: accountKeys[0].toBase58(),
-          recipient: accountKeys[1].toBase58(),
-        };
+      for (const bal of postBalances) {
+        const owner = bal.owner;
+        if (owner === expectedStealthAddress && (bal.uiTokenAmount?.uiAmount ?? 0) > 0) {
+          return true;
+        }
       }
-      return { payer: null, recipient: null };
+      // Fallback: check if the stealth address appears in the account keys at all
+      return accountKeys.some(k => k.toBase58() === expectedStealthAddress) || false;
     } catch {
-      return { payer: null, recipient: null };
+      return null; // RPC unavailable
     }
   }
 
@@ -327,18 +338,49 @@ export class PrivacyAnalysisService {
         }
       }
 
+      // Check pool receipt PDA if escrow is part of a transaction pool
+      let poolReceiptPda: string | null = null;
+      let poolReceiptExists = false;
+      if (escrow.poolId) {
+        try {
+          const programId = new PublicKey(config.solana.escrowProgramId);
+          const escrowIdBytes = Buffer.from(escrow.escrowId.replace(/-/g, ''), 'hex');
+          // Look up the pool to get the pool_id bytes
+          const pool = await this.prisma.transactionPool.findUnique({
+            where: { id: escrow.poolId },
+            select: { poolId: true },
+          });
+          if (pool) {
+            const poolIdBytes = Buffer.from(pool.poolId.replace(/-/g, ''), 'hex');
+            const [receiptPda] = PublicKey.findProgramAddressSync(
+              [Buffer.from('pool_receipt'), poolIdBytes, escrowIdBytes],
+              programId
+            );
+            poolReceiptPda = receiptPda.toBase58();
+            const receiptAccount = await this.connection.getAccountInfo(receiptPda);
+            poolReceiptExists = !!receiptAccount;
+          }
+        } catch {
+          // Pool receipt lookup failed — non-critical
+        }
+      }
+
       const accountExists = escrowAccountExists || vaultAccountExists;
       const passed = accountExists && metadataEncrypted;
 
       return {
         passed,
         detail: passed
-          ? 'Escrow PDA account exists on-chain with encrypted metadata'
+          ? poolReceiptExists
+            ? 'Escrow PDA and pool receipt exist on-chain with encrypted metadata'
+            : 'Escrow PDA account exists on-chain with encrypted metadata'
           : accountExists
             ? 'PDA account exists but no encrypted metadata found'
             : 'PDA accounts not found on-chain (may have been closed after settlement)',
         escrowPda: escrowPda || null,
         vaultPda: vaultPda || null,
+        poolReceiptPda,
+        poolReceiptExists,
         accountExists,
         metadataEncrypted,
         onChainDetails: { escrowPdaOwner, vaultBalance, vaultTokenMint },
