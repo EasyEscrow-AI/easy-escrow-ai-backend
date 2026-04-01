@@ -2003,9 +2003,12 @@ export class InstitutionEscrowService {
     }
 
     // Resolve release destination (standard or stealth address)
-    // Direct payments always use NONE privacy — stealth addresses are incompatible
-    // with direct transfers (no vault PDA to derive ephemeral keys from)
-    const effectivePrivacy = isDirectPayment
+    // Stealth addresses are ONLY compatible with direct payments (no vault PDA).
+    // Vault-based escrows store the recipient wallet on-chain at init time and the
+    // program enforces recipient_token_account.owner == escrow_state.recipient at
+    // release — routing to a stealth address would cause InstructionError 6036.
+    const hasOnChainVault = !!escrow.escrowPda;
+    const effectivePrivacy = (isDirectPayment || hasOnChainVault)
       ? { level: PrivacyLevel.NONE }
       : privacyPreferences || {
           level: (escrow.privacyLevel as PrivacyLevel) || PrivacyLevel.STEALTH,
