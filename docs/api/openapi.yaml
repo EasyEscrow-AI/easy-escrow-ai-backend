@@ -5848,7 +5848,34 @@ components:
                   description: Solana tx signature when funds were swept from stealth address
                 addressReused:
                   type: boolean
-                  description: Whether this stealth address was reused across multiple escrows
+                  description: Whether this stealth address was reused across multiple payments
+                addresses:
+                  type: object
+                  nullable: true
+                  description: Address mapping showing real wallets vs on-chain addresses
+                  properties:
+                    payer:
+                      type: object
+                      properties:
+                        real: { type: string, description: Payer's real wallet address }
+                        onChain: { type: string, description: Address used on-chain }
+                        match: { type: boolean }
+                    recipient:
+                      type: object
+                      properties:
+                        real: { type: string, description: Recipient's real wallet address }
+                        stealthAddress: { type: string, nullable: true, description: One-time stealth address derived for this payment }
+                        onChain: { type: string, description: Address used on-chain (stealth or real) }
+                        match: { type: boolean, description: False when stealth is used (by design) }
+                    fundsReleasedToCorrectAddress:
+                      type: boolean
+                      nullable: true
+                      description: Verified from on-chain release tx that funds went to the stealth address
+                    releaseTxSignature:
+                      type: string
+                      nullable: true
+                      description: Release transaction signature for Solana Explorer
+                    note: { type: string }
             pdaReceipts:
               type: object
               properties:
@@ -5856,6 +5883,8 @@ components:
                 detail: { type: string }
                 escrowPda: { type: string, nullable: true }
                 vaultPda: { type: string, nullable: true }
+                poolReceiptPda: { type: string, nullable: true, description: Pool receipt PDA (if escrow is in a transaction pool) }
+                poolReceiptExists: { type: boolean, description: Whether the pool receipt PDA exists on-chain }
                 accountExists: { type: boolean }
                 metadataEncrypted: { type: boolean }
             encryptedCustody:
