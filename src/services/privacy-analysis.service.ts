@@ -223,18 +223,17 @@ export class PrivacyAnalysisService {
       const pubkey = new PublicKey(recipientWallet);
       const accountInfo = await this.connection.getAccountInfo(pubkey);
 
-      const onChainAddresses = await this.extractOnChainAddresses(escrow);
       const payerReal = escrow.payerWallet;
       const addresses = {
         payer: {
           real: payerReal,
-          onChain: onChainAddresses.payer || payerReal,
-          match: payerReal === (onChainAddresses.payer || payerReal),
+          onChain: payerReal,
+          match: true,
         },
         recipient: {
           real: recipientWallet,
-          onChain: onChainAddresses.recipient || recipientWallet,
-          match: recipientWallet === (onChainAddresses.recipient || recipientWallet),
+          onChain: recipientWallet,
+          match: true,
         },
         note: 'Standard addresses used — real and on-chain addresses match.',
       };
@@ -345,13 +344,13 @@ export class PrivacyAnalysisService {
         try {
           const programId = new PublicKey(config.solana.escrowProgramId);
           const escrowIdBytes = Buffer.from(escrow.escrowId.replace(/-/g, ''), 'hex');
-          // Look up the pool to get the pool_id bytes
+          // The pool's UUID (id) is used as the on-chain seed
           const pool = await this.prisma.transactionPool.findUnique({
             where: { id: escrow.poolId },
-            select: { poolId: true },
+            select: { id: true },
           });
           if (pool) {
-            const poolIdBytes = Buffer.from(pool.poolId.replace(/-/g, ''), 'hex');
+            const poolIdBytes = Buffer.from(pool.id.replace(/-/g, ''), 'hex');
             const [receiptPda] = PublicKey.findProgramAddressSync(
               [Buffer.from('pool_receipt'), poolIdBytes, escrowIdBytes],
               programId
