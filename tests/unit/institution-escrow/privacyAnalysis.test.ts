@@ -81,6 +81,7 @@ describe('PrivacyAnalysisService', () => {
       },
       stealthPayment: {
         findUnique: sandbox.stub(),
+        findFirst: sandbox.stub(),
       },
     };
     (service as any).prisma = prismaStub;
@@ -98,12 +99,14 @@ describe('PrivacyAnalysisService', () => {
     (service as any).cache = cacheStub;
 
     // Default: stealth payment is CONFIRMED (tests override as needed)
-    prismaStub.stealthPayment.findUnique.resolves({
+    const defaultStealthPayment = {
       status: 'CONFIRMED',
       stealthAddress: 'stealth-address-default',
       releaseTxSignature: 'releaseSig789',
       sweepTxSignature: null,
-    });
+    };
+    prismaStub.stealthPayment.findUnique.resolves(defaultStealthPayment);
+    prismaStub.stealthPayment.findFirst.resolves(null); // fallback returns nothing by default
   });
 
   afterEach(() => {
@@ -236,10 +239,11 @@ describe('PrivacyAnalysisService', () => {
       expect(result.checks.stealthAddress.detail).to.include('swept to recipient');
     });
 
-    it('should fail when stealth payment record not found', async () => {
+    it('should fall back to non-stealth when both FK and escrowId lookups return null', async () => {
       const escrow = makeEscrow();
       prismaStub.institutionEscrow.findUnique.resolves(escrow);
       prismaStub.stealthPayment.findUnique.resolves(null);
+      prismaStub.stealthPayment.findFirst.resolves(null);
       connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
       connectionStub.getTransaction.resolves({ meta: { err: null } });
       prismaStub.institutionAuditLog.findMany.resolves([]);
@@ -247,7 +251,7 @@ describe('PrivacyAnalysisService', () => {
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.false;
       expect(result.checks.stealthAddress.stealthStatus).to.be.null;
-      expect(result.checks.stealthAddress.detail).to.include('record not found');
+      expect(result.checks.stealthAddress.detail).to.include('Standard wallet');
     });
 
     it('should fail when stealth payment is still PENDING', async () => {
@@ -289,9 +293,32 @@ describe('PrivacyAnalysisService', () => {
       expect(result.checks.stealthAddress.detail).to.include('reused');
     });
 
-    it('should fail when no stealth payment ID (standard wallet)', async () => {
+    it('should pass via escrowId fallback when stealthPaymentId is null', async () => {
       const escrow = makeEscrow({ stealthPaymentId: null });
       prismaStub.institutionEscrow.findUnique.resolves(escrow);
+      prismaStub.institutionEscrow.count.resolves(0);
+      // findUnique won't be called (no stealthPaymentId), findFirst returns by escrowId
+      prismaStub.stealthPayment.findFirst.resolves({
+        status: 'SWEPT',
+        stealthAddress: escrow.recipientWallet,
+        releaseTxSignature: 'releaseSig789',
+        sweepTxSignature: 'sweepSig999',
+      });
+      connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
+      connectionStub.getTransaction.resolves({ meta: { err: null } });
+      prismaStub.institutionAuditLog.findMany.resolves([]);
+
+      const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
+      expect(result.checks.stealthAddress.passed).to.be.true;
+      expect(result.checks.stealthAddress.stealthStatus).to.equal('SWEPT');
+      expect(result.checks.stealthAddress.sweepTxSignature).to.equal('sweepSig999');
+      expect(result.checks.stealthAddress.detail).to.include('swept to recipient');
+    });
+
+    it('should fall back to standard wallet when no stealth payment found by either lookup', async () => {
+      const escrow = makeEscrow({ stealthPaymentId: null });
+      prismaStub.institutionEscrow.findUnique.resolves(escrow);
+      prismaStub.stealthPayment.findFirst.resolves(null);
       connectionStub.getAccountInfo.resolves({ data: Buffer.alloc(100) });
       connectionStub.getTransaction.resolves({ meta: { err: null } });
       prismaStub.institutionAuditLog.findMany.resolves([]);
@@ -299,7 +326,6 @@ describe('PrivacyAnalysisService', () => {
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.false;
       expect(result.checks.stealthAddress.stealthStatus).to.be.null;
-      expect(result.checks.stealthAddress.sweepTxSignature).to.be.null;
       expect(result.checks.stealthAddress.addressReused).to.be.false;
       expect(result.checks.stealthAddress.detail).to.include('Standard wallet');
     });
