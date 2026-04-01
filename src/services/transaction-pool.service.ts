@@ -106,16 +106,13 @@ export class TransactionPoolService {
         }
         const usdcMint = programService.getUsdcMintAddress();
         const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
-        const settlementAuthority = new PublicKey(
-          client.primaryWallet || config.platform.feeCollectorAddress
-        );
 
         const result = await programService.initPoolVaultOnChain({
           poolId,
           usdcMint,
           feeCollector,
-          settlementAuthority,
           corridor: corridor || '',
+          expiryTimestamp: Math.floor(expiresAt.getTime() / 1000),
           poolCode,
         });
 
@@ -1236,10 +1233,8 @@ export class TransactionPoolService {
             poolId: pool.id,
             escrowId: member.escrowId,
             recipientWallet: new PublicKey(escrow.recipientWallet!),
-            feeCollector,
             usdcMint,
             amountMicroUsdc,
-            feeMicroUsdc,
             commitmentHash: commitment,
             encryptedReceipt,
             poolCode: pool.poolCode,
