@@ -1722,8 +1722,9 @@ pub mod escrow {
     pub fn release_institution_escrow(
         ctx: Context<ReleaseInstitutionEscrow>,
         escrow_id: [u8; 32],
+        stealth_recipient: Option<Pubkey>,
     ) -> Result<()> {
-        inst_escrow_release(ctx, escrow_id)
+        inst_escrow_release(ctx, escrow_id, stealth_recipient)
     }
 
     /// Cancel institution escrow and refund USDC to payer
