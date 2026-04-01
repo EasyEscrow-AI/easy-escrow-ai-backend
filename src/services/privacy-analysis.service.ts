@@ -159,15 +159,16 @@ export class PrivacyAnalysisService {
         const paymentVerified =
           stealthPayment!.status === 'CONFIRMED' || stealthPayment!.status === 'SWEPT';
 
-        // Check address reuse across escrows for this client
-        const reuseCount = await this.prisma.institutionEscrow.count({
+        // Check stealth address reuse — each payment should derive a unique one-time address.
+        // Reuse of the same stealth address across payments would indicate a privacy leak.
+        // (The real recipientWallet being the same across escrows is expected and fine.)
+        const stealthReuseCount = await this.prisma.stealthPayment.count({
           where: {
-            clientId: escrow.clientId,
-            recipientWallet,
+            stealthAddress: stealthPayment!.stealthAddress,
             escrowId: { not: escrow.escrowId },
           },
         });
-        const noReuse = reuseCount === 0;
+        const noReuse = stealthReuseCount === 0;
         const derivationVerified = paymentVerified && noReuse;
 
         // Build address mapping
