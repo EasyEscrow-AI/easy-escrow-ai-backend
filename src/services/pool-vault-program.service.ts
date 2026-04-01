@@ -342,7 +342,7 @@ export class PoolVaultProgramService {
     const corridorArray = Array.from(corridorBuf);
 
     const ix = await (this.program.methods as any)
-      .initPoolVault(poolIdArray, corridorArray, params.expiryTimestamp)
+      .initPoolVault(poolIdArray, corridorArray, new BN(params.expiryTimestamp))
       .accounts({
         authority: this.adminKeypair.publicKey,
         poolVault: poolStatePda,
