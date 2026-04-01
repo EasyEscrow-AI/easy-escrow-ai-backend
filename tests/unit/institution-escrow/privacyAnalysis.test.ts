@@ -201,6 +201,9 @@ describe('PrivacyAnalysisService', () => {
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.true;
       expect(result.checks.stealthAddress.derivationVerified).to.be.true;
+      expect(result.checks.stealthAddress.stealthStatus).to.equal('CONFIRMED');
+      expect(result.checks.stealthAddress.sweepTxSignature).to.be.null;
+      expect(result.checks.stealthAddress.addressReused).to.be.false;
       expect(result.checks.stealthAddress.detail).to.include('settled to derived wallet');
     });
 
@@ -227,6 +230,9 @@ describe('PrivacyAnalysisService', () => {
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.true;
       expect(result.checks.stealthAddress.derivationVerified).to.be.true;
+      expect(result.checks.stealthAddress.stealthStatus).to.equal('SWEPT');
+      expect(result.checks.stealthAddress.sweepTxSignature).to.equal('sweepSig999');
+      expect(result.checks.stealthAddress.addressReused).to.be.false;
       expect(result.checks.stealthAddress.detail).to.include('swept to recipient');
     });
 
@@ -240,6 +246,7 @@ describe('PrivacyAnalysisService', () => {
 
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.false;
+      expect(result.checks.stealthAddress.stealthStatus).to.be.null;
       expect(result.checks.stealthAddress.detail).to.include('record not found');
     });
 
@@ -258,6 +265,7 @@ describe('PrivacyAnalysisService', () => {
 
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.false;
+      expect(result.checks.stealthAddress.stealthStatus).to.equal('PENDING');
       expect(result.checks.stealthAddress.detail).to.include('not yet confirmed');
     });
 
@@ -277,6 +285,7 @@ describe('PrivacyAnalysisService', () => {
 
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.false;
+      expect(result.checks.stealthAddress.addressReused).to.be.true;
       expect(result.checks.stealthAddress.detail).to.include('reused');
     });
 
@@ -289,6 +298,9 @@ describe('PrivacyAnalysisService', () => {
 
       const result = await service.analyze(CLIENT_ID, ESCROW_CODE);
       expect(result.checks.stealthAddress.passed).to.be.false;
+      expect(result.checks.stealthAddress.stealthStatus).to.be.null;
+      expect(result.checks.stealthAddress.sweepTxSignature).to.be.null;
+      expect(result.checks.stealthAddress.addressReused).to.be.false;
       expect(result.checks.stealthAddress.detail).to.include('Standard wallet');
     });
   });
