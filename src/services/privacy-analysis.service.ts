@@ -131,19 +131,33 @@ export class PrivacyAnalysisService {
         return { passed: false, detail: 'No recipient wallet set', recipientWallet: null, derivationVerified: false, stealthStatus: null, sweepTxSignature: null, addressReused: false, addresses: null };
       }
 
-      // Check if this escrow used stealth privacy (has a stealthPaymentId)
-      const isStealthDerived = !!escrow.stealthPaymentId;
+      // Check if this escrow used stealth privacy — try stealthPaymentId FK first,
+      // then fall back to looking up StealthPayment by escrowId (covers cases where
+      // the FK wasn't backfilled on the escrow record)
+      type StealthPaymentResult = { status: string; stealthAddress: string; sweepTxSignature: string | null; releaseTxSignature: string | null };
+      let stealthPayment: StealthPaymentResult | null = null;
+      const selectFields = { status: true, stealthAddress: true, sweepTxSignature: true, releaseTxSignature: true } as const;
 
-      // For stealth escrows, verify via StealthPayment record — the on-chain account
-      // may no longer exist after the recipient sweeps funds and the ATA is closed
-      if (isStealthDerived) {
-        const stealthPayment = await this.prisma.stealthPayment.findUnique({
+      // Try FK lookup first, then fall back to escrowId (covers missing/orphaned FK)
+      if (escrow.stealthPaymentId) {
+        stealthPayment = await this.prisma.stealthPayment.findUnique({
           where: { id: escrow.stealthPaymentId },
-          select: { status: true, stealthAddress: true, sweepTxSignature: true, releaseTxSignature: true },
+          select: selectFields,
         });
+      }
+      if (!stealthPayment) {
+        stealthPayment = await this.prisma.stealthPayment.findFirst({
+          where: { escrowId: escrow.escrowId },
+          select: selectFields,
+          orderBy: { createdAt: 'desc' },
+        });
+      }
 
-        const paymentVerified = !!stealthPayment &&
-          (stealthPayment.status === 'CONFIRMED' || stealthPayment.status === 'SWEPT');
+      const isStealthDerived = !!stealthPayment;
+
+      if (isStealthDerived) {
+        const paymentVerified =
+          stealthPayment!.status === 'CONFIRMED' || stealthPayment!.status === 'SWEPT';
 
         // Check address reuse across escrows for this client
         const reuseCount = await this.prisma.institutionEscrow.count({
