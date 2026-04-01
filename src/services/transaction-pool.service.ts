@@ -1226,15 +1226,15 @@ export class TransactionPoolService {
           }
           const usdcMint = programService.getUsdcMintAddress();
           const feeCollector = new PublicKey(config.platform.feeCollectorAddress);
-          const amountMicroUsdc = programService.decimalToMicroUsdc(Number(escrow.amount));
-          const feeMicroUsdc = programService.decimalToMicroUsdc(Number(escrow.platformFee));
-
+          // Pass amount=0 for receipt-only mode: funds were already released from
+          // individual escrow vaults via releaseEscrowOnChain. The pool vault receipt
+          // PDA is created for audit/privacy without a duplicate transfer.
           const receiptResult = await programService.releasePoolMemberOnChain({
             poolId: pool.id,
             escrowId: member.escrowId,
             recipientWallet: new PublicKey(escrow.recipientWallet!),
             usdcMint,
-            amountMicroUsdc,
+            amountMicroUsdc: '0',
             commitmentHash: commitment,
             encryptedReceipt,
             poolCode: pool.poolCode,
