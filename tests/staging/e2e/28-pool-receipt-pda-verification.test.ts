@@ -52,6 +52,7 @@ const DEMO_PASSWORD = 'DemoPass123!';
 const ESCROW_AMOUNT = 1; // 1 USDC
 
 const BUYER_PRIVATE_KEY = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY || '';
+const RECIPIENT_ADDRESS = process.env.DEVNET_STAGING_RECEIVER_ADDRESS || '59Xet5qZ6b6NbpS9a2JD1maamfYKMYEwbvfbFPR92jHx';
 
 describe('Pool Receipt PDA Verification E2E (Staging)', function () {
   this.timeout(300000);
@@ -130,7 +131,8 @@ describe('Pool Receipt PDA Verification E2E (Staging)', function () {
         amount: ESCROW_AMOUNT,
         corridor: 'SG-CH',
         conditionType: 'ADMIN_RELEASE',
-        recipientWallet: buyerKeypair.publicKey.toBase58(), // self-send for testing
+        payerWallet: buyerKeypair.publicKey.toBase58(),
+        recipientWallet: RECIPIENT_ADDRESS,
       },
       { headers: { Authorization: `Bearer ${buyerToken}` } }
     );
@@ -139,9 +141,9 @@ describe('Pool Receipt PDA Verification E2E (Staging)', function () {
       throw new Error(`Create failed (${createRes.status}): ${JSON.stringify(createRes.data)}`);
     }
 
-    const escrow = createRes.data.data;
-    const internalId = escrow.id || escrow.escrowId;
-    const escrowCode = escrow.escrowCode || escrow.code;
+    const escrow = createRes.data.data.escrow || createRes.data.data;
+    const internalId = escrow.internalId || escrow.id || escrow.escrowId;
+    const escrowCode = escrow.escrowId || escrow.escrowCode || escrow.code;
     console.log(`    Created: ${escrowCode} (${internalId})`);
 
     // Get deposit tx from backend

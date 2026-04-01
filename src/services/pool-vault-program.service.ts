@@ -313,8 +313,8 @@ export class PoolVaultProgramService {
     poolId: string;
     usdcMint: PublicKey;
     feeCollector: PublicKey;
-    settlementAuthority: PublicKey;
     corridor: string;
+    expiryTimestamp: number;
     poolCode?: string;
   }): Promise<{ txSignature: string; poolStatePda: string; vaultPda: string }> {
     const poolIdBytes = this.uuidToBytes(params.poolId);
@@ -342,17 +342,15 @@ export class PoolVaultProgramService {
     const corridorArray = Array.from(corridorBuf);
 
     const ix = await (this.program.methods as any)
-      .initPoolVault(poolIdArray, corridorArray)
+      .initPoolVault(poolIdArray, corridorArray, params.expiryTimestamp)
       .accounts({
         authority: this.adminKeypair.publicKey,
-        poolState: poolStatePda,
-        tokenVault: vaultPda,
-        usdcMint: params.usdcMint,
+        poolVault: poolStatePda,
+        mint: params.usdcMint,
+        vaultTokenAccount: vaultPda,
         feeCollector: params.feeCollector,
-        settlementAuthority: params.settlementAuthority,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
       })
       .instruction();
 
@@ -398,10 +396,11 @@ export class PoolVaultProgramService {
     const ix = await (this.program.methods as any)
       .depositToPool(poolIdArray)
       .accounts({
-        payer: params.payer,
-        payerTokenAccount: payerAta,
-        poolState: poolStatePda,
-        tokenVault: vaultPda,
+        depositor: params.payer,
+        depositorTokenAccount: payerAta,
+        poolVault: poolStatePda,
+        vaultTokenAccount: vaultPda,
+        mint: params.usdcMint,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
@@ -420,10 +419,8 @@ export class PoolVaultProgramService {
     poolId: string;
     escrowId: string;
     recipientWallet: PublicKey;
-    feeCollector: PublicKey;
     usdcMint: PublicKey;
     amountMicroUsdc: string;
-    feeMicroUsdc: string;
     commitmentHash: Buffer;
     encryptedReceipt: Buffer;
     poolCode?: string;
@@ -438,13 +435,15 @@ export class PoolVaultProgramService {
     const poolIdArray = Array.from(poolIdBytes);
     const escrowIdArray = Array.from(escrowIdBytes);
     const amountBN = new BN(params.amountMicroUsdc);
-    const feeBN = new BN(params.feeMicroUsdc);
     const commitmentArray = Array.from(params.commitmentHash);
     const receiptArray = Array.from(params.encryptedReceipt);
 
+    // Generate 16-byte receipt ID (unique per receipt PDA)
+    const receiptId = Array.from(randomBytes(16));
+
     const transaction = new Transaction();
 
-    // Ensure recipient and fee collector ATAs exist
+    // Ensure recipient ATA exists
     const recipientAta = await this.getOrCreateAta(
       params.usdcMint,
       params.recipientWallet,
@@ -454,27 +453,17 @@ export class PoolVaultProgramService {
       transaction.add(recipientAta.instruction);
     }
 
-    const feeCollectorAta = await this.getOrCreateAta(
-      params.usdcMint,
-      params.feeCollector,
-      this.adminKeypair.publicKey
-    );
-    if (feeCollectorAta.instruction) {
-      transaction.add(feeCollectorAta.instruction);
-    }
-
     const ix = await (this.program.methods as any)
-      .releasePoolMember(poolIdArray, escrowIdArray, amountBN, feeBN, commitmentArray, receiptArray)
+      .releasePoolMember(poolIdArray, escrowIdArray, amountBN, receiptId, commitmentArray, receiptArray)
       .accounts({
         authority: this.adminKeypair.publicKey,
-        poolState: poolStatePda,
-        tokenVault: vaultPda,
+        poolVault: poolStatePda,
+        vaultTokenAccount: vaultPda,
         recipientTokenAccount: recipientAta.address,
-        feeCollectorTokenAccount: feeCollectorAta.address,
+        mint: params.usdcMint,
         poolReceipt: receiptPda,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
       })
       .instruction();
 
@@ -529,9 +518,10 @@ export class PoolVaultProgramService {
       .releasePoolFees(poolIdArray)
       .accounts({
         authority: this.adminKeypair.publicKey,
-        poolState: poolStatePda,
-        tokenVault: vaultPda,
+        poolVault: poolStatePda,
+        vaultTokenAccount: vaultPda,
         feeCollectorTokenAccount: feeCollectorAta.address,
+        mint: params.usdcMint,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
@@ -622,9 +612,8 @@ export class PoolVaultProgramService {
       .closePoolVault(poolIdArray)
       .accounts({
         authority: this.adminKeypair.publicKey,
-        poolState: poolStatePda,
-        tokenVault: vaultPda,
-        rentReceiver: this.adminKeypair.publicKey,
+        poolVault: poolStatePda,
+        vaultTokenAccount: vaultPda,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
@@ -655,6 +644,7 @@ export class PoolVaultProgramService {
   async closePoolReceiptOnChain(params: { poolId: string; escrowId: string }): Promise<string> {
     const poolIdBytes = this.uuidToBytes(params.poolId);
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
+    const [poolStatePda] = this.derivePoolStatePda(poolIdBytes);
     const [receiptPda] = this.derivePoolReceiptPda(poolIdBytes, escrowIdBytes);
     const poolIdArray = Array.from(poolIdBytes);
     const escrowIdArray = Array.from(escrowIdBytes);
@@ -663,8 +653,8 @@ export class PoolVaultProgramService {
       .closePoolReceipt(poolIdArray, escrowIdArray)
       .accounts({
         authority: this.adminKeypair.publicKey,
+        poolVault: poolStatePda,
         poolReceipt: receiptPda,
-        rentReceiver: this.adminKeypair.publicKey,
       })
       .instruction();
 
