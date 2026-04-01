@@ -19,7 +19,7 @@ const prisma = new PrismaClient();
 // Clients to register meta-addresses for (by email)
 const TARGET_CLIENTS = [
   'finance@satoshi-bridge.io',      // Satoshi Bridge Labs Inc
-  'treasury@optimus-exchange.ch',   // Optimus Exchange AG
+  'ops@optimus-exchange.ch',         // Optimus Exchange AG
   'ops@chainflow-remit.sg',         // ChainFlow Remittance Pte Ltd
   'admin@aminagroup.com',           // AMINA Bank AG
 ];
