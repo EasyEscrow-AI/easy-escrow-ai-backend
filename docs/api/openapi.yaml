@@ -5837,6 +5837,18 @@ components:
                 detail: { type: string }
                 recipientWallet: { type: string, nullable: true }
                 derivationVerified: { type: boolean }
+                stealthStatus:
+                  type: string
+                  nullable: true
+                  enum: [PENDING, CONFIRMED, SWEPT, FAILED]
+                  description: Stealth payment lifecycle status
+                sweepTxSignature:
+                  type: string
+                  nullable: true
+                  description: Solana tx signature when funds were swept from stealth address
+                addressReused:
+                  type: boolean
+                  description: Whether this stealth address was reused across multiple escrows
             pdaReceipts:
               type: object
               properties:

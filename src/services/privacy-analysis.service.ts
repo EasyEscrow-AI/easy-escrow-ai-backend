@@ -128,7 +128,7 @@ export class PrivacyAnalysisService {
     try {
       const recipientWallet = escrow.recipientWallet;
       if (!recipientWallet) {
-        return { passed: false, detail: 'No recipient wallet set', recipientWallet: null, derivationVerified: false, addresses: null };
+        return { passed: false, detail: 'No recipient wallet set', recipientWallet: null, derivationVerified: false, stealthStatus: null, sweepTxSignature: null, addressReused: false, addresses: null };
       }
 
       // Check if this escrow used stealth privacy (has a stealthPaymentId)
@@ -188,6 +188,9 @@ export class PrivacyAnalysisService {
           detail,
           recipientWallet,
           derivationVerified,
+          stealthStatus: stealthPayment?.status || null,
+          sweepTxSignature: stealthPayment?.sweepTxSignature || null,
+          addressReused: !noReuse,
           addresses,
         };
       }
@@ -219,11 +222,14 @@ export class PrivacyAnalysisService {
           : 'Recipient wallet not found on-chain',
         recipientWallet,
         derivationVerified: false,
+        stealthStatus: null,
+        sweepTxSignature: null,
+        addressReused: false,
         addresses: accountInfo ? addresses : null,
       };
     } catch (err) {
       logger.error(`${LOG_PREFIX} Stealth address check failed`, { error: (err as Error).message });
-      return { passed: false, detail: 'RPC verification unavailable', recipientWallet: null, derivationVerified: false, addresses: null };
+      return { passed: false, detail: 'RPC verification unavailable', recipientWallet: null, derivationVerified: false, stealthStatus: null, sweepTxSignature: null, addressReused: false, addresses: null };
     }
   }
 
