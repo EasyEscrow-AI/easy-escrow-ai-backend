@@ -488,6 +488,39 @@ router.post(
   }
 );
 
+// GET /api/v1/institution-escrow/privacy-summary
+router.get(
+  '/api/v1/institution-escrow/privacy-summary',
+  standardRateLimiter,
+  requireInstitutionOrAdminAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const isAdmin = req.isAdmin === true;
+      const clientId = isAdmin ? null : (req.institutionClient?.clientId || null);
+      if (!clientId && !isAdmin) {
+        res.status(403).json({ error: 'Authentication required', timestamp: new Date().toISOString() });
+        return;
+      }
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 10);
+      const { getPrivacyAnalysisService } = await import('../services/privacy-analysis.service');
+      const service = getPrivacyAnalysisService();
+      const escrows = await service.getPrivacySummary(clientId, limit);
+
+      res.status(200).json({
+        success: true,
+        data: { escrows },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        error: 'Privacy Summary Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 // GET /api/v1/institution-escrow/:escrowId/privacy-analysis
 router.get(
   '/api/v1/institution-escrow/:escrowId/privacy-analysis',

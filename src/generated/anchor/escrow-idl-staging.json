@@ -1184,6 +1184,71 @@
       "args": []
     },
     {
+      "name": "close_escrow_receipt",
+      "docs": [
+        "Close an escrow receipt PDA — reclaim rent"
+      ],
+      "discriminator": [
+        83,
+        241,
+        204,
+        62,
+        83,
+        144,
+        53,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "escrow_receipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119,
+                  95,
+                  114,
+                  101,
+                  99,
+                  101,
+                  105,
+                  112,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "escrow_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "close_offer_escrow",
       "docs": [
         "Close an offer escrow account",
@@ -1561,6 +1626,108 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "create_escrow_receipt",
+      "docs": [
+        "Create an encrypted receipt for a single escrow (no pool required)"
+      ],
+      "discriminator": [
+        5,
+        174,
+        106,
+        156,
+        62,
+        177,
+        194,
+        163
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Authority creating the receipt (admin/settlement authority)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "escrow_receipt",
+          "docs": [
+            "Escrow receipt PDA (created)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119,
+                  95,
+                  114,
+                  101,
+                  99,
+                  101,
+                  105,
+                  112,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "escrow_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "receipt_id",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "commitment_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "encrypted_payload",
+          "type": {
+            "array": [
+              "u8",
+              512
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "create_offer_escrow",
@@ -4308,6 +4475,19 @@
   ],
   "accounts": [
     {
+      "name": "EscrowReceipt",
+      "discriminator": [
+        5,
+        104,
+        57,
+        114,
+        177,
+        192,
+        135,
+        10
+      ]
+    },
+    {
       "name": "EscrowState",
       "discriminator": [
         19,
@@ -4389,158 +4569,268 @@
   "errors": [
     {
       "code": 6000,
-      "name": "Unauthorized",
-      "msg": "Unauthorized: Only platform authority can execute swaps"
+      "name": "InvalidAmount",
+      "msg": "Invalid amount provided"
     },
     {
       "code": 6001,
-      "name": "InvalidFee",
-      "msg": "Invalid fee: Platform fee must be greater than zero"
+      "name": "InvalidExpiry",
+      "msg": "Invalid expiry timestamp"
     },
     {
       "code": 6002,
-      "name": "FeeTooHigh",
-      "msg": "Invalid fee: Fee exceeds maximum allowed"
+      "name": "InvalidStatus",
+      "msg": "Invalid escrow status for this operation"
     },
     {
       "code": 6003,
-      "name": "MakerAssetOwnershipFailed",
-      "msg": "Invalid asset: Maker does not own the specified asset"
+      "name": "AlreadyDeposited",
+      "msg": "Assets already deposited"
     },
     {
       "code": 6004,
-      "name": "TakerAssetOwnershipFailed",
-      "msg": "Invalid asset: Taker does not own the specified asset"
+      "name": "Unauthorized",
+      "msg": "Unauthorized to perform this action"
     },
     {
       "code": 6005,
-      "name": "InsufficientMakerBalance",
-      "msg": "Insufficient balance: Maker has insufficient balance"
+      "name": "UnauthorizedAdmin",
+      "msg": "Only authorized admin can initialize escrows"
     },
     {
       "code": 6006,
-      "name": "InsufficientTakerBalance",
-      "msg": "Insufficient balance: Taker has insufficient balance"
+      "name": "InvalidNftMint",
+      "msg": "Invalid NFT mint address"
     },
     {
       "code": 6007,
-      "name": "InvalidTokenAccount",
-      "msg": "Invalid token account: Token account does not match expected mint"
+      "name": "DepositNotComplete",
+      "msg": "Deposits not complete"
     },
     {
       "code": 6008,
-      "name": "InvalidMerkleProof",
-      "msg": "Invalid merkle proof: cNFT ownership verification failed"
+      "name": "Expired",
+      "msg": "Escrow has expired"
     },
     {
       "code": 6009,
-      "name": "TooManyAssets",
-      "msg": "Too many assets: Maximum number of assets per side exceeded"
+      "name": "NotExpired",
+      "msg": "Escrow has not expired yet"
     },
     {
       "code": 6010,
-      "name": "InvalidSwapId",
-      "msg": "Invalid swap ID: Swap ID exceeds maximum length"
+      "name": "InvalidFeeBps",
+      "msg": "Invalid fee basis points (must be <= 10000)"
     },
     {
       "code": 6011,
-      "name": "ArithmeticOverflow",
-      "msg": "Arithmetic overflow: Fee calculation overflowed"
+      "name": "CalculationOverflow",
+      "msg": "Calculation overflow"
     },
     {
       "code": 6012,
-      "name": "ProgramPaused",
-      "msg": "Program is paused: All operations are temporarily disabled"
+      "name": "InvalidSwapType",
+      "msg": "Invalid swap type for this operation"
     },
     {
       "code": 6013,
-      "name": "AlreadyPaused",
-      "msg": "Program is already paused"
+      "name": "SolAmountTooLow",
+      "msg": "SOL amount below minimum: 0.01 SOL (BETA limit)"
     },
     {
       "code": 6014,
-      "name": "NotPaused",
-      "msg": "Program is not paused"
+      "name": "SolAmountTooHigh",
+      "msg": "SOL amount exceeds maximum: 15 SOL (BETA limit)"
     },
     {
       "code": 6015,
-      "name": "WithdrawalTooFrequent",
-      "msg": "Withdrawal too frequent: Must wait 7 days between withdrawals"
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds in escrow account after accounting for rent exemption"
     },
     {
       "code": 6016,
-      "name": "InsufficientTreasuryBalance",
-      "msg": "Insufficient treasury balance: Not enough funds to withdraw"
+      "name": "InvalidSwapParameters",
+      "msg": "Invalid parameter combination for swap type"
     },
     {
       "code": 6017,
-      "name": "UnauthorizedWithdrawalDestination",
-      "msg": "Unauthorized withdrawal destination: Treasury can only withdraw to authorized wallet"
+      "name": "InsufficientFeeCollectorRent",
+      "msg": "Fee collector account would not be rent-exempt after receiving fee"
     },
     {
       "code": 6018,
-      "name": "InvalidCnftProof",
-      "msg": "Invalid cNFT proof: Merkle proof validation failed"
+      "name": "InsufficientSellerRent",
+      "msg": "Seller account would not be rent-exempt after receiving payment"
     },
     {
       "code": 6019,
-      "name": "MissingBubblegumProgram",
-      "msg": "Missing required account: Bubblegum program"
+      "name": "InsufficientEscrowRent",
+      "msg": "Escrow account would not be rent-exempt after transfers"
     },
     {
       "code": 6020,
-      "name": "MissingMerkleTree",
-      "msg": "Missing required account: Merkle tree"
+      "name": "InvalidEscrowAccount",
+      "msg": "Invalid escrow account provided (PDA mismatch)"
     },
     {
       "code": 6021,
-      "name": "StaleProof",
-      "msg": "Stale proof: Merkle root has changed since proof generation"
+      "name": "ExecutableAccountNotAllowed",
+      "msg": "Executable accounts (programs) cannot send or receive lamports"
     },
     {
       "code": 6022,
-      "name": "ConflictingAssetFlags",
-      "msg": "Invalid asset flags: Cannot send both standard NFT and compressed NFT"
+      "name": "AmountTooLow",
+      "msg": "Amount below minimum: $1.00 (BETA limit)"
     },
     {
       "code": 6023,
-      "name": "UnauthorizedZeroFeeSwap",
-      "msg": "Unauthorized: Zero-fee swaps require authorized app signature"
+      "name": "AmountTooHigh",
+      "msg": "Amount exceeds maximum: $3,000.00 (BETA limit)"
     },
     {
       "code": 6024,
-      "name": "MissingCoreAsset",
-      "msg": "Missing required account: Core NFT asset"
+      "name": "OfferAmountTooLow",
+      "msg": "Offer amount below minimum (0.01 SOL)"
     },
     {
       "code": 6025,
-      "name": "MissingMplCoreProgram",
-      "msg": "Missing required account: mpl-core program"
+      "name": "OfferAmountTooHigh",
+      "msg": "Offer amount exceeds maximum (10,000 SOL)"
     },
     {
       "code": 6026,
-      "name": "InvalidMplCoreProgram",
-      "msg": "Invalid mpl-core program: Program ID does not match expected"
+      "name": "OfferDurationTooShort",
+      "msg": "Offer duration too short (minimum 1 hour)"
     },
     {
       "code": 6027,
-      "name": "InvalidAmount",
-      "msg": "Invalid amount: Amount must be greater than zero"
+      "name": "OfferDurationTooLong",
+      "msg": "Offer duration too long (maximum 30 days)"
     },
     {
       "code": 6028,
-      "name": "InsufficientFunds",
-      "msg": "Insufficient funds: Vault does not have enough balance"
+      "name": "BidderCannotBeOwner",
+      "msg": "Bidder cannot be the same as owner"
     },
     {
       "code": 6029,
-      "name": "VaultNotInitialized",
-      "msg": "Vault not initialized: Cannot deposit to non-existent vault PDA"
+      "name": "InvalidBidder",
+      "msg": "Invalid bidder address"
     },
     {
       "code": 6030,
-      "name": "UnauthorizedTwoPhase",
-      "msg": "Unauthorized caller: Only backend authority can call this instruction"
+      "name": "InvalidFeeCollector",
+      "msg": "Fee collector does not match the one stored at offer creation"
+    },
+    {
+      "code": 6031,
+      "name": "InvalidOfferStatus",
+      "msg": "Invalid offer status for this operation"
+    },
+    {
+      "code": 6032,
+      "name": "OfferExpired",
+      "msg": "Offer has expired"
+    },
+    {
+      "code": 6033,
+      "name": "OfferNotExpired",
+      "msg": "Offer has not expired yet"
+    },
+    {
+      "code": 6034,
+      "name": "OfferStillActive",
+      "msg": "Offer is still active - cannot close"
+    },
+    {
+      "code": 6035,
+      "name": "InstitutionInvalidStatus",
+      "msg": "Institution escrow: invalid status for this operation"
+    },
+    {
+      "code": 6036,
+      "name": "InstitutionUnauthorized",
+      "msg": "Institution escrow: unauthorized caller"
+    },
+    {
+      "code": 6037,
+      "name": "InstitutionExpired",
+      "msg": "Institution escrow: escrow has expired"
+    },
+    {
+      "code": 6038,
+      "name": "InstitutionDepositMismatch",
+      "msg": "Institution escrow: deposit amount mismatch"
+    },
+    {
+      "code": 6039,
+      "name": "InstitutionPayerIsRecipient",
+      "msg": "Institution escrow: payer cannot be recipient"
+    },
+    {
+      "code": 6040,
+      "name": "InstitutionAmountTooLow",
+      "msg": "Institution escrow: amount below minimum"
+    },
+    {
+      "code": 6041,
+      "name": "InstitutionAmountTooHigh",
+      "msg": "Institution escrow: amount above maximum"
+    },
+    {
+      "code": 6042,
+      "name": "InstitutionExpiryTooShort",
+      "msg": "Institution escrow: expiry too short"
+    },
+    {
+      "code": 6043,
+      "name": "InstitutionExpiryTooLong",
+      "msg": "Institution escrow: expiry too long"
+    },
+    {
+      "code": 6044,
+      "name": "InstitutionTimeLockNotReached",
+      "msg": "Institution escrow: time lock period not reached"
+    },
+    {
+      "code": 6045,
+      "name": "PoolVaultNotActive",
+      "msg": "Pool vault: not in active/created state for this operation"
+    },
+    {
+      "code": 6046,
+      "name": "PoolVaultExpired",
+      "msg": "Pool vault: pool has expired"
+    },
+    {
+      "code": 6047,
+      "name": "PoolNotSettledOrCancelled",
+      "msg": "Pool vault: pool must be settled or cancelled"
+    },
+    {
+      "code": 6048,
+      "name": "PoolVaultNotEmpty",
+      "msg": "Pool vault: vault token account is not empty"
+    },
+    {
+      "code": 6049,
+      "name": "PoolInvalidAmount",
+      "msg": "Pool vault: invalid amount"
+    },
+    {
+      "code": 6050,
+      "name": "PoolExpiryTooShort",
+      "msg": "Pool vault: expiry too short (minimum 1 hour)"
+    },
+    {
+      "code": 6051,
+      "name": "PoolExpiryTooLong",
+      "msg": "Pool vault: expiry too long (maximum 90 days)"
+    },
+    {
+      "code": 6052,
+      "name": "PoolMintMismatch",
+      "msg": "Pool vault: token mint does not match pool vault mint"
     }
   ],
   "types": [
@@ -4616,6 +4906,96 @@
                 ]
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "EscrowReceipt",
+      "docs": [
+        "Escrow Receipt PDA — encrypted receipt for individual (non-pooled) escrows.",
+        "",
+        "Same encryption format as PoolReceipt (AES-256-GCM, 512-byte payload, SHA-256 commitment).",
+        "Created during escrow release when PRIVACY_ENABLED and TRANSACTION_POOLS_ENABLED.",
+        "",
+        "Seeds: [\"escrow_receipt\", escrow_id[32]]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "escrow_id",
+            "docs": [
+              "Escrow identifier"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "receipt_id",
+            "docs": [
+              "Unique receipt identifier"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "timestamp",
+            "docs": [
+              "Timestamp of receipt creation"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "docs": [
+              "Receipt status"
+            ],
+            "type": {
+              "defined": {
+                "name": "PoolReceiptStatus"
+              }
+            }
+          },
+          {
+            "name": "commitment_hash",
+            "docs": [
+              "SHA-256 commitment hash for public verification"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_payload",
+            "docs": [
+              "AES-256-GCM encrypted payload (same 512-byte format as PoolReceipt)",
+              "Layout: [12 IV][16 tag][2 ciphertext-length][482 ciphertext (zero-padded)]"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                512
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
           }
         ]
       }

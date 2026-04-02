@@ -205,7 +205,7 @@ export class PrivacyAnalysisService {
               ? 'Stealth address reused across multiple escrows'
               : stealthPayment.status === 'SWEPT'
                 ? 'Stealth address verified — funds swept to recipient wallet'
-                : 'Stealth address verified — funds successfully settled to derived wallet';
+                : 'Stealth address verified — funds settled to derived wallet';
 
         return {
           passed: derivationVerified,
@@ -337,20 +337,72 @@ export class PrivacyAnalysisService {
         }
       }
 
+      // Extract account attributes from the on-chain escrow PDA
+      let accountAttributes: Array<{ field: string; label: string; rawValue: string | null; onChainValue: string | null; encrypted: boolean }> | undefined;
+      if (escrowPda && escrowAccountExists) {
+        try {
+          const escrowAccount = await this.connection.getAccountInfo(new PublicKey(escrowPda));
+          if (escrowAccount && escrowAccount.data.length >= 194) {
+            const d = escrowAccount.data;
+            // Layout: disc(8) + escrow_id(32) + payer(32) + recipient(32) + mint(32)
+            //         + amount(8) + platform_fee(8) + fee_collector(32) + condition_type(1)
+            //         + corridor(8) + status(1) + settlement_authority(32)
+            const onChainEscrowId = d.slice(8, 40).toString('hex');
+            const onChainPayer = new PublicKey(d.slice(40, 72)).toBase58();
+            const onChainRecipient = new PublicKey(d.slice(72, 104)).toBase58();
+            const onChainMint = new PublicKey(d.slice(104, 136)).toBase58();
+            const onChainAmount = d.readBigUInt64LE(136);
+            const onChainFee = d.readBigUInt64LE(144);
+            const onChainFeeCollector = new PublicKey(d.slice(152, 184)).toBase58();
+            const onChainCondition = d[184];
+            const onChainCorridor = d.slice(185, 193).toString('utf8').replace(/\0/g, '');
+            const onChainStatus = d[193];
+            const onChainAuthority = new PublicKey(d.slice(194, 226)).toBase58();
+            const statusNames = ['CREATED', 'FUNDED', 'RELEASED', 'CANCELLED', 'EXPIRED'];
+            const conditionNames = ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'];
+
+            // The escrow PDA stores all fields as plaintext Borsh-serialized data.
+            // Privacy is provided by stealth addresses (hiding recipient identity) and
+            // pool receipt encryption (hiding payer-recipient links), not by PDA encryption.
+            // The escrowId appears as raw hex (UUID bytes) which is not human-readable
+            // but is NOT encrypted — it can be decoded by anyone.
+            accountAttributes = [
+              { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: onChainEscrowId, encrypted: false },
+              { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: onChainPayer, encrypted: false },
+              { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: onChainRecipient, encrypted: false },
+              { field: 'tokenMint', label: 'Token Mint', rawValue: escrow.usdcMint, onChainValue: onChainMint, encrypted: false },
+              { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: `${Number(onChainAmount) / 1e6} USDC`, encrypted: false },
+              { field: 'platformFee', label: 'Platform Fee', rawValue: String(Number(escrow.platformFee)), onChainValue: `${Number(onChainFee) / 1e6} USDC`, encrypted: false },
+              { field: 'feeCollector', label: 'Fee Collector', rawValue: config.platform?.feeCollectorAddress || null, onChainValue: onChainFeeCollector, encrypted: false },
+              { field: 'conditionType', label: 'Condition Type', rawValue: escrow.conditionType, onChainValue: conditionNames[onChainCondition] || String(onChainCondition), encrypted: false },
+              { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: onChainCorridor, encrypted: false },
+              { field: 'status', label: 'Status', rawValue: escrow.status, onChainValue: statusNames[onChainStatus] || String(onChainStatus), encrypted: false },
+              { field: 'settlementAuthority', label: 'Settlement Authority', rawValue: escrow.settlementAuthority, onChainValue: onChainAuthority, encrypted: false },
+            ];
+          }
+        } catch {
+          // Account attribute extraction failed — non-critical
+        }
+      }
+
       // Check pool receipt PDA if escrow is part of a transaction pool
       let poolReceiptPda: string | null = null;
       let poolReceiptExists = false;
+      let poolReceiptAttributes: Array<{ field: string; label: string; rawValue: string | null; onChainValue: string | null; encrypted: boolean }> | undefined;
       if (escrow.poolId) {
         try {
           const programId = new PublicKey(config.solana.escrowProgramId);
-          const escrowIdBytes = Buffer.from(escrow.escrowId.replace(/-/g, ''), 'hex');
-          // The pool's UUID (id) is used as the on-chain seed
+          const escrowIdHex = escrow.escrowId.replace(/-/g, '');
+          const escrowIdBytes = Buffer.alloc(32);
+          Buffer.from(escrowIdHex, 'hex').copy(escrowIdBytes);
           const pool = await this.prisma.transactionPool.findUnique({
             where: { id: escrow.poolId },
-            select: { id: true },
+            select: { id: true, poolCode: true },
           });
           if (pool) {
-            const poolIdBytes = Buffer.from(pool.id.replace(/-/g, ''), 'hex');
+            const poolIdHex = pool.id.replace(/-/g, '');
+            const poolIdBytes = Buffer.alloc(32);
+            Buffer.from(poolIdHex, 'hex').copy(poolIdBytes);
             const [receiptPda] = PublicKey.findProgramAddressSync(
               [Buffer.from('pool_receipt'), poolIdBytes, escrowIdBytes],
               programId
@@ -358,31 +410,116 @@ export class PrivacyAnalysisService {
             poolReceiptPda = receiptPda.toBase58();
             const receiptAccount = await this.connection.getAccountInfo(receiptPda);
             poolReceiptExists = !!receiptAccount;
+
+            // Extract pool receipt attributes — these ARE encrypted on-chain
+            if (receiptAccount && receiptAccount.data.length >= 129 + 512) {
+              const rd = receiptAccount.data;
+              // Layout: disc(8) + pool_id(32) + escrow_id(32) + receipt_id(16) + timestamp(8) + status(1) + commitment_hash(32) + encrypted_payload(512) + bump(1)
+              const commitmentHash = rd.slice(97, 129).toString('hex');
+              const encryptedPayload = rd.slice(129, 641);
+              const iv = encryptedPayload.slice(0, 12).toString('hex');
+              const authTag = encryptedPayload.slice(12, 28).toString('hex');
+              const ciphertextLen = encryptedPayload.readUInt16BE(28);
+              const ciphertext = encryptedPayload.slice(30, 30 + ciphertextLen).toString('hex');
+              const truncatedCipher = ciphertext.length > 32 ? ciphertext.slice(0, 32) + '...' : ciphertext;
+
+              // All receipt fields are encrypted in the payload — show encrypted indicator
+              poolReceiptAttributes = [
+                { field: 'poolId', label: 'Pool ID', rawValue: pool.poolCode, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: truncatedCipher, encrypted: true },
+                { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'releaseTxSignature', label: 'Release Tx', rawValue: escrow.releaseTxSignature, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'settledAt', label: 'Settled At', rawValue: escrow.resolvedAt?.toISOString() || null, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'commitmentHash', label: 'Commitment Hash', rawValue: commitmentHash, onChainValue: commitmentHash, encrypted: false },
+                { field: 'encryptionIV', label: 'Encryption IV', rawValue: null, onChainValue: iv, encrypted: false },
+                { field: 'authTag', label: 'Auth Tag', rawValue: null, onChainValue: authTag, encrypted: false },
+                { field: 'payloadSize', label: 'Encrypted Payload', rawValue: null, onChainValue: `${ciphertextLen} bytes (AES-256-GCM)`, encrypted: false },
+              ];
+            }
           }
         } catch {
           // Pool receipt lookup failed — non-critical
         }
       }
 
+      // Check standalone escrow receipt PDA (for non-pooled escrows with privacy enabled)
+      let escrowReceiptPda: string | null = null;
+      let escrowReceiptExists = false;
+      let escrowReceiptAttributes: Array<{ field: string; label: string; rawValue: string | null; onChainValue: string | null; encrypted: boolean }> | undefined;
+      if (!escrow.poolId) {
+        try {
+          const programId = new PublicKey(config.solana.escrowProgramId);
+          const escrowIdHex = escrow.escrowId.replace(/-/g, '');
+          const eidBytes = Buffer.alloc(32);
+          Buffer.from(escrowIdHex, 'hex').copy(eidBytes);
+          const [receiptPda] = PublicKey.findProgramAddressSync(
+            [Buffer.from('escrow_receipt'), eidBytes],
+            programId
+          );
+          escrowReceiptPda = receiptPda.toBase58();
+          const receiptAccount = await this.connection.getAccountInfo(receiptPda);
+          escrowReceiptExists = !!receiptAccount;
+
+          if (receiptAccount && receiptAccount.data.length >= 97 + 512) {
+            const rd = receiptAccount.data;
+            // Layout: disc(8) + escrow_id(32) + receipt_id(16) + timestamp(8) + status(1) + commitment_hash(32) + encrypted_payload(512)
+            const commitmentHash = rd.slice(65, 97).toString('hex');
+            const encryptedPayload = rd.slice(97, 609);
+            const iv = encryptedPayload.slice(0, 12).toString('hex');
+            const authTag = encryptedPayload.slice(12, 28).toString('hex');
+            const ciphertextLen = encryptedPayload.readUInt16BE(28);
+            const ciphertext = encryptedPayload.slice(30, 30 + ciphertextLen).toString('hex');
+            const truncatedCipher = ciphertext.length > 32 ? ciphertext.slice(0, 32) + '...' : ciphertext;
+
+            escrowReceiptAttributes = [
+              { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: truncatedCipher, encrypted: true },
+              { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'releaseTxSignature', label: 'Release Tx', rawValue: escrow.releaseTxSignature, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'settledAt', label: 'Settled At', rawValue: escrow.resolvedAt?.toISOString() || null, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'commitmentHash', label: 'Commitment Hash', rawValue: commitmentHash, onChainValue: commitmentHash, encrypted: false },
+              { field: 'encryptionIV', label: 'Encryption IV', rawValue: null, onChainValue: iv, encrypted: false },
+              { field: 'authTag', label: 'Auth Tag', rawValue: null, onChainValue: authTag, encrypted: false },
+              { field: 'payloadSize', label: 'Encrypted Payload', rawValue: null, onChainValue: `${ciphertextLen} bytes (AES-256-GCM)`, encrypted: false },
+            ];
+          }
+        } catch {
+          // Escrow receipt lookup failed — non-critical
+        }
+      }
+
+      // Use whichever receipt attributes are available (pool or standalone)
+      const receiptAttributes = escrowReceiptAttributes;
+      const anyReceiptExists = poolReceiptExists || escrowReceiptExists;
+
       const accountExists = escrowAccountExists || vaultAccountExists;
-      const passed = accountExists && metadataEncrypted;
+      const passed = accountExists && (metadataEncrypted || anyReceiptExists);
 
       return {
         passed,
-        detail: passed
-          ? poolReceiptExists
-            ? 'Escrow PDA and pool receipt exist on-chain with encrypted metadata'
-            : 'Escrow PDA account exists on-chain with encrypted metadata'
-          : accountExists
-            ? 'PDA account exists but no encrypted metadata found'
-            : 'PDA accounts not found on-chain (may have been closed after settlement)',
+        detail: anyReceiptExists
+          ? 'Escrow PDA and encrypted receipt exist on-chain with verifiable commitment hash'
+          : passed
+            ? 'Escrow PDA account exists on-chain with metadata'
+            : accountExists
+              ? 'PDA account exists but no encrypted receipt found'
+              : 'PDA accounts not found on-chain (may have been closed after settlement)',
         escrowPda: escrowPda || null,
         vaultPda: vaultPda || null,
         poolReceiptPda,
         poolReceiptExists,
+        escrowReceiptPda,
+        escrowReceiptExists,
         accountExists,
         metadataEncrypted,
         onChainDetails: { escrowPdaOwner, vaultBalance, vaultTokenMint },
+        accountAttributes,
+        receiptAttributes,
       };
     } catch (err) {
       logger.error(`${LOG_PREFIX} PDA receipts check failed`, { error: (err as Error).message });
@@ -461,25 +598,14 @@ export class PrivacyAnalysisService {
 
   private async checkComplianceAuditTrail(escrow: any): Promise<CheckResult> {
     try {
-      // Look up compliance/KYT audit logs for this escrow
-      const auditLogs = await this.prisma.institutionAuditLog.findMany({
-        where: {
-          clientId: escrow.clientId,
-          action: { in: ['COMPLIANCE_SCREENING', 'COMPLIANCE_WARNING', 'KYT_CHECK'] },
-        },
+      // Look up ALL audit logs for this escrow by the top-level escrowId column
+      const escrowLogs = await this.prisma.institutionAuditLog.findMany({
+        where: { escrowId: escrow.escrowId },
         orderBy: { createdAt: 'desc' },
-        take: 20,
+        take: 50,
       });
 
-      // Filter to logs related to this escrow (stored in details JSON)
-      const escrowLogs = auditLogs.filter((log: any) => {
-        const details = log.details as Record<string, unknown> | null;
-        return details && (
-          (details as any).escrowId === escrow.escrowId ||
-          (details as any).escrowCode === escrow.escrowCode
-        );
-      });
-
+      // Keep riskScore, kytReportId, sanctionsCleared for the response (not used for pass/fail)
       const riskScore = escrow.riskScore ?? null;
       const screeningLog = escrowLogs.find(
         (l: any) => l.action === 'COMPLIANCE_SCREENING'
@@ -488,24 +614,31 @@ export class PrivacyAnalysisService {
       const sanctionsCleared = screeningDetails
         ? (screeningDetails.passed === true)
         : false;
-
       const kytReportId = screeningLog?.id || null;
 
-      if (riskScore === null && escrowLogs.length === 0) {
+      if (escrowLogs.length === 0) {
         return {
           passed: false,
-          detail: 'No compliance records found for this escrow',
-          riskScore: null,
-          kytReportId: null,
-          sanctionsCleared: false,
+          detail: 'Compliance audit trail incomplete — no events logged',
+          riskScore,
+          kytReportId,
+          sanctionsCleared,
         };
       }
 
+      // Check lifecycle completeness: pass when audit trail covers the full lifecycle
+      const actions = new Set(escrowLogs.map((l: any) => l.action));
+      const hasCreation = actions.has('ESCROW_CREATED') || actions.has('DRAFT_SUBMITTED');
+      const hasFunding = actions.has('DEPOSIT_CONFIRMED');
+      const hasRelease = actions.has('FUNDS_RELEASED') || actions.has('ESCROW_COMPLETED');
+      const lifecycleComplete = hasCreation && hasFunding;
+      const eventCount = escrowLogs.length;
+
       return {
-        passed: sanctionsCleared,
-        detail: sanctionsCleared
-          ? `KYC/AML records anchored — risk score ${riskScore ?? 'N/A'}`
-          : `Compliance screening incomplete or flagged — risk score ${riskScore ?? 'N/A'}`,
+        passed: lifecycleComplete,
+        detail: lifecycleComplete
+          ? `Compliance audit trail complete — ${eventCount} events logged`
+          : `Compliance audit trail incomplete — missing lifecycle events`,
         riskScore,
         kytReportId,
         sanctionsCleared,
@@ -536,6 +669,7 @@ export class PrivacyAnalysisService {
           shieldedPoolBatchId: null,
           batchSize: 0,
           poolDetails: nullPoolDetails,
+          privacyDetails: null,
         };
       }
 
@@ -546,6 +680,7 @@ export class PrivacyAnalysisService {
           poolCode: true,
           status: true,
           totalAmount: true,
+          settlementMode: true,
           _count: { select: { members: true } },
         },
       });
@@ -557,16 +692,76 @@ export class PrivacyAnalysisService {
           shieldedPoolBatchId: null,
           batchSize: 0,
           poolDetails: nullPoolDetails,
+          privacyDetails: null,
         };
       }
 
       const batchSize = pool._count.members;
       const totalBatchAmount = Number(pool.totalAmount);
       const transactionAmount = Number(escrow.amount);
-      // Obfuscation ratio: how much of the batch is NOT this transaction (higher = more private)
       const obfuscationRatio = totalBatchAmount > 0
         ? Math.round(((totalBatchAmount - transactionAmount) / totalBatchAmount) * 100)
         : 0;
+
+      const stealthEnabled = escrow.privacyLevel === 'STEALTH' && !!escrow.stealthPaymentId;
+      const settlementMode = (pool.settlementMode as string) || 'SEQUENTIAL';
+
+      const privacyDetails = {
+        senderPrivacy: {
+          fundMixing: true,
+          detail: 'Sender deposits routed through shared pool vault PDA — direct payer-to-recipient link broken on-chain',
+        },
+        receiverPrivacy: {
+          fundMixing: true,
+          stealthEnabled,
+          detail: stealthEnabled
+            ? 'Recipient receives from pool vault via stealth-derived address — identity fully unlinkable'
+            : 'Recipient receives from pool vault, not directly from payer. Stealth address not configured for this escrow',
+        },
+        amountPrivacy: {
+          obfuscationRatio,
+          individualAmountVisible: true,
+          detail: batchSize >= 2
+            ? `Individual amounts visible on-chain but obscured within batch of ${batchSize} transactions (${obfuscationRatio}% noise ratio)`
+            : 'Single transaction in pool — no amount obfuscation',
+        },
+        mevProtection: {
+          jitoBundle: false,
+          priorityFee: true,
+          detail: 'Standard priority fees applied. Jito MEV bundles not enabled for pool settlements',
+        },
+        tokenStandard: {
+          program: 'Token',
+          transferMethod: 'transfer_checked',
+          token2022: false,
+          confidentialTransfers: false,
+          detail: 'SPL Token program with transfer_checked validation. Token2022 confidential transfers not enabled',
+        },
+        encryption: {
+          algorithm: 'AES-256-GCM',
+          keySize: 256,
+          ivSize: 96,
+          payloadSize: 512,
+          commitmentHash: 'SHA-256',
+          detail: 'Receipt encrypted with AES-256-GCM (256-bit key, 96-bit IV). SHA-256 commitment hash stored on-chain for tamper verification',
+        },
+        insidePoolVisibility: {
+          poolSizeVisible: true,
+          memberCountVisible: true,
+          settlementProgressVisible: true,
+          corridorVisible: true,
+          individualAmountsVisible: true,
+          payerRecipientLinkVisible: false,
+          detail: 'Pool size, member count, and settlement progress visible on-chain. Payer-recipient link encrypted in receipt PDAs',
+        },
+        protocol: {
+          name: 'EasyEscrow Shielded Pool',
+          version: '1.0',
+          settlementMode,
+          atomicSettlement: false,
+          detail: `Non-atomic ${settlementMode.toLowerCase()} settlement via individual on-chain transactions`,
+        },
+      };
 
       return {
         passed: batchSize >= 2,
@@ -576,6 +771,7 @@ export class PrivacyAnalysisService {
         shieldedPoolBatchId: pool.poolCode,
         batchSize,
         poolDetails: { totalBatchAmount, transactionAmount, obfuscationRatio },
+        privacyDetails,
       };
     } catch (err) {
       logger.error(`${LOG_PREFIX} Pool shielding check failed`, { error: (err as Error).message });
@@ -585,8 +781,93 @@ export class PrivacyAnalysisService {
         shieldedPoolBatchId: null,
         batchSize: 0,
         poolDetails: nullPoolDetails,
+        privacyDetails: null,
       };
     }
+  }
+  // ─── Privacy Summary (lightweight, no on-chain queries) ────────
+
+  async getPrivacySummary(clientId: string | null, limit: number = 10): Promise<any[]> {
+    const escrows = await this.prisma.institutionEscrow.findMany({
+      where: clientId ? { clientId } : {},
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 10),
+      select: {
+        escrowId: true,
+        escrowCode: true,
+        amount: true,
+        status: true,
+        corridor: true,
+        payerName: true,
+        recipientName: true,
+        createdAt: true,
+        privacyLevel: true,
+        stealthPaymentId: true,
+        escrowPda: true,
+        vaultPda: true,
+        initTxSignature: true,
+        depositTxSignature: true,
+        releaseTxSignature: true,
+        poolId: true,
+      },
+    });
+
+    // Batch-fetch audit log action sets for all escrows in one query
+    const escrowIds = escrows.map(e => e.escrowId);
+    const auditLogs = escrowIds.length > 0
+      ? await this.prisma.institutionAuditLog.findMany({
+          where: { escrowId: { in: escrowIds } },
+          select: { escrowId: true, action: true },
+        })
+      : [];
+
+    const auditByEscrow = new Map<string, Set<string>>();
+    for (const log of auditLogs) {
+      if (!log.escrowId) continue;
+      if (!auditByEscrow.has(log.escrowId)) auditByEscrow.set(log.escrowId, new Set());
+      auditByEscrow.get(log.escrowId)!.add(log.action);
+    }
+
+    return escrows.map(e => {
+      const actions = auditByEscrow.get(e.escrowId) || new Set<string>();
+
+      // Stealth: pass if stealth payment exists, fail otherwise
+      const stealthAddress = e.stealthPaymentId ? 'pass' : 'fail';
+
+      // PDA receipts: pass if PDA exists, partial if only escrowId is "encrypted" (UUID bytes),
+      // fail if no PDA
+      const pdaReceipts = e.escrowPda ? 'partial' : 'fail';
+
+      // Encrypted custody: count tx signatures
+      const sigs = [e.initTxSignature, e.depositTxSignature, e.releaseTxSignature].filter(Boolean);
+      const encryptedCustody = sigs.length >= 3 ? 'pass' : sigs.length > 0 ? 'partial' : 'fail';
+
+      // Compliance audit trail: check lifecycle events
+      const hasCreation = actions.has('ESCROW_CREATED') || actions.has('DRAFT_SUBMITTED');
+      const hasFunding = actions.has('DEPOSIT_CONFIRMED');
+      const complianceAuditTrail = (hasCreation && hasFunding) ? 'pass'
+        : actions.size > 0 ? 'partial' : 'fail';
+
+      // Transaction pool shielding: pass if in a pool, fail otherwise
+      const transactionPoolShielding = e.poolId ? 'pass' : 'fail';
+
+      return {
+        escrowId: e.escrowCode,
+        amount: Number(e.amount),
+        status: e.status,
+        corridor: e.corridor,
+        payerName: e.payerName || null,
+        recipientName: e.recipientName || null,
+        createdAt: e.createdAt.toISOString(),
+        privacySummary: {
+          stealthAddress,
+          pdaReceipts,
+          encryptedCustody,
+          complianceAuditTrail,
+          transactionPoolShielding,
+        },
+      };
+    });
   }
 }
 

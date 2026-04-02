@@ -449,5 +449,9 @@ describe('Pool Receipt PDA Verification E2E (Staging)', function () {
 // ─── Helpers ──────────────────────────────────────────────────────
 
 function uuidToBytes(uuid: string): Buffer {
-  return Buffer.from(uuid.replace(/-/g, ''), 'hex');
+  const hex = uuid.replace(/-/g, '');
+  const buf = Buffer.from(hex, 'hex');
+  const padded = Buffer.alloc(32);
+  buf.copy(padded);
+  return padded;
 }
