@@ -663,13 +663,34 @@ export class PrivacyAnalysisService {
       // Check if this escrow belongs to a transaction pool
       const poolId = escrow.poolId;
       if (!poolId) {
+        // Check if a standalone encrypted receipt PDA exists (partial shielding)
+        const hasReceiptPda = await this.hasEscrowReceiptPda(escrow.escrowId);
         return {
-          passed: false,
-          detail: 'Transaction not routed through a shielded pool',
+          passed: hasReceiptPda,
+          detail: hasReceiptPda
+            ? 'Encrypted receipt PDA created — no batch pool (single escrow). Add more escrows to a pool for maximum obfuscation'
+            : 'Transaction not routed through a shielded pool',
           shieldedPoolBatchId: null,
-          batchSize: 0,
-          poolDetails: nullPoolDetails,
-          privacyDetails: null,
+          batchSize: hasReceiptPda ? 1 : 0,
+          poolDetails: hasReceiptPda
+            ? { totalBatchAmount: Number(escrow.amount), transactionAmount: Number(escrow.amount), obfuscationRatio: 0 }
+            : nullPoolDetails,
+          privacyDetails: hasReceiptPda ? {
+            senderPrivacy: { fundMixing: false, detail: 'Single escrow — no fund mixing (batch pool required for sender privacy)' },
+            receiverPrivacy: {
+              fundMixing: false,
+              stealthEnabled: escrow.privacyLevel === 'STEALTH' && !!escrow.stealthPaymentId,
+              detail: escrow.stealthPaymentId
+                ? 'Stealth address active — receiver identity hidden on-chain'
+                : 'No batch pool. Stealth address provides receiver privacy when enabled',
+            },
+            amountPrivacy: { obfuscationRatio: 0, individualAmountVisible: true, detail: 'Single escrow — amount visible on-chain. Add to a batch pool for obfuscation' },
+            mevProtection: { jitoBundle: false, priorityFee: true, detail: 'Standard priority fees applied' },
+            tokenStandard: { program: 'Token', transferMethod: 'transfer_checked', token2022: false, confidentialTransfers: false, detail: 'SPL Token with transfer_checked' },
+            encryption: { algorithm: 'AES-256-GCM', keySize: 256, ivSize: 96, payloadSize: 512, commitmentHash: 'SHA-256', detail: 'Receipt encrypted with AES-256-GCM. SHA-256 commitment hash on-chain for verification' },
+            insidePoolVisibility: { poolSizeVisible: false, memberCountVisible: false, settlementProgressVisible: false, corridorVisible: true, individualAmountsVisible: true, payerRecipientLinkVisible: false, detail: 'Encrypted receipt hides payer-recipient link. No pool metadata visible (standalone escrow)' },
+            protocol: { name: 'EasyEscrow Encrypted Receipt', version: '1.0', settlementMode: 'DIRECT', atomicSettlement: false, detail: 'Standalone encrypted receipt — no pool batching' },
+          } : null,
         };
       }
 
@@ -763,6 +784,26 @@ export class PrivacyAnalysisService {
         },
       };
 
+      // Query decoy metrics for this pool
+      let decoyMetrics: { decoyCount: number; realMemberCount: number; totalMembers: number; decoyPercentage: number; note: string } | null = null;
+      try {
+        const members = await this.prisma.transactionPoolMember.findMany({
+          where: { poolId },
+          select: { isDecoy: true },
+        });
+        const decoyCount = members.filter((m: any) => m.isDecoy).length;
+        const realCount = members.filter((m: any) => !m.isDecoy).length;
+        if (decoyCount > 0) {
+          decoyMetrics = {
+            decoyCount,
+            realMemberCount: realCount,
+            totalMembers: members.length,
+            decoyPercentage: Math.round((decoyCount / members.length) * 100),
+            note: `${decoyCount} chaff transactions injected for privacy shielding`,
+          };
+        }
+      } catch { /* non-critical */ }
+
       return {
         passed: batchSize >= 2,
         detail: batchSize >= 2
@@ -771,6 +812,7 @@ export class PrivacyAnalysisService {
         shieldedPoolBatchId: pool.poolCode,
         batchSize,
         poolDetails: { totalBatchAmount, transactionAmount, obfuscationRatio },
+        decoyMetrics,
         privacyDetails,
       };
     } catch (err) {
@@ -785,6 +827,24 @@ export class PrivacyAnalysisService {
       };
     }
   }
+  // ─── Helpers ───────────────────────────────────────────────────
+
+  private async hasEscrowReceiptPda(escrowId: string): Promise<boolean> {
+    try {
+      const programId = new PublicKey(config.solana.escrowProgramId);
+      const escrowIdBytes = Buffer.alloc(32);
+      Buffer.from(escrowId.replace(/-/g, ''), 'hex').copy(escrowIdBytes);
+      const [receiptPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('escrow_receipt'), escrowIdBytes],
+        programId
+      );
+      const account = await this.connection.getAccountInfo(receiptPda);
+      return !!account;
+    } catch {
+      return false;
+    }
+  }
+
   // ─── Privacy Summary (lightweight, no on-chain queries) ────────
 
   async getPrivacySummary(clientId: string | null, limit: number = 10): Promise<any[]> {

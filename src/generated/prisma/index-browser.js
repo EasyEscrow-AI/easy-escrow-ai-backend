@@ -894,6 +894,7 @@ exports.Prisma.TransactionPoolMemberScalarFieldEnum = {
   commitmentHash: 'commitmentHash',
   privacyLevel: 'privacyLevel',
   stealthPaymentId: 'stealthPaymentId',
+  isDecoy: 'isDecoy',
   sequenceNumber: 'sequenceNumber',
   addedAt: 'addedAt',
   updatedAt: 'updatedAt'
@@ -923,6 +924,7 @@ exports.Prisma.InstitutionTransferScalarFieldEnum = {
   status: 'status',
   note: 'note',
   failureReason: 'failureReason',
+  expiresAt: 'expiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

@@ -1248,13 +1248,12 @@ model InstitutionEscrow {
   poolId String? @map("pool_id")
 
   // Relations
-  client      InstitutionClient       @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  pool        TransactionPool?        @relation(fields: [poolId], references: [id])
-  deposits    InstitutionDeposit[]
-  auditLogs   InstitutionAuditLog[]
-  aiAnalyses  InstitutionAiAnalysis[]
-  files       InstitutionFile[]
-  poolMembers TransactionPoolMember[]
+  client     InstitutionClient       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  pool       TransactionPool?        @relation(fields: [poolId], references: [id])
+  deposits   InstitutionDeposit[]
+  auditLogs  InstitutionAuditLog[]
+  aiAnalyses InstitutionAiAnalysis[]
+  files      InstitutionFile[]
 
   @@index([clientId])
   @@index([escrowId])
@@ -1732,18 +1731,18 @@ model TransactionPoolMember {
   // Privacy tracking
   privacyLevel     PrivacyLevel? @map("privacy_level")
   stealthPaymentId String?       @map("stealth_payment_id")
+  isDecoy          Boolean       @default(false) @map("is_decoy")
 
   sequenceNumber Int      @default(0) @map("sequence_number")
   addedAt        DateTime @default(now()) @map("added_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
-  pool   TransactionPool   @relation(fields: [poolId], references: [id])
-  escrow InstitutionEscrow @relation(fields: [escrowId], references: [escrowId])
+  pool TransactionPool @relation(fields: [poolId], references: [id])
 
-  @@unique([poolId, escrowId])
   @@index([poolId])
   @@index([escrowId])
+  @@index([isDecoy])
   @@map("transaction_pool_members")
 }
 
@@ -1768,20 +1767,21 @@ model TransactionPoolAuditLog {
 
 // Internal account-to-account SPL token transfers within the same institution
 model InstitutionTransfer {
-  id              String   @id @default(uuid())
-  transferCode    String   @unique @map("transfer_code") // TXF-XXX-XXX
-  clientId        String   @map("client_id")
-  fromAccountId   String   @map("from_account_id")
-  toAccountId     String   @map("to_account_id")
-  tokenSymbol     String   @map("token_symbol") // USDC, EURC, USDT, PYUSD
-  amount          Decimal  @db.Decimal(20, 6)
-  signerPublicKey String   @map("signer_public_key")
-  txSignature     String?  @map("tx_signature")
-  status          String   @default("pending") // pending, completed, failed
+  id              String    @id @default(uuid())
+  transferCode    String    @unique @map("transfer_code") // TXF-XXX-XXX
+  clientId        String    @map("client_id")
+  fromAccountId   String    @map("from_account_id")
+  toAccountId     String    @map("to_account_id")
+  tokenSymbol     String    @map("token_symbol") // USDC, EURC, USDT, PYUSD
+  amount          Decimal   @db.Decimal(20, 6)
+  signerPublicKey String    @map("signer_public_key")
+  txSignature     String?   @map("tx_signature")
+  status          String    @default("pending") // pending, completed, failed, expired
   note            String?
-  failureReason   String?  @map("failure_reason")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  failureReason   String?   @map("failure_reason")
+  expiresAt       DateTime? @map("expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   client      InstitutionClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
   fromAccount InstitutionAccount @relation("TransferFrom", fields: [fromAccountId], references: [id])

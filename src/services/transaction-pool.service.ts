@@ -19,6 +19,7 @@ import { redisClient } from '../config/redis';
 import { PublicKey } from '@solana/web3.js';
 import { config } from '../config';
 import crypto from 'crypto';
+import { isPoolDecoyEnabled } from '../utils/featureFlags';
 import {
   TransactionPoolStatus,
   PoolMemberStatus,
@@ -169,7 +170,18 @@ export class TransactionPoolService {
       corridor,
     });
 
-    // 8. Cache
+    // 8. Inject decoy members for privacy shielding
+    if (isPoolDecoyEnabled()) {
+      try {
+        const { getPoolDecoyService } = await import('./pool-decoy.service');
+        const decoyService = getPoolDecoyService();
+        await decoyService.injectDecoys(poolId, poolCode, corridor || null);
+      } catch (err) {
+        console.warn(`${LOG_PREFIX} Decoy injection failed (non-critical):`, err);
+      }
+    }
+
+    // 9. Cache
     await this.cachePool(pool);
 
     return this.formatPool(pool);
@@ -1146,6 +1158,12 @@ export class TransactionPoolService {
     member: any,
     actorEmail?: string
   ): Promise<PoolMemberSettlementResult> {
+    // Decoy members are pre-settled with receipt PDAs — skip
+    if (member.isDecoy) {
+      console.log(`${LOG_PREFIX} Skipping decoy member ${member.id}`);
+      return { memberId: member.id, escrowId: member.escrowId, status: 'SETTLED' as PoolMemberStatus };
+    }
+
     const escrow = await this.prisma.institutionEscrow.findUnique({
       where: { escrowId: member.escrowId },
     });
