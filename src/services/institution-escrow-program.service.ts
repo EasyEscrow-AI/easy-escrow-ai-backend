@@ -272,17 +272,54 @@ export class InstitutionEscrowProgramService {
     const [vaultPda] = this.deriveVaultPda(escrowIdBytes);
     const escrowIdArray = Array.from(escrowIdBytes);
 
-    // Use stealth payer address if provided, otherwise real payer
-    const depositPayer = params.stealthPayer || params.payer;
-    const payerAta = await getAssociatedTokenAddress(params.usdcMint, depositPayer);
-
     const transaction = new Transaction();
+
+    // When stealth payer is active: build combined tx with 3 steps:
+    // 1. Create stealth ATA (if needed)
+    // 2. SPL transfer: real payer ATA → stealth ATA (payer signs)
+    // 3. Deposit: stealth ATA → vault (with stealth_payer param)
+    // All in one transaction — payer signs once.
+    const depositPayer = params.stealthPayer || params.payer;
+    const realPayerAta = await getAssociatedTokenAddress(params.usdcMint, params.payer);
+    let depositPayerAta: PublicKey;
+
+    if (params.stealthPayer) {
+      // Create stealth ATA if needed
+      const stealthAta = await this.getOrCreateAta(
+        params.usdcMint,
+        params.stealthPayer,
+        params.payer // real payer pays for ATA creation
+      );
+      depositPayerAta = stealthAta.address;
+      if (stealthAta.instruction) {
+        transaction.add(stealthAta.instruction);
+      }
+
+      // Transfer total deposit (amount + fee) from real payer to stealth ATA
+      // We read the escrow state to get the amounts
+      const escrowAccount = await this.connection.getAccountInfo(escrowPda);
+      if (escrowAccount && escrowAccount.data.length >= 152) {
+        const amount = escrowAccount.data.readBigUInt64LE(136);
+        const fee = escrowAccount.data.readBigUInt64LE(144);
+        const total = amount + fee;
+        transaction.add(
+          createTransferInstruction(
+            realPayerAta,
+            depositPayerAta,
+            params.payer,
+            Number(total)
+          )
+        );
+      }
+    } else {
+      depositPayerAta = realPayerAta;
+    }
 
     // Ensure fee collector ATA exists
     const feeCollectorAta = await this.getOrCreateAta(
       params.usdcMint,
       params.feeCollector,
-      params.payer // real payer pays for ATA creation
+      params.payer
     );
     if (feeCollectorAta.instruction) {
       transaction.add(feeCollectorAta.instruction);
@@ -292,7 +329,7 @@ export class InstitutionEscrowProgramService {
       .depositInstitutionEscrow(escrowIdArray, params.stealthPayer || null)
       .accounts({
         payer: params.payer,
-        payerTokenAccount: payerAta,
+        payerTokenAccount: depositPayerAta,
         escrowState: escrowPda,
         tokenVault: vaultPda,
         feeCollectorTokenAccount: feeCollectorAta.address,
