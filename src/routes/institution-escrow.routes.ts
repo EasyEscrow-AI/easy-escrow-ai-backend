@@ -495,8 +495,9 @@ router.get(
   requireInstitutionOrAdminAuth,
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
-      const clientId = req.institutionClient?.clientId;
-      if (!clientId) {
+      const clientId = req.institutionClient?.clientId || null;
+      const isAdmin = req.isAdmin === true;
+      if (!clientId && !isAdmin) {
         res.status(403).json({ error: 'Authentication required', timestamp: new Date().toISOString() });
         return;
       }
