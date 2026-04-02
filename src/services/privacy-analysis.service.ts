@@ -337,20 +337,66 @@ export class PrivacyAnalysisService {
         }
       }
 
+      // Extract account attributes from the on-chain escrow PDA
+      let accountAttributes: Array<{ field: string; label: string; rawValue: string | null; onChainValue: string | null; encrypted: boolean }> | undefined;
+      if (escrowPda && escrowAccountExists) {
+        try {
+          const escrowAccount = await this.connection.getAccountInfo(new PublicKey(escrowPda));
+          if (escrowAccount && escrowAccount.data.length >= 194) {
+            const d = escrowAccount.data;
+            // Layout: disc(8) + escrow_id(32) + payer(32) + recipient(32) + mint(32)
+            //         + amount(8) + platform_fee(8) + fee_collector(32) + condition_type(1)
+            //         + corridor(8) + status(1) + settlement_authority(32)
+            const onChainEscrowId = d.slice(8, 40).toString('hex');
+            const onChainPayer = new PublicKey(d.slice(40, 72)).toBase58();
+            const onChainRecipient = new PublicKey(d.slice(72, 104)).toBase58();
+            const onChainMint = new PublicKey(d.slice(104, 136)).toBase58();
+            const onChainAmount = d.readBigUInt64LE(136);
+            const onChainFee = d.readBigUInt64LE(144);
+            const onChainFeeCollector = new PublicKey(d.slice(152, 184)).toBase58();
+            const onChainCondition = d[184];
+            const onChainCorridor = d.slice(185, 193).toString('utf8').replace(/\0/g, '');
+            const onChainStatus = d[193];
+            const onChainAuthority = new PublicKey(d.slice(194, 226)).toBase58();
+            const statusNames = ['CREATED', 'FUNDED', 'RELEASED', 'CANCELLED', 'EXPIRED'];
+            const conditionNames = ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'];
+
+            accountAttributes = [
+              { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: onChainEscrowId, encrypted: true },
+              { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: onChainPayer, encrypted: false },
+              { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: onChainRecipient, encrypted: false },
+              { field: 'tokenMint', label: 'Token Mint', rawValue: escrow.usdcMint, onChainValue: onChainMint, encrypted: false },
+              { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: `${Number(onChainAmount) / 1e6} USDC`, encrypted: false },
+              { field: 'platformFee', label: 'Platform Fee', rawValue: String(Number(escrow.platformFee)), onChainValue: `${Number(onChainFee) / 1e6} USDC`, encrypted: false },
+              { field: 'feeCollector', label: 'Fee Collector', rawValue: config.platform?.feeCollectorAddress || null, onChainValue: onChainFeeCollector, encrypted: false },
+              { field: 'conditionType', label: 'Condition Type', rawValue: escrow.conditionType, onChainValue: conditionNames[onChainCondition] || String(onChainCondition), encrypted: false },
+              { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: onChainCorridor, encrypted: false },
+              { field: 'status', label: 'Status', rawValue: escrow.status, onChainValue: statusNames[onChainStatus] || String(onChainStatus), encrypted: false },
+              { field: 'settlementAuthority', label: 'Settlement Authority', rawValue: escrow.settlementAuthority, onChainValue: onChainAuthority, encrypted: false },
+            ];
+          }
+        } catch {
+          // Account attribute extraction failed — non-critical
+        }
+      }
+
       // Check pool receipt PDA if escrow is part of a transaction pool
       let poolReceiptPda: string | null = null;
       let poolReceiptExists = false;
       if (escrow.poolId) {
         try {
           const programId = new PublicKey(config.solana.escrowProgramId);
-          const escrowIdBytes = Buffer.from(escrow.escrowId.replace(/-/g, ''), 'hex');
-          // The pool's UUID (id) is used as the on-chain seed
+          const escrowIdHex = escrow.escrowId.replace(/-/g, '');
+          const escrowIdBytes = Buffer.alloc(32);
+          Buffer.from(escrowIdHex, 'hex').copy(escrowIdBytes);
           const pool = await this.prisma.transactionPool.findUnique({
             where: { id: escrow.poolId },
             select: { id: true },
           });
           if (pool) {
-            const poolIdBytes = Buffer.from(pool.id.replace(/-/g, ''), 'hex');
+            const poolIdHex = pool.id.replace(/-/g, '');
+            const poolIdBytes = Buffer.alloc(32);
+            Buffer.from(poolIdHex, 'hex').copy(poolIdBytes);
             const [receiptPda] = PublicKey.findProgramAddressSync(
               [Buffer.from('pool_receipt'), poolIdBytes, escrowIdBytes],
               programId
@@ -383,6 +429,7 @@ export class PrivacyAnalysisService {
         accountExists,
         metadataEncrypted,
         onChainDetails: { escrowPdaOwner, vaultBalance, vaultTokenMint },
+        accountAttributes,
       };
     } catch (err) {
       logger.error(`${LOG_PREFIX} PDA receipts check failed`, { error: (err as Error).message });
