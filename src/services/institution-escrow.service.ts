@@ -1298,27 +1298,10 @@ export class InstitutionEscrowService {
     const usdcMint = programService.getUsdcMintAddress();
     const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
 
-    // Resolve stealth payer address — builds a combined tx that transfers USDC
-    // to the stealth ATA then deposits from it, all in one payer-signed transaction.
-    let stealthPayerPubkey: PublicKey | undefined;
-    if (isPrivacyEnabled() && isTransactionPoolsEnabled()) {
-      try {
-        const { resolveDepositSource } = await import('./privacy/privacy-router.service');
-        const depositSource = await resolveDepositSource(
-          escrow.payerWallet,
-          clientId,
-          escrowId,
-          escrow.usdcMint,
-          BigInt(Math.round((Number(escrow.amount) + Number(escrow.platformFee)) * 1_000_000)),
-        );
-        if (depositSource.privacyLevel === 'STEALTH' && depositSource.recipientAddress !== escrow.payerWallet) {
-          stealthPayerPubkey = toPublicKey(depositSource.recipientAddress, 'stealthPayer');
-          console.log(`[InstitutionEscrow] Stealth payer resolved for ${escrowId}: ${depositSource.recipientAddress}`);
-        }
-      } catch (err) {
-        console.warn('[InstitutionEscrow] Stealth payer resolution failed (non-critical):', err);
-      }
-    }
+    // Stealth sender note: the on-chain program supports stealth_payer but it requires
+    // a two-transaction flow (user transfers to stealth ATA, then backend deposits from
+    // stealth ATA using stealth spending key). For now, deposits use the real payer wallet.
+    // Payer privacy is provided by: auto-pooling + encrypted receipt + escrow PDA closure.
 
     const tx = await programService.buildDepositTransaction({
       escrowId,
@@ -1326,7 +1309,6 @@ export class InstitutionEscrowService {
       usdcMint,
       feeCollector,
       memo: escrow.escrowCode ? `EasyEscrow:deposit:${escrow.escrowCode}` : undefined,
-      stealthPayer: stealthPayerPubkey,
     });
 
     tx.feePayer = payerWallet;
