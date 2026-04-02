@@ -508,20 +508,11 @@ export class PrivacyAnalysisService {
 
   private async checkComplianceAuditTrail(escrow: any): Promise<CheckResult> {
     try {
-      // Look up ALL audit logs for this escrow to check lifecycle completeness
-      const auditLogs = await this.prisma.institutionAuditLog.findMany({
-        where: { clientId: escrow.clientId },
+      // Look up ALL audit logs for this escrow by the top-level escrowId column
+      const escrowLogs = await this.prisma.institutionAuditLog.findMany({
+        where: { escrowId: escrow.escrowId },
         orderBy: { createdAt: 'desc' },
         take: 50,
-      });
-
-      // Filter to logs related to this escrow (stored in details JSON)
-      const escrowLogs = auditLogs.filter((log: any) => {
-        const details = log.details as Record<string, unknown> | null;
-        return details && (
-          (details as any).escrowId === escrow.escrowId ||
-          (details as any).escrowCode === escrow.escrowCode
-        );
       });
 
       // Keep riskScore, kytReportId, sanctionsCleared for the response (not used for pass/fail)
@@ -703,6 +694,90 @@ export class PrivacyAnalysisService {
         privacyDetails: null,
       };
     }
+  }
+  // ─── Privacy Summary (lightweight, no on-chain queries) ────────
+
+  async getPrivacySummary(clientId: string, limit: number = 10): Promise<any[]> {
+    const escrows = await this.prisma.institutionEscrow.findMany({
+      where: { clientId },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 10),
+      select: {
+        escrowId: true,
+        escrowCode: true,
+        amount: true,
+        status: true,
+        corridor: true,
+        payerName: true,
+        recipientName: true,
+        createdAt: true,
+        privacyLevel: true,
+        stealthPaymentId: true,
+        escrowPda: true,
+        vaultPda: true,
+        initTxSignature: true,
+        depositTxSignature: true,
+        releaseTxSignature: true,
+        poolId: true,
+      },
+    });
+
+    // Batch-fetch audit log action sets for all escrows in one query
+    const escrowIds = escrows.map(e => e.escrowId);
+    const auditLogs = escrowIds.length > 0
+      ? await this.prisma.institutionAuditLog.findMany({
+          where: { escrowId: { in: escrowIds } },
+          select: { escrowId: true, action: true },
+        })
+      : [];
+
+    const auditByEscrow = new Map<string, Set<string>>();
+    for (const log of auditLogs) {
+      if (!log.escrowId) continue;
+      if (!auditByEscrow.has(log.escrowId)) auditByEscrow.set(log.escrowId, new Set());
+      auditByEscrow.get(log.escrowId)!.add(log.action);
+    }
+
+    return escrows.map(e => {
+      const actions = auditByEscrow.get(e.escrowId) || new Set<string>();
+
+      // Stealth: pass if stealth payment exists, fail otherwise
+      const stealthAddress = e.stealthPaymentId ? 'pass' : 'fail';
+
+      // PDA receipts: pass if PDA exists, partial if only escrowId is "encrypted" (UUID bytes),
+      // fail if no PDA
+      const pdaReceipts = e.escrowPda ? 'partial' : 'fail';
+
+      // Encrypted custody: count tx signatures
+      const sigs = [e.initTxSignature, e.depositTxSignature, e.releaseTxSignature].filter(Boolean);
+      const encryptedCustody = sigs.length >= 3 ? 'pass' : sigs.length > 0 ? 'partial' : 'fail';
+
+      // Compliance audit trail: check lifecycle events
+      const hasCreation = actions.has('ESCROW_CREATED') || actions.has('DRAFT_SUBMITTED');
+      const hasFunding = actions.has('DEPOSIT_CONFIRMED');
+      const complianceAuditTrail = (hasCreation && hasFunding) ? 'pass'
+        : actions.size > 0 ? 'partial' : 'fail';
+
+      // Transaction pool shielding: pass if in a pool, fail otherwise
+      const transactionPoolShielding = e.poolId ? 'pass' : 'fail';
+
+      return {
+        escrowId: e.escrowCode,
+        amount: Number(e.amount),
+        status: e.status,
+        corridor: e.corridor,
+        payerName: e.payerName || null,
+        recipientName: e.recipientName || null,
+        createdAt: e.createdAt.toISOString(),
+        privacySummary: {
+          stealthAddress,
+          pdaReceipts,
+          encryptedCustody,
+          complianceAuditTrail,
+          transactionPoolShielding,
+        },
+      };
+    });
   }
 }
 
