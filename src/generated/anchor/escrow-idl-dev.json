@@ -4389,268 +4389,158 @@
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidAmount",
-      "msg": "Invalid amount provided"
+      "name": "Unauthorized",
+      "msg": "Unauthorized: Only platform authority can execute swaps"
     },
     {
       "code": 6001,
-      "name": "InvalidExpiry",
-      "msg": "Invalid expiry timestamp"
+      "name": "InvalidFee",
+      "msg": "Invalid fee: Platform fee must be greater than zero"
     },
     {
       "code": 6002,
-      "name": "InvalidStatus",
-      "msg": "Invalid escrow status for this operation"
+      "name": "FeeTooHigh",
+      "msg": "Invalid fee: Fee exceeds maximum allowed"
     },
     {
       "code": 6003,
-      "name": "AlreadyDeposited",
-      "msg": "Assets already deposited"
+      "name": "MakerAssetOwnershipFailed",
+      "msg": "Invalid asset: Maker does not own the specified asset"
     },
     {
       "code": 6004,
-      "name": "Unauthorized",
-      "msg": "Unauthorized to perform this action"
+      "name": "TakerAssetOwnershipFailed",
+      "msg": "Invalid asset: Taker does not own the specified asset"
     },
     {
       "code": 6005,
-      "name": "UnauthorizedAdmin",
-      "msg": "Only authorized admin can initialize escrows"
+      "name": "InsufficientMakerBalance",
+      "msg": "Insufficient balance: Maker has insufficient balance"
     },
     {
       "code": 6006,
-      "name": "InvalidNftMint",
-      "msg": "Invalid NFT mint address"
+      "name": "InsufficientTakerBalance",
+      "msg": "Insufficient balance: Taker has insufficient balance"
     },
     {
       "code": 6007,
-      "name": "DepositNotComplete",
-      "msg": "Deposits not complete"
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account: Token account does not match expected mint"
     },
     {
       "code": 6008,
-      "name": "Expired",
-      "msg": "Escrow has expired"
+      "name": "InvalidMerkleProof",
+      "msg": "Invalid merkle proof: cNFT ownership verification failed"
     },
     {
       "code": 6009,
-      "name": "NotExpired",
-      "msg": "Escrow has not expired yet"
+      "name": "TooManyAssets",
+      "msg": "Too many assets: Maximum number of assets per side exceeded"
     },
     {
       "code": 6010,
-      "name": "InvalidFeeBps",
-      "msg": "Invalid fee basis points (must be <= 10000)"
+      "name": "InvalidSwapId",
+      "msg": "Invalid swap ID: Swap ID exceeds maximum length"
     },
     {
       "code": 6011,
-      "name": "CalculationOverflow",
-      "msg": "Calculation overflow"
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow: Fee calculation overflowed"
     },
     {
       "code": 6012,
-      "name": "InvalidSwapType",
-      "msg": "Invalid swap type for this operation"
+      "name": "ProgramPaused",
+      "msg": "Program is paused: All operations are temporarily disabled"
     },
     {
       "code": 6013,
-      "name": "SolAmountTooLow",
-      "msg": "SOL amount below minimum: 0.01 SOL (BETA limit)"
+      "name": "AlreadyPaused",
+      "msg": "Program is already paused"
     },
     {
       "code": 6014,
-      "name": "SolAmountTooHigh",
-      "msg": "SOL amount exceeds maximum: 15 SOL (BETA limit)"
+      "name": "NotPaused",
+      "msg": "Program is not paused"
     },
     {
       "code": 6015,
-      "name": "InsufficientFunds",
-      "msg": "Insufficient funds in escrow account after accounting for rent exemption"
+      "name": "WithdrawalTooFrequent",
+      "msg": "Withdrawal too frequent: Must wait 7 days between withdrawals"
     },
     {
       "code": 6016,
-      "name": "InvalidSwapParameters",
-      "msg": "Invalid parameter combination for swap type"
+      "name": "InsufficientTreasuryBalance",
+      "msg": "Insufficient treasury balance: Not enough funds to withdraw"
     },
     {
       "code": 6017,
-      "name": "InsufficientFeeCollectorRent",
-      "msg": "Fee collector account would not be rent-exempt after receiving fee"
+      "name": "UnauthorizedWithdrawalDestination",
+      "msg": "Unauthorized withdrawal destination: Treasury can only withdraw to authorized wallet"
     },
     {
       "code": 6018,
-      "name": "InsufficientSellerRent",
-      "msg": "Seller account would not be rent-exempt after receiving payment"
+      "name": "InvalidCnftProof",
+      "msg": "Invalid cNFT proof: Merkle proof validation failed"
     },
     {
       "code": 6019,
-      "name": "InsufficientEscrowRent",
-      "msg": "Escrow account would not be rent-exempt after transfers"
+      "name": "MissingBubblegumProgram",
+      "msg": "Missing required account: Bubblegum program"
     },
     {
       "code": 6020,
-      "name": "InvalidEscrowAccount",
-      "msg": "Invalid escrow account provided (PDA mismatch)"
+      "name": "MissingMerkleTree",
+      "msg": "Missing required account: Merkle tree"
     },
     {
       "code": 6021,
-      "name": "ExecutableAccountNotAllowed",
-      "msg": "Executable accounts (programs) cannot send or receive lamports"
+      "name": "StaleProof",
+      "msg": "Stale proof: Merkle root has changed since proof generation"
     },
     {
       "code": 6022,
-      "name": "AmountTooLow",
-      "msg": "Amount below minimum: $1.00 (BETA limit)"
+      "name": "ConflictingAssetFlags",
+      "msg": "Invalid asset flags: Cannot send both standard NFT and compressed NFT"
     },
     {
       "code": 6023,
-      "name": "AmountTooHigh",
-      "msg": "Amount exceeds maximum: $3,000.00 (BETA limit)"
+      "name": "UnauthorizedZeroFeeSwap",
+      "msg": "Unauthorized: Zero-fee swaps require authorized app signature"
     },
     {
       "code": 6024,
-      "name": "OfferAmountTooLow",
-      "msg": "Offer amount below minimum (0.01 SOL)"
+      "name": "MissingCoreAsset",
+      "msg": "Missing required account: Core NFT asset"
     },
     {
       "code": 6025,
-      "name": "OfferAmountTooHigh",
-      "msg": "Offer amount exceeds maximum (10,000 SOL)"
+      "name": "MissingMplCoreProgram",
+      "msg": "Missing required account: mpl-core program"
     },
     {
       "code": 6026,
-      "name": "OfferDurationTooShort",
-      "msg": "Offer duration too short (minimum 1 hour)"
+      "name": "InvalidMplCoreProgram",
+      "msg": "Invalid mpl-core program: Program ID does not match expected"
     },
     {
       "code": 6027,
-      "name": "OfferDurationTooLong",
-      "msg": "Offer duration too long (maximum 30 days)"
+      "name": "InvalidAmount",
+      "msg": "Invalid amount: Amount must be greater than zero"
     },
     {
       "code": 6028,
-      "name": "BidderCannotBeOwner",
-      "msg": "Bidder cannot be the same as owner"
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds: Vault does not have enough balance"
     },
     {
       "code": 6029,
-      "name": "InvalidBidder",
-      "msg": "Invalid bidder address"
+      "name": "VaultNotInitialized",
+      "msg": "Vault not initialized: Cannot deposit to non-existent vault PDA"
     },
     {
       "code": 6030,
-      "name": "InvalidFeeCollector",
-      "msg": "Fee collector does not match the one stored at offer creation"
-    },
-    {
-      "code": 6031,
-      "name": "InvalidOfferStatus",
-      "msg": "Invalid offer status for this operation"
-    },
-    {
-      "code": 6032,
-      "name": "OfferExpired",
-      "msg": "Offer has expired"
-    },
-    {
-      "code": 6033,
-      "name": "OfferNotExpired",
-      "msg": "Offer has not expired yet"
-    },
-    {
-      "code": 6034,
-      "name": "OfferStillActive",
-      "msg": "Offer is still active - cannot close"
-    },
-    {
-      "code": 6035,
-      "name": "InstitutionInvalidStatus",
-      "msg": "Institution escrow: invalid status for this operation"
-    },
-    {
-      "code": 6036,
-      "name": "InstitutionUnauthorized",
-      "msg": "Institution escrow: unauthorized caller"
-    },
-    {
-      "code": 6037,
-      "name": "InstitutionExpired",
-      "msg": "Institution escrow: escrow has expired"
-    },
-    {
-      "code": 6038,
-      "name": "InstitutionDepositMismatch",
-      "msg": "Institution escrow: deposit amount mismatch"
-    },
-    {
-      "code": 6039,
-      "name": "InstitutionPayerIsRecipient",
-      "msg": "Institution escrow: payer cannot be recipient"
-    },
-    {
-      "code": 6040,
-      "name": "InstitutionAmountTooLow",
-      "msg": "Institution escrow: amount below minimum"
-    },
-    {
-      "code": 6041,
-      "name": "InstitutionAmountTooHigh",
-      "msg": "Institution escrow: amount above maximum"
-    },
-    {
-      "code": 6042,
-      "name": "InstitutionExpiryTooShort",
-      "msg": "Institution escrow: expiry too short"
-    },
-    {
-      "code": 6043,
-      "name": "InstitutionExpiryTooLong",
-      "msg": "Institution escrow: expiry too long"
-    },
-    {
-      "code": 6044,
-      "name": "InstitutionTimeLockNotReached",
-      "msg": "Institution escrow: time lock period not reached"
-    },
-    {
-      "code": 6045,
-      "name": "PoolVaultNotActive",
-      "msg": "Pool vault: not in active/created state for this operation"
-    },
-    {
-      "code": 6046,
-      "name": "PoolVaultExpired",
-      "msg": "Pool vault: pool has expired"
-    },
-    {
-      "code": 6047,
-      "name": "PoolNotSettledOrCancelled",
-      "msg": "Pool vault: pool must be settled or cancelled"
-    },
-    {
-      "code": 6048,
-      "name": "PoolVaultNotEmpty",
-      "msg": "Pool vault: vault token account is not empty"
-    },
-    {
-      "code": 6049,
-      "name": "PoolInvalidAmount",
-      "msg": "Pool vault: invalid amount"
-    },
-    {
-      "code": 6050,
-      "name": "PoolExpiryTooShort",
-      "msg": "Pool vault: expiry too short (minimum 1 hour)"
-    },
-    {
-      "code": 6051,
-      "name": "PoolExpiryTooLong",
-      "msg": "Pool vault: expiry too long (maximum 90 days)"
-    },
-    {
-      "code": 6052,
-      "name": "PoolMintMismatch",
-      "msg": "Pool vault: token mint does not match pool vault mint"
+      "name": "UnauthorizedTwoPhase",
+      "msg": "Unauthorized caller: Only backend authority can call this instruction"
     }
   ],
   "types": [

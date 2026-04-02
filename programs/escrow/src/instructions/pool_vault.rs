@@ -447,23 +447,26 @@ pub fn handle_release_pool_member(
         )?;
     }
 
-    // Update pool vault state
+    // Update pool vault state — skip counters and status transitions in receipt-only
+    // mode (amount == 0), where funds were already released from individual escrow vaults
     let pool_vault = &mut ctx.accounts.pool_vault;
-    pool_vault.total_released = pool_vault.total_released
-        .checked_add(amount)
-        .ok_or(EscrowError::CalculationOverflow)?;
-    pool_vault.released_count = pool_vault.released_count
-        .checked_add(1)
-        .ok_or(EscrowError::CalculationOverflow)?;
+    if amount > 0 {
+        pool_vault.total_released = pool_vault.total_released
+            .checked_add(amount)
+            .ok_or(EscrowError::CalculationOverflow)?;
+        pool_vault.released_count = pool_vault.released_count
+            .checked_add(1)
+            .ok_or(EscrowError::CalculationOverflow)?;
 
-    // Transition to Settling on first release
-    if pool_vault.status == PoolVaultStatus::Active {
-        pool_vault.status = PoolVaultStatus::Settling;
-    }
+        // Transition to Settling on first release
+        if pool_vault.status == PoolVaultStatus::Active {
+            pool_vault.status = PoolVaultStatus::Settling;
+        }
 
-    // Auto-complete if all members released
-    if pool_vault.released_count >= pool_vault.member_count {
-        pool_vault.status = PoolVaultStatus::Settled;
+        // Auto-complete if all members released
+        if pool_vault.released_count >= pool_vault.member_count {
+            pool_vault.status = PoolVaultStatus::Settled;
+        }
     }
 
     // Initialize receipt PDA
