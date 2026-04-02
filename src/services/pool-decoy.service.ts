@@ -31,7 +31,7 @@ function randomInt(min: number, max: number): number {
 function randomAmount(): string {
   const whole = randomInt(AMOUNT_MIN, AMOUNT_MAX);
   const cents = randomInt(0, 99);
-  return `${whole}.${cents.toString().padStart(2, '0')}0000`;
+  return `${whole}.${cents.toString().padStart(2, '0')}`;
 }
 
 function generateEscrowCode(): string {
@@ -42,10 +42,9 @@ function generateEscrowCode(): string {
 }
 
 function fakeTxSignature(): string {
-  // Generate a 64-byte random signature encoded as base58-like string
-  return Array.from(randomBytes(64))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  // Generate a realistic-looking base58 tx signature (88 chars, same as real Solana sigs)
+  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  return Array.from({ length: 88 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
 export class PoolDecoyService {
