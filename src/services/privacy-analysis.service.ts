@@ -697,9 +697,9 @@ export class PrivacyAnalysisService {
   }
   // ─── Privacy Summary (lightweight, no on-chain queries) ────────
 
-  async getPrivacySummary(clientId: string, limit: number = 10): Promise<any[]> {
+  async getPrivacySummary(clientId: string | null, limit: number = 10): Promise<any[]> {
     const escrows = await this.prisma.institutionEscrow.findMany({
-      where: { clientId },
+      where: clientId ? { clientId } : {},
       orderBy: { createdAt: 'desc' },
       take: Math.min(limit, 10),
       select: {
