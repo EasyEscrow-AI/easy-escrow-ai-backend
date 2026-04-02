@@ -2005,7 +2005,9 @@
         {
           "name": "payer_token_account",
           "docs": [
-            "Payer's USDC token account (source of deposit)"
+            "Payer's USDC token account (source of deposit).",
+            "Owner validated in handler body — either escrow_state.payer (standard)",
+            "or stealth_payer (when stealth sender privacy is enabled)."
           ],
           "writable": true
         },
@@ -2090,6 +2092,12 @@
               "u8",
               32
             ]
+          }
+        },
+        {
+          "name": "stealth_payer",
+          "type": {
+            "option": "pubkey"
           }
         }
       ]

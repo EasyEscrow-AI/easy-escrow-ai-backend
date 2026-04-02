@@ -1709,8 +1709,9 @@ pub mod escrow {
     pub fn deposit_institution_escrow(
         ctx: Context<DepositInstitutionEscrow>,
         escrow_id: [u8; 32],
+        stealth_payer: Option<Pubkey>,
     ) -> Result<()> {
-        inst_escrow_deposit(ctx, escrow_id)
+        inst_escrow_deposit(ctx, escrow_id, stealth_payer)
     }
 
     /// Release USDC from institution escrow to recipient

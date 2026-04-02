@@ -1271,6 +1271,11 @@ export class InstitutionEscrowService {
     platformFee: number;
     totalDeposit: number;
     currency: string;
+    stealthPayer?: {
+      address: string;
+      stealthPaymentId?: string;
+      note: string;
+    };
   }> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1298,12 +1303,38 @@ export class InstitutionEscrowService {
     const usdcMint = programService.getUsdcMintAddress();
     const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
 
+    // Resolve stealth payer address if privacy is enabled
+    let stealthPayerPubkey: PublicKey | undefined;
+    let stealthPayerAddress: string | undefined;
+    let stealthPaymentId: string | undefined;
+    if (isPrivacyEnabled() && isTransactionPoolsEnabled()) {
+      try {
+        const { resolveDepositSource } = await import('./privacy/privacy-router.service');
+        const depositSource = await resolveDepositSource(
+          escrow.payerWallet,
+          clientId,
+          escrowId,
+          escrow.usdcMint,
+          BigInt(Math.round((Number(escrow.amount) + Number(escrow.platformFee)) * 1_000_000)),
+        );
+        if (depositSource.privacyLevel === 'STEALTH' && depositSource.recipientAddress !== escrow.payerWallet) {
+          stealthPayerPubkey = toPublicKey(depositSource.recipientAddress, 'stealthPayer');
+          stealthPayerAddress = depositSource.recipientAddress;
+          stealthPaymentId = depositSource.stealthPaymentId;
+          console.log(`[InstitutionEscrow] Stealth payer resolved for ${escrowId}: ${stealthPayerAddress}`);
+        }
+      } catch (err) {
+        console.warn('[InstitutionEscrow] Stealth payer resolution failed (non-critical):', err);
+      }
+    }
+
     const tx = await programService.buildDepositTransaction({
       escrowId,
       payer: payerWallet,
       usdcMint,
       feeCollector,
       memo: escrow.escrowCode ? `EasyEscrow:deposit:${escrow.escrowCode}` : undefined,
+      stealthPayer: stealthPayerPubkey,
     });
 
     tx.feePayer = payerWallet;
@@ -1322,6 +1353,13 @@ export class InstitutionEscrowService {
       platformFee,
       totalDeposit: amount + platformFee,
       currency: 'USDC',
+      ...(stealthPayerAddress ? {
+        stealthPayer: {
+          address: stealthPayerAddress,
+          stealthPaymentId,
+          note: 'Transfer USDC to this stealth address before signing the deposit transaction',
+        },
+      } : {}),
     };
   }
 

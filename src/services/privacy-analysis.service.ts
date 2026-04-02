@@ -177,14 +177,29 @@ export class PrivacyAnalysisService {
           ? await this.verifyReleaseFundsDestination(releaseSig, stealthPayment!.stealthAddress)
           : null;
 
+        // Check if payer also used stealth (separate StealthPayment for deposit)
+        let payerStealthPayment: { stealthAddress: string; status: string } | null = null;
+        try {
+          payerStealthPayment = await this.prisma.stealthPayment.findFirst({
+            where: {
+              escrowId: escrow.escrowId,
+              stealthAddress: { not: stealthPayment!.stealthAddress }, // different from recipient stealth
+            },
+            select: { stealthAddress: true, status: true },
+            orderBy: { createdAt: 'asc' }, // deposit stealth created first
+          });
+        } catch { /* non-critical */ }
+
         // Build comprehensive address mapping
         const payerReal = escrow.payerWallet;
         const stealthAddr = stealthPayment!.stealthAddress;
+        const payerStealthAddr = payerStealthPayment?.stealthAddress || null;
         const addresses = {
           payer: {
             real: payerReal,
-            onChain: payerReal,
-            match: true,
+            stealthAddress: payerStealthAddr,
+            onChain: payerStealthAddr || payerReal,
+            match: !payerStealthAddr, // false when stealth payer used
           },
           recipient: {
             real: recipientWallet,

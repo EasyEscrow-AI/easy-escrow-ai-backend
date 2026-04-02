@@ -265,28 +265,31 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     feeCollector: PublicKey;
     memo?: string;
+    stealthPayer?: PublicKey;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
     const [vaultPda] = this.deriveVaultPda(escrowIdBytes);
     const escrowIdArray = Array.from(escrowIdBytes);
 
-    const payerAta = await getAssociatedTokenAddress(params.usdcMint, params.payer);
+    // Use stealth payer address if provided, otherwise real payer
+    const depositPayer = params.stealthPayer || params.payer;
+    const payerAta = await getAssociatedTokenAddress(params.usdcMint, depositPayer);
 
     const transaction = new Transaction();
 
-    // Ensure fee collector ATA exists (payer pays for ATA creation if needed)
+    // Ensure fee collector ATA exists
     const feeCollectorAta = await this.getOrCreateAta(
       params.usdcMint,
       params.feeCollector,
-      params.payer
+      params.payer // real payer pays for ATA creation
     );
     if (feeCollectorAta.instruction) {
       transaction.add(feeCollectorAta.instruction);
     }
 
     const ix = await (this.program.methods as any)
-      .depositInstitutionEscrow(escrowIdArray)
+      .depositInstitutionEscrow(escrowIdArray, params.stealthPayer || null)
       .accounts({
         payer: params.payer,
         payerTokenAccount: payerAta,
