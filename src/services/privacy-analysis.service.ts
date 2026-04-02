@@ -508,20 +508,11 @@ export class PrivacyAnalysisService {
 
   private async checkComplianceAuditTrail(escrow: any): Promise<CheckResult> {
     try {
-      // Look up ALL audit logs for this escrow to check lifecycle completeness
-      const auditLogs = await this.prisma.institutionAuditLog.findMany({
-        where: { clientId: escrow.clientId },
+      // Look up ALL audit logs for this escrow by the top-level escrowId column
+      const escrowLogs = await this.prisma.institutionAuditLog.findMany({
+        where: { escrowId: escrow.escrowId },
         orderBy: { createdAt: 'desc' },
         take: 50,
-      });
-
-      // Filter to logs related to this escrow (stored in details JSON)
-      const escrowLogs = auditLogs.filter((log: any) => {
-        const details = log.details as Record<string, unknown> | null;
-        return details && (
-          (details as any).escrowId === escrow.escrowId ||
-          (details as any).escrowCode === escrow.escrowCode
-        );
       });
 
       // Keep riskScore, kytReportId, sanctionsCleared for the response (not used for pass/fail)
