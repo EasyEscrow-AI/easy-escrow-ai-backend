@@ -536,6 +536,7 @@ export class PrivacyAnalysisService {
           shieldedPoolBatchId: null,
           batchSize: 0,
           poolDetails: nullPoolDetails,
+          privacyDetails: null,
         };
       }
 
@@ -546,6 +547,7 @@ export class PrivacyAnalysisService {
           poolCode: true,
           status: true,
           totalAmount: true,
+          settlementMode: true,
           _count: { select: { members: true } },
         },
       });
@@ -557,16 +559,76 @@ export class PrivacyAnalysisService {
           shieldedPoolBatchId: null,
           batchSize: 0,
           poolDetails: nullPoolDetails,
+          privacyDetails: null,
         };
       }
 
       const batchSize = pool._count.members;
       const totalBatchAmount = Number(pool.totalAmount);
       const transactionAmount = Number(escrow.amount);
-      // Obfuscation ratio: how much of the batch is NOT this transaction (higher = more private)
       const obfuscationRatio = totalBatchAmount > 0
         ? Math.round(((totalBatchAmount - transactionAmount) / totalBatchAmount) * 100)
         : 0;
+
+      const stealthEnabled = escrow.privacyLevel === 'STEALTH' && !!escrow.stealthPaymentId;
+      const settlementMode = (pool.settlementMode as string) || 'SEQUENTIAL';
+
+      const privacyDetails = {
+        senderPrivacy: {
+          fundMixing: true,
+          detail: 'Sender deposits routed through shared pool vault PDA — direct payer-to-recipient link broken on-chain',
+        },
+        receiverPrivacy: {
+          fundMixing: true,
+          stealthEnabled,
+          detail: stealthEnabled
+            ? 'Recipient receives from pool vault via stealth-derived address — identity fully unlinkable'
+            : 'Recipient receives from pool vault, not directly from payer. Stealth address not configured for this escrow',
+        },
+        amountPrivacy: {
+          obfuscationRatio,
+          individualAmountVisible: true,
+          detail: batchSize >= 2
+            ? `Individual amounts visible on-chain but obscured within batch of ${batchSize} transactions (${obfuscationRatio}% noise ratio)`
+            : 'Single transaction in pool — no amount obfuscation',
+        },
+        mevProtection: {
+          jitoBundle: false,
+          priorityFee: true,
+          detail: 'Standard priority fees applied. Jito MEV bundles not enabled for pool settlements',
+        },
+        tokenStandard: {
+          program: 'Token',
+          transferMethod: 'transfer_checked',
+          token2022: false,
+          confidentialTransfers: false,
+          detail: 'SPL Token program with transfer_checked validation. Token2022 confidential transfers not enabled',
+        },
+        encryption: {
+          algorithm: 'AES-256-GCM',
+          keySize: 256,
+          ivSize: 96,
+          payloadSize: 512,
+          commitmentHash: 'SHA-256',
+          detail: 'Receipt encrypted with AES-256-GCM (256-bit key, 96-bit IV). SHA-256 commitment hash stored on-chain for tamper verification',
+        },
+        insidePoolVisibility: {
+          poolSizeVisible: true,
+          memberCountVisible: true,
+          settlementProgressVisible: true,
+          corridorVisible: true,
+          individualAmountsVisible: true,
+          payerRecipientLinkVisible: false,
+          detail: 'Pool size, member count, and settlement progress visible on-chain. Payer-recipient link encrypted in receipt PDAs',
+        },
+        protocol: {
+          name: 'EasyEscrow Shielded Pool',
+          version: '1.0',
+          settlementMode,
+          atomicSettlement: false,
+          detail: `Non-atomic ${settlementMode.toLowerCase()} settlement via individual on-chain transactions`,
+        },
+      };
 
       return {
         passed: batchSize >= 2,
@@ -576,6 +638,7 @@ export class PrivacyAnalysisService {
         shieldedPoolBatchId: pool.poolCode,
         batchSize,
         poolDetails: { totalBatchAmount, transactionAmount, obfuscationRatio },
+        privacyDetails,
       };
     } catch (err) {
       logger.error(`${LOG_PREFIX} Pool shielding check failed`, { error: (err as Error).message });
@@ -585,6 +648,7 @@ export class PrivacyAnalysisService {
         shieldedPoolBatchId: null,
         batchSize: 0,
         poolDetails: nullPoolDetails,
+        privacyDetails: null,
       };
     }
   }
