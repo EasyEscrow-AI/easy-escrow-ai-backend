@@ -5562,7 +5562,6 @@ export namespace Prisma {
     auditLogs: number
     aiAnalyses: number
     files: number
-    poolMembers: number
   }
 
   export type InstitutionEscrowCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5570,7 +5569,6 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionEscrowCountOutputTypeCountAuditLogsArgs
     aiAnalyses?: boolean | InstitutionEscrowCountOutputTypeCountAiAnalysesArgs
     files?: boolean | InstitutionEscrowCountOutputTypeCountFilesArgs
-    poolMembers?: boolean | InstitutionEscrowCountOutputTypeCountPoolMembersArgs
   }
 
   // Custom InputTypes
@@ -5610,13 +5608,6 @@ export namespace Prisma {
    */
   export type InstitutionEscrowCountOutputTypeCountFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InstitutionFileWhereInput
-  }
-
-  /**
-   * InstitutionEscrowCountOutputType without action
-   */
-  export type InstitutionEscrowCountOutputTypeCountPoolMembersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: TransactionPoolMemberWhereInput
   }
 
 
@@ -36578,7 +36569,6 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionEscrow$auditLogsArgs<ExtArgs>
     aiAnalyses?: boolean | InstitutionEscrow$aiAnalysesArgs<ExtArgs>
     files?: boolean | InstitutionEscrow$filesArgs<ExtArgs>
-    poolMembers?: boolean | InstitutionEscrow$poolMembersArgs<ExtArgs>
     _count?: boolean | InstitutionEscrowCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["institutionEscrow"]>
 
@@ -36729,7 +36719,6 @@ export namespace Prisma {
     auditLogs?: boolean | InstitutionEscrow$auditLogsArgs<ExtArgs>
     aiAnalyses?: boolean | InstitutionEscrow$aiAnalysesArgs<ExtArgs>
     files?: boolean | InstitutionEscrow$filesArgs<ExtArgs>
-    poolMembers?: boolean | InstitutionEscrow$poolMembersArgs<ExtArgs>
     _count?: boolean | InstitutionEscrowCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type InstitutionEscrowIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -36750,7 +36739,6 @@ export namespace Prisma {
       auditLogs: Prisma.$InstitutionAuditLogPayload<ExtArgs>[]
       aiAnalyses: Prisma.$InstitutionAiAnalysisPayload<ExtArgs>[]
       files: Prisma.$InstitutionFilePayload<ExtArgs>[]
-      poolMembers: Prisma.$TransactionPoolMemberPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -37195,7 +37183,6 @@ export namespace Prisma {
     auditLogs<T extends InstitutionEscrow$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrow$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     aiAnalyses<T extends InstitutionEscrow$aiAnalysesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrow$aiAnalysesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionAiAnalysisPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     files<T extends InstitutionEscrow$filesArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrow$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstitutionFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    poolMembers<T extends InstitutionEscrow$poolMembersArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrow$poolMembersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionPoolMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -37775,30 +37762,6 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: InstitutionFileScalarFieldEnum | InstitutionFileScalarFieldEnum[]
-  }
-
-  /**
-   * InstitutionEscrow.poolMembers
-   */
-  export type InstitutionEscrow$poolMembersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionPoolMember
-     */
-    select?: TransactionPoolMemberSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionPoolMember
-     */
-    omit?: TransactionPoolMemberOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: TransactionPoolMemberInclude<ExtArgs> | null
-    where?: TransactionPoolMemberWhereInput
-    orderBy?: TransactionPoolMemberOrderByWithRelationInput | TransactionPoolMemberOrderByWithRelationInput[]
-    cursor?: TransactionPoolMemberWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: TransactionPoolMemberScalarFieldEnum | TransactionPoolMemberScalarFieldEnum[]
   }
 
   /**
@@ -54305,6 +54268,7 @@ export namespace Prisma {
     commitmentHash: string | null
     privacyLevel: $Enums.PrivacyLevel | null
     stealthPaymentId: string | null
+    isDecoy: boolean | null
     sequenceNumber: number | null
     addedAt: Date | null
     updatedAt: Date | null
@@ -54326,6 +54290,7 @@ export namespace Prisma {
     commitmentHash: string | null
     privacyLevel: $Enums.PrivacyLevel | null
     stealthPaymentId: string | null
+    isDecoy: boolean | null
     sequenceNumber: number | null
     addedAt: Date | null
     updatedAt: Date | null
@@ -54347,6 +54312,7 @@ export namespace Prisma {
     commitmentHash: number
     privacyLevel: number
     stealthPaymentId: number
+    isDecoy: number
     sequenceNumber: number
     addedAt: number
     updatedAt: number
@@ -54384,6 +54350,7 @@ export namespace Prisma {
     commitmentHash?: true
     privacyLevel?: true
     stealthPaymentId?: true
+    isDecoy?: true
     sequenceNumber?: true
     addedAt?: true
     updatedAt?: true
@@ -54405,6 +54372,7 @@ export namespace Prisma {
     commitmentHash?: true
     privacyLevel?: true
     stealthPaymentId?: true
+    isDecoy?: true
     sequenceNumber?: true
     addedAt?: true
     updatedAt?: true
@@ -54426,6 +54394,7 @@ export namespace Prisma {
     commitmentHash?: true
     privacyLevel?: true
     stealthPaymentId?: true
+    isDecoy?: true
     sequenceNumber?: true
     addedAt?: true
     updatedAt?: true
@@ -54534,6 +54503,7 @@ export namespace Prisma {
     commitmentHash: string | null
     privacyLevel: $Enums.PrivacyLevel | null
     stealthPaymentId: string | null
+    isDecoy: boolean
     sequenceNumber: number
     addedAt: Date
     updatedAt: Date
@@ -54574,11 +54544,11 @@ export namespace Prisma {
     commitmentHash?: boolean
     privacyLevel?: boolean
     stealthPaymentId?: boolean
+    isDecoy?: boolean
     sequenceNumber?: boolean
     addedAt?: boolean
     updatedAt?: boolean
     pool?: boolean | TransactionPoolDefaultArgs<ExtArgs>
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["transactionPoolMember"]>
 
   export type TransactionPoolMemberSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -54597,11 +54567,11 @@ export namespace Prisma {
     commitmentHash?: boolean
     privacyLevel?: boolean
     stealthPaymentId?: boolean
+    isDecoy?: boolean
     sequenceNumber?: boolean
     addedAt?: boolean
     updatedAt?: boolean
     pool?: boolean | TransactionPoolDefaultArgs<ExtArgs>
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["transactionPoolMember"]>
 
   export type TransactionPoolMemberSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -54620,11 +54590,11 @@ export namespace Prisma {
     commitmentHash?: boolean
     privacyLevel?: boolean
     stealthPaymentId?: boolean
+    isDecoy?: boolean
     sequenceNumber?: boolean
     addedAt?: boolean
     updatedAt?: boolean
     pool?: boolean | TransactionPoolDefaultArgs<ExtArgs>
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["transactionPoolMember"]>
 
   export type TransactionPoolMemberSelectScalar = {
@@ -54643,30 +54613,27 @@ export namespace Prisma {
     commitmentHash?: boolean
     privacyLevel?: boolean
     stealthPaymentId?: boolean
+    isDecoy?: boolean
     sequenceNumber?: boolean
     addedAt?: boolean
     updatedAt?: boolean
   }
 
-  export type TransactionPoolMemberOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "poolId" | "escrowId" | "status" | "amount" | "platformFee" | "corridor" | "releaseTxSignature" | "releasedAt" | "errorMessage" | "retryCount" | "receiptPda" | "commitmentHash" | "privacyLevel" | "stealthPaymentId" | "sequenceNumber" | "addedAt" | "updatedAt", ExtArgs["result"]["transactionPoolMember"]>
+  export type TransactionPoolMemberOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "poolId" | "escrowId" | "status" | "amount" | "platformFee" | "corridor" | "releaseTxSignature" | "releasedAt" | "errorMessage" | "retryCount" | "receiptPda" | "commitmentHash" | "privacyLevel" | "stealthPaymentId" | "isDecoy" | "sequenceNumber" | "addedAt" | "updatedAt", ExtArgs["result"]["transactionPoolMember"]>
   export type TransactionPoolMemberInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     pool?: boolean | TransactionPoolDefaultArgs<ExtArgs>
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
   }
   export type TransactionPoolMemberIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     pool?: boolean | TransactionPoolDefaultArgs<ExtArgs>
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
   }
   export type TransactionPoolMemberIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     pool?: boolean | TransactionPoolDefaultArgs<ExtArgs>
-    escrow?: boolean | InstitutionEscrowDefaultArgs<ExtArgs>
   }
 
   export type $TransactionPoolMemberPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "TransactionPoolMember"
     objects: {
       pool: Prisma.$TransactionPoolPayload<ExtArgs>
-      escrow: Prisma.$InstitutionEscrowPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -54684,6 +54651,7 @@ export namespace Prisma {
       commitmentHash: string | null
       privacyLevel: $Enums.PrivacyLevel | null
       stealthPaymentId: string | null
+      isDecoy: boolean
       sequenceNumber: number
       addedAt: Date
       updatedAt: Date
@@ -55082,7 +55050,6 @@ export namespace Prisma {
   export interface Prisma__TransactionPoolMemberClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     pool<T extends TransactionPoolDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TransactionPoolDefaultArgs<ExtArgs>>): Prisma__TransactionPoolClient<$Result.GetResult<Prisma.$TransactionPoolPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    escrow<T extends InstitutionEscrowDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InstitutionEscrowDefaultArgs<ExtArgs>>): Prisma__InstitutionEscrowClient<$Result.GetResult<Prisma.$InstitutionEscrowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -55127,6 +55094,7 @@ export namespace Prisma {
     readonly commitmentHash: FieldRef<"TransactionPoolMember", 'String'>
     readonly privacyLevel: FieldRef<"TransactionPoolMember", 'PrivacyLevel'>
     readonly stealthPaymentId: FieldRef<"TransactionPoolMember", 'String'>
+    readonly isDecoy: FieldRef<"TransactionPoolMember", 'Boolean'>
     readonly sequenceNumber: FieldRef<"TransactionPoolMember", 'Int'>
     readonly addedAt: FieldRef<"TransactionPoolMember", 'DateTime'>
     readonly updatedAt: FieldRef<"TransactionPoolMember", 'DateTime'>
@@ -56670,6 +56638,7 @@ export namespace Prisma {
     status: string | null
     note: string | null
     failureReason: string | null
+    expiresAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -56687,6 +56656,7 @@ export namespace Prisma {
     status: string | null
     note: string | null
     failureReason: string | null
+    expiresAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -56704,6 +56674,7 @@ export namespace Prisma {
     status: number
     note: number
     failureReason: number
+    expiresAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -56731,6 +56702,7 @@ export namespace Prisma {
     status?: true
     note?: true
     failureReason?: true
+    expiresAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -56748,6 +56720,7 @@ export namespace Prisma {
     status?: true
     note?: true
     failureReason?: true
+    expiresAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -56765,6 +56738,7 @@ export namespace Prisma {
     status?: true
     note?: true
     failureReason?: true
+    expiresAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -56869,6 +56843,7 @@ export namespace Prisma {
     status: string
     note: string | null
     failureReason: string | null
+    expiresAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: InstitutionTransferCountAggregateOutputType | null
@@ -56905,6 +56880,7 @@ export namespace Prisma {
     status?: boolean
     note?: boolean
     failureReason?: boolean
+    expiresAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -56925,6 +56901,7 @@ export namespace Prisma {
     status?: boolean
     note?: boolean
     failureReason?: boolean
+    expiresAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -56945,6 +56922,7 @@ export namespace Prisma {
     status?: boolean
     note?: boolean
     failureReason?: boolean
+    expiresAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
@@ -56965,11 +56943,12 @@ export namespace Prisma {
     status?: boolean
     note?: boolean
     failureReason?: boolean
+    expiresAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type InstitutionTransferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "transferCode" | "clientId" | "fromAccountId" | "toAccountId" | "tokenSymbol" | "amount" | "signerPublicKey" | "txSignature" | "status" | "note" | "failureReason" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionTransfer"]>
+  export type InstitutionTransferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "transferCode" | "clientId" | "fromAccountId" | "toAccountId" | "tokenSymbol" | "amount" | "signerPublicKey" | "txSignature" | "status" | "note" | "failureReason" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["institutionTransfer"]>
   export type InstitutionTransferInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | InstitutionClientDefaultArgs<ExtArgs>
     fromAccount?: boolean | InstitutionAccountDefaultArgs<ExtArgs>
@@ -57006,6 +56985,7 @@ export namespace Prisma {
       status: string
       note: string | null
       failureReason: string | null
+      expiresAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["institutionTransfer"]>
@@ -57446,6 +57426,7 @@ export namespace Prisma {
     readonly status: FieldRef<"InstitutionTransfer", 'String'>
     readonly note: FieldRef<"InstitutionTransfer", 'String'>
     readonly failureReason: FieldRef<"InstitutionTransfer", 'String'>
+    readonly expiresAt: FieldRef<"InstitutionTransfer", 'DateTime'>
     readonly createdAt: FieldRef<"InstitutionTransfer", 'DateTime'>
     readonly updatedAt: FieldRef<"InstitutionTransfer", 'DateTime'>
   }
@@ -58763,6 +58744,7 @@ export namespace Prisma {
     commitmentHash: 'commitmentHash',
     privacyLevel: 'privacyLevel',
     stealthPaymentId: 'stealthPaymentId',
+    isDecoy: 'isDecoy',
     sequenceNumber: 'sequenceNumber',
     addedAt: 'addedAt',
     updatedAt: 'updatedAt'
@@ -58798,6 +58780,7 @@ export namespace Prisma {
     status: 'status',
     note: 'note',
     failureReason: 'failureReason',
+    expiresAt: 'expiresAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -62588,7 +62571,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
     files?: InstitutionFileListRelationFilter
-    poolMembers?: TransactionPoolMemberListRelationFilter
   }
 
   export type InstitutionEscrowOrderByWithRelationInput = {
@@ -62640,7 +62622,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogOrderByRelationAggregateInput
     aiAnalyses?: InstitutionAiAnalysisOrderByRelationAggregateInput
     files?: InstitutionFileOrderByRelationAggregateInput
-    poolMembers?: TransactionPoolMemberOrderByRelationAggregateInput
   }
 
   export type InstitutionEscrowWhereUniqueInput = Prisma.AtLeast<{
@@ -62695,7 +62676,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogListRelationFilter
     aiAnalyses?: InstitutionAiAnalysisListRelationFilter
     files?: InstitutionFileListRelationFilter
-    poolMembers?: TransactionPoolMemberListRelationFilter
   }, "id" | "escrowId" | "escrowCode">
 
   export type InstitutionEscrowOrderByWithAggregationInput = {
@@ -64071,11 +64051,11 @@ export namespace Prisma {
     commitmentHash?: StringNullableFilter<"TransactionPoolMember"> | string | null
     privacyLevel?: EnumPrivacyLevelNullableFilter<"TransactionPoolMember"> | $Enums.PrivacyLevel | null
     stealthPaymentId?: StringNullableFilter<"TransactionPoolMember"> | string | null
+    isDecoy?: BoolFilter<"TransactionPoolMember"> | boolean
     sequenceNumber?: IntFilter<"TransactionPoolMember"> | number
     addedAt?: DateTimeFilter<"TransactionPoolMember"> | Date | string
     updatedAt?: DateTimeFilter<"TransactionPoolMember"> | Date | string
     pool?: XOR<TransactionPoolScalarRelationFilter, TransactionPoolWhereInput>
-    escrow?: XOR<InstitutionEscrowScalarRelationFilter, InstitutionEscrowWhereInput>
   }
 
   export type TransactionPoolMemberOrderByWithRelationInput = {
@@ -64094,16 +64074,15 @@ export namespace Prisma {
     commitmentHash?: SortOrderInput | SortOrder
     privacyLevel?: SortOrderInput | SortOrder
     stealthPaymentId?: SortOrderInput | SortOrder
+    isDecoy?: SortOrder
     sequenceNumber?: SortOrder
     addedAt?: SortOrder
     updatedAt?: SortOrder
     pool?: TransactionPoolOrderByWithRelationInput
-    escrow?: InstitutionEscrowOrderByWithRelationInput
   }
 
   export type TransactionPoolMemberWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    poolId_escrowId?: TransactionPoolMemberPoolIdEscrowIdCompoundUniqueInput
     AND?: TransactionPoolMemberWhereInput | TransactionPoolMemberWhereInput[]
     OR?: TransactionPoolMemberWhereInput[]
     NOT?: TransactionPoolMemberWhereInput | TransactionPoolMemberWhereInput[]
@@ -64121,12 +64100,12 @@ export namespace Prisma {
     commitmentHash?: StringNullableFilter<"TransactionPoolMember"> | string | null
     privacyLevel?: EnumPrivacyLevelNullableFilter<"TransactionPoolMember"> | $Enums.PrivacyLevel | null
     stealthPaymentId?: StringNullableFilter<"TransactionPoolMember"> | string | null
+    isDecoy?: BoolFilter<"TransactionPoolMember"> | boolean
     sequenceNumber?: IntFilter<"TransactionPoolMember"> | number
     addedAt?: DateTimeFilter<"TransactionPoolMember"> | Date | string
     updatedAt?: DateTimeFilter<"TransactionPoolMember"> | Date | string
     pool?: XOR<TransactionPoolScalarRelationFilter, TransactionPoolWhereInput>
-    escrow?: XOR<InstitutionEscrowScalarRelationFilter, InstitutionEscrowWhereInput>
-  }, "id" | "poolId_escrowId">
+  }, "id">
 
   export type TransactionPoolMemberOrderByWithAggregationInput = {
     id?: SortOrder
@@ -64144,6 +64123,7 @@ export namespace Prisma {
     commitmentHash?: SortOrderInput | SortOrder
     privacyLevel?: SortOrderInput | SortOrder
     stealthPaymentId?: SortOrderInput | SortOrder
+    isDecoy?: SortOrder
     sequenceNumber?: SortOrder
     addedAt?: SortOrder
     updatedAt?: SortOrder
@@ -64173,6 +64153,7 @@ export namespace Prisma {
     commitmentHash?: StringNullableWithAggregatesFilter<"TransactionPoolMember"> | string | null
     privacyLevel?: EnumPrivacyLevelNullableWithAggregatesFilter<"TransactionPoolMember"> | $Enums.PrivacyLevel | null
     stealthPaymentId?: StringNullableWithAggregatesFilter<"TransactionPoolMember"> | string | null
+    isDecoy?: BoolWithAggregatesFilter<"TransactionPoolMember"> | boolean
     sequenceNumber?: IntWithAggregatesFilter<"TransactionPoolMember"> | number
     addedAt?: DateTimeWithAggregatesFilter<"TransactionPoolMember"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"TransactionPoolMember"> | Date | string
@@ -64264,6 +64245,7 @@ export namespace Prisma {
     status?: StringFilter<"InstitutionTransfer"> | string
     note?: StringNullableFilter<"InstitutionTransfer"> | string | null
     failureReason?: StringNullableFilter<"InstitutionTransfer"> | string | null
+    expiresAt?: DateTimeNullableFilter<"InstitutionTransfer"> | Date | string | null
     createdAt?: DateTimeFilter<"InstitutionTransfer"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionTransfer"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -64284,6 +64266,7 @@ export namespace Prisma {
     status?: SortOrder
     note?: SortOrderInput | SortOrder
     failureReason?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     client?: InstitutionClientOrderByWithRelationInput
@@ -64307,6 +64290,7 @@ export namespace Prisma {
     status?: StringFilter<"InstitutionTransfer"> | string
     note?: StringNullableFilter<"InstitutionTransfer"> | string | null
     failureReason?: StringNullableFilter<"InstitutionTransfer"> | string | null
+    expiresAt?: DateTimeNullableFilter<"InstitutionTransfer"> | Date | string | null
     createdAt?: DateTimeFilter<"InstitutionTransfer"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionTransfer"> | Date | string
     client?: XOR<InstitutionClientScalarRelationFilter, InstitutionClientWhereInput>
@@ -64327,6 +64311,7 @@ export namespace Prisma {
     status?: SortOrder
     note?: SortOrderInput | SortOrder
     failureReason?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: InstitutionTransferCountOrderByAggregateInput
@@ -64352,6 +64337,7 @@ export namespace Prisma {
     status?: StringWithAggregatesFilter<"InstitutionTransfer"> | string
     note?: StringNullableWithAggregatesFilter<"InstitutionTransfer"> | string | null
     failureReason?: StringNullableWithAggregatesFilter<"InstitutionTransfer"> | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"InstitutionTransfer"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"InstitutionTransfer"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"InstitutionTransfer"> | Date | string
   }
@@ -68072,7 +68058,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowUncheckedCreateInput = {
@@ -68122,7 +68107,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberUncheckedCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowUpdateInput = {
@@ -68172,7 +68156,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateInput = {
@@ -68222,7 +68205,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowCreateManyInput = {
@@ -69789,6 +69771,7 @@ export namespace Prisma {
 
   export type TransactionPoolMemberCreateInput = {
     id?: string
+    escrowId: string
     status?: $Enums.PoolMemberStatus
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -69801,11 +69784,11 @@ export namespace Prisma {
     commitmentHash?: string | null
     privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
+    isDecoy?: boolean
     sequenceNumber?: number
     addedAt?: Date | string
     updatedAt?: Date | string
     pool: TransactionPoolCreateNestedOneWithoutMembersInput
-    escrow: InstitutionEscrowCreateNestedOneWithoutPoolMembersInput
   }
 
   export type TransactionPoolMemberUncheckedCreateInput = {
@@ -69824,6 +69807,7 @@ export namespace Prisma {
     commitmentHash?: string | null
     privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
+    isDecoy?: boolean
     sequenceNumber?: number
     addedAt?: Date | string
     updatedAt?: Date | string
@@ -69831,6 +69815,7 @@ export namespace Prisma {
 
   export type TransactionPoolMemberUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
     status?: EnumPoolMemberStatusFieldUpdateOperationsInput | $Enums.PoolMemberStatus
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -69843,11 +69828,11 @@ export namespace Prisma {
     commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
     privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    isDecoy?: BoolFieldUpdateOperationsInput | boolean
     sequenceNumber?: IntFieldUpdateOperationsInput | number
     addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     pool?: TransactionPoolUpdateOneRequiredWithoutMembersNestedInput
-    escrow?: InstitutionEscrowUpdateOneRequiredWithoutPoolMembersNestedInput
   }
 
   export type TransactionPoolMemberUncheckedUpdateInput = {
@@ -69866,6 +69851,7 @@ export namespace Prisma {
     commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
     privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    isDecoy?: BoolFieldUpdateOperationsInput | boolean
     sequenceNumber?: IntFieldUpdateOperationsInput | number
     addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -69887,6 +69873,7 @@ export namespace Prisma {
     commitmentHash?: string | null
     privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
+    isDecoy?: boolean
     sequenceNumber?: number
     addedAt?: Date | string
     updatedAt?: Date | string
@@ -69894,6 +69881,7 @@ export namespace Prisma {
 
   export type TransactionPoolMemberUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
     status?: EnumPoolMemberStatusFieldUpdateOperationsInput | $Enums.PoolMemberStatus
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -69906,6 +69894,7 @@ export namespace Prisma {
     commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
     privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    isDecoy?: BoolFieldUpdateOperationsInput | boolean
     sequenceNumber?: IntFieldUpdateOperationsInput | number
     addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -69927,6 +69916,7 @@ export namespace Prisma {
     commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
     privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    isDecoy?: BoolFieldUpdateOperationsInput | boolean
     sequenceNumber?: IntFieldUpdateOperationsInput | number
     addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -70018,6 +70008,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutTransfersInput
@@ -70038,6 +70029,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -70052,6 +70044,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutTransfersNestedInput
@@ -70072,6 +70065,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -70089,6 +70083,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -70103,6 +70098,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -70120,6 +70116,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -73067,17 +73064,7 @@ export namespace Prisma {
     none?: InstitutionDepositWhereInput
   }
 
-  export type TransactionPoolMemberListRelationFilter = {
-    every?: TransactionPoolMemberWhereInput
-    some?: TransactionPoolMemberWhereInput
-    none?: TransactionPoolMemberWhereInput
-  }
-
   export type InstitutionDepositOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type TransactionPoolMemberOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -74036,10 +74023,20 @@ export namespace Prisma {
     not?: NestedEnumPoolSettlementModeFilter<$PrismaModel> | $Enums.PoolSettlementMode
   }
 
+  export type TransactionPoolMemberListRelationFilter = {
+    every?: TransactionPoolMemberWhereInput
+    some?: TransactionPoolMemberWhereInput
+    none?: TransactionPoolMemberWhereInput
+  }
+
   export type TransactionPoolAuditLogListRelationFilter = {
     every?: TransactionPoolAuditLogWhereInput
     some?: TransactionPoolAuditLogWhereInput
     none?: TransactionPoolAuditLogWhereInput
+  }
+
+  export type TransactionPoolMemberOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type TransactionPoolAuditLogOrderByRelationAggregateInput = {
@@ -74168,11 +74165,6 @@ export namespace Prisma {
     isNot?: TransactionPoolWhereInput
   }
 
-  export type TransactionPoolMemberPoolIdEscrowIdCompoundUniqueInput = {
-    poolId: string
-    escrowId: string
-  }
-
   export type TransactionPoolMemberCountOrderByAggregateInput = {
     id?: SortOrder
     poolId?: SortOrder
@@ -74189,6 +74181,7 @@ export namespace Prisma {
     commitmentHash?: SortOrder
     privacyLevel?: SortOrder
     stealthPaymentId?: SortOrder
+    isDecoy?: SortOrder
     sequenceNumber?: SortOrder
     addedAt?: SortOrder
     updatedAt?: SortOrder
@@ -74217,6 +74210,7 @@ export namespace Prisma {
     commitmentHash?: SortOrder
     privacyLevel?: SortOrder
     stealthPaymentId?: SortOrder
+    isDecoy?: SortOrder
     sequenceNumber?: SortOrder
     addedAt?: SortOrder
     updatedAt?: SortOrder
@@ -74238,6 +74232,7 @@ export namespace Prisma {
     commitmentHash?: SortOrder
     privacyLevel?: SortOrder
     stealthPaymentId?: SortOrder
+    isDecoy?: SortOrder
     sequenceNumber?: SortOrder
     addedAt?: SortOrder
     updatedAt?: SortOrder
@@ -74309,6 +74304,7 @@ export namespace Prisma {
     status?: SortOrder
     note?: SortOrder
     failureReason?: SortOrder
+    expiresAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -74330,6 +74326,7 @@ export namespace Prisma {
     status?: SortOrder
     note?: SortOrder
     failureReason?: SortOrder
+    expiresAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -74347,6 +74344,7 @@ export namespace Prisma {
     status?: SortOrder
     note?: SortOrder
     failureReason?: SortOrder
+    expiresAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -76315,13 +76313,6 @@ export namespace Prisma {
     connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
   }
 
-  export type TransactionPoolMemberCreateNestedManyWithoutEscrowInput = {
-    create?: XOR<TransactionPoolMemberCreateWithoutEscrowInput, TransactionPoolMemberUncheckedCreateWithoutEscrowInput> | TransactionPoolMemberCreateWithoutEscrowInput[] | TransactionPoolMemberUncheckedCreateWithoutEscrowInput[]
-    connectOrCreate?: TransactionPoolMemberCreateOrConnectWithoutEscrowInput | TransactionPoolMemberCreateOrConnectWithoutEscrowInput[]
-    createMany?: TransactionPoolMemberCreateManyEscrowInputEnvelope
-    connect?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-  }
-
   export type InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput = {
     create?: XOR<InstitutionDepositCreateWithoutEscrowInput, InstitutionDepositUncheckedCreateWithoutEscrowInput> | InstitutionDepositCreateWithoutEscrowInput[] | InstitutionDepositUncheckedCreateWithoutEscrowInput[]
     connectOrCreate?: InstitutionDepositCreateOrConnectWithoutEscrowInput | InstitutionDepositCreateOrConnectWithoutEscrowInput[]
@@ -76348,13 +76339,6 @@ export namespace Prisma {
     connectOrCreate?: InstitutionFileCreateOrConnectWithoutEscrowInput | InstitutionFileCreateOrConnectWithoutEscrowInput[]
     createMany?: InstitutionFileCreateManyEscrowInputEnvelope
     connect?: InstitutionFileWhereUniqueInput | InstitutionFileWhereUniqueInput[]
-  }
-
-  export type TransactionPoolMemberUncheckedCreateNestedManyWithoutEscrowInput = {
-    create?: XOR<TransactionPoolMemberCreateWithoutEscrowInput, TransactionPoolMemberUncheckedCreateWithoutEscrowInput> | TransactionPoolMemberCreateWithoutEscrowInput[] | TransactionPoolMemberUncheckedCreateWithoutEscrowInput[]
-    connectOrCreate?: TransactionPoolMemberCreateOrConnectWithoutEscrowInput | TransactionPoolMemberCreateOrConnectWithoutEscrowInput[]
-    createMany?: TransactionPoolMemberCreateManyEscrowInputEnvelope
-    connect?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
   }
 
   export type NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput = {
@@ -76453,20 +76437,6 @@ export namespace Prisma {
     deleteMany?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
   }
 
-  export type TransactionPoolMemberUpdateManyWithoutEscrowNestedInput = {
-    create?: XOR<TransactionPoolMemberCreateWithoutEscrowInput, TransactionPoolMemberUncheckedCreateWithoutEscrowInput> | TransactionPoolMemberCreateWithoutEscrowInput[] | TransactionPoolMemberUncheckedCreateWithoutEscrowInput[]
-    connectOrCreate?: TransactionPoolMemberCreateOrConnectWithoutEscrowInput | TransactionPoolMemberCreateOrConnectWithoutEscrowInput[]
-    upsert?: TransactionPoolMemberUpsertWithWhereUniqueWithoutEscrowInput | TransactionPoolMemberUpsertWithWhereUniqueWithoutEscrowInput[]
-    createMany?: TransactionPoolMemberCreateManyEscrowInputEnvelope
-    set?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-    disconnect?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-    delete?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-    connect?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-    update?: TransactionPoolMemberUpdateWithWhereUniqueWithoutEscrowInput | TransactionPoolMemberUpdateWithWhereUniqueWithoutEscrowInput[]
-    updateMany?: TransactionPoolMemberUpdateManyWithWhereWithoutEscrowInput | TransactionPoolMemberUpdateManyWithWhereWithoutEscrowInput[]
-    deleteMany?: TransactionPoolMemberScalarWhereInput | TransactionPoolMemberScalarWhereInput[]
-  }
-
   export type InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput = {
     create?: XOR<InstitutionDepositCreateWithoutEscrowInput, InstitutionDepositUncheckedCreateWithoutEscrowInput> | InstitutionDepositCreateWithoutEscrowInput[] | InstitutionDepositUncheckedCreateWithoutEscrowInput[]
     connectOrCreate?: InstitutionDepositCreateOrConnectWithoutEscrowInput | InstitutionDepositCreateOrConnectWithoutEscrowInput[]
@@ -76521,20 +76491,6 @@ export namespace Prisma {
     update?: InstitutionFileUpdateWithWhereUniqueWithoutEscrowInput | InstitutionFileUpdateWithWhereUniqueWithoutEscrowInput[]
     updateMany?: InstitutionFileUpdateManyWithWhereWithoutEscrowInput | InstitutionFileUpdateManyWithWhereWithoutEscrowInput[]
     deleteMany?: InstitutionFileScalarWhereInput | InstitutionFileScalarWhereInput[]
-  }
-
-  export type TransactionPoolMemberUncheckedUpdateManyWithoutEscrowNestedInput = {
-    create?: XOR<TransactionPoolMemberCreateWithoutEscrowInput, TransactionPoolMemberUncheckedCreateWithoutEscrowInput> | TransactionPoolMemberCreateWithoutEscrowInput[] | TransactionPoolMemberUncheckedCreateWithoutEscrowInput[]
-    connectOrCreate?: TransactionPoolMemberCreateOrConnectWithoutEscrowInput | TransactionPoolMemberCreateOrConnectWithoutEscrowInput[]
-    upsert?: TransactionPoolMemberUpsertWithWhereUniqueWithoutEscrowInput | TransactionPoolMemberUpsertWithWhereUniqueWithoutEscrowInput[]
-    createMany?: TransactionPoolMemberCreateManyEscrowInputEnvelope
-    set?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-    disconnect?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-    delete?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-    connect?: TransactionPoolMemberWhereUniqueInput | TransactionPoolMemberWhereUniqueInput[]
-    update?: TransactionPoolMemberUpdateWithWhereUniqueWithoutEscrowInput | TransactionPoolMemberUpdateWithWhereUniqueWithoutEscrowInput[]
-    updateMany?: TransactionPoolMemberUpdateManyWithWhereWithoutEscrowInput | TransactionPoolMemberUpdateManyWithWhereWithoutEscrowInput[]
-    deleteMany?: TransactionPoolMemberScalarWhereInput | TransactionPoolMemberScalarWhereInput[]
   }
 
   export type InstitutionEscrowCreateNestedOneWithoutDepositsInput = {
@@ -77070,12 +77026,6 @@ export namespace Prisma {
     connect?: TransactionPoolWhereUniqueInput
   }
 
-  export type InstitutionEscrowCreateNestedOneWithoutPoolMembersInput = {
-    create?: XOR<InstitutionEscrowCreateWithoutPoolMembersInput, InstitutionEscrowUncheckedCreateWithoutPoolMembersInput>
-    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutPoolMembersInput
-    connect?: InstitutionEscrowWhereUniqueInput
-  }
-
   export type EnumPoolMemberStatusFieldUpdateOperationsInput = {
     set?: $Enums.PoolMemberStatus
   }
@@ -77086,14 +77036,6 @@ export namespace Prisma {
     upsert?: TransactionPoolUpsertWithoutMembersInput
     connect?: TransactionPoolWhereUniqueInput
     update?: XOR<XOR<TransactionPoolUpdateToOneWithWhereWithoutMembersInput, TransactionPoolUpdateWithoutMembersInput>, TransactionPoolUncheckedUpdateWithoutMembersInput>
-  }
-
-  export type InstitutionEscrowUpdateOneRequiredWithoutPoolMembersNestedInput = {
-    create?: XOR<InstitutionEscrowCreateWithoutPoolMembersInput, InstitutionEscrowUncheckedCreateWithoutPoolMembersInput>
-    connectOrCreate?: InstitutionEscrowCreateOrConnectWithoutPoolMembersInput
-    upsert?: InstitutionEscrowUpsertWithoutPoolMembersInput
-    connect?: InstitutionEscrowWhereUniqueInput
-    update?: XOR<XOR<InstitutionEscrowUpdateToOneWithWhereWithoutPoolMembersInput, InstitutionEscrowUpdateWithoutPoolMembersInput>, InstitutionEscrowUncheckedUpdateWithoutPoolMembersInput>
   }
 
   export type TransactionPoolCreateNestedOneWithoutAuditLogsInput = {
@@ -81520,7 +81462,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowUncheckedCreateWithoutClientInput = {
@@ -81569,7 +81510,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberUncheckedCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowCreateOrConnectWithoutClientInput = {
@@ -82068,6 +82008,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     fromAccount: InstitutionAccountCreateNestedOneWithoutTransfersOutInput
@@ -82086,6 +82027,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -82715,6 +82657,7 @@ export namespace Prisma {
     status?: StringFilter<"InstitutionTransfer"> | string
     note?: StringNullableFilter<"InstitutionTransfer"> | string | null
     failureReason?: StringNullableFilter<"InstitutionTransfer"> | string | null
+    expiresAt?: DateTimeNullableFilter<"InstitutionTransfer"> | Date | string | null
     createdAt?: DateTimeFilter<"InstitutionTransfer"> | Date | string
     updatedAt?: DateTimeFilter<"InstitutionTransfer"> | Date | string
   }
@@ -83308,6 +83251,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutTransfersInput
@@ -83326,6 +83270,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -83350,6 +83295,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     client: InstitutionClientCreateNestedOneWithoutTransfersInput
@@ -83368,6 +83314,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -85795,56 +85742,6 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type TransactionPoolMemberCreateWithoutEscrowInput = {
-    id?: string
-    status?: $Enums.PoolMemberStatus
-    amount: Decimal | DecimalJsLike | number | string
-    platformFee: Decimal | DecimalJsLike | number | string
-    corridor?: string | null
-    releaseTxSignature?: string | null
-    releasedAt?: Date | string | null
-    errorMessage?: string | null
-    retryCount?: number
-    receiptPda?: string | null
-    commitmentHash?: string | null
-    privacyLevel?: $Enums.PrivacyLevel | null
-    stealthPaymentId?: string | null
-    sequenceNumber?: number
-    addedAt?: Date | string
-    updatedAt?: Date | string
-    pool: TransactionPoolCreateNestedOneWithoutMembersInput
-  }
-
-  export type TransactionPoolMemberUncheckedCreateWithoutEscrowInput = {
-    id?: string
-    poolId: string
-    status?: $Enums.PoolMemberStatus
-    amount: Decimal | DecimalJsLike | number | string
-    platformFee: Decimal | DecimalJsLike | number | string
-    corridor?: string | null
-    releaseTxSignature?: string | null
-    releasedAt?: Date | string | null
-    errorMessage?: string | null
-    retryCount?: number
-    receiptPda?: string | null
-    commitmentHash?: string | null
-    privacyLevel?: $Enums.PrivacyLevel | null
-    stealthPaymentId?: string | null
-    sequenceNumber?: number
-    addedAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type TransactionPoolMemberCreateOrConnectWithoutEscrowInput = {
-    where: TransactionPoolMemberWhereUniqueInput
-    create: XOR<TransactionPoolMemberCreateWithoutEscrowInput, TransactionPoolMemberUncheckedCreateWithoutEscrowInput>
-  }
-
-  export type TransactionPoolMemberCreateManyEscrowInputEnvelope = {
-    data: TransactionPoolMemberCreateManyEscrowInput | TransactionPoolMemberCreateManyEscrowInput[]
-    skipDuplicates?: boolean
-  }
-
   export type InstitutionClientUpsertWithoutEscrowsInput = {
     update: XOR<InstitutionClientUpdateWithoutEscrowsInput, InstitutionClientUncheckedUpdateWithoutEscrowsInput>
     create: XOR<InstitutionClientCreateWithoutEscrowsInput, InstitutionClientUncheckedCreateWithoutEscrowsInput>
@@ -86154,46 +86051,6 @@ export namespace Prisma {
     data: XOR<InstitutionFileUpdateManyMutationInput, InstitutionFileUncheckedUpdateManyWithoutEscrowInput>
   }
 
-  export type TransactionPoolMemberUpsertWithWhereUniqueWithoutEscrowInput = {
-    where: TransactionPoolMemberWhereUniqueInput
-    update: XOR<TransactionPoolMemberUpdateWithoutEscrowInput, TransactionPoolMemberUncheckedUpdateWithoutEscrowInput>
-    create: XOR<TransactionPoolMemberCreateWithoutEscrowInput, TransactionPoolMemberUncheckedCreateWithoutEscrowInput>
-  }
-
-  export type TransactionPoolMemberUpdateWithWhereUniqueWithoutEscrowInput = {
-    where: TransactionPoolMemberWhereUniqueInput
-    data: XOR<TransactionPoolMemberUpdateWithoutEscrowInput, TransactionPoolMemberUncheckedUpdateWithoutEscrowInput>
-  }
-
-  export type TransactionPoolMemberUpdateManyWithWhereWithoutEscrowInput = {
-    where: TransactionPoolMemberScalarWhereInput
-    data: XOR<TransactionPoolMemberUpdateManyMutationInput, TransactionPoolMemberUncheckedUpdateManyWithoutEscrowInput>
-  }
-
-  export type TransactionPoolMemberScalarWhereInput = {
-    AND?: TransactionPoolMemberScalarWhereInput | TransactionPoolMemberScalarWhereInput[]
-    OR?: TransactionPoolMemberScalarWhereInput[]
-    NOT?: TransactionPoolMemberScalarWhereInput | TransactionPoolMemberScalarWhereInput[]
-    id?: StringFilter<"TransactionPoolMember"> | string
-    poolId?: StringFilter<"TransactionPoolMember"> | string
-    escrowId?: StringFilter<"TransactionPoolMember"> | string
-    status?: EnumPoolMemberStatusFilter<"TransactionPoolMember"> | $Enums.PoolMemberStatus
-    amount?: DecimalFilter<"TransactionPoolMember"> | Decimal | DecimalJsLike | number | string
-    platformFee?: DecimalFilter<"TransactionPoolMember"> | Decimal | DecimalJsLike | number | string
-    corridor?: StringNullableFilter<"TransactionPoolMember"> | string | null
-    releaseTxSignature?: StringNullableFilter<"TransactionPoolMember"> | string | null
-    releasedAt?: DateTimeNullableFilter<"TransactionPoolMember"> | Date | string | null
-    errorMessage?: StringNullableFilter<"TransactionPoolMember"> | string | null
-    retryCount?: IntFilter<"TransactionPoolMember"> | number
-    receiptPda?: StringNullableFilter<"TransactionPoolMember"> | string | null
-    commitmentHash?: StringNullableFilter<"TransactionPoolMember"> | string | null
-    privacyLevel?: EnumPrivacyLevelNullableFilter<"TransactionPoolMember"> | $Enums.PrivacyLevel | null
-    stealthPaymentId?: StringNullableFilter<"TransactionPoolMember"> | string | null
-    sequenceNumber?: IntFilter<"TransactionPoolMember"> | number
-    addedAt?: DateTimeFilter<"TransactionPoolMember"> | Date | string
-    updatedAt?: DateTimeFilter<"TransactionPoolMember"> | Date | string
-  }
-
   export type InstitutionEscrowCreateWithoutDepositsInput = {
     id?: string
     escrowId: string
@@ -86240,7 +86097,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowUncheckedCreateWithoutDepositsInput = {
@@ -86289,7 +86145,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberUncheckedCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowCreateOrConnectWithoutDepositsInput = {
@@ -86354,7 +86209,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateWithoutDepositsInput = {
@@ -86403,7 +86257,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowCreateWithoutAuditLogsInput = {
@@ -86452,7 +86305,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowUncheckedCreateWithoutAuditLogsInput = {
@@ -86501,7 +86353,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberUncheckedCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowCreateOrConnectWithoutAuditLogsInput = {
@@ -86729,7 +86580,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateWithoutAuditLogsInput = {
@@ -86778,7 +86628,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionClientUpsertWithoutAuditLogsInput = {
@@ -86996,7 +86845,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowUncheckedCreateWithoutAiAnalysesInput = {
@@ -87045,7 +86893,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberUncheckedCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowCreateOrConnectWithoutAiAnalysesInput = {
@@ -87273,7 +87120,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateWithoutAiAnalysesInput = {
@@ -87322,7 +87168,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionClientUpsertWithoutAiAnalysesInput = {
@@ -88007,7 +87852,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowUncheckedCreateWithoutFilesInput = {
@@ -88056,7 +87900,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberUncheckedCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowCreateOrConnectWithoutFilesInput = {
@@ -88290,7 +88133,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateWithoutFilesInput = {
@@ -88339,7 +88181,6 @@ export namespace Prisma {
     deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionClientCreateWithoutNotificationsInput = {
@@ -89265,6 +89106,7 @@ export namespace Prisma {
 
   export type TransactionPoolMemberCreateWithoutPoolInput = {
     id?: string
+    escrowId: string
     status?: $Enums.PoolMemberStatus
     amount: Decimal | DecimalJsLike | number | string
     platformFee: Decimal | DecimalJsLike | number | string
@@ -89277,10 +89119,10 @@ export namespace Prisma {
     commitmentHash?: string | null
     privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
+    isDecoy?: boolean
     sequenceNumber?: number
     addedAt?: Date | string
     updatedAt?: Date | string
-    escrow: InstitutionEscrowCreateNestedOneWithoutPoolMembersInput
   }
 
   export type TransactionPoolMemberUncheckedCreateWithoutPoolInput = {
@@ -89298,6 +89140,7 @@ export namespace Prisma {
     commitmentHash?: string | null
     privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
+    isDecoy?: boolean
     sequenceNumber?: number
     addedAt?: Date | string
     updatedAt?: Date | string
@@ -89552,7 +89395,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowUncheckedCreateWithoutPoolInput = {
@@ -89601,7 +89443,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
     files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
-    poolMembers?: TransactionPoolMemberUncheckedCreateNestedManyWithoutEscrowInput
   }
 
   export type InstitutionEscrowCreateOrConnectWithoutPoolInput = {
@@ -89628,6 +89469,31 @@ export namespace Prisma {
   export type TransactionPoolMemberUpdateManyWithWhereWithoutPoolInput = {
     where: TransactionPoolMemberScalarWhereInput
     data: XOR<TransactionPoolMemberUpdateManyMutationInput, TransactionPoolMemberUncheckedUpdateManyWithoutPoolInput>
+  }
+
+  export type TransactionPoolMemberScalarWhereInput = {
+    AND?: TransactionPoolMemberScalarWhereInput | TransactionPoolMemberScalarWhereInput[]
+    OR?: TransactionPoolMemberScalarWhereInput[]
+    NOT?: TransactionPoolMemberScalarWhereInput | TransactionPoolMemberScalarWhereInput[]
+    id?: StringFilter<"TransactionPoolMember"> | string
+    poolId?: StringFilter<"TransactionPoolMember"> | string
+    escrowId?: StringFilter<"TransactionPoolMember"> | string
+    status?: EnumPoolMemberStatusFilter<"TransactionPoolMember"> | $Enums.PoolMemberStatus
+    amount?: DecimalFilter<"TransactionPoolMember"> | Decimal | DecimalJsLike | number | string
+    platformFee?: DecimalFilter<"TransactionPoolMember"> | Decimal | DecimalJsLike | number | string
+    corridor?: StringNullableFilter<"TransactionPoolMember"> | string | null
+    releaseTxSignature?: StringNullableFilter<"TransactionPoolMember"> | string | null
+    releasedAt?: DateTimeNullableFilter<"TransactionPoolMember"> | Date | string | null
+    errorMessage?: StringNullableFilter<"TransactionPoolMember"> | string | null
+    retryCount?: IntFilter<"TransactionPoolMember"> | number
+    receiptPda?: StringNullableFilter<"TransactionPoolMember"> | string | null
+    commitmentHash?: StringNullableFilter<"TransactionPoolMember"> | string | null
+    privacyLevel?: EnumPrivacyLevelNullableFilter<"TransactionPoolMember"> | $Enums.PrivacyLevel | null
+    stealthPaymentId?: StringNullableFilter<"TransactionPoolMember"> | string | null
+    isDecoy?: BoolFilter<"TransactionPoolMember"> | boolean
+    sequenceNumber?: IntFilter<"TransactionPoolMember"> | number
+    addedAt?: DateTimeFilter<"TransactionPoolMember"> | Date | string
+    updatedAt?: DateTimeFilter<"TransactionPoolMember"> | Date | string
   }
 
   export type TransactionPoolAuditLogUpsertWithWhereUniqueWithoutPoolInput = {
@@ -89902,109 +89768,6 @@ export namespace Prisma {
     create: XOR<TransactionPoolCreateWithoutMembersInput, TransactionPoolUncheckedCreateWithoutMembersInput>
   }
 
-  export type InstitutionEscrowCreateWithoutPoolMembersInput = {
-    id?: string
-    escrowId: string
-    escrowCode: string
-    payerWallet: string
-    recipientWallet?: string | null
-    payerName?: string | null
-    payerAccountLabel?: string | null
-    payerBranchName?: string | null
-    recipientName?: string | null
-    recipientAccountLabel?: string | null
-    recipientBranchName?: string | null
-    usdcMint: string
-    amount: Decimal | DecimalJsLike | number | string
-    platformFee: Decimal | DecimalJsLike | number | string
-    corridor?: string | null
-    conditionType?: $Enums.InstitutionConditionType | null
-    status?: $Enums.InstitutionEscrowStatus
-    settlementAuthority: string
-    riskScore?: number | null
-    settlementMode?: string | null
-    releaseMode?: string | null
-    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
-    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
-    approvalInstructions?: string | null
-    privacyLevel?: $Enums.PrivacyLevel | null
-    stealthPaymentId?: string | null
-    escrowPda?: string | null
-    vaultPda?: string | null
-    nonceAccount?: string | null
-    initTxSignature?: string | null
-    depositTxSignature?: string | null
-    releaseTxSignature?: string | null
-    cancelTxSignature?: string | null
-    expiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    resolvedAt?: Date | string | null
-    fundedAt?: Date | string | null
-    unlockAt?: Date | string | null
-    timelockHours?: number | null
-    client: InstitutionClientCreateNestedOneWithoutEscrowsInput
-    pool?: TransactionPoolCreateNestedOneWithoutEscrowsInput
-    deposits?: InstitutionDepositCreateNestedManyWithoutEscrowInput
-    auditLogs?: InstitutionAuditLogCreateNestedManyWithoutEscrowInput
-    aiAnalyses?: InstitutionAiAnalysisCreateNestedManyWithoutEscrowInput
-    files?: InstitutionFileCreateNestedManyWithoutEscrowInput
-  }
-
-  export type InstitutionEscrowUncheckedCreateWithoutPoolMembersInput = {
-    id?: string
-    escrowId: string
-    escrowCode: string
-    clientId: string
-    payerWallet: string
-    recipientWallet?: string | null
-    payerName?: string | null
-    payerAccountLabel?: string | null
-    payerBranchName?: string | null
-    recipientName?: string | null
-    recipientAccountLabel?: string | null
-    recipientBranchName?: string | null
-    usdcMint: string
-    amount: Decimal | DecimalJsLike | number | string
-    platformFee: Decimal | DecimalJsLike | number | string
-    corridor?: string | null
-    conditionType?: $Enums.InstitutionConditionType | null
-    status?: $Enums.InstitutionEscrowStatus
-    settlementAuthority: string
-    riskScore?: number | null
-    settlementMode?: string | null
-    releaseMode?: string | null
-    approvalParties?: InstitutionEscrowCreateapprovalPartiesInput | string[]
-    releaseConditions?: InstitutionEscrowCreatereleaseConditionsInput | string[]
-    approvalInstructions?: string | null
-    privacyLevel?: $Enums.PrivacyLevel | null
-    stealthPaymentId?: string | null
-    escrowPda?: string | null
-    vaultPda?: string | null
-    nonceAccount?: string | null
-    initTxSignature?: string | null
-    depositTxSignature?: string | null
-    releaseTxSignature?: string | null
-    cancelTxSignature?: string | null
-    expiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    resolvedAt?: Date | string | null
-    fundedAt?: Date | string | null
-    unlockAt?: Date | string | null
-    timelockHours?: number | null
-    poolId?: string | null
-    deposits?: InstitutionDepositUncheckedCreateNestedManyWithoutEscrowInput
-    auditLogs?: InstitutionAuditLogUncheckedCreateNestedManyWithoutEscrowInput
-    aiAnalyses?: InstitutionAiAnalysisUncheckedCreateNestedManyWithoutEscrowInput
-    files?: InstitutionFileUncheckedCreateNestedManyWithoutEscrowInput
-  }
-
-  export type InstitutionEscrowCreateOrConnectWithoutPoolMembersInput = {
-    where: InstitutionEscrowWhereUniqueInput
-    create: XOR<InstitutionEscrowCreateWithoutPoolMembersInput, InstitutionEscrowUncheckedCreateWithoutPoolMembersInput>
-  }
-
   export type TransactionPoolUpsertWithoutMembersInput = {
     update: XOR<TransactionPoolUpdateWithoutMembersInput, TransactionPoolUncheckedUpdateWithoutMembersInput>
     create: XOR<TransactionPoolCreateWithoutMembersInput, TransactionPoolUncheckedCreateWithoutMembersInput>
@@ -90066,115 +89829,6 @@ export namespace Prisma {
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     auditLogs?: TransactionPoolAuditLogUncheckedUpdateManyWithoutPoolNestedInput
     escrows?: InstitutionEscrowUncheckedUpdateManyWithoutPoolNestedInput
-  }
-
-  export type InstitutionEscrowUpsertWithoutPoolMembersInput = {
-    update: XOR<InstitutionEscrowUpdateWithoutPoolMembersInput, InstitutionEscrowUncheckedUpdateWithoutPoolMembersInput>
-    create: XOR<InstitutionEscrowCreateWithoutPoolMembersInput, InstitutionEscrowUncheckedCreateWithoutPoolMembersInput>
-    where?: InstitutionEscrowWhereInput
-  }
-
-  export type InstitutionEscrowUpdateToOneWithWhereWithoutPoolMembersInput = {
-    where?: InstitutionEscrowWhereInput
-    data: XOR<InstitutionEscrowUpdateWithoutPoolMembersInput, InstitutionEscrowUncheckedUpdateWithoutPoolMembersInput>
-  }
-
-  export type InstitutionEscrowUpdateWithoutPoolMembersInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    escrowId?: StringFieldUpdateOperationsInput | string
-    escrowCode?: StringFieldUpdateOperationsInput | string
-    payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
-    payerName?: NullableStringFieldUpdateOperationsInput | string | null
-    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
-    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
-    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
-    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
-    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
-    usdcMint?: StringFieldUpdateOperationsInput | string
-    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: NullableStringFieldUpdateOperationsInput | string | null
-    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
-    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
-    settlementAuthority?: StringFieldUpdateOperationsInput | string
-    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
-    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
-    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
-    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
-    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
-    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
-    stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
-    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
-    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
-    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
-    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
-    client?: InstitutionClientUpdateOneRequiredWithoutEscrowsNestedInput
-    pool?: TransactionPoolUpdateOneWithoutEscrowsNestedInput
-    deposits?: InstitutionDepositUpdateManyWithoutEscrowNestedInput
-    auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
-    aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
-    files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
-  }
-
-  export type InstitutionEscrowUncheckedUpdateWithoutPoolMembersInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    escrowId?: StringFieldUpdateOperationsInput | string
-    escrowCode?: StringFieldUpdateOperationsInput | string
-    clientId?: StringFieldUpdateOperationsInput | string
-    payerWallet?: StringFieldUpdateOperationsInput | string
-    recipientWallet?: NullableStringFieldUpdateOperationsInput | string | null
-    payerName?: NullableStringFieldUpdateOperationsInput | string | null
-    payerAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
-    payerBranchName?: NullableStringFieldUpdateOperationsInput | string | null
-    recipientName?: NullableStringFieldUpdateOperationsInput | string | null
-    recipientAccountLabel?: NullableStringFieldUpdateOperationsInput | string | null
-    recipientBranchName?: NullableStringFieldUpdateOperationsInput | string | null
-    usdcMint?: StringFieldUpdateOperationsInput | string
-    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: NullableStringFieldUpdateOperationsInput | string | null
-    conditionType?: NullableEnumInstitutionConditionTypeFieldUpdateOperationsInput | $Enums.InstitutionConditionType | null
-    status?: EnumInstitutionEscrowStatusFieldUpdateOperationsInput | $Enums.InstitutionEscrowStatus
-    settlementAuthority?: StringFieldUpdateOperationsInput | string
-    riskScore?: NullableIntFieldUpdateOperationsInput | number | null
-    settlementMode?: NullableStringFieldUpdateOperationsInput | string | null
-    releaseMode?: NullableStringFieldUpdateOperationsInput | string | null
-    approvalParties?: InstitutionEscrowUpdateapprovalPartiesInput | string[]
-    releaseConditions?: InstitutionEscrowUpdatereleaseConditionsInput | string[]
-    approvalInstructions?: NullableStringFieldUpdateOperationsInput | string | null
-    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
-    stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
-    escrowPda?: NullableStringFieldUpdateOperationsInput | string | null
-    vaultPda?: NullableStringFieldUpdateOperationsInput | string | null
-    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
-    initTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    depositTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    cancelTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    fundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    unlockAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    timelockHours?: NullableIntFieldUpdateOperationsInput | number | null
-    poolId?: NullableStringFieldUpdateOperationsInput | string | null
-    deposits?: InstitutionDepositUncheckedUpdateManyWithoutEscrowNestedInput
-    auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
-    aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
-    files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
   export type TransactionPoolCreateWithoutAuditLogsInput = {
@@ -92384,6 +92038,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -92500,7 +92155,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateWithoutClientInput = {
@@ -92549,7 +92203,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateManyWithoutClientInput = {
@@ -93162,6 +92815,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     fromAccount?: InstitutionAccountUpdateOneRequiredWithoutTransfersOutNestedInput
@@ -93180,6 +92834,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -93196,6 +92851,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -93212,6 +92868,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -93228,6 +92885,7 @@ export namespace Prisma {
     status?: string
     note?: string | null
     failureReason?: string | null
+    expiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -93242,6 +92900,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutTransfersNestedInput
@@ -93260,6 +92919,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -93276,6 +92936,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -93290,6 +92951,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: InstitutionClientUpdateOneRequiredWithoutTransfersNestedInput
@@ -93308,6 +92970,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -93324,6 +92987,7 @@ export namespace Prisma {
     status?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -93529,26 +93193,6 @@ export namespace Prisma {
     uploadedAt?: Date | string
   }
 
-  export type TransactionPoolMemberCreateManyEscrowInput = {
-    id?: string
-    poolId: string
-    status?: $Enums.PoolMemberStatus
-    amount: Decimal | DecimalJsLike | number | string
-    platformFee: Decimal | DecimalJsLike | number | string
-    corridor?: string | null
-    releaseTxSignature?: string | null
-    releasedAt?: Date | string | null
-    errorMessage?: string | null
-    retryCount?: number
-    receiptPda?: string | null
-    commitmentHash?: string | null
-    privacyLevel?: $Enums.PrivacyLevel | null
-    stealthPaymentId?: string | null
-    sequenceNumber?: number
-    addedAt?: Date | string
-    updatedAt?: Date | string
-  }
-
   export type InstitutionDepositUpdateWithoutEscrowInput = {
     id?: StringFieldUpdateOperationsInput | string
     txSignature?: StringFieldUpdateOperationsInput | string
@@ -93682,66 +93326,6 @@ export namespace Prisma {
     sizeBytes?: IntFieldUpdateOperationsInput | number
     documentType?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type TransactionPoolMemberUpdateWithoutEscrowInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    status?: EnumPoolMemberStatusFieldUpdateOperationsInput | $Enums.PoolMemberStatus
-    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: NullableStringFieldUpdateOperationsInput | string | null
-    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    releasedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    retryCount?: IntFieldUpdateOperationsInput | number
-    receiptPda?: NullableStringFieldUpdateOperationsInput | string | null
-    commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
-    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
-    stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
-    sequenceNumber?: IntFieldUpdateOperationsInput | number
-    addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    pool?: TransactionPoolUpdateOneRequiredWithoutMembersNestedInput
-  }
-
-  export type TransactionPoolMemberUncheckedUpdateWithoutEscrowInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    poolId?: StringFieldUpdateOperationsInput | string
-    status?: EnumPoolMemberStatusFieldUpdateOperationsInput | $Enums.PoolMemberStatus
-    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: NullableStringFieldUpdateOperationsInput | string | null
-    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    releasedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    retryCount?: IntFieldUpdateOperationsInput | number
-    receiptPda?: NullableStringFieldUpdateOperationsInput | string | null
-    commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
-    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
-    stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
-    sequenceNumber?: IntFieldUpdateOperationsInput | number
-    addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type TransactionPoolMemberUncheckedUpdateManyWithoutEscrowInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    poolId?: StringFieldUpdateOperationsInput | string
-    status?: EnumPoolMemberStatusFieldUpdateOperationsInput | $Enums.PoolMemberStatus
-    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    corridor?: NullableStringFieldUpdateOperationsInput | string | null
-    releaseTxSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    releasedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    retryCount?: IntFieldUpdateOperationsInput | number
-    receiptPda?: NullableStringFieldUpdateOperationsInput | string | null
-    commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
-    privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
-    stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
-    sequenceNumber?: IntFieldUpdateOperationsInput | number
-    addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CorridorThresholdRuleCreateManyCorridorInput = {
@@ -94071,6 +93655,7 @@ export namespace Prisma {
     commitmentHash?: string | null
     privacyLevel?: $Enums.PrivacyLevel | null
     stealthPaymentId?: string | null
+    isDecoy?: boolean
     sequenceNumber?: number
     addedAt?: Date | string
     updatedAt?: Date | string
@@ -94132,6 +93717,7 @@ export namespace Prisma {
 
   export type TransactionPoolMemberUpdateWithoutPoolInput = {
     id?: StringFieldUpdateOperationsInput | string
+    escrowId?: StringFieldUpdateOperationsInput | string
     status?: EnumPoolMemberStatusFieldUpdateOperationsInput | $Enums.PoolMemberStatus
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     platformFee?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -94144,10 +93730,10 @@ export namespace Prisma {
     commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
     privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    isDecoy?: BoolFieldUpdateOperationsInput | boolean
     sequenceNumber?: IntFieldUpdateOperationsInput | number
     addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    escrow?: InstitutionEscrowUpdateOneRequiredWithoutPoolMembersNestedInput
   }
 
   export type TransactionPoolMemberUncheckedUpdateWithoutPoolInput = {
@@ -94165,6 +93751,7 @@ export namespace Prisma {
     commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
     privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    isDecoy?: BoolFieldUpdateOperationsInput | boolean
     sequenceNumber?: IntFieldUpdateOperationsInput | number
     addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -94185,6 +93772,7 @@ export namespace Prisma {
     commitmentHash?: NullableStringFieldUpdateOperationsInput | string | null
     privacyLevel?: NullableEnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel | null
     stealthPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    isDecoy?: BoolFieldUpdateOperationsInput | boolean
     sequenceNumber?: IntFieldUpdateOperationsInput | number
     addedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -94266,7 +93854,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateWithoutPoolInput = {
@@ -94315,7 +93902,6 @@ export namespace Prisma {
     auditLogs?: InstitutionAuditLogUncheckedUpdateManyWithoutEscrowNestedInput
     aiAnalyses?: InstitutionAiAnalysisUncheckedUpdateManyWithoutEscrowNestedInput
     files?: InstitutionFileUncheckedUpdateManyWithoutEscrowNestedInput
-    poolMembers?: TransactionPoolMemberUncheckedUpdateManyWithoutEscrowNestedInput
   }
 
   export type InstitutionEscrowUncheckedUpdateManyWithoutPoolInput = {

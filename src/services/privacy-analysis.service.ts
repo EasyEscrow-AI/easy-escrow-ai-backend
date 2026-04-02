@@ -784,6 +784,26 @@ export class PrivacyAnalysisService {
         },
       };
 
+      // Query decoy metrics for this pool
+      let decoyMetrics: { decoyCount: number; realMemberCount: number; totalMembers: number; decoyPercentage: number; note: string } | null = null;
+      try {
+        const members = await this.prisma.transactionPoolMember.findMany({
+          where: { poolId },
+          select: { isDecoy: true },
+        });
+        const decoyCount = members.filter((m: any) => m.isDecoy).length;
+        const realCount = members.filter((m: any) => !m.isDecoy).length;
+        if (decoyCount > 0) {
+          decoyMetrics = {
+            decoyCount,
+            realMemberCount: realCount,
+            totalMembers: members.length,
+            decoyPercentage: Math.round((decoyCount / members.length) * 100),
+            note: `${decoyCount} chaff transactions injected for privacy shielding`,
+          };
+        }
+      } catch { /* non-critical */ }
+
       return {
         passed: batchSize >= 2,
         detail: batchSize >= 2
@@ -792,6 +812,7 @@ export class PrivacyAnalysisService {
         shieldedPoolBatchId: pool.poolCode,
         batchSize,
         poolDetails: { totalBatchAmount, transactionAmount, obfuscationRatio },
+        decoyMetrics,
         privacyDetails,
       };
     } catch (err) {
