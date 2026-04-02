@@ -66,6 +66,16 @@ export function isTransactionPoolsEnabled(): boolean {
 }
 
 /**
+ * Check if pool decoy members are enabled.
+ * Injects chaff transactions at pool creation for privacy shielding.
+ */
+export function isPoolDecoyEnabled(): boolean {
+  return process.env.POOL_DECOY_ENABLED === 'true'
+    && isTransactionPoolsEnabled()
+    && isPrivacyEnabled();
+}
+
+/**
  * Log the current state of JITO bundles feature flag.
  * Useful for debugging and startup diagnostics.
  */
