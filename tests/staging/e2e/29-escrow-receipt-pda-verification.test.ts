@@ -256,7 +256,9 @@ describe('Escrow Receipt PDA Verification E2E (Staging)', function () {
     expect(checks.encryptedCustody.passed).to.be.true;
     // Compliance should pass (audit trail complete)
     expect(checks.complianceAuditTrail.passed).to.be.true;
-    // At least 3/5 checks should pass
-    expect(overallScore).to.be.greaterThanOrEqual(3);
+    // Pool shielding should pass (encrypted receipt PDA exists, even without batch)
+    expect(checks.transactionPoolShielding.passed).to.be.true;
+    // Should achieve 5/5 with stealth + PDA + custody + compliance + receipt encryption
+    expect(overallScore).to.equal(5);
   });
 });
