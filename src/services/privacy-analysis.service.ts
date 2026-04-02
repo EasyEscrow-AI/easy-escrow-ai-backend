@@ -461,14 +461,11 @@ export class PrivacyAnalysisService {
 
   private async checkComplianceAuditTrail(escrow: any): Promise<CheckResult> {
     try {
-      // Look up compliance/KYT audit logs for this escrow
+      // Look up ALL audit logs for this escrow to check lifecycle completeness
       const auditLogs = await this.prisma.institutionAuditLog.findMany({
-        where: {
-          clientId: escrow.clientId,
-          action: { in: ['COMPLIANCE_SCREENING', 'COMPLIANCE_WARNING', 'KYT_CHECK'] },
-        },
+        where: { clientId: escrow.clientId },
         orderBy: { createdAt: 'desc' },
-        take: 20,
+        take: 50,
       });
 
       // Filter to logs related to this escrow (stored in details JSON)
@@ -480,6 +477,7 @@ export class PrivacyAnalysisService {
         );
       });
 
+      // Keep riskScore, kytReportId, sanctionsCleared for the response (not used for pass/fail)
       const riskScore = escrow.riskScore ?? null;
       const screeningLog = escrowLogs.find(
         (l: any) => l.action === 'COMPLIANCE_SCREENING'
@@ -488,24 +486,31 @@ export class PrivacyAnalysisService {
       const sanctionsCleared = screeningDetails
         ? (screeningDetails.passed === true)
         : false;
-
       const kytReportId = screeningLog?.id || null;
 
-      if (riskScore === null && escrowLogs.length === 0) {
+      if (escrowLogs.length === 0) {
         return {
           passed: false,
-          detail: 'No compliance records found for this escrow',
-          riskScore: null,
-          kytReportId: null,
-          sanctionsCleared: false,
+          detail: 'Compliance audit trail incomplete — no events logged',
+          riskScore,
+          kytReportId,
+          sanctionsCleared,
         };
       }
 
+      // Check lifecycle completeness: pass when audit trail covers the full lifecycle
+      const actions = new Set(escrowLogs.map((l: any) => l.action));
+      const hasCreation = actions.has('ESCROW_CREATED') || actions.has('DRAFT_SUBMITTED');
+      const hasFunding = actions.has('DEPOSIT_CONFIRMED');
+      const hasRelease = actions.has('FUNDS_RELEASED') || actions.has('ESCROW_COMPLETED');
+      const lifecycleComplete = hasCreation && hasFunding;
+      const eventCount = escrowLogs.length;
+
       return {
-        passed: sanctionsCleared,
-        detail: sanctionsCleared
-          ? 'KYC/AML records anchored'
-          : 'Compliance screening incomplete or flagged',
+        passed: lifecycleComplete,
+        detail: lifecycleComplete
+          ? `Compliance audit trail complete — ${eventCount} events logged`
+          : `Compliance audit trail incomplete — missing lifecycle events`,
         riskScore,
         kytReportId,
         sanctionsCleared,
