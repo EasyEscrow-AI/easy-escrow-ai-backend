@@ -40,7 +40,7 @@ import {
 import { resolveReleaseDestination } from './privacy/privacy-router.service';
 import { getStealthAddressService } from './privacy/stealth-address.service';
 import { PrivacyLevel, PrivacyPreferences } from './privacy/privacy.types';
-import { isPrivacyEnabled } from '../utils/featureFlags';
+import { isPrivacyEnabled, isTransactionPoolsEnabled } from '../utils/featureFlags';
 import type { PoolContext } from '../types/transaction-pool';
 import { getCdpSettlementService } from './cdp-settlement.service';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
@@ -2177,6 +2177,43 @@ export class InstitutionEscrowService {
           } catch (err) {
             console.warn(
               '[InstitutionEscrow] Stealth payment confirmation failed (non-critical):',
+              err
+            );
+          }
+        }
+
+        // Create encrypted receipt PDA when privacy + pools are enabled (non-pooled escrows).
+        // Pooled escrows get their receipt via releasePoolMemberOnChain in the pool settlement flow.
+        if (isPrivacyEnabled() && isTransactionPoolsEnabled() && !escrow.poolId && releaseTxSig) {
+          try {
+            const { getPoolVaultProgramService } = await import('./pool-vault-program.service');
+            const pvService = getPoolVaultProgramService();
+            const { encryptReceiptPayload, computeCommitmentHash } = await import('./pool-vault-program.service');
+            const receiptPlaintext = {
+              poolId: 'standalone',
+              poolCode: 'STANDALONE',
+              escrowId,
+              escrowCode: escrow.escrowCode || escrowId,
+              amount: Number(escrow.amount).toFixed(6),
+              corridor: escrow.corridor || '',
+              payerWallet: escrow.payerWallet,
+              recipientWallet: releaseRecipient,
+              releaseTxSignature: releaseTxSig,
+              settledAt: new Date().toISOString(),
+            };
+            const commitment = computeCommitmentHash(receiptPlaintext);
+            const encrypted = pvService.encryptReceipt(receiptPlaintext);
+            const result = await pvService.createEscrowReceiptOnChain({
+              escrowId,
+              commitmentHash: commitment,
+              encryptedReceipt: encrypted,
+            });
+            console.log(
+              `[InstitutionEscrow] Encrypted receipt PDA created for ${escrowId}: ${result.receiptPda}`
+            );
+          } catch (err) {
+            console.warn(
+              '[InstitutionEscrow] Escrow receipt PDA creation failed (non-critical):',
               err
             );
           }

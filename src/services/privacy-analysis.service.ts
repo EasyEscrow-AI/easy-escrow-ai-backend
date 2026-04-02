@@ -445,27 +445,81 @@ export class PrivacyAnalysisService {
         }
       }
 
+      // Check standalone escrow receipt PDA (for non-pooled escrows with privacy enabled)
+      let escrowReceiptPda: string | null = null;
+      let escrowReceiptExists = false;
+      let escrowReceiptAttributes: Array<{ field: string; label: string; rawValue: string | null; onChainValue: string | null; encrypted: boolean }> | undefined;
+      if (!escrow.poolId) {
+        try {
+          const programId = new PublicKey(config.solana.escrowProgramId);
+          const escrowIdHex = escrow.escrowId.replace(/-/g, '');
+          const eidBytes = Buffer.alloc(32);
+          Buffer.from(escrowIdHex, 'hex').copy(eidBytes);
+          const [receiptPda] = PublicKey.findProgramAddressSync(
+            [Buffer.from('escrow_receipt'), eidBytes],
+            programId
+          );
+          escrowReceiptPda = receiptPda.toBase58();
+          const receiptAccount = await this.connection.getAccountInfo(receiptPda);
+          escrowReceiptExists = !!receiptAccount;
+
+          if (receiptAccount && receiptAccount.data.length >= 97 + 512) {
+            const rd = receiptAccount.data;
+            // Layout: disc(8) + escrow_id(32) + receipt_id(16) + timestamp(8) + status(1) + commitment_hash(32) + encrypted_payload(512)
+            const commitmentHash = rd.slice(65, 97).toString('hex');
+            const encryptedPayload = rd.slice(97, 609);
+            const iv = encryptedPayload.slice(0, 12).toString('hex');
+            const authTag = encryptedPayload.slice(12, 28).toString('hex');
+            const ciphertextLen = encryptedPayload.readUInt16BE(28);
+            const ciphertext = encryptedPayload.slice(30, 30 + ciphertextLen).toString('hex');
+            const truncatedCipher = ciphertext.length > 32 ? ciphertext.slice(0, 32) + '...' : ciphertext;
+
+            escrowReceiptAttributes = [
+              { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: truncatedCipher, encrypted: true },
+              { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'releaseTxSignature', label: 'Release Tx', rawValue: escrow.releaseTxSignature, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'settledAt', label: 'Settled At', rawValue: escrow.resolvedAt?.toISOString() || null, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'commitmentHash', label: 'Commitment Hash', rawValue: commitmentHash, onChainValue: commitmentHash, encrypted: false },
+              { field: 'encryptionIV', label: 'Encryption IV', rawValue: null, onChainValue: iv, encrypted: false },
+              { field: 'authTag', label: 'Auth Tag', rawValue: null, onChainValue: authTag, encrypted: false },
+              { field: 'payloadSize', label: 'Encrypted Payload', rawValue: null, onChainValue: `${ciphertextLen} bytes (AES-256-GCM)`, encrypted: false },
+            ];
+          }
+        } catch {
+          // Escrow receipt lookup failed — non-critical
+        }
+      }
+
+      // Use whichever receipt attributes are available (pool or standalone)
+      const receiptAttributes = escrowReceiptAttributes;
+      const anyReceiptExists = poolReceiptExists || escrowReceiptExists;
+
       const accountExists = escrowAccountExists || vaultAccountExists;
-      const passed = accountExists && metadataEncrypted;
+      const passed = accountExists && (metadataEncrypted || anyReceiptExists);
 
       return {
         passed,
-        detail: passed
-          ? poolReceiptExists
-            ? 'Escrow PDA and pool receipt exist on-chain with encrypted metadata'
-            : 'Escrow PDA account exists on-chain with encrypted metadata'
-          : accountExists
-            ? 'PDA account exists but no encrypted metadata found'
-            : 'PDA accounts not found on-chain (may have been closed after settlement)',
+        detail: anyReceiptExists
+          ? 'Escrow PDA and encrypted receipt exist on-chain with verifiable commitment hash'
+          : passed
+            ? 'Escrow PDA account exists on-chain with metadata'
+            : accountExists
+              ? 'PDA account exists but no encrypted receipt found'
+              : 'PDA accounts not found on-chain (may have been closed after settlement)',
         escrowPda: escrowPda || null,
         vaultPda: vaultPda || null,
         poolReceiptPda,
         poolReceiptExists,
+        escrowReceiptPda,
+        escrowReceiptExists,
         accountExists,
         metadataEncrypted,
         onChainDetails: { escrowPdaOwner, vaultBalance, vaultTokenMint },
         accountAttributes,
-        poolReceiptAttributes,
+        receiptAttributes,
       };
     } catch (err) {
       logger.error(`${LOG_PREFIX} PDA receipts check failed`, { error: (err as Error).message });

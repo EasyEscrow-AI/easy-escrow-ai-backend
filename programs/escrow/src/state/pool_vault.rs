@@ -126,6 +126,38 @@ impl PoolReceipt {
     pub const LEN: usize = 8 + 32 + 32 + 16 + 8 + 1 + 32 + 512 + 1;
 }
 
+/// Escrow Receipt PDA — encrypted receipt for individual (non-pooled) escrows.
+///
+/// Same encryption format as PoolReceipt (AES-256-GCM, 512-byte payload, SHA-256 commitment).
+/// Created during escrow release when PRIVACY_ENABLED and TRANSACTION_POOLS_ENABLED.
+///
+/// Seeds: ["escrow_receipt", escrow_id[32]]
+#[account]
+pub struct EscrowReceipt {
+    /// Escrow identifier
+    pub escrow_id: [u8; 32],
+    /// Unique receipt identifier
+    pub receipt_id: [u8; 16],
+    /// Timestamp of receipt creation
+    pub timestamp: i64,
+    /// Receipt status
+    pub status: PoolReceiptStatus,
+    /// SHA-256 commitment hash for public verification
+    pub commitment_hash: [u8; 32],
+    /// AES-256-GCM encrypted payload (same 512-byte format as PoolReceipt)
+    /// Layout: [12 IV][16 tag][2 ciphertext-length][482 ciphertext (zero-padded)]
+    pub encrypted_payload: [u8; 512],
+    /// PDA bump seed
+    pub bump: u8,
+}
+
+impl EscrowReceipt {
+    /// Discriminator(8) + escrow_id(32) + receipt_id(16) + timestamp(8) + status(1)
+    /// + commitment_hash(32) + encrypted_payload(512) + bump(1) = 610
+    pub const LEN: usize = 8 + 32 + 16 + 8 + 1 + 32 + 512 + 1;
+    pub const SEED_PREFIX: &'static [u8] = b"escrow_receipt";
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -138,5 +170,10 @@ mod tests {
     #[test]
     fn test_pool_receipt_size() {
         assert_eq!(PoolReceipt::LEN, 642);
+    }
+
+    #[test]
+    fn test_escrow_receipt_size() {
+        assert_eq!(EscrowReceipt::LEN, 610);
     }
 }

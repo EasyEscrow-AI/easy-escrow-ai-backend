@@ -702,6 +702,80 @@ export class PoolVaultProgramService {
     }
   }
 
+  // ─── Escrow Receipt (standalone, no pool required) ─────────────
+
+  /**
+   * Derive escrow receipt PDA
+   */
+  deriveEscrowReceiptPda(escrowIdBytes: Buffer): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from('escrow_receipt'), escrowIdBytes],
+      this.programId
+    );
+  }
+
+  /**
+   * Create an encrypted receipt PDA for an individual escrow.
+   * Called after escrow release when PRIVACY_ENABLED + TRANSACTION_POOLS_ENABLED.
+   */
+  async createEscrowReceiptOnChain(params: {
+    escrowId: string;
+    commitmentHash: Buffer;
+    encryptedReceipt: Buffer;
+  }): Promise<{ txSignature: string; receiptPda: string }> {
+    const escrowIdBytes = this.uuidToBytes(params.escrowId);
+    const [receiptPda] = this.deriveEscrowReceiptPda(escrowIdBytes);
+    const escrowIdArray = Array.from(escrowIdBytes);
+    const receiptId = Array.from(randomBytes(16));
+    const commitmentArray = Array.from(params.commitmentHash);
+    const receiptArray = Array.from(params.encryptedReceipt);
+
+    const ix = await (this.program.methods as any)
+      .createEscrowReceipt(escrowIdArray, receiptId, commitmentArray, receiptArray)
+      .accounts({
+        authority: this.adminKeypair.publicKey,
+        escrowReceipt: receiptPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
+
+    const transaction = new Transaction().add(ix);
+    const txSignature = await this.signAndSubmit(transaction);
+
+    console.log(
+      `[PoolVaultProgramService] Escrow receipt created on-chain: ${params.escrowId}, tx: ${txSignature}`
+    );
+
+    return { txSignature, receiptPda: receiptPda.toBase58() };
+  }
+
+  /**
+   * Fetch an escrow receipt PDA from on-chain
+   */
+  async fetchEscrowReceipt(escrowId: string): Promise<{
+    exists: boolean;
+    commitmentHash?: string;
+    encryptedPayload?: Buffer;
+  }> {
+    const escrowIdBytes = this.uuidToBytes(escrowId);
+    const [receiptPda] = this.deriveEscrowReceiptPda(escrowIdBytes);
+
+    try {
+      const account = await this.connection.getAccountInfo(receiptPda);
+      if (!account) return { exists: false };
+
+      // Parse: disc(8) + escrow_id(32) + receipt_id(16) + timestamp(8) + status(1) + commitment_hash(32) + encrypted_payload(512)
+      const d = account.data;
+      const commitmentHash = d.slice(65, 97).toString('hex');
+      const encryptedPayload = Buffer.from(d.slice(97, 609));
+
+      return { exists: true, commitmentHash, encryptedPayload };
+    } catch (err) {
+      console.warn('[PoolVaultProgramService] fetchEscrowReceipt error:', err);
+      return { exists: false };
+    }
+  }
+
   /**
    * Verify on-chain pool state using Anchor account decoding
    */
