@@ -71,10 +71,11 @@ pub struct DepositInstitutionEscrow<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// Payer's USDC token account (source of deposit)
+    /// Payer's USDC token account (source of deposit).
+    /// Owner validated in handler body — either escrow_state.payer (standard)
+    /// or stealth_payer (when stealth sender privacy is enabled).
     #[account(
         mut,
-        constraint = payer_token_account.owner == payer.key() @ EscrowError::InstitutionUnauthorized,
         constraint = payer_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
     )]
     pub payer_token_account: Account<'info, TokenAccount>,
@@ -84,7 +85,6 @@ pub struct DepositInstitutionEscrow<'info> {
         mut,
         seeds = [InstitutionEscrow::SEED_PREFIX, escrow_id.as_ref()],
         bump = escrow_state.bump,
-        constraint = escrow_state.payer == payer.key() @ EscrowError::InstitutionUnauthorized,
         constraint = escrow_state.status == InstitutionEscrowOnChainStatus::Created @ EscrowError::InstitutionInvalidStatus,
     )]
     pub escrow_state: Account<'info, InstitutionEscrow>,
@@ -273,9 +273,23 @@ pub fn init_institution_escrow(
 pub fn deposit_institution_escrow(
     ctx: Context<DepositInstitutionEscrow>,
     _escrow_id: [u8; 32],
+    stealth_payer: Option<Pubkey>,
 ) -> Result<()> {
     let clock = Clock::get()?;
     let escrow_state = &ctx.accounts.escrow_state;
+
+    // Validate payer: use stealth_payer if provided (payer deposits from a
+    // one-time stealth-derived address for privacy), otherwise enforce the
+    // original payer stored at init time.
+    let expected_payer = stealth_payer.unwrap_or(escrow_state.payer);
+    require!(
+        ctx.accounts.payer.key() == expected_payer || ctx.accounts.payer.key() == escrow_state.payer,
+        EscrowError::InstitutionUnauthorized
+    );
+    require!(
+        ctx.accounts.payer_token_account.owner == expected_payer,
+        EscrowError::InstitutionUnauthorized
+    );
 
     // Check not expired
     require!(
@@ -426,12 +440,24 @@ pub fn release_institution_escrow(
     token::close_account(close_ctx)?;
     msg!("Token vault closed, rent recovered");
 
-    // Update status to Released
+    // Update status to Released (set before closing so the final state is recorded)
     let escrow_state = &mut ctx.accounts.escrow_state;
     escrow_state.status = InstitutionEscrowOnChainStatus::Released;
     escrow_state.resolved_at = clock.unix_timestamp;
 
-    msg!("Institution escrow released successfully");
+    // Close escrow state PDA — remove plaintext data from chain, reclaim rent.
+    // The encrypted receipt PDA (created separately) is the permanent privacy-preserving record.
+    let escrow_info = ctx.accounts.escrow_state.to_account_info();
+    let rent_info = ctx.accounts.rent_receiver.to_account_info();
+    let escrow_lamports = escrow_info.lamports();
+    **escrow_info.try_borrow_mut_lamports()? = 0;
+    **rent_info.try_borrow_mut_lamports()? = rent_info.lamports()
+        .checked_add(escrow_lamports)
+        .ok_or(EscrowError::CalculationOverflow)?;
+    // Zero account data to prevent deserialization of stale data
+    escrow_info.data.borrow_mut().fill(0);
+
+    msg!("Institution escrow released and PDA closed — plaintext data removed from chain");
 
     Ok(())
 }

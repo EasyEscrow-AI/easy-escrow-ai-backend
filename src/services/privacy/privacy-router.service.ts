@@ -106,3 +106,92 @@ export async function resolveReleaseDestination(
 
   throw new Error(`Unknown privacy level: ${level}`);
 }
+
+/**
+ * Resolve the deposit source — stealth payer address if available.
+ * Mirrors resolveReleaseDestination() but for the payer side.
+ */
+export async function resolveDepositSource(
+  payerWallet: string,
+  clientId: string,
+  escrowId: string,
+  tokenMint: string,
+  amountRaw: bigint,
+  preferences?: PrivacyPreferences
+): Promise<PrivacyRouteResult> {
+  const config = getPrivacyConfig();
+  const level = preferences?.level || config.defaultPrivacyLevel;
+  const useJito = preferences?.useJito ?? config.jitoDefault;
+
+  if (!isPrivacyEnabled() || level === PrivacyLevel.NONE) {
+    return {
+      recipientAddress: payerWallet, // "recipientAddress" is reused — means "resolved address"
+      privacyLevel: PrivacyLevel.NONE,
+      useJito,
+    };
+  }
+
+  if (level === PrivacyLevel.STEALTH) {
+    const stealthService = getStealthAddressService();
+    let metaAddressId: string | undefined = preferences?.metaAddressId;
+
+    if (!metaAddressId) {
+      try {
+        // Try wallet-based lookup first
+        metaAddressId =
+          (await stealthService.findMetaAddressForWallet(payerWallet)) ?? undefined;
+
+        // Fallback: look up by clientId directly (payer wallet may not be in accounts table)
+        if (!metaAddressId) {
+          const { prisma } = await import('../../config/database');
+          const meta = await prisma.stealthMetaAddress.findFirst({
+            where: { institutionClientId: clientId, isActive: true },
+            select: { id: true },
+            orderBy: { createdAt: 'desc' },
+          });
+          metaAddressId = meta?.id ?? undefined;
+        }
+      } catch (error) {
+        console.warn('[PrivacyRouter] Payer stealth auto-lookup failed, falling back to NONE:', error);
+      }
+    }
+
+    if (!metaAddressId) {
+      console.log(
+        `[PrivacyRouter] No stealth meta-address for payer wallet ${payerWallet}, falling back to NONE`
+      );
+      return {
+        recipientAddress: payerWallet,
+        privacyLevel: PrivacyLevel.NONE,
+        useJito,
+      };
+    }
+
+    try {
+      const { stealthPaymentId, stealthAddress, ephemeralPublicKey } =
+        await stealthService.createStealthPayment({
+          metaAddressId,
+          escrowId,
+          tokenMint,
+          amountRaw,
+        });
+
+      return {
+        recipientAddress: stealthAddress, // stealth payer address
+        privacyLevel: PrivacyLevel.STEALTH,
+        stealthPaymentId,
+        ephemeralPublicKey,
+        useJito,
+      };
+    } catch (error) {
+      console.error('[PrivacyRouter] createStealthPayment for payer failed, falling back to NONE:', error);
+      return {
+        recipientAddress: payerWallet,
+        privacyLevel: PrivacyLevel.NONE,
+        useJito,
+      };
+    }
+  }
+
+  throw new Error(`Unknown privacy level: ${level}`);
+}
