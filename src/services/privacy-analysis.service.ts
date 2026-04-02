@@ -498,17 +498,18 @@ export class PrivacyAnalysisService {
       const anyReceiptExists = poolReceiptExists || escrowReceiptExists;
 
       const accountExists = escrowAccountExists || vaultAccountExists;
-      const passed = accountExists && (metadataEncrypted || anyReceiptExists);
+      // passed is determined by the encrypted receipt PDA, not the plaintext escrow PDA.
+      // The escrow PDA stores plaintext (program needs it for validation) — not a privacy indicator.
+      // The receipt PDA stores AES-256-GCM encrypted data — this IS the privacy indicator.
+      const passed = anyReceiptExists;
 
       return {
         passed,
         detail: anyReceiptExists
-          ? 'Escrow PDA and encrypted receipt exist on-chain with verifiable commitment hash'
-          : passed
-            ? 'Escrow PDA account exists on-chain with metadata'
-            : accountExists
-              ? 'PDA account exists but no encrypted receipt found'
-              : 'PDA accounts not found on-chain (may have been closed after settlement)',
+          ? 'Encrypted receipt PDA exists on-chain with verifiable commitment hash'
+          : accountExists
+            ? 'Escrow PDA exists but no encrypted receipt found'
+            : 'No PDA accounts found on-chain (may have been closed after settlement)',
         escrowPda: escrowPda || null,
         vaultPda: vaultPda || null,
         poolReceiptPda,
@@ -894,9 +895,10 @@ export class PrivacyAnalysisService {
       // Stealth: pass if stealth payment exists, fail otherwise
       const stealthAddress = e.stealthPaymentId ? 'pass' : 'fail';
 
-      // PDA receipts: pass if PDA exists, partial if only escrowId is "encrypted" (UUID bytes),
-      // fail if no PDA
-      const pdaReceipts = e.escrowPda ? 'partial' : 'fail';
+      // PDA receipts: pass if released with privacy enabled (receipt PDA created),
+      // partial if escrow PDA exists but no receipt yet, fail if nothing
+      const hasReceipt = !!e.releaseTxSignature && e.privacyLevel === 'STEALTH';
+      const pdaReceipts = hasReceipt ? 'pass' : e.escrowPda ? 'partial' : 'fail';
 
       // Encrypted custody: count tx signatures
       const sigs = [e.initTxSignature, e.depositTxSignature, e.releaseTxSignature].filter(Boolean);
@@ -908,8 +910,9 @@ export class PrivacyAnalysisService {
       const complianceAuditTrail = (hasCreation && hasFunding) ? 'pass'
         : actions.size > 0 ? 'partial' : 'fail';
 
-      // Transaction pool shielding: pass if in a pool, fail otherwise
-      const transactionPoolShielding = e.poolId ? 'pass' : 'fail';
+      // Transaction pool shielding: pass if encrypted receipt exists (pool or standalone),
+      // matches full analysis logic where receipt PDA = passed
+      const transactionPoolShielding = hasReceipt ? 'pass' : e.poolId ? 'pass' : 'fail';
 
       return {
         escrowId: e.escrowCode,

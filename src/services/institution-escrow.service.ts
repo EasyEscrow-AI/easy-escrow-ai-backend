@@ -1990,6 +1990,17 @@ export class InstitutionEscrowService {
       return { escrowId, status: escrow.status, poolDeferral: true };
     }
 
+    // Auto-pool: when pools are enabled and escrow isn't already in a pool,
+    // transparently route through pool lifecycle for full privacy shielding
+    if (isTransactionPoolsEnabled() && !escrow.poolId && !poolContext) {
+      try {
+        return await this.autoPoolAndRelease(clientId, escrow, notes, actorEmail, privacyPreferences, options);
+      } catch (err) {
+        console.error('[InstitutionEscrow] Auto-pool failed, falling back to direct release:', (err as Error).message);
+        // Fall through to direct release if auto-pool fails
+      }
+    }
+
     // Update status to RELEASING
     const originalStatus = escrow.status;
     await this.prisma.institutionEscrow.update({
@@ -2863,6 +2874,70 @@ export class InstitutionEscrowService {
             },
       },
     };
+  }
+
+  /**
+   * Transparently route an escrow through a pool for full privacy shielding.
+   * Creates pool → adds escrow + decoys → locks → settles, all in one flow.
+   */
+  private async autoPoolAndRelease(
+    clientId: string,
+    escrow: any,
+    notes?: string,
+    actorEmail?: string,
+    privacyPreferences?: PrivacyPreferences,
+    options?: { skipAiCheck?: boolean; aiMemoData?: any; forceRelease?: boolean }
+  ): Promise<Record<string, unknown>> {
+    const { getTransactionPoolService } = await import('./transaction-pool.service');
+    const poolService = getTransactionPoolService();
+    const actor = actorEmail || 'system:auto-pool';
+
+    console.log(`[InstitutionEscrow] Auto-pooling escrow ${escrow.escrowCode} for privacy shielding`);
+
+    // 1. Create pool (decoys auto-injected if POOL_DECOY_ENABLED)
+    const pool = await poolService.createPool({
+      clientId,
+      corridor: escrow.corridor || undefined,
+      settlementMode: 'SEQUENTIAL' as any,
+      expiryHours: 1,
+      actorEmail: actor,
+    }) as any;
+    const poolId = pool.id || pool.poolId;
+    console.log(`[InstitutionEscrow] Auto-pool created: ${pool.poolCode || poolId}`);
+
+    // 2. Add escrow to pool
+    await poolService.addMember({
+      clientId,
+      poolIdOrCode: poolId,
+      escrowId: escrow.escrowId,
+      actorEmail: actor,
+    });
+
+    // 3. Lock pool (runs compliance check)
+    await poolService.lockPool({
+      clientId,
+      poolIdOrCode: poolId,
+      actorEmail: actor,
+    });
+
+    // 4. Settle pool (releases escrow + creates encrypted receipt PDAs)
+    await poolService.settlePool({
+      clientId,
+      poolIdOrCode: poolId,
+      notes: notes || 'Auto-pool settlement',
+      actorEmail: actor,
+    });
+
+    console.log(`[InstitutionEscrow] Auto-pool settlement complete for ${escrow.escrowCode}`);
+
+    // 5. Return updated escrow
+    const updated = await this.prisma.institutionEscrow.findUnique({ where: { escrowId: escrow.escrowId } });
+    if (updated) {
+      await this.cacheEscrow(updated);
+      const partyNames = await this.resolvePartyNames([updated as any], clientId);
+      return this.formatEscrow(updated, partyNames[0]);
+    }
+    return { escrowId: escrow.escrowId, status: 'COMPLETE' };
   }
 
   private async createAuditLog(
