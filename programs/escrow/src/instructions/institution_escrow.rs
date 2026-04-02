@@ -71,10 +71,11 @@ pub struct DepositInstitutionEscrow<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// Payer's USDC token account (source of deposit)
+    /// Payer's USDC token account (source of deposit).
+    /// Owner validated in handler body — either escrow_state.payer (standard)
+    /// or stealth_payer (when stealth sender privacy is enabled).
     #[account(
         mut,
-        constraint = payer_token_account.owner == payer.key() @ EscrowError::InstitutionUnauthorized,
         constraint = payer_token_account.mint == escrow_state.mint @ EscrowError::InstitutionDepositMismatch,
     )]
     pub payer_token_account: Account<'info, TokenAccount>,
@@ -84,7 +85,6 @@ pub struct DepositInstitutionEscrow<'info> {
         mut,
         seeds = [InstitutionEscrow::SEED_PREFIX, escrow_id.as_ref()],
         bump = escrow_state.bump,
-        constraint = escrow_state.payer == payer.key() @ EscrowError::InstitutionUnauthorized,
         constraint = escrow_state.status == InstitutionEscrowOnChainStatus::Created @ EscrowError::InstitutionInvalidStatus,
     )]
     pub escrow_state: Account<'info, InstitutionEscrow>,
@@ -273,9 +273,23 @@ pub fn init_institution_escrow(
 pub fn deposit_institution_escrow(
     ctx: Context<DepositInstitutionEscrow>,
     _escrow_id: [u8; 32],
+    stealth_payer: Option<Pubkey>,
 ) -> Result<()> {
     let clock = Clock::get()?;
     let escrow_state = &ctx.accounts.escrow_state;
+
+    // Validate payer: use stealth_payer if provided (payer deposits from a
+    // one-time stealth-derived address for privacy), otherwise enforce the
+    // original payer stored at init time.
+    let expected_payer = stealth_payer.unwrap_or(escrow_state.payer);
+    require!(
+        ctx.accounts.payer.key() == expected_payer || ctx.accounts.payer.key() == escrow_state.payer,
+        EscrowError::InstitutionUnauthorized
+    );
+    require!(
+        ctx.accounts.payer_token_account.owner == expected_payer,
+        EscrowError::InstitutionUnauthorized
+    );
 
     // Check not expired
     require!(
