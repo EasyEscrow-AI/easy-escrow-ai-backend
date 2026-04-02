@@ -361,8 +361,13 @@ export class PrivacyAnalysisService {
             const statusNames = ['CREATED', 'FUNDED', 'RELEASED', 'CANCELLED', 'EXPIRED'];
             const conditionNames = ['ADMIN_RELEASE', 'TIME_LOCK', 'COMPLIANCE_CHECK'];
 
+            // The escrow PDA stores all fields as plaintext Borsh-serialized data.
+            // Privacy is provided by stealth addresses (hiding recipient identity) and
+            // pool receipt encryption (hiding payer-recipient links), not by PDA encryption.
+            // The escrowId appears as raw hex (UUID bytes) which is not human-readable
+            // but is NOT encrypted — it can be decoded by anyone.
             accountAttributes = [
-              { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: onChainEscrowId, encrypted: true },
+              { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: onChainEscrowId, encrypted: false },
               { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: onChainPayer, encrypted: false },
               { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: onChainRecipient, encrypted: false },
               { field: 'tokenMint', label: 'Token Mint', rawValue: escrow.usdcMint, onChainValue: onChainMint, encrypted: false },
@@ -383,6 +388,7 @@ export class PrivacyAnalysisService {
       // Check pool receipt PDA if escrow is part of a transaction pool
       let poolReceiptPda: string | null = null;
       let poolReceiptExists = false;
+      let poolReceiptAttributes: Array<{ field: string; label: string; rawValue: string | null; onChainValue: string | null; encrypted: boolean }> | undefined;
       if (escrow.poolId) {
         try {
           const programId = new PublicKey(config.solana.escrowProgramId);
@@ -391,7 +397,7 @@ export class PrivacyAnalysisService {
           Buffer.from(escrowIdHex, 'hex').copy(escrowIdBytes);
           const pool = await this.prisma.transactionPool.findUnique({
             where: { id: escrow.poolId },
-            select: { id: true },
+            select: { id: true, poolCode: true },
           });
           if (pool) {
             const poolIdHex = pool.id.replace(/-/g, '');
@@ -404,6 +410,35 @@ export class PrivacyAnalysisService {
             poolReceiptPda = receiptPda.toBase58();
             const receiptAccount = await this.connection.getAccountInfo(receiptPda);
             poolReceiptExists = !!receiptAccount;
+
+            // Extract pool receipt attributes — these ARE encrypted on-chain
+            if (receiptAccount && receiptAccount.data.length >= 129 + 512) {
+              const rd = receiptAccount.data;
+              // Layout: disc(8) + pool_id(32) + escrow_id(32) + receipt_id(16) + timestamp(8) + status(1) + commitment_hash(32) + encrypted_payload(512) + bump(1)
+              const commitmentHash = rd.slice(97, 129).toString('hex');
+              const encryptedPayload = rd.slice(129, 641);
+              const iv = encryptedPayload.slice(0, 12).toString('hex');
+              const authTag = encryptedPayload.slice(12, 28).toString('hex');
+              const ciphertextLen = encryptedPayload.readUInt16BE(28);
+              const ciphertext = encryptedPayload.slice(30, 30 + ciphertextLen).toString('hex');
+              const truncatedCipher = ciphertext.length > 32 ? ciphertext.slice(0, 32) + '...' : ciphertext;
+
+              // All receipt fields are encrypted in the payload — show encrypted indicator
+              poolReceiptAttributes = [
+                { field: 'poolId', label: 'Pool ID', rawValue: pool.poolCode, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: truncatedCipher, encrypted: true },
+                { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'releaseTxSignature', label: 'Release Tx', rawValue: escrow.releaseTxSignature, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'settledAt', label: 'Settled At', rawValue: escrow.resolvedAt?.toISOString() || null, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'commitmentHash', label: 'Commitment Hash', rawValue: commitmentHash, onChainValue: commitmentHash, encrypted: false },
+                { field: 'encryptionIV', label: 'Encryption IV', rawValue: null, onChainValue: iv, encrypted: false },
+                { field: 'authTag', label: 'Auth Tag', rawValue: null, onChainValue: authTag, encrypted: false },
+                { field: 'payloadSize', label: 'Encrypted Payload', rawValue: null, onChainValue: `${ciphertextLen} bytes (AES-256-GCM)`, encrypted: false },
+              ];
+            }
           }
         } catch {
           // Pool receipt lookup failed — non-critical
@@ -430,6 +465,7 @@ export class PrivacyAnalysisService {
         metadataEncrypted,
         onChainDetails: { escrowPdaOwner, vaultBalance, vaultTokenMint },
         accountAttributes,
+        poolReceiptAttributes,
       };
     } catch (err) {
       logger.error(`${LOG_PREFIX} PDA receipts check failed`, { error: (err as Error).message });
