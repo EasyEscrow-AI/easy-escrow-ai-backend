@@ -426,12 +426,24 @@ pub fn release_institution_escrow(
     token::close_account(close_ctx)?;
     msg!("Token vault closed, rent recovered");
 
-    // Update status to Released
+    // Update status to Released (set before closing so the final state is recorded)
     let escrow_state = &mut ctx.accounts.escrow_state;
     escrow_state.status = InstitutionEscrowOnChainStatus::Released;
     escrow_state.resolved_at = clock.unix_timestamp;
 
-    msg!("Institution escrow released successfully");
+    // Close escrow state PDA — remove plaintext data from chain, reclaim rent.
+    // The encrypted receipt PDA (created separately) is the permanent privacy-preserving record.
+    let escrow_info = ctx.accounts.escrow_state.to_account_info();
+    let rent_info = ctx.accounts.rent_receiver.to_account_info();
+    let escrow_lamports = escrow_info.lamports();
+    **escrow_info.try_borrow_mut_lamports()? = 0;
+    **rent_info.try_borrow_mut_lamports()? = rent_info.lamports()
+        .checked_add(escrow_lamports)
+        .ok_or(EscrowError::CalculationOverflow)?;
+    // Zero account data to prevent deserialization of stale data
+    escrow_info.data.borrow_mut().fill(0);
+
+    msg!("Institution escrow released and PDA closed — plaintext data removed from chain");
 
     Ok(())
 }
