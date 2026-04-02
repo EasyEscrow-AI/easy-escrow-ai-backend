@@ -1271,11 +1271,6 @@ export class InstitutionEscrowService {
     platformFee: number;
     totalDeposit: number;
     currency: string;
-    stealthPayer?: {
-      address: string;
-      stealthPaymentId?: string;
-      note: string;
-    };
   }> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
     const { escrowId } = escrow;
@@ -1303,10 +1298,9 @@ export class InstitutionEscrowService {
     const usdcMint = programService.getUsdcMintAddress();
     const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
 
-    // Resolve stealth payer address if privacy is enabled
+    // Resolve stealth payer address — builds a combined tx that transfers USDC
+    // to the stealth ATA then deposits from it, all in one payer-signed transaction.
     let stealthPayerPubkey: PublicKey | undefined;
-    let stealthPayerAddress: string | undefined;
-    let stealthPaymentId: string | undefined;
     if (isPrivacyEnabled() && isTransactionPoolsEnabled()) {
       try {
         const { resolveDepositSource } = await import('./privacy/privacy-router.service');
@@ -1319,9 +1313,7 @@ export class InstitutionEscrowService {
         );
         if (depositSource.privacyLevel === 'STEALTH' && depositSource.recipientAddress !== escrow.payerWallet) {
           stealthPayerPubkey = toPublicKey(depositSource.recipientAddress, 'stealthPayer');
-          stealthPayerAddress = depositSource.recipientAddress;
-          stealthPaymentId = depositSource.stealthPaymentId;
-          console.log(`[InstitutionEscrow] Stealth payer resolved for ${escrowId}: ${stealthPayerAddress}`);
+          console.log(`[InstitutionEscrow] Stealth payer resolved for ${escrowId}: ${depositSource.recipientAddress}`);
         }
       } catch (err) {
         console.warn('[InstitutionEscrow] Stealth payer resolution failed (non-critical):', err);
@@ -1353,13 +1345,6 @@ export class InstitutionEscrowService {
       platformFee,
       totalDeposit: amount + platformFee,
       currency: 'USDC',
-      ...(stealthPayerAddress ? {
-        stealthPayer: {
-          address: stealthPayerAddress,
-          stealthPaymentId,
-          note: 'Transfer USDC to this stealth address before signing the deposit transaction',
-        },
-      } : {}),
     };
   }
 
