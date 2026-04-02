@@ -137,8 +137,20 @@ export async function resolveDepositSource(
 
     if (!metaAddressId) {
       try {
+        // Try wallet-based lookup first
         metaAddressId =
           (await stealthService.findMetaAddressForWallet(payerWallet)) ?? undefined;
+
+        // Fallback: look up by clientId directly (payer wallet may not be in accounts table)
+        if (!metaAddressId) {
+          const { prisma } = await import('../../config/database');
+          const meta = await prisma.stealthMetaAddress.findFirst({
+            where: { institutionClientId: clientId, isActive: true },
+            select: { id: true },
+            orderBy: { createdAt: 'desc' },
+          });
+          metaAddressId = meta?.id ?? undefined;
+        }
       } catch (error) {
         console.warn('[PrivacyRouter] Payer stealth auto-lookup failed, falling back to NONE:', error);
       }
