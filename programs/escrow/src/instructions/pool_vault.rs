@@ -3,7 +3,7 @@ use anchor_spl::token_interface::{
     transfer_checked, TransferChecked, TokenAccount, Mint, TokenInterface,
     CloseAccount, close_account,
 };
-use crate::state::pool_vault::{PoolVault, PoolVaultStatus, PoolReceipt, PoolReceiptStatus};
+use crate::state::pool_vault::{PoolVault, PoolVaultStatus, PoolReceipt, PoolReceiptStatus, EscrowReceipt};
 use crate::EscrowError;
 
 // ============================================================================
@@ -619,4 +619,71 @@ pub fn handle_close_pool_receipt(
     // Receipt is closed via `close = authority` constraint
     msg!("Pool receipt closed");
     Ok(())
+}
+
+// ============================================================================
+// Escrow Receipt (standalone, no pool required)
+// ============================================================================
+
+/// Create an encrypted receipt PDA for an individual escrow (no pool required).
+/// Used when PRIVACY_ENABLED + TRANSACTION_POOLS_ENABLED for non-pooled escrows.
+#[derive(Accounts)]
+#[instruction(escrow_id: [u8; 32])]
+pub struct CreateEscrowReceipt<'info> {
+    /// Authority creating the receipt (admin/settlement authority)
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    /// Escrow receipt PDA (created)
+    #[account(
+        init,
+        payer = authority,
+        space = EscrowReceipt::LEN,
+        seeds = [EscrowReceipt::SEED_PREFIX, escrow_id.as_ref()],
+        bump,
+    )]
+    pub escrow_receipt: Account<'info, EscrowReceipt>,
+
+    pub system_program: Program<'info, System>,
+}
+
+/// Create an encrypted receipt for a single escrow — stores AES-256-GCM encrypted
+/// payload and SHA-256 commitment hash on-chain. No pool vault required.
+pub fn handle_create_escrow_receipt(
+    ctx: Context<CreateEscrowReceipt>,
+    escrow_id: [u8; 32],
+    receipt_id: [u8; 16],
+    commitment_hash: [u8; 32],
+    encrypted_payload: [u8; 512],
+) -> Result<()> {
+    let clock = Clock::get()?;
+
+    let receipt = &mut ctx.accounts.escrow_receipt;
+    receipt.escrow_id = escrow_id;
+    receipt.receipt_id = receipt_id;
+    receipt.timestamp = clock.unix_timestamp;
+    receipt.status = PoolReceiptStatus::Settled;
+    receipt.commitment_hash = commitment_hash;
+    receipt.encrypted_payload = encrypted_payload;
+    receipt.bump = ctx.bumps.escrow_receipt;
+
+    msg!("Escrow receipt created with encrypted payload (512 bytes)");
+
+    Ok(())
+}
+
+/// Close an escrow receipt PDA — reclaim rent
+#[derive(Accounts)]
+#[instruction(escrow_id: [u8; 32])]
+pub struct CloseEscrowReceipt<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        mut,
+        close = authority,
+        seeds = [EscrowReceipt::SEED_PREFIX, escrow_id.as_ref()],
+        bump = escrow_receipt.bump,
+    )]
+    pub escrow_receipt: Account<'info, EscrowReceipt>,
 }

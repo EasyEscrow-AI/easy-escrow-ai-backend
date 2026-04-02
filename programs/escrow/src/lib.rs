@@ -39,6 +39,7 @@ pub use instructions::pool_vault::{
     ReleasePoolMember, ReleasePoolFees,
     ClosePoolVault, CancelPoolVault,
     ClosePoolReceipt,
+    CreateEscrowReceipt, CloseEscrowReceipt,
     handle_init_pool_vault as pool_vault_init,
     handle_deposit_to_pool as pool_vault_deposit,
     handle_release_pool_member as pool_vault_release_member,
@@ -46,6 +47,7 @@ pub use instructions::pool_vault::{
     handle_close_pool_vault as pool_vault_close,
     handle_cancel_pool_vault as pool_vault_cancel,
     handle_close_pool_receipt as pool_vault_close_receipt,
+    handle_create_escrow_receipt as escrow_receipt_create,
 };
 
 // Environment-specific Program IDs
@@ -1805,6 +1807,26 @@ pub mod escrow {
         escrow_id: [u8; 32],
     ) -> Result<()> {
         pool_vault_close_receipt(ctx, pool_id, escrow_id)
+    }
+
+    /// Create an encrypted receipt for a single escrow (no pool required)
+    pub fn create_escrow_receipt(
+        ctx: Context<CreateEscrowReceipt>,
+        escrow_id: [u8; 32],
+        receipt_id: [u8; 16],
+        commitment_hash: [u8; 32],
+        encrypted_payload: [u8; 512],
+    ) -> Result<()> {
+        escrow_receipt_create(ctx, escrow_id, receipt_id, commitment_hash, encrypted_payload)
+    }
+
+    /// Close an escrow receipt PDA — reclaim rent
+    pub fn close_escrow_receipt(
+        ctx: Context<CloseEscrowReceipt>,
+        escrow_id: [u8; 32],
+    ) -> Result<()> {
+        msg!("Escrow receipt closed");
+        Ok(())
     }
 
 }
