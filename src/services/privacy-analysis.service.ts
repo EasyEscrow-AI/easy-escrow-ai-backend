@@ -205,7 +205,7 @@ export class PrivacyAnalysisService {
               ? 'Stealth address reused across multiple escrows'
               : stealthPayment.status === 'SWEPT'
                 ? 'Stealth address verified — funds swept to recipient wallet'
-                : 'Stealth address verified — funds successfully settled to derived wallet';
+                : 'Stealth address verified — funds settled to derived wallet';
 
         return {
           passed: derivationVerified,
@@ -504,8 +504,8 @@ export class PrivacyAnalysisService {
       return {
         passed: sanctionsCleared,
         detail: sanctionsCleared
-          ? `KYC/AML records anchored — risk score ${riskScore ?? 'N/A'}`
-          : `Compliance screening incomplete or flagged — risk score ${riskScore ?? 'N/A'}`,
+          ? 'KYC/AML records anchored'
+          : 'Compliance screening incomplete or flagged',
         riskScore,
         kytReportId,
         sanctionsCleared,
