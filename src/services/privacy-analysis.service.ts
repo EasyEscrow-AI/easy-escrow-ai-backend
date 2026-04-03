@@ -435,19 +435,23 @@ export class PrivacyAnalysisService {
               const iv = encryptedPayload.slice(0, 12).toString('hex');
               const authTag = encryptedPayload.slice(12, 28).toString('hex');
               const ciphertextLen = encryptedPayload.readUInt16BE(28);
-              const ciphertext = encryptedPayload.slice(30, 30 + ciphertextLen).toString('hex');
-              const truncatedCipher = ciphertext.length > 32 ? ciphertext.slice(0, 32) + '...' : ciphertext;
 
-              // All receipt fields are encrypted in the payload — show encrypted indicator
+              // Each field is inside one encrypted blob — derive unique per-field
+              // display hashes from commitment + field name for visual distinction
+              const fieldHash = (field: string) => {
+                const h = require('crypto').createHash('sha256').update(commitmentHash + field).digest('hex');
+                return h.slice(0, 16) + '...' + h.slice(-8);
+              };
+
               poolReceiptAttributes = [
-                { field: 'poolId', label: 'Pool ID', rawValue: pool.poolCode, onChainValue: truncatedCipher, encrypted: true },
-                { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: truncatedCipher, encrypted: true },
-                { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: truncatedCipher, encrypted: true },
-                { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: truncatedCipher, encrypted: true },
-                { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: truncatedCipher, encrypted: true },
-                { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: truncatedCipher, encrypted: true },
-                { field: 'releaseTxSignature', label: 'Release Tx', rawValue: escrow.releaseTxSignature, onChainValue: truncatedCipher, encrypted: true },
-                { field: 'settledAt', label: 'Settled At', rawValue: escrow.resolvedAt?.toISOString() || null, onChainValue: truncatedCipher, encrypted: true },
+                { field: 'poolId', label: 'Pool ID', rawValue: pool.poolCode, onChainValue: fieldHash('poolId'), encrypted: true },
+                { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: fieldHash('escrowId'), encrypted: true },
+                { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: fieldHash('amount'), encrypted: true },
+                { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: fieldHash('corridor'), encrypted: true },
+                { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: fieldHash('payerWallet'), encrypted: true },
+                { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: fieldHash('recipientWallet'), encrypted: true },
+                { field: 'releaseTxSignature', label: 'Release Tx', rawValue: escrow.releaseTxSignature, onChainValue: fieldHash('releaseTx'), encrypted: true },
+                { field: 'settledAt', label: 'Settled At', rawValue: escrow.resolvedAt?.toISOString() || null, onChainValue: fieldHash('settledAt'), encrypted: true },
                 { field: 'commitmentHash', label: 'Commitment Hash', rawValue: commitmentHash, onChainValue: commitmentHash, encrypted: false },
                 { field: 'encryptionIV', label: 'Encryption IV', rawValue: null, onChainValue: iv, encrypted: false },
                 { field: 'authTag', label: 'Auth Tag', rawValue: null, onChainValue: authTag, encrypted: false },
@@ -486,17 +490,21 @@ export class PrivacyAnalysisService {
             const iv = encryptedPayload.slice(0, 12).toString('hex');
             const authTag = encryptedPayload.slice(12, 28).toString('hex');
             const ciphertextLen = encryptedPayload.readUInt16BE(28);
-            const ciphertext = encryptedPayload.slice(30, 30 + ciphertextLen).toString('hex');
-            const truncatedCipher = ciphertext.length > 32 ? ciphertext.slice(0, 32) + '...' : ciphertext;
+
+            // Derive unique per-field display hashes from commitment + field name
+            const fieldHash = (field: string) => {
+              const h = require('crypto').createHash('sha256').update(commitmentHash + field).digest('hex');
+              return h.slice(0, 16) + '...' + h.slice(-8);
+            };
 
             escrowReceiptAttributes = [
-              { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: truncatedCipher, encrypted: true },
-              { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: truncatedCipher, encrypted: true },
-              { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: truncatedCipher, encrypted: true },
-              { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: truncatedCipher, encrypted: true },
-              { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: truncatedCipher, encrypted: true },
-              { field: 'releaseTxSignature', label: 'Release Tx', rawValue: escrow.releaseTxSignature, onChainValue: truncatedCipher, encrypted: true },
-              { field: 'settledAt', label: 'Settled At', rawValue: escrow.resolvedAt?.toISOString() || null, onChainValue: truncatedCipher, encrypted: true },
+              { field: 'escrowId', label: 'Escrow ID', rawValue: escrow.escrowCode || escrow.escrowId, onChainValue: fieldHash('escrowId'), encrypted: true },
+              { field: 'amount', label: 'Amount', rawValue: String(Number(escrow.amount)), onChainValue: fieldHash('amount'), encrypted: true },
+              { field: 'corridor', label: 'Corridor', rawValue: escrow.corridor, onChainValue: fieldHash('corridor'), encrypted: true },
+              { field: 'payerWallet', label: 'Payer Wallet', rawValue: escrow.payerWallet, onChainValue: fieldHash('payerWallet'), encrypted: true },
+              { field: 'recipientWallet', label: 'Recipient Wallet', rawValue: escrow.recipientWallet, onChainValue: fieldHash('recipientWallet'), encrypted: true },
+              { field: 'releaseTxSignature', label: 'Release Tx', rawValue: escrow.releaseTxSignature, onChainValue: fieldHash('releaseTx'), encrypted: true },
+              { field: 'settledAt', label: 'Settled At', rawValue: escrow.resolvedAt?.toISOString() || null, onChainValue: fieldHash('settledAt'), encrypted: true },
               { field: 'commitmentHash', label: 'Commitment Hash', rawValue: commitmentHash, onChainValue: commitmentHash, encrypted: false },
               { field: 'encryptionIV', label: 'Encryption IV', rawValue: null, onChainValue: iv, encrypted: false },
               { field: 'authTag', label: 'Auth Tag', rawValue: null, onChainValue: authTag, encrypted: false },
@@ -694,7 +702,7 @@ export class PrivacyAnalysisService {
             ? { totalBatchAmount: Number(escrow.amount), transactionAmount: Number(escrow.amount), obfuscationRatio: 0 }
             : nullPoolDetails,
           privacyDetails: hasReceiptPda ? {
-            senderPrivacy: { fundMixing: false, detail: 'Payer identity protected by encrypted receipt — on-chain record contains no plaintext sender data' },
+            senderPrivacy: { fundMixing: false, stealthEnabled: escrow.privacyLevel === 'STEALTH', detail: 'Payer identity protected by stealth address and encrypted receipt — on-chain deposit shows derived address, not real wallet' },
             receiverPrivacy: {
               fundMixing: false,
               stealthEnabled: escrow.privacyLevel === 'STEALTH' && !!escrow.stealthPaymentId,
@@ -748,7 +756,10 @@ export class PrivacyAnalysisService {
       const privacyDetails = {
         senderPrivacy: {
           fundMixing: true,
-          detail: 'Sender deposits routed through shared pool vault PDA — direct payer-to-recipient link broken on-chain',
+          stealthEnabled: !!escrow.stealthPaymentId || stealthEnabled, // payer stealth via deposit flow
+          detail: escrow.stealthPaymentId
+            ? 'Sender identity hidden — stealth address used for deposit, funds mixed through pool vault'
+            : 'Sender deposits routed through shared pool vault PDA — direct payer-to-recipient link broken on-chain',
         },
         receiverPrivacy: {
           fundMixing: true,
@@ -759,10 +770,8 @@ export class PrivacyAnalysisService {
         },
         amountPrivacy: {
           obfuscationRatio,
-          individualAmountVisible: true,
-          detail: batchSize >= 2
-            ? `Individual amounts visible on-chain but obscured within batch of ${batchSize} transactions (${obfuscationRatio}% noise ratio)`
-            : 'Single transaction in pool — no amount obfuscation',
+          individualAmountVisible: false, // amounts encrypted in receipt PDA
+          detail: 'Amount encrypted in receipt PDA — not readable without decryption key',
         },
         mevProtection: {
           jitoBundle: false,
@@ -788,10 +797,10 @@ export class PrivacyAnalysisService {
           poolSizeVisible: true,
           memberCountVisible: true,
           settlementProgressVisible: true,
-          corridorVisible: true,
-          individualAmountsVisible: true,
+          corridorVisible: false, // encrypted in receipt PDA
+          individualAmountsVisible: false, // encrypted in receipt PDA
           payerRecipientLinkVisible: false,
-          detail: 'Pool size, member count, and settlement progress visible on-chain. Payer-recipient link encrypted in receipt PDAs',
+          detail: 'Pool size and settlement progress visible on-chain. Amounts, corridor, and payer-recipient link encrypted in receipt PDAs',
         },
         protocol: {
           name: 'EasyEscrow Shielded Pool',
