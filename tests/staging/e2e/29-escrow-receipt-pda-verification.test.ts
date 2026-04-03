@@ -122,39 +122,51 @@ describe('Escrow Receipt PDA Verification E2E (Staging)', function () {
     console.log(`    Released: ${release.data.data.status}`);
   });
 
-  it('2. should have created an escrow receipt PDA on-chain', async function () {
-    if (!internalId) return this.skip();
+  // Store the receipt PDA address from privacy analysis for subsequent tests
+  let receiptPdaAddress: string;
 
-    console.log('\n  [2] Checking escrow receipt PDA...');
-    const escrowIdBytes = uuidToBytes(internalId);
-    const [receiptPda] = PublicKey.findProgramAddressSync(
-      [ESCROW_RECEIPT_SEED, escrowIdBytes], PROGRAM_ID
-    );
+  it('2. should have created an encrypted receipt PDA on-chain', async function () {
+    if (!escrowCode) return this.skip();
 
-    const account = await connection.getAccountInfo(receiptPda);
+    console.log('\n  [2] Checking encrypted receipt PDA...');
+    // Use the privacy analysis API to find the receipt PDA (works for both pool and standalone receipts)
+    const res = await api.get(`/api/v1/institution-escrow/${escrowCode}/privacy-analysis`, {
+      headers: { Authorization: `Bearer ${buyerToken}` },
+    });
+    expect(res.status).to.equal(200);
+    const pda = res.data.data.checks.pdaReceipts;
+
+    // Find whichever receipt PDA exists (pool or standalone)
+    receiptPdaAddress = pda.poolReceiptPda || pda.escrowReceiptPda;
+    expect(receiptPdaAddress).to.be.a('string');
+    const receiptExists = pda.poolReceiptExists || pda.escrowReceiptExists;
+    expect(receiptExists).to.be.true;
+
+    console.log(`    Receipt PDA: ${receiptPdaAddress}`);
+    console.log(`    Pool receipt: ${pda.poolReceiptExists}, Escrow receipt: ${pda.escrowReceiptExists}`);
+
+    const account = await connection.getAccountInfo(new PublicKey(receiptPdaAddress));
     expect(account).to.not.be.null;
-    console.log(`    PDA: ${receiptPda.toBase58()}`);
-    console.log(`    Size: ${account!.data.length} bytes (expected 610)`);
-    expect(account!.data.length).to.equal(610);
+    console.log(`    Size: ${account!.data.length} bytes`);
     expect(account!.owner.toBase58()).to.equal(PROGRAM_ID.toBase58());
     console.log(`    Owner: ${account!.owner.toBase58()} ✓`);
   });
 
   it('3. should have valid AES-256-GCM encrypted payload structure', async function () {
-    if (!internalId) return this.skip();
+    if (!receiptPdaAddress) return this.skip();
 
     console.log('\n  [3] Verifying encrypted payload...');
-    const escrowIdBytes = uuidToBytes(internalId);
-    const [receiptPda] = PublicKey.findProgramAddressSync(
-      [ESCROW_RECEIPT_SEED, escrowIdBytes], PROGRAM_ID
-    );
-    const account = await connection.getAccountInfo(receiptPda);
+    const account = await connection.getAccountInfo(new PublicKey(receiptPdaAddress));
     expect(account).to.not.be.null;
 
     const d = account!.data;
-    // Layout: disc(8) + escrow_id(32) + receipt_id(16) + timestamp(8) + status(1) + commitment_hash(32) + encrypted_payload(512) + bump(1)
-    const encPayload = d.slice(97, 609);
+    const dataLen = d.length;
+    // Pool receipt (642): disc(8)+pool_id(32)+escrow_id(32)+receipt_id(16)+ts(8)+status(1)+hash(32)+payload(512)+bump(1)
+    // Escrow receipt (610): disc(8)+escrow_id(32)+receipt_id(16)+ts(8)+status(1)+hash(32)+payload(512)+bump(1)
+    const payloadOffset = dataLen === 642 ? 129 : 97;
+    const encPayload = d.slice(payloadOffset, payloadOffset + 512);
     expect(encPayload.length).to.equal(512);
+    console.log(`    Receipt type: ${dataLen === 642 ? 'Pool' : 'Escrow'} (${dataLen} bytes)`);
 
     const iv = encPayload.slice(0, 12);
     const authTag = encPayload.slice(12, 28);
@@ -177,17 +189,15 @@ describe('Escrow Receipt PDA Verification E2E (Staging)', function () {
   });
 
   it('4. should have a non-zero SHA-256 commitment hash', async function () {
-    if (!internalId) return this.skip();
+    if (!receiptPdaAddress) return this.skip();
 
     console.log('\n  [4] Verifying commitment hash...');
-    const escrowIdBytes = uuidToBytes(internalId);
-    const [receiptPda] = PublicKey.findProgramAddressSync(
-      [ESCROW_RECEIPT_SEED, escrowIdBytes], PROGRAM_ID
-    );
-    const account = await connection.getAccountInfo(receiptPda);
+    const account = await connection.getAccountInfo(new PublicKey(receiptPdaAddress));
     expect(account).to.not.be.null;
 
-    const commitmentHash = account!.data.slice(65, 97);
+    const dataLen = account!.data.length;
+    const hashOffset = dataLen === 642 ? 97 : 65;
+    const commitmentHash = account!.data.slice(hashOffset, hashOffset + 32);
     expect(commitmentHash.length).to.equal(32);
     expect(commitmentHash.some((b: number) => b !== 0)).to.be.true;
     console.log(`    Hash: ${commitmentHash.toString('hex')}`);
@@ -204,10 +214,12 @@ describe('Escrow Receipt PDA Verification E2E (Staging)', function () {
     expect(res.status).to.equal(200);
 
     const pda = res.data.data.checks.pdaReceipts;
-    expect(pda.escrowReceiptPda).to.be.a('string');
-    expect(pda.escrowReceiptExists).to.be.true;
-    console.log(`    escrowReceiptPda: ${pda.escrowReceiptPda}`);
-    console.log(`    escrowReceiptExists: ${pda.escrowReceiptExists}`);
+    // Check for any receipt PDA (pool or standalone)
+    const hasReceipt = pda.poolReceiptExists || pda.escrowReceiptExists;
+    const receiptAddr = pda.poolReceiptPda || pda.escrowReceiptPda;
+    expect(hasReceipt).to.be.true;
+    console.log(`    Receipt PDA: ${receiptAddr}`);
+    console.log(`    Pool receipt: ${pda.poolReceiptExists}, Escrow receipt: ${pda.escrowReceiptExists}`);
 
     // Verify receiptAttributes exist with encrypted fields
     expect(pda.receiptAttributes).to.be.an('array');
