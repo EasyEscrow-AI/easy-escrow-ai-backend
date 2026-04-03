@@ -1154,6 +1154,7 @@ export class InstitutionEscrowService {
           include: { metaAddress: true },
           orderBy: { createdAt: 'asc' }, // sender created before recipient
         });
+        console.log(`[InstitutionEscrow] Sender stealth lookup for ${escrowId}: ${senderStealth ? `found ${senderStealth.stealthAddress.slice(0, 12)}...` : 'not found'}`);
         if (senderStealth) {
           // Payer stealth payment found — do vault deposit from stealth ATA
           const { decryptKey } = await import('./privacy/stealth-key-manager');
@@ -1211,8 +1212,9 @@ export class InstitutionEscrowService {
           }
         }
       } catch (err) {
-        console.error('[InstitutionEscrow] Stealth vault deposit failed:', (err as Error).message);
-        throw new Error(`Stealth vault deposit failed: ${(err as Error).message}`);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error('[InstitutionEscrow] Stealth vault deposit failed:', errMsg, err);
+        throw new Error(`Stealth vault deposit failed: ${errMsg}`);
       }
     }
 

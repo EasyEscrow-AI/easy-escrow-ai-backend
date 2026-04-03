@@ -293,28 +293,32 @@ export class InstitutionEscrowProgramService {
       const stealthAta = await this.getOrCreateAta(
         params.usdcMint,
         params.stealthPayer,
-        params.rentPayer || params.payer // admin pays rent for server-side stealth deposits
+        params.rentPayer || params.payer
       );
       depositPayerAta = stealthAta.address;
       if (stealthAta.instruction) {
         transaction.add(stealthAta.instruction);
       }
 
-      // Transfer total deposit (amount + fee) from real payer to stealth ATA
-      // We read the escrow state to get the amounts
-      const escrowAccount = await this.connection.getAccountInfo(escrowPda);
-      if (escrowAccount && escrowAccount.data.length >= 152) {
-        const amount = escrowAccount.data.readBigUInt64LE(136);
-        const fee = escrowAccount.data.readBigUInt64LE(144);
-        const total = amount + fee;
-        transaction.add(
-          createTransferInstruction(
-            realPayerAta,
-            depositPayerAta,
-            params.payer,
-            Number(total)
-          )
-        );
+      // SPL transfer: real payer ATA → stealth ATA (only for frontend path where
+      // payer != stealthPayer). Server-side path (payer == stealthPayer) skips this
+      // because USDC is already in the stealth ATA from the user's first tx.
+      const isServerSide = params.payer.equals(params.stealthPayer);
+      if (!isServerSide) {
+        const escrowAccount = await this.connection.getAccountInfo(escrowPda);
+        if (escrowAccount && escrowAccount.data.length >= 152) {
+          const amount = escrowAccount.data.readBigUInt64LE(136);
+          const fee = escrowAccount.data.readBigUInt64LE(144);
+          const total = amount + fee;
+          transaction.add(
+            createTransferInstruction(
+              realPayerAta,
+              depositPayerAta,
+              params.payer,
+              Number(total)
+            )
+          );
+        }
       }
     } else {
       depositPayerAta = realPayerAta;
