@@ -1156,59 +1156,93 @@ export class InstitutionEscrowService {
         });
         console.log(`[InstitutionEscrow] Sender stealth lookup for ${escrowId}: ${senderStealth ? `found ${senderStealth.stealthAddress.slice(0, 12)}...` : 'not found'}`);
         if (senderStealth) {
-          // Payer stealth payment found — do vault deposit from stealth ATA
+          // Payer stealth payment found — do vault deposit from stealth ATA.
+          // Pattern matches sendTokensFromStealth() (proven for recipient sweep):
+          // 1. Derive spending key from encrypted meta-address keys + ephemeral key
+          // 2. Convert scalar to keypair (signing key)
+          // 3. Use STORED stealth address for ATA derivation (not keypair pubkey)
+          // 4. Build deposit instruction with stealth address as payer param
+          // 5. Admin pays fees, stealth keypair signs as authority
           const { decryptKey } = await import('./privacy/stealth-key-manager');
-          const { deriveSpendingKey } = await import('./privacy/stealth-adapter');
+          const { deriveSpendingKey, scalarToKeypair } = await import('./privacy/stealth-adapter');
+          const { PublicKey: SolPublicKey, Transaction: SolTransaction } = await import('@solana/web3.js');
+          const { getAssociatedTokenAddress: getAta } = await import('@solana/spl-token');
+
           const scanKey = decryptKey(senderStealth.metaAddress.encryptedScanKey);
           const spendKey = decryptKey(senderStealth.metaAddress.encryptedSpendKey);
           const scalarKey = await deriveSpendingKey(scanKey, spendKey, senderStealth.ephemeralPublicKey);
+          const stealthKeypair = await scalarToKeypair(scalarKey);
 
-          const programService = this.getProgramService();
-          if (programService) {
-            const { Keypair: SolKeypair } = await import('@solana/web3.js');
-            const { scalarToKeypair } = await import('./privacy/stealth-adapter');
-            const stealthKeypair = await scalarToKeypair(scalarKey);
-            const usdcMint = programService.getUsdcMintAddress();
-            const feeCollector = toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress');
+          // Use the STORED stealth address for ATA and instruction accounts
+          // (not stealthKeypair.publicKey which may differ due to scalar clamping)
+          const stealthPubkey = new SolPublicKey(senderStealth.stealthAddress);
+          const programService2 = this.getProgramService()!;
+          const stealthAta = await getAta(programService2.getUsdcMintAddress(), stealthPubkey, true);
 
-            // Build deposit tx: stealth keypair as payer, admin pays rent
-            const adminKeypair = programService.getAdminKeypair();
-            const depositTx = await programService.buildDepositTransaction({
-              escrowId,
-              payer: stealthKeypair.publicKey,
-              usdcMint,
-              feeCollector,
-              memo: escrow.escrowCode ? `EasyEscrow:stealth-deposit:${escrow.escrowCode}` : undefined,
-              stealthPayer: stealthKeypair.publicKey,
-              rentPayer: adminKeypair.publicKey,
-            });
+          console.log(`[InstitutionEscrow] Stealth keypair pubkey: ${stealthKeypair.publicKey.toBase58()}`);
+          console.log(`[InstitutionEscrow] Stored stealth address: ${senderStealth.stealthAddress}`);
+          console.log(`[InstitutionEscrow] Match: ${stealthKeypair.publicKey.toBase58() === senderStealth.stealthAddress}`);
+          console.log(`[InstitutionEscrow] Stealth ATA: ${stealthAta.toBase58()}`);
 
-            // Admin pays fees, stealth keypair signs as token authority
-            depositTx.feePayer = adminKeypair.publicKey;
-            const { blockhash, lastValidBlockHeight } = await programService.getConnection().getLatestBlockhash('confirmed');
-            depositTx.recentBlockhash = blockhash;
-            depositTx.partialSign(adminKeypair);
-            depositTx.partialSign(stealthKeypair);
+          const adminKeypair = programService2.getAdminKeypair();
+          const usdcMint = programService2.getUsdcMintAddress();
+          const feeCollector = toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress');
+          const conn = programService2.getConnection();
 
-            const rawTx = depositTx.serialize();
-            const conn = programService.getConnection();
-            vaultDepositSig = await conn.sendRawTransaction(rawTx, { skipPreflight: true, maxRetries: 3 });
-            await conn.confirmTransaction({ signature: vaultDepositSig, blockhash, lastValidBlockHeight }, 'confirmed');
+          // Derive PDAs
+          const escrowIdBytes = Buffer.alloc(32);
+          Buffer.from(escrowId.replace(/-/g, ''), 'hex').copy(escrowIdBytes);
+          const [escrowPda] = SolPublicKey.findProgramAddressSync(
+            [Buffer.from('inst_escrow'), escrowIdBytes],
+            new SolPublicKey(config.solana.escrowProgramId)
+          );
+          const [vaultPda] = SolPublicKey.findProgramAddressSync(
+            [Buffer.from('inst_vault'), escrowIdBytes],
+            new SolPublicKey(config.solana.escrowProgramId)
+          );
 
-            // Verify tx succeeded on-chain
-            const txResult = await conn.getTransaction(vaultDepositSig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
-            if (txResult?.meta?.err) {
-              throw new Error(`Stealth deposit tx ${vaultDepositSig} confirmed but failed: ${JSON.stringify(txResult.meta.err)}`);
-            }
-            console.log(`[InstitutionEscrow] Stealth vault deposit success: ${vaultDepositSig}`);
+          // Ensure fee collector ATA exists (admin pays rent)
+          const feeCollectorAta = await programService2.getOrCreateAta(usdcMint, feeCollector, adminKeypair.publicKey);
 
-            // Confirm the sender stealth payment (same as recipient stealth confirmation)
-            try {
-              const stealthService = getStealthAddressService();
-              await stealthService.confirmStealthPayment(senderStealth.id, vaultDepositSig);
-            } catch (confirmErr) {
-              console.warn('[InstitutionEscrow] Sender stealth confirmation failed (non-critical):', confirmErr);
-            }
+          // Build deposit instruction manually (mirrors receiver sweep pattern)
+          const escrowIdArray = Array.from(escrowIdBytes);
+          const depositIx = await (programService2 as any).program.methods
+            .depositInstitutionEscrow(escrowIdArray, stealthPubkey)
+            .accounts({
+              payer: stealthPubkey,
+              payerTokenAccount: stealthAta,
+              escrowState: escrowPda,
+              tokenVault: vaultPda,
+              feeCollectorTokenAccount: feeCollectorAta.address,
+              tokenProgram: new SolPublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+            })
+            .instruction();
+
+          const depositTx = new SolTransaction();
+          if (feeCollectorAta.instruction) depositTx.add(feeCollectorAta.instruction);
+          depositTx.add(depositIx);
+
+          depositTx.feePayer = adminKeypair.publicKey;
+          const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+          depositTx.recentBlockhash = blockhash;
+          depositTx.partialSign(adminKeypair);
+          depositTx.partialSign(stealthKeypair);
+
+          const rawTx = depositTx.serialize();
+          vaultDepositSig = await conn.sendRawTransaction(rawTx, { skipPreflight: true, maxRetries: 3 });
+          await conn.confirmTransaction({ signature: vaultDepositSig, blockhash, lastValidBlockHeight }, 'confirmed');
+
+          const txResult = await conn.getTransaction(vaultDepositSig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+          if (txResult?.meta?.err) {
+            throw new Error(`Stealth deposit tx ${vaultDepositSig} failed: ${JSON.stringify(txResult.meta.err)}`);
+          }
+          console.log(`[InstitutionEscrow] Stealth vault deposit success: ${vaultDepositSig}`);
+
+          // Confirm sender stealth payment
+          try {
+            await getStealthAddressService().confirmStealthPayment(senderStealth.id, vaultDepositSig);
+          } catch (confirmErr) {
+            console.warn('[InstitutionEscrow] Sender stealth confirmation failed (non-critical):', confirmErr);
           }
         }
       } catch (err) {
