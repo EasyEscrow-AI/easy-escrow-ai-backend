@@ -231,7 +231,7 @@ export class TransactionPoolService {
       throw new Error(`Corridor mismatch: pool is ${pool.corridor}, escrow is ${escrow.corridor}`);
     }
 
-    // Atomic: create member + update pool totals
+    // Atomic: create member + update pool totals + set poolId on escrow
     const [member] = await this.prisma.$transaction([
       this.prisma.transactionPoolMember.create({
         data: {
@@ -251,6 +251,10 @@ export class TransactionPoolService {
           totalFees: { increment: Number(escrow.platformFee) },
           memberCount: { increment: 1 },
         },
+      }),
+      this.prisma.institutionEscrow.update({
+        where: { escrowId: escrow.escrowId },
+        data: { poolId: pool.id },
       }),
     ]);
 
