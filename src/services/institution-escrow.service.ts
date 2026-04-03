@@ -1139,6 +1139,64 @@ export class InstitutionEscrowService {
       },
     });
 
+    // Stealth sender: if escrow has a stealth payment for the payer,
+    // do the actual vault deposit server-side using the stealth spending key.
+    // The user's tx only transferred USDC to the stealth ATA.
+    let vaultDepositSig: string | null = null;
+    if (escrow.stealthPaymentId) {
+      try {
+        const stealthPayment = await this.prisma.stealthPayment.findUnique({
+          where: { id: escrow.stealthPaymentId },
+          include: { metaAddress: true },
+        });
+        if (stealthPayment && stealthPayment.stealthAddress !== escrow.recipientWallet) {
+          // This is a payer stealth payment — do vault deposit from stealth ATA
+          const { decryptKey } = await import('./privacy/stealth-key-manager');
+          const { deriveSpendingKey } = await import('./privacy/stealth-adapter');
+          const scanKey = decryptKey(stealthPayment.metaAddress.encryptedScanKey);
+          const spendKey = decryptKey(stealthPayment.metaAddress.encryptedSpendKey);
+          const scalarKey = await deriveSpendingKey(scanKey, spendKey, stealthPayment.ephemeralPublicKey);
+
+          const programService = this.getProgramService();
+          if (programService) {
+            const { Keypair: SolKeypair } = await import('@solana/web3.js');
+            const { scalarToKeypair } = await import('./privacy/stealth-adapter');
+            const stealthKeypair = await scalarToKeypair(scalarKey);
+            const usdcMint = programService.getUsdcMintAddress();
+            const feeCollector = toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress');
+
+            // Build deposit tx with stealth keypair as payer/signer
+            const depositTx = await programService.buildDepositTransaction({
+              escrowId,
+              payer: stealthKeypair.publicKey,
+              usdcMint,
+              feeCollector,
+              memo: escrow.escrowCode ? `EasyEscrow:stealth-deposit:${escrow.escrowCode}` : undefined,
+              stealthPayer: stealthKeypair.publicKey,
+            });
+
+            // Admin pays fees, stealth keypair signs as token authority
+            const adminKeypair = programService.getAdminKeypair();
+            depositTx.feePayer = adminKeypair.publicKey;
+            const { blockhash, lastValidBlockHeight } = await programService.getConnection().getLatestBlockhash('confirmed');
+            depositTx.recentBlockhash = blockhash;
+            depositTx.partialSign(adminKeypair);
+            depositTx.partialSign(stealthKeypair);
+
+            const rawTx = depositTx.serialize();
+            vaultDepositSig = await programService.getConnection().sendRawTransaction(rawTx, { skipPreflight: true, maxRetries: 3 });
+            await programService.getConnection().confirmTransaction(
+              { signature: vaultDepositSig, blockhash, lastValidBlockHeight }, 'confirmed'
+            );
+            console.log(`[InstitutionEscrow] Stealth vault deposit: ${vaultDepositSig}`);
+          }
+        }
+      } catch (err) {
+        console.error('[InstitutionEscrow] Stealth vault deposit failed:', (err as Error).message);
+        throw new Error(`Stealth vault deposit failed: ${(err as Error).message}`);
+      }
+    }
+
     // Update escrow status to FUNDED and compute unlockAt from timelockHours
     const fundedAt = new Date();
     const unlockAt = escrow.timelockHours && escrow.timelockHours > 0
@@ -1149,7 +1207,7 @@ export class InstitutionEscrowService {
       where: { escrowId },
       data: {
         status: 'FUNDED',
-        depositTxSignature: txSignature,
+        depositTxSignature: vaultDepositSig || txSignature,
         fundedAt,
         unlockAt,
       },
@@ -1298,9 +1356,11 @@ export class InstitutionEscrowService {
     const usdcMint = programService.getUsdcMintAddress();
     const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
 
-    // Resolve stealth payer address — builds a combined tx that transfers USDC
-    // to the stealth ATA then deposits from it, all in one payer-signed transaction.
-    let stealthPayerPubkey: PublicKey | undefined;
+    // Stealth sender: when active, the deposit-tx returns a simple SPL transfer
+    // to the stealth ATA. The actual vault deposit happens server-side in recordDeposit()
+    // using the stealth spending key (admin pays fees).
+    let stealthPayerAddress: string | undefined;
+    let stealthPaymentId: string | undefined;
     if (isPrivacyEnabled() && isTransactionPoolsEnabled()) {
       try {
         const { resolveDepositSource } = await import('./privacy/privacy-router.service');
@@ -1312,28 +1372,63 @@ export class InstitutionEscrowService {
           BigInt(Math.round((Number(escrow.amount) + Number(escrow.platformFee)) * 1_000_000)),
         );
         if (depositSource.privacyLevel === 'STEALTH' && depositSource.recipientAddress !== escrow.payerWallet) {
-          stealthPayerPubkey = toPublicKey(depositSource.recipientAddress, 'stealthPayer');
-          console.log(`[InstitutionEscrow] Stealth payer resolved for ${escrowId}: ${depositSource.recipientAddress}`);
+          stealthPayerAddress = depositSource.recipientAddress;
+          stealthPaymentId = depositSource.stealthPaymentId;
+          console.log(`[InstitutionEscrow] Stealth payer resolved for ${escrowId}: ${stealthPayerAddress}`);
         }
       } catch (err) {
         console.warn('[InstitutionEscrow] Stealth payer resolution failed (non-critical):', err);
       }
     }
 
-    const tx = await programService.buildDepositTransaction({
-      escrowId,
-      payer: payerWallet,
-      usdcMint,
-      feeCollector,
-      memo: escrow.escrowCode ? `EasyEscrow:deposit:${escrow.escrowCode}` : undefined,
-      stealthPayer: stealthPayerPubkey,
-    });
+    let serialized: string;
 
-    tx.feePayer = payerWallet;
-    const { blockhash } = await programService.getConnection().getLatestBlockhash('confirmed');
-    tx.recentBlockhash = blockhash;
+    if (stealthPayerAddress) {
+      // Stealth mode: build SPL transfer from real payer → stealth ATA
+      // The vault deposit will be done server-side in recordDeposit()
+      const { Transaction: SolTx } = await import('@solana/web3.js');
+      const { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferInstruction } = await import('@solana/spl-token');
+      const stealthPubkey = toPublicKey(stealthPayerAddress, 'stealthPayer');
+      const realPayerAta = await getAssociatedTokenAddress(usdcMint, payerWallet);
+      const stealthAta = await getAssociatedTokenAddress(usdcMint, stealthPubkey, true);
+      const totalDeposit = Math.round((Number(escrow.amount) + Number(escrow.platformFee)) * 1_000_000);
 
-    const serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
+      const tx = new SolTx();
+      // Create stealth ATA if needed
+      try {
+        const conn = programService.getConnection();
+        const existing = await conn.getAccountInfo(stealthAta);
+        if (!existing) {
+          tx.add(createAssociatedTokenAccountInstruction(payerWallet, stealthAta, stealthPubkey, usdcMint));
+        }
+      } catch { /* assume needs creation */ }
+      // Transfer total deposit to stealth ATA
+      tx.add(createTransferInstruction(realPayerAta, stealthAta, payerWallet, totalDeposit));
+
+      tx.feePayer = payerWallet;
+      const { blockhash } = await programService.getConnection().getLatestBlockhash('confirmed');
+      tx.recentBlockhash = blockhash;
+      serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
+
+      // Store stealth payment ID on escrow for recordDeposit() to pick up
+      await this.prisma.institutionEscrow.update({
+        where: { escrowId },
+        data: { stealthPaymentId: stealthPaymentId || undefined } as any,
+      });
+    } else {
+      // Standard mode: build deposit tx directly
+      const tx = await programService.buildDepositTransaction({
+        escrowId,
+        payer: payerWallet,
+        usdcMint,
+        feeCollector,
+        memo: escrow.escrowCode ? `EasyEscrow:deposit:${escrow.escrowCode}` : undefined,
+      });
+      tx.feePayer = payerWallet;
+      const { blockhash } = await programService.getConnection().getLatestBlockhash('confirmed');
+      tx.recentBlockhash = blockhash;
+      serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
+    }
 
     const amount = Number(escrow.amount);
     const platformFee = Number(escrow.platformFee);
