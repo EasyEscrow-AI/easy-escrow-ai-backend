@@ -1173,15 +1173,15 @@ export class InstitutionEscrowService {
           const scalarKey = await deriveSpendingKey(scanKey, spendKey, senderStealth.ephemeralPublicKey);
           const stealthKeypair = await scalarToKeypair(scalarKey);
 
-          // Use the STORED stealth address for ATA and instruction accounts
-          // (not stealthKeypair.publicKey which may differ due to scalar clamping)
-          const stealthPubkey = new SolPublicKey(senderStealth.stealthAddress);
+          // Use stealthKeypair.publicKey for ATA and accounts — this is the
+          // actual signing key and may differ from stored stealthAddress due to
+          // scalar clamping. getDepositTransaction() uses the same keypair derivation
+          // so the user's SPL transfer funds the correct ATA.
+          const stealthPubkey = stealthKeypair.publicKey;
           const programService2 = this.getProgramService()!;
           const stealthAta = await getAta(programService2.getUsdcMintAddress(), stealthPubkey, true);
 
-          console.log(`[InstitutionEscrow] Stealth keypair pubkey: ${stealthKeypair.publicKey.toBase58()}`);
-          console.log(`[InstitutionEscrow] Stored stealth address: ${senderStealth.stealthAddress}`);
-          console.log(`[InstitutionEscrow] Match: ${stealthKeypair.publicKey.toBase58() === senderStealth.stealthAddress}`);
+          console.log(`[InstitutionEscrow] Stealth payer pubkey: ${stealthPubkey.toBase58()}`);
           console.log(`[InstitutionEscrow] Stealth ATA: ${stealthAta.toBase58()}`);
 
           const adminKeypair = programService2.getAdminKeypair();
@@ -1438,12 +1438,27 @@ export class InstitutionEscrowService {
 
     let serialized: string;
 
-    if (stealthPayerAddress) {
-      // Stealth mode: build SPL transfer from real payer → stealth ATA
-      // The vault deposit will be done server-side in recordDeposit()
+    if (stealthPayerAddress && stealthPaymentId) {
+      // Stealth mode: derive the spending keypair to get the REAL pubkey
+      // (may differ from stored stealthAddress due to scalar clamping).
+      // Use keypair.publicKey for ATA — must match what recordDeposit() uses.
       const { Transaction: SolTx } = await import('@solana/web3.js');
       const { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferInstruction } = await import('@solana/spl-token');
-      const stealthPubkey = toPublicKey(stealthPayerAddress, 'stealthPayer');
+      const { decryptKey } = await import('./privacy/stealth-key-manager');
+      const { deriveSpendingKey, scalarToKeypair } = await import('./privacy/stealth-adapter');
+
+      const stealthPayment = await this.prisma.stealthPayment.findUnique({
+        where: { id: stealthPaymentId },
+        include: { metaAddress: true },
+      });
+      if (!stealthPayment) throw new Error('Stealth payment not found');
+
+      const scanKey = decryptKey(stealthPayment.metaAddress.encryptedScanKey);
+      const spendKey = decryptKey(stealthPayment.metaAddress.encryptedSpendKey);
+      const scalarKey = await deriveSpendingKey(scanKey, spendKey, stealthPayment.ephemeralPublicKey);
+      const stealthKeypair = await scalarToKeypair(scalarKey);
+      const stealthPubkey = stealthKeypair.publicKey;
+      console.log(`[InstitutionEscrow] Stealth payer keypair pubkey for deposit-tx: ${stealthPubkey.toBase58()}`);
       const realPayerAta = await getAssociatedTokenAddress(usdcMint, payerWallet);
       const stealthAta = await getAssociatedTokenAddress(usdcMint, stealthPubkey, true);
       const totalDeposit = Math.round((Number(escrow.amount) + Number(escrow.platformFee)) * 1_000_000);
