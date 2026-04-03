@@ -121,6 +121,10 @@ export class InstitutionEscrowProgramService {
     return this.adminKeypair.publicKey;
   }
 
+  getAdminKeypair(): Keypair {
+    return this.adminKeypair;
+  }
+
   /** Expose the shared Connection so callers don't create per-request instances */
   getConnection(): Connection {
     return this.connection;
