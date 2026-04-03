@@ -1139,23 +1139,28 @@ export class InstitutionEscrowService {
       },
     });
 
-    // Stealth sender: if escrow has a stealth payment for the payer,
-    // do the actual vault deposit server-side using the stealth spending key.
-    // The user's tx only transferred USDC to the stealth ATA.
+    // Stealth sender: look up a payer stealth payment for this escrow.
+    // The sender stealth payment is identified by: same escrowId but stealthAddress
+    // differs from the recipient wallet (recipient stealth is separate).
     let vaultDepositSig: string | null = null;
-    if (escrow.stealthPaymentId) {
+    if (isPrivacyEnabled() && isTransactionPoolsEnabled()) {
       try {
-        const stealthPayment = await this.prisma.stealthPayment.findUnique({
-          where: { id: escrow.stealthPaymentId },
+        const senderStealth = await this.prisma.stealthPayment.findFirst({
+          where: {
+            escrowId: escrow.escrowId,
+            stealthAddress: { not: escrow.recipientWallet || '' },
+            status: 'PENDING', // sender stealth is PENDING until vault deposit confirms
+          },
           include: { metaAddress: true },
+          orderBy: { createdAt: 'asc' }, // sender created before recipient
         });
-        if (stealthPayment && stealthPayment.stealthAddress !== escrow.recipientWallet) {
-          // This is a payer stealth payment — do vault deposit from stealth ATA
+        if (senderStealth) {
+          // Payer stealth payment found — do vault deposit from stealth ATA
           const { decryptKey } = await import('./privacy/stealth-key-manager');
           const { deriveSpendingKey } = await import('./privacy/stealth-adapter');
-          const scanKey = decryptKey(stealthPayment.metaAddress.encryptedScanKey);
-          const spendKey = decryptKey(stealthPayment.metaAddress.encryptedSpendKey);
-          const scalarKey = await deriveSpendingKey(scanKey, spendKey, stealthPayment.ephemeralPublicKey);
+          const scanKey = decryptKey(senderStealth.metaAddress.encryptedScanKey);
+          const spendKey = decryptKey(senderStealth.metaAddress.encryptedSpendKey);
+          const scalarKey = await deriveSpendingKey(scanKey, spendKey, senderStealth.ephemeralPublicKey);
 
           const programService = this.getProgramService();
           if (programService) {
@@ -1165,7 +1170,8 @@ export class InstitutionEscrowService {
             const usdcMint = programService.getUsdcMintAddress();
             const feeCollector = toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress');
 
-            // Build deposit tx with stealth keypair as payer/signer
+            // Build deposit tx: stealth keypair as payer, admin pays rent
+            const adminKeypair = programService.getAdminKeypair();
             const depositTx = await programService.buildDepositTransaction({
               escrowId,
               payer: stealthKeypair.publicKey,
@@ -1173,10 +1179,10 @@ export class InstitutionEscrowService {
               feeCollector,
               memo: escrow.escrowCode ? `EasyEscrow:stealth-deposit:${escrow.escrowCode}` : undefined,
               stealthPayer: stealthKeypair.publicKey,
+              rentPayer: adminKeypair.publicKey,
             });
 
             // Admin pays fees, stealth keypair signs as token authority
-            const adminKeypair = programService.getAdminKeypair();
             depositTx.feePayer = adminKeypair.publicKey;
             const { blockhash, lastValidBlockHeight } = await programService.getConnection().getLatestBlockhash('confirmed');
             depositTx.recentBlockhash = blockhash;
@@ -1184,11 +1190,24 @@ export class InstitutionEscrowService {
             depositTx.partialSign(stealthKeypair);
 
             const rawTx = depositTx.serialize();
-            vaultDepositSig = await programService.getConnection().sendRawTransaction(rawTx, { skipPreflight: true, maxRetries: 3 });
-            await programService.getConnection().confirmTransaction(
-              { signature: vaultDepositSig, blockhash, lastValidBlockHeight }, 'confirmed'
-            );
-            console.log(`[InstitutionEscrow] Stealth vault deposit: ${vaultDepositSig}`);
+            const conn = programService.getConnection();
+            vaultDepositSig = await conn.sendRawTransaction(rawTx, { skipPreflight: true, maxRetries: 3 });
+            await conn.confirmTransaction({ signature: vaultDepositSig, blockhash, lastValidBlockHeight }, 'confirmed');
+
+            // Verify tx succeeded on-chain
+            const txResult = await conn.getTransaction(vaultDepositSig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+            if (txResult?.meta?.err) {
+              throw new Error(`Stealth deposit tx ${vaultDepositSig} confirmed but failed: ${JSON.stringify(txResult.meta.err)}`);
+            }
+            console.log(`[InstitutionEscrow] Stealth vault deposit success: ${vaultDepositSig}`);
+
+            // Confirm the sender stealth payment (same as recipient stealth confirmation)
+            try {
+              const stealthService = getStealthAddressService();
+              await stealthService.confirmStealthPayment(senderStealth.id, vaultDepositSig);
+            } catch (confirmErr) {
+              console.warn('[InstitutionEscrow] Sender stealth confirmation failed (non-critical):', confirmErr);
+            }
           }
         }
       } catch (err) {
@@ -1410,11 +1429,9 @@ export class InstitutionEscrowService {
       tx.recentBlockhash = blockhash;
       serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
 
-      // Store stealth payment ID on escrow for recordDeposit() to pick up
-      await this.prisma.institutionEscrow.update({
-        where: { escrowId },
-        data: { stealthPaymentId: stealthPaymentId || undefined } as any,
-      });
+      // Don't store sender stealthPaymentId on escrow — that field is reserved
+      // for recipient stealth (set during release). recordDeposit() will look up
+      // the sender stealth payment by escrowId directly.
     } else {
       // Standard mode: build deposit tx directly
       const tx = await programService.buildDepositTransaction({
@@ -3017,7 +3034,7 @@ export class InstitutionEscrowService {
       clientId,
       corridor: escrow.corridor || undefined,
       settlementMode: 'SEQUENTIAL' as any,
-      expiryHours: 1,
+      expiryHours: 2,
       actorEmail: actor,
     }) as any;
     const poolId = pool.id || pool.poolId;
