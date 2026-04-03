@@ -270,6 +270,7 @@ export class InstitutionEscrowProgramService {
     feeCollector: PublicKey;
     memo?: string;
     stealthPayer?: PublicKey;
+    rentPayer?: PublicKey;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -292,7 +293,7 @@ export class InstitutionEscrowProgramService {
       const stealthAta = await this.getOrCreateAta(
         params.usdcMint,
         params.stealthPayer,
-        params.payer // real payer pays for ATA creation
+        params.rentPayer || params.payer // admin pays rent for server-side stealth deposits
       );
       depositPayerAta = stealthAta.address;
       if (stealthAta.instruction) {
@@ -323,7 +324,7 @@ export class InstitutionEscrowProgramService {
     const feeCollectorAta = await this.getOrCreateAta(
       params.usdcMint,
       params.feeCollector,
-      params.payer
+      params.rentPayer || params.payer
     );
     if (feeCollectorAta.instruction) {
       transaction.add(feeCollectorAta.instruction);
