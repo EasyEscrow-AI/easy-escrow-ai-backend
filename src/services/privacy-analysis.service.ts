@@ -517,7 +517,7 @@ export class PrivacyAnalysisService {
       }
 
       // Use whichever receipt attributes are available (pool or standalone)
-      const receiptAttributes = escrowReceiptAttributes;
+      const receiptAttributes = poolReceiptAttributes || escrowReceiptAttributes;
       const anyReceiptExists = poolReceiptExists || escrowReceiptExists;
 
       const accountExists = escrowAccountExists || vaultAccountExists;
