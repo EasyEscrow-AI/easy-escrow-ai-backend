@@ -24,6 +24,18 @@ Non-custodial digital escrow platform on Solana. Backend API service powering in
 
 ## Changelog
 
+### v1.2.0 — Blockchain Privacy Verification (April 2026)
+
+Privacy-preserving infrastructure for institutional escrow payments with on-chain verification.
+
+- ✅ **Stealth Address Derivation**: Dual-Key Stealth Address Protocol (DKSAP) hides real wallet addresses of both payer and recipient on blockchain transactions. Auto-enabled for all institution accounts — each receives a stealth meta-address on creation. One-time stealth addresses derived per payment ensure address unlinkability.
+- ✅ **Chain of Custody**: Cryptographically signed blockchain transactions tracking escrow actors and state transitions. Full audit trail from creation through settlement with on-chain transaction signatures at every lifecycle stage.
+- ✅ **Compliance Audit Trail**: Complete compliance audit trail for payments from creation to settlement. Lifecycle completeness verification, risk scoring, AI-powered document analysis, and downloadable audit reports.
+- ✅ **On-Chain PDA Receipts**: Encrypted receipt PDA accounts store escrow metadata on-chain for every settlement (pooled and standalone). AES-256-GCM encryption with fixed 512-byte payloads prevents information leakage. Publicly verifiable on-chain, decryptable only by the pool operator.
+- ✅ **Transaction Pool Shielding**: Transaction pools batch escrow settlements with decoy members for privacy shielding. Transparent auto-pooling, configurable sequential/parallel settlement modes, and on-chain vault management with encrypted receipts.
+- ✅ **Stealth Sender Addresses**: Server-side vault deposit flow enables payer privacy — deposits route through one-time stealth addresses so the sender's real wallet is not visible on-chain.
+- ✅ **Privacy Analysis API**: On-chain privacy verification endpoint with enriched analysis including stealth status, address mapping, transaction hashes, and pool shielding details. Admin and per-client privacy summaries.
+
 ### v1.1.0 — Institutional Escrow (March 2026)
 
 Cross-border stablecoin escrow payments for institutional clients.
@@ -84,6 +96,7 @@ Programmable cross-border stablecoin escrow payments, built for institutions com
 - **AMINA Payment Network**: APN integration support (not activated for hackathon)
 - **Transaction Pools**: Batch multiple escrow settlements into pooled operations with configurable settlement modes (sequential/parallel) (feature-flagged: off by default -- enable via `TRANSACTION_POOLS_ENABLED`)
 - **CDP Settlement Authority**: Optional independent settlement authority via Coinbase Developer Platform (CDP) wallet with TEE-secured policy engine. When enabled, the CDP wallet replaces the admin as the on-chain settlement authority, requiring policy approval before signing release/cancel transactions (feature-flagged: off by default -- enable via `CDP_ENABLED`)
+- **Blockchain Privacy**: Stealth addresses (DKSAP), on-chain encrypted receipt PDAs, transaction pool shielding with decoy members, and privacy analysis API. See [Blockchain Privacy Verification](#blockchain-privacy-verification) for details.
 
 ### Escrow Lifecycle
 
@@ -113,6 +126,8 @@ Create --> Deposit --> Release / Cancel
 | **AI Analysis** | analyze document, get results                    | AI compliance risk scoring            |
 | **AI Chat**     | chat with AI assistant                           | AI-powered escrow assistant           |
 | **Receipts**    | get, list, download                              | Settlement receipt management         |
+| **Pools**       | create, add/remove member, lock, settle, cancel  | Transaction pool lifecycle            |
+| **Privacy**     | privacy-analysis, privacy-summary                | On-chain privacy verification         |
 | **Admin**       | allowlist CRUD, corridor configuration           | Administrative operations             |
 
 ### Settlement Authority
@@ -120,6 +135,63 @@ Create --> Deposit --> Release / Cancel
 Release operations require a separate settlement authority API key, enforcing separation of duties between escrow creation and fund release. This is validated via the `requireSettlementAuthority` middleware.
 
 Optionally, escrows can use a **CDP (Coinbase Developer Platform) wallet** as an independent settlement authority. When the `cdp_policy_approval` release condition is selected, the CDP wallet's public key is stored as the on-chain `settlement_authority` instead of the admin. Release and cancel transactions require multi-sign: the admin partially signs as fee payer, then CDP signs as authority after its TEE-secured policy engine validates the operation. See [CDP Settlement Authority Architecture](docs/architecture/CDP_SETTLEMENT_AUTHORITY.md) for details.
+
+---
+
+## Blockchain Privacy Verification
+
+Privacy-preserving infrastructure for institutional escrow payments, providing on-chain verification of payment confidentiality.
+
+### Privacy Features
+
+| Feature | Description | Status |
+| --- | --- | --- |
+| **Stealth Address Derivation** | Stealth addresses hide the real wallet addresses of both payer and recipient on blockchain transactions. Uses Dual-Key Stealth Address Protocol (DKSAP) with `@noble/ed25519`. Auto-enabled for all institution accounts. | ✅ Verified |
+| **Chain of Custody** | Cryptographically signed blockchain transactions tracking the escrow actors and states. On-chain transaction signatures at every lifecycle stage. | ✅ Verified |
+| **Compliance Audit Trail** | Complete compliance audit trail for the payment from creation to settlement. Lifecycle completeness verification, risk scoring, and downloadable reports. | ✅ Verified |
+| **On-Chain PDA Receipts** | Escrow PDA account stores encrypted metadata for the payments on-chain, publicly verifiable. AES-256-GCM encryption with fixed 512-byte payloads. Decryptable only by the pool operator. | ✅ Verified |
+| **Transaction Pool Shielding** | Transaction pools provide confidential payment details enforced at the blockchain protocol level. Decoy members, auto-pooling, and encrypted on-chain receipts. | ✅ Verified |
+
+### How Stealth Addresses Work
+
+1. **Account creation** auto-generates a **stealth meta-address** (scan key + spend key pair)
+2. **Sender** (or backend on release) derives a one-time **stealth address** from the meta-address using an ephemeral keypair
+3. Funds are sent to the stealth address — a standard Solana pubkey, no program changes required
+4. **Recipient** scans for payments using their scan private key + the ephemeral public key
+5. **Recipient** derives the spending key to sweep funds from the stealth address
+
+**Key properties**: address unlinkability (each payment uses a unique address), selective disclosure (scan key shareable with auditors for compliance), and graceful fallback (standard transfer when no meta-address exists).
+
+### Privacy Analysis API
+
+The `GET /institution-escrow/privacy-summary` and `GET /institution-escrow/:id/privacy-analysis` endpoints provide on-chain verification of privacy features for each escrow, including:
+
+- Stealth address status and address mapping
+- Chain of custody verification with transaction signatures
+- Compliance audit trail completeness
+- On-chain PDA receipt verification
+- Transaction pool shielding details with decoy member analysis
+
+### Privacy Services
+
+| Service | Purpose |
+| --- | --- |
+| `privacy/stealth-address.service.ts` | DKSAP stealth address generation and derivation |
+| `privacy/stealth-crypto.ts` | Ed25519 elliptic curve operations for DKSAP |
+| `privacy/stealth-key-manager.ts` | Meta-address key generation and storage |
+| `privacy/stealth-adapter.ts` | Integrates stealth addresses into escrow release flow |
+| `privacy/privacy-router.service.ts` | Routes escrow operations through privacy pipeline |
+| `privacy-analysis.service.ts` | On-chain privacy verification and analysis |
+| `transaction-pool.service.ts` | Pool lifecycle, settlement, and receipt encryption |
+| `pool-decoy.service.ts` | Decoy member generation for pool shielding |
+| `pool-vault-program.service.ts` | On-chain vault and receipt PDA management |
+
+### Architecture Docs
+
+- [Stealth Addresses](docs/architecture/STEALTH_ADDRESSES.md) — DKSAP implementation details
+- [Transaction Pools](docs/architecture/TRANSACTION_POOLS.md) — Pool lifecycle and settlement
+- [Pool Receipt Encryption](docs/architecture/POOL_RECEIPT_ENCRYPTION.md) — AES-256-GCM on-chain receipt encryption
+- [Payment Timelock](docs/architecture/PAYMENT_TIMELOCK.md) — Cooling-off period between funding and release
 
 ---
 
@@ -219,6 +291,14 @@ Instant, non-custodial digital swaps that execute in a single transaction. Your 
 | `allowlist.service.ts`                   | Wallet allowlist management (Redis + Prisma)                   |
 | `compliance.service.ts`                  | Corridor validation, risk scoring, volume limits               |
 | `cdp-settlement.service.ts`              | CDP wallet integration for independent settlement authority    |
+| `privacy-analysis.service.ts`            | On-chain privacy verification and analysis                     |
+| `privacy/stealth-address.service.ts`     | DKSAP stealth address generation and derivation                |
+| `privacy/stealth-crypto.ts`              | Ed25519 elliptic curve operations for DKSAP                    |
+| `privacy/stealth-key-manager.ts`         | Meta-address key generation and storage                        |
+| `privacy/stealth-adapter.ts`             | Stealth address integration into escrow release flow           |
+| `transaction-pool.service.ts`            | Pool lifecycle, settlement, and receipt encryption              |
+| `pool-decoy.service.ts`                  | Decoy member generation for pool privacy shielding             |
+| `pool-vault-program.service.ts`          | On-chain vault and encrypted receipt PDA management            |
 
 ### Database Models
 
@@ -538,6 +618,9 @@ OpenAPI spec (JSON):
 - **File Upload Security**: Mime type validation, size limits, filename sanitisation
 - **CORS & Helmet**: Security headers and origin whitelisting
 - **Constant-Time Comparison**: Timing-safe token verification
+- **Stealth Addresses (DKSAP)**: Address unlinkability via Dual-Key Stealth Address Protocol
+- **On-Chain Receipt Encryption**: AES-256-GCM encrypted PDA receipts with fixed-size payloads
+- **Transaction Pool Shielding**: Decoy members obscure real payment participants
 
 ---
 
@@ -554,6 +637,10 @@ OpenAPI spec (JSON):
 - [Swap Routing](docs/architecture/SWAP_ROUTING.md) — Jito vs escrow routing logic
 - [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) — Multi-NFT swap design
 - [CDP Settlement Authority](docs/architecture/CDP_SETTLEMENT_AUTHORITY.md) — Independent settlement authority via Coinbase CDP
+- [Stealth Addresses](docs/architecture/STEALTH_ADDRESSES.md) — DKSAP implementation for address unlinkability
+- [Transaction Pools](docs/architecture/TRANSACTION_POOLS.md) — Batched settlement with pool lifecycle
+- [Pool Receipt Encryption](docs/architecture/POOL_RECEIPT_ENCRYPTION.md) — AES-256-GCM on-chain receipt encryption
+- [Payment Timelock](docs/architecture/PAYMENT_TIMELOCK.md) — Cooling-off period between funding and release
 
 ### Deployment
 
