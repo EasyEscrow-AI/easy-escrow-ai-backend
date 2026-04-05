@@ -12,6 +12,7 @@ const BCRYPT_ROUNDS = 12;
 const LOGIN_RATE_LIMIT_MAX = 5;
 const LOGIN_RATE_LIMIT_TTL = 900; // 15 minutes in seconds
 const REDIS_LOGIN_PREFIX = 'institution:login:attempts:';
+const REFRESH_TOKEN_GRACE_PERIOD_MS = 30_000; // 30 seconds grace period for rotated tokens
 
 /**
  * Institution Authentication Service
@@ -147,10 +148,13 @@ export class InstitutionAuthService {
       },
     });
 
+    const refreshExpirySec = Math.floor(refreshExpiryMs / 1000);
+
     return {
       accessToken,
       refreshToken,
       expiresIn: accessExpirySec,
+      refreshExpiresIn: refreshExpirySec,
     };
   }
 
@@ -173,6 +177,8 @@ export class InstitutionAuthService {
       throw err;
     }
 
+    // Allow a 30-second grace period after revocation to handle race conditions
+    // (e.g., multiple tabs or retry logic using the old token after rotation)
     if (storedToken.revokedAt) {
       const err = new Error('Refresh token has been revoked') as Error & { code: string };
       err.code = 'REFRESH_TOKEN_REVOKED';
@@ -185,11 +191,14 @@ export class InstitutionAuthService {
       throw err;
     }
 
-    // Revoke old refresh token
-    await this.prisma.institutionRefreshToken.update({
-      where: { id: storedToken.id },
-      data: { revokedAt: new Date() },
-    });
+    // Revoke old refresh token (skip if already revoked during grace period
+    // to preserve the original revokedAt timestamp and keep the window fixed)
+    if (!storedToken.revokedAt) {
+      await this.prisma.institutionRefreshToken.update({
+        where: { id: storedToken.id },
+        data: { revokedAt: new Date() },
+      });
+    }
 
     // Generate new token pair
     const tokens = await this.generateTokens(
