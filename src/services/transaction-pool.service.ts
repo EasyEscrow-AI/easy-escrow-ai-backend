@@ -206,10 +206,10 @@ export class TransactionPoolService {
     // Resolve escrow (by ID or code)
     const escrow = await this.resolveEscrow(clientId, escrowId);
 
-    // Validate escrow is FUNDED
-    if (escrow.status !== 'FUNDED') {
+    // Validate escrow is FUNDED or PENDING_RELEASE (proof submitted, awaiting release)
+    if (escrow.status !== 'FUNDED' && escrow.status !== 'PENDING_RELEASE') {
       throw new Error(
-        `Escrow ${escrow.escrowCode || escrow.escrowId} status is ${escrow.status}, expected FUNDED`
+        `Escrow ${escrow.escrowCode || escrow.escrowId} status is ${escrow.status}, expected FUNDED or PENDING_RELEASE`
       );
     }
 
