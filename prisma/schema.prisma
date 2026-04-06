@@ -1654,6 +1654,7 @@ enum PoolMemberStatus {
   SETTLING
   SETTLED
   FAILED
+  REMOVING
   REMOVED
 }
 

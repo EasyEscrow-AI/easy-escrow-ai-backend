@@ -2182,8 +2182,18 @@ export class InstitutionEscrowService {
       try {
         return await this.autoPoolAndRelease(clientId, escrow, notes, actorEmail, privacyPreferences, options);
       } catch (err) {
-        console.error('[InstitutionEscrow] Auto-pool failed, falling back to direct release:', (err as Error).message);
-        // Fall through to direct release if auto-pool fails
+        // Check if the escrow was partially pooled before the failure
+        const current = await this.prisma.institutionEscrow.findUnique({
+          where: { escrowId },
+          select: { poolId: true },
+        });
+        if (current?.poolId) {
+          // Escrow is now in a pool — direct release would be inconsistent
+          console.error('[InstitutionEscrow] Auto-pool failed after escrow was added to pool, cannot fall back to direct release:', (err as Error).message);
+          throw err;
+        }
+        console.error('[InstitutionEscrow] Auto-pool failed before pooling, falling back to direct release:', (err as Error).message);
+        // Fall through to direct release — escrow was never added to a pool
       }
     }
 
