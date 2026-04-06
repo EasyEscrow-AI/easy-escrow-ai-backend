@@ -38,6 +38,8 @@ import institutionReferenceRoutes from './institution-reference.routes';
 import institutionBootstrapRoutes from './institution-bootstrap.routes';
 import institutionSearchRoutes from './institution-search.routes';
 import privacyRoutes from './privacy.routes';
+import transactionPoolRoutes from './transaction-pool.routes';
+import institutionTransferRoutes from './institution-transfer.routes';
 
 export {
   expiryCancellationRoutes,
@@ -73,4 +75,6 @@ export {
   institutionBootstrapRoutes,
   institutionSearchRoutes,
   privacyRoutes,
+  transactionPoolRoutes,
+  institutionTransferRoutes,
 };

@@ -107,7 +107,7 @@ function bytesToNumberLE(bytes: Uint8Array): bigint {
  * The scalar is a 32-byte Ed25519 private seed; we derive the public key
  * and combine into the 64-byte format Solana expects.
  */
-async function scalarToKeypair(scalarKeyBase58: string): Promise<Keypair> {
+export async function scalarToKeypair(scalarKeyBase58: string): Promise<Keypair> {
   const scalarBytes = bs58.decode(scalarKeyBase58);
   const pubKeyBytes = await ed.getPublicKey(scalarBytes);
   const fullKey = new Uint8Array(64);

@@ -29,6 +29,9 @@ const ALLOWED_SETTINGS_FIELDS = [
   'maxFeeUsdc',
   'notificationPreferences',
   'defaultTimelockHours',
+  'poolDefaultSettlementMode',
+  'poolDefaultExpiryHours',
+  'poolMaxMembers',
 ] as const;
 
 const DEFAULT_NOTIFICATION_PREFERENCES = [
@@ -106,6 +109,11 @@ export class InstitutionClientSettingsService {
       },
       integration: {
         webhookUrl: settings.webhookUrl,
+      },
+      pools: {
+        defaultSettlementMode: (settings as any).poolDefaultSettlementMode ?? 'SEQUENTIAL',
+        defaultExpiryHours: (settings as any).poolDefaultExpiryHours ?? 24,
+        maxMembers: (settings as any).poolMaxMembers ?? 50,
       },
     };
   }
@@ -242,6 +250,24 @@ export class InstitutionClientSettingsService {
       const v = filteredUpdates.defaultTimelockHours;
       if (v !== null && (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 72)) {
         throw new Error('defaultTimelockHours must be an integer between 0 and 72, or null');
+      }
+    }
+    if ('poolDefaultSettlementMode' in filteredUpdates) {
+      const valid = ['SEQUENTIAL', 'PARALLEL'];
+      if (!valid.includes(filteredUpdates.poolDefaultSettlementMode)) {
+        throw new Error(`poolDefaultSettlementMode must be one of: ${valid.join(', ')}`);
+      }
+    }
+    if ('poolDefaultExpiryHours' in filteredUpdates) {
+      const v = filteredUpdates.poolDefaultExpiryHours;
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < 1 || v > 2160) {
+        throw new Error('poolDefaultExpiryHours must be a positive integer between 1 and 2160');
+      }
+    }
+    if ('poolMaxMembers' in filteredUpdates) {
+      const v = filteredUpdates.poolMaxMembers;
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < 1 || v > 100) {
+        throw new Error('poolMaxMembers must be a positive integer between 1 and 100');
       }
     }
 

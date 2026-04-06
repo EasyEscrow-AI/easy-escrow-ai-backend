@@ -121,6 +121,10 @@ export class InstitutionEscrowProgramService {
     return this.adminKeypair.publicKey;
   }
 
+  getAdminKeypair(): Keypair {
+    return this.adminKeypair;
+  }
+
   /** Expose the shared Connection so callers don't create per-request instances */
   getConnection(): Connection {
     return this.connection;
@@ -265,31 +269,76 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     feeCollector: PublicKey;
     memo?: string;
+    stealthPayer?: PublicKey;
+    rentPayer?: PublicKey;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
     const [vaultPda] = this.deriveVaultPda(escrowIdBytes);
     const escrowIdArray = Array.from(escrowIdBytes);
 
-    const payerAta = await getAssociatedTokenAddress(params.usdcMint, params.payer);
-
     const transaction = new Transaction();
 
-    // Ensure fee collector ATA exists (payer pays for ATA creation if needed)
+    // When stealth payer is active: build combined tx with 3 steps:
+    // 1. Create stealth ATA (if needed)
+    // 2. SPL transfer: real payer ATA → stealth ATA (payer signs)
+    // 3. Deposit: stealth ATA → vault (with stealth_payer param)
+    // All in one transaction — payer signs once.
+    const depositPayer = params.stealthPayer || params.payer;
+    const realPayerAta = await getAssociatedTokenAddress(params.usdcMint, params.payer);
+    let depositPayerAta: PublicKey;
+
+    if (params.stealthPayer) {
+      // Create stealth ATA if needed
+      const stealthAta = await this.getOrCreateAta(
+        params.usdcMint,
+        params.stealthPayer,
+        params.rentPayer || params.payer
+      );
+      depositPayerAta = stealthAta.address;
+      if (stealthAta.instruction) {
+        transaction.add(stealthAta.instruction);
+      }
+
+      // SPL transfer: real payer ATA → stealth ATA (only for frontend path where
+      // payer != stealthPayer). Server-side path (payer == stealthPayer) skips this
+      // because USDC is already in the stealth ATA from the user's first tx.
+      const isServerSide = params.payer.equals(params.stealthPayer);
+      if (!isServerSide) {
+        const escrowAccount = await this.connection.getAccountInfo(escrowPda);
+        if (escrowAccount && escrowAccount.data.length >= 152) {
+          const amount = escrowAccount.data.readBigUInt64LE(136);
+          const fee = escrowAccount.data.readBigUInt64LE(144);
+          const total = amount + fee;
+          transaction.add(
+            createTransferInstruction(
+              realPayerAta,
+              depositPayerAta,
+              params.payer,
+              Number(total)
+            )
+          );
+        }
+      }
+    } else {
+      depositPayerAta = realPayerAta;
+    }
+
+    // Ensure fee collector ATA exists
     const feeCollectorAta = await this.getOrCreateAta(
       params.usdcMint,
       params.feeCollector,
-      params.payer
+      params.rentPayer || params.payer
     );
     if (feeCollectorAta.instruction) {
       transaction.add(feeCollectorAta.instruction);
     }
 
     const ix = await (this.program.methods as any)
-      .depositInstitutionEscrow(escrowIdArray)
+      .depositInstitutionEscrow(escrowIdArray, params.stealthPayer || null)
       .accounts({
         payer: params.payer,
-        payerTokenAccount: payerAta,
+        payerTokenAccount: depositPayerAta,
         escrowState: escrowPda,
         tokenVault: vaultPda,
         feeCollectorTokenAccount: feeCollectorAta.address,
@@ -318,6 +367,7 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     memo?: string;
     rentPayer?: PublicKey;
+    stealthRecipient?: PublicKey;
   }): Promise<Transaction> {
     const escrowIdBytes = this.uuidToBytes(params.escrowId);
     const [escrowPda] = this.deriveEscrowStatePda(escrowIdBytes);
@@ -351,7 +401,7 @@ export class InstitutionEscrowProgramService {
     }
 
     const ix = await (this.program.methods as any)
-      .releaseInstitutionEscrow(escrowIdArray)
+      .releaseInstitutionEscrow(escrowIdArray, params.stealthRecipient || null)
       .accounts({
         authority: params.authority,
         escrowState: escrowPda,
@@ -521,6 +571,7 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     escrowCode?: string;
     aiDigest?: string;
+    stealthRecipient?: PublicKey;
   }): Promise<string> {
     let memo: string | undefined;
     if (params.escrowCode) {
@@ -602,6 +653,7 @@ export class InstitutionEscrowProgramService {
     usdcMint: PublicKey;
     escrowCode?: string;
     aiDigest?: string;
+    stealthRecipient?: PublicKey;
   }): Promise<string> {
     let memo: string | undefined;
     if (params.escrowCode) {

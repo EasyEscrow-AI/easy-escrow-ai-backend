@@ -70,33 +70,20 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
   /**
    * Parse Redis URL and build configuration with TLS support for Upstash
    */
-  private parseRedisUrl(redisUrl: string): { protocol: string; username?: string; password?: string; hostname: string; port: string } {
-    try {
-      const url = new URL(redisUrl);
-      return { protocol: url.protocol, username: url.username, password: url.password ? decodeURIComponent(url.password) : undefined, hostname: url.hostname, port: url.port };
-    } catch {
-      // Manually parse URLs with special characters in password (e.g. ^, @, $, %)
-      // Format: rediss?://user:pass@host:port
-      const match = redisUrl.match(/^(rediss?):\/\/(?:([^:]*):(.*)@)?([^:]+):(\d+)$/);
-      if (!match) throw new Error(`Cannot parse Redis URL: ${redisUrl}`);
-      return { protocol: match[1] + ':', username: match[2], password: match[3], hostname: match[4], port: match[5] };
-    }
-  }
-
   private getRedisConfig(redisUrl: string): any {
     if (!redisUrl) {
       return 'redis://localhost:6379';
     }
 
     try {
-      const { protocol, username, password, hostname, port } = this.parseRedisUrl(redisUrl);
-      const isTLS = protocol === 'rediss:';
+      const url = new URL(redisUrl);
+      const isTLS = url.protocol === 'rediss:';
 
       return {
-        host: hostname,
-        port: parseInt(port || '6379', 10),
-        password: password || undefined,
-        username: username || undefined,
+        host: url.hostname,
+        port: parseInt(url.port || '6379', 10),
+        password: url.password ? decodeURIComponent(url.password) : undefined,
+        username: url.username ? decodeURIComponent(url.username) : undefined,
         // TLS configuration for Upstash
         tls: isTLS ? {
           // Upstash uses valid certificates, but some environments need this

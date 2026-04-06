@@ -40,7 +40,8 @@ import {
 import { resolveReleaseDestination } from './privacy/privacy-router.service';
 import { getStealthAddressService } from './privacy/stealth-address.service';
 import { PrivacyLevel, PrivacyPreferences } from './privacy/privacy.types';
-import { isPrivacyEnabled } from '../utils/featureFlags';
+import { isPrivacyEnabled, isTransactionPoolsEnabled } from '../utils/featureFlags';
+import type { PoolContext } from '../types/transaction-pool';
 import { getCdpSettlementService } from './cdp-settlement.service';
 import { getInstitutionEscrowConfig } from '../config/institution-escrow.config';
 
@@ -1138,6 +1139,119 @@ export class InstitutionEscrowService {
       },
     });
 
+    // Stealth sender: look up a payer stealth payment for this escrow.
+    // The sender stealth payment is identified by: same escrowId but stealthAddress
+    // differs from the recipient wallet (recipient stealth is separate).
+    let vaultDepositSig: string | null = null;
+    if (isPrivacyEnabled() && isTransactionPoolsEnabled()) {
+      try {
+        const senderStealth = await this.prisma.stealthPayment.findFirst({
+          where: {
+            escrowId: escrow.escrowId,
+            stealthAddress: { not: escrow.recipientWallet || '' },
+            status: 'PENDING', // sender stealth is PENDING until vault deposit confirms
+          },
+          include: { metaAddress: true },
+          orderBy: { createdAt: 'asc' }, // sender created before recipient
+        });
+        console.log(`[InstitutionEscrow] Sender stealth lookup for ${escrowId}: ${senderStealth ? `found ${senderStealth.stealthAddress.slice(0, 12)}...` : 'not found'}`);
+        if (senderStealth) {
+          // Payer stealth payment found — do vault deposit from stealth ATA.
+          // Pattern matches sendTokensFromStealth() (proven for recipient sweep):
+          // 1. Derive spending key from encrypted meta-address keys + ephemeral key
+          // 2. Convert scalar to keypair (signing key)
+          // 3. Use STORED stealth address for ATA derivation (not keypair pubkey)
+          // 4. Build deposit instruction with stealth address as payer param
+          // 5. Admin pays fees, stealth keypair signs as authority
+          const { decryptKey } = await import('./privacy/stealth-key-manager');
+          const { deriveSpendingKey, scalarToKeypair } = await import('./privacy/stealth-adapter');
+          const { PublicKey: SolPublicKey, Transaction: SolTransaction } = await import('@solana/web3.js');
+          const { getAssociatedTokenAddress: getAta } = await import('@solana/spl-token');
+
+          const scanKey = decryptKey(senderStealth.metaAddress.encryptedScanKey);
+          const spendKey = decryptKey(senderStealth.metaAddress.encryptedSpendKey);
+          const scalarKey = await deriveSpendingKey(scanKey, spendKey, senderStealth.ephemeralPublicKey);
+          const stealthKeypair = await scalarToKeypair(scalarKey);
+
+          // Use stealthKeypair.publicKey for ATA and accounts — this is the
+          // actual signing key and may differ from stored stealthAddress due to
+          // scalar clamping. getDepositTransaction() uses the same keypair derivation
+          // so the user's SPL transfer funds the correct ATA.
+          const stealthPubkey = stealthKeypair.publicKey;
+          const programService2 = this.getProgramService()!;
+          const stealthAta = await getAta(programService2.getUsdcMintAddress(), stealthPubkey, true);
+
+          console.log(`[InstitutionEscrow] Stealth payer pubkey: ${stealthPubkey.toBase58()}`);
+          console.log(`[InstitutionEscrow] Stealth ATA: ${stealthAta.toBase58()}`);
+
+          const adminKeypair = programService2.getAdminKeypair();
+          const usdcMint = programService2.getUsdcMintAddress();
+          const feeCollector = toPublicKey(config.platform.feeCollectorAddress!, 'feeCollectorAddress');
+          const conn = programService2.getConnection();
+
+          // Derive PDAs
+          const escrowIdBytes = Buffer.alloc(32);
+          Buffer.from(escrowId.replace(/-/g, ''), 'hex').copy(escrowIdBytes);
+          const [escrowPda] = SolPublicKey.findProgramAddressSync(
+            [Buffer.from('inst_escrow'), escrowIdBytes],
+            new SolPublicKey(config.solana.escrowProgramId)
+          );
+          const [vaultPda] = SolPublicKey.findProgramAddressSync(
+            [Buffer.from('inst_vault'), escrowIdBytes],
+            new SolPublicKey(config.solana.escrowProgramId)
+          );
+
+          // Ensure fee collector ATA exists (admin pays rent)
+          const feeCollectorAta = await programService2.getOrCreateAta(usdcMint, feeCollector, adminKeypair.publicKey);
+
+          // Build deposit instruction manually (mirrors receiver sweep pattern)
+          const escrowIdArray = Array.from(escrowIdBytes);
+          const depositIx = await (programService2 as any).program.methods
+            .depositInstitutionEscrow(escrowIdArray, stealthPubkey)
+            .accounts({
+              payer: stealthPubkey,
+              payerTokenAccount: stealthAta,
+              escrowState: escrowPda,
+              tokenVault: vaultPda,
+              feeCollectorTokenAccount: feeCollectorAta.address,
+              tokenProgram: new SolPublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+            })
+            .instruction();
+
+          const depositTx = new SolTransaction();
+          if (feeCollectorAta.instruction) depositTx.add(feeCollectorAta.instruction);
+          depositTx.add(depositIx);
+
+          depositTx.feePayer = adminKeypair.publicKey;
+          const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+          depositTx.recentBlockhash = blockhash;
+          depositTx.partialSign(adminKeypair);
+          depositTx.partialSign(stealthKeypair);
+
+          const rawTx = depositTx.serialize();
+          vaultDepositSig = await conn.sendRawTransaction(rawTx, { skipPreflight: true, maxRetries: 3 });
+          await conn.confirmTransaction({ signature: vaultDepositSig, blockhash, lastValidBlockHeight }, 'confirmed');
+
+          const txResult = await conn.getTransaction(vaultDepositSig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+          if (txResult?.meta?.err) {
+            throw new Error(`Stealth deposit tx ${vaultDepositSig} failed: ${JSON.stringify(txResult.meta.err)}`);
+          }
+          console.log(`[InstitutionEscrow] Stealth vault deposit success: ${vaultDepositSig}`);
+
+          // Confirm sender stealth payment
+          try {
+            await getStealthAddressService().confirmStealthPayment(senderStealth.id, vaultDepositSig);
+          } catch (confirmErr) {
+            console.warn('[InstitutionEscrow] Sender stealth confirmation failed (non-critical):', confirmErr);
+          }
+        }
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error('[InstitutionEscrow] Stealth vault deposit failed:', errMsg, err);
+        throw new Error(`Stealth vault deposit failed: ${errMsg}`);
+      }
+    }
+
     // Update escrow status to FUNDED and compute unlockAt from timelockHours
     const fundedAt = new Date();
     const unlockAt = escrow.timelockHours && escrow.timelockHours > 0
@@ -1148,7 +1262,7 @@ export class InstitutionEscrowService {
       where: { escrowId },
       data: {
         status: 'FUNDED',
-        depositTxSignature: txSignature,
+        depositTxSignature: vaultDepositSig || txSignature,
         fundedAt,
         unlockAt,
       },
@@ -1297,19 +1411,92 @@ export class InstitutionEscrowService {
     const usdcMint = programService.getUsdcMintAddress();
     const feeCollector = toPublicKey(config.platform.feeCollectorAddress, 'feeCollectorAddress');
 
-    const tx = await programService.buildDepositTransaction({
-      escrowId,
-      payer: payerWallet,
-      usdcMint,
-      feeCollector,
-      memo: escrow.escrowCode ? `EasyEscrow:deposit:${escrow.escrowCode}` : undefined,
-    });
+    // Stealth sender: when active, the deposit-tx returns a simple SPL transfer
+    // to the stealth ATA. The actual vault deposit happens server-side in recordDeposit()
+    // using the stealth spending key (admin pays fees).
+    let stealthPayerAddress: string | undefined;
+    let stealthPaymentId: string | undefined;
+    if (isPrivacyEnabled() && isTransactionPoolsEnabled()) {
+      try {
+        const { resolveDepositSource } = await import('./privacy/privacy-router.service');
+        const depositSource = await resolveDepositSource(
+          escrow.payerWallet,
+          clientId,
+          escrowId,
+          escrow.usdcMint,
+          BigInt(Math.round((Number(escrow.amount) + Number(escrow.platformFee)) * 1_000_000)),
+        );
+        if (depositSource.privacyLevel === 'STEALTH' && depositSource.recipientAddress !== escrow.payerWallet) {
+          stealthPayerAddress = depositSource.recipientAddress;
+          stealthPaymentId = depositSource.stealthPaymentId;
+          console.log(`[InstitutionEscrow] Stealth payer resolved for ${escrowId}: ${stealthPayerAddress}`);
+        }
+      } catch (err) {
+        console.warn('[InstitutionEscrow] Stealth payer resolution failed (non-critical):', err);
+      }
+    }
 
-    tx.feePayer = payerWallet;
-    const { blockhash } = await programService.getConnection().getLatestBlockhash('confirmed');
-    tx.recentBlockhash = blockhash;
+    let serialized: string;
 
-    const serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
+    if (stealthPayerAddress && stealthPaymentId) {
+      // Stealth mode: derive the spending keypair to get the REAL pubkey
+      // (may differ from stored stealthAddress due to scalar clamping).
+      // Use keypair.publicKey for ATA — must match what recordDeposit() uses.
+      const { Transaction: SolTx } = await import('@solana/web3.js');
+      const { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferInstruction } = await import('@solana/spl-token');
+      const { decryptKey } = await import('./privacy/stealth-key-manager');
+      const { deriveSpendingKey, scalarToKeypair } = await import('./privacy/stealth-adapter');
+
+      const stealthPayment = await this.prisma.stealthPayment.findUnique({
+        where: { id: stealthPaymentId },
+        include: { metaAddress: true },
+      });
+      if (!stealthPayment) throw new Error('Stealth payment not found');
+
+      const scanKey = decryptKey(stealthPayment.metaAddress.encryptedScanKey);
+      const spendKey = decryptKey(stealthPayment.metaAddress.encryptedSpendKey);
+      const scalarKey = await deriveSpendingKey(scanKey, spendKey, stealthPayment.ephemeralPublicKey);
+      const stealthKeypair = await scalarToKeypair(scalarKey);
+      const stealthPubkey = stealthKeypair.publicKey;
+      console.log(`[InstitutionEscrow] Stealth payer keypair pubkey for deposit-tx: ${stealthPubkey.toBase58()}`);
+      const realPayerAta = await getAssociatedTokenAddress(usdcMint, payerWallet);
+      const stealthAta = await getAssociatedTokenAddress(usdcMint, stealthPubkey, true);
+      const totalDeposit = Math.round((Number(escrow.amount) + Number(escrow.platformFee)) * 1_000_000);
+
+      const tx = new SolTx();
+      // Create stealth ATA if needed
+      try {
+        const conn = programService.getConnection();
+        const existing = await conn.getAccountInfo(stealthAta);
+        if (!existing) {
+          tx.add(createAssociatedTokenAccountInstruction(payerWallet, stealthAta, stealthPubkey, usdcMint));
+        }
+      } catch { /* assume needs creation */ }
+      // Transfer total deposit to stealth ATA
+      tx.add(createTransferInstruction(realPayerAta, stealthAta, payerWallet, totalDeposit));
+
+      tx.feePayer = payerWallet;
+      const { blockhash } = await programService.getConnection().getLatestBlockhash('confirmed');
+      tx.recentBlockhash = blockhash;
+      serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
+
+      // Don't store sender stealthPaymentId on escrow — that field is reserved
+      // for recipient stealth (set during release). recordDeposit() will look up
+      // the sender stealth payment by escrowId directly.
+    } else {
+      // Standard mode: build deposit tx directly
+      const tx = await programService.buildDepositTransaction({
+        escrowId,
+        payer: payerWallet,
+        usdcMint,
+        feeCollector,
+        memo: escrow.escrowCode ? `EasyEscrow:deposit:${escrow.escrowCode}` : undefined,
+      });
+      tx.feePayer = payerWallet;
+      const { blockhash } = await programService.getConnection().getLatestBlockhash('confirmed');
+      tx.recentBlockhash = blockhash;
+      serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
+    }
 
     const amount = Number(escrow.amount);
     const platformFee = Number(escrow.platformFee);
@@ -1721,6 +1908,7 @@ export class InstitutionEscrowService {
                 'AI auto-release — all conditions passed',
                 'AI Orchestrator',
                 undefined,
+                undefined,
                 {
                   skipAiCheck: true,
                   aiMemoData: {
@@ -1864,6 +2052,7 @@ export class InstitutionEscrowService {
     notes?: string,
     actorEmail?: string,
     privacyPreferences?: PrivacyPreferences,
+    poolContext?: PoolContext,
     options?: { skipAiCheck?: boolean; aiMemoData?: AiMemoData; forceRelease?: boolean }
   ): Promise<Record<string, unknown>> {
     const escrow = await this.getEscrowInternal(clientId, idOrCode);
@@ -1880,6 +2069,16 @@ export class InstitutionEscrowService {
       throw new Error(
         `Cannot release: escrow status is ${escrow.status}, expected ${expected}`
       );
+    }
+
+    // Pool context: validate pool membership if provided
+    if (poolContext?.poolId) {
+      const poolMember = await prisma.transactionPoolMember.findFirst({
+        where: { poolId: poolContext.poolId, escrowId },
+      });
+      if (!poolMember) {
+        throw new Error(`Escrow ${escrowId} is not a member of pool ${poolContext.poolId}`);
+      }
     }
 
     // Timelock gate: prevent release before cooling-off period expires
@@ -1908,6 +2107,7 @@ export class InstitutionEscrowService {
     let aiAnalysisForMemo: AiMemoData | null = options?.aiMemoData || null;
 
     // Gate by releaseMode: if AI, run AI compliance checks before proceeding
+    // Must run BEFORE pool deferral to ensure compliance even for batched settlements
     // Skip if caller already performed the check (e.g. fulfillEscrow auto-release)
     if (escrow.releaseMode === 'ai' && !options?.skipAiCheck) {
       const aiResult = await this.performAiReleaseCheck(escrow, clientId);
@@ -1964,6 +2164,37 @@ export class InstitutionEscrowService {
         recommendation: aiResult.aiAnalysis.recommendation,
         message: `AI approved release — risk score ${aiResult.aiAnalysis.riskScore / 100}`,
       });
+    }
+
+    // Pool context: skip on-chain release when pool handles batched settlement
+    if (poolContext?.skipOnChainRelease) {
+      await this.createKytAuditLog(escrow, 'POOL_RELEASE_DEFERRED', actorEmail || 'system', {
+        poolId: poolContext.poolId,
+        memberId: poolContext.memberId,
+        message: 'On-chain release deferred to pool settlement',
+      });
+      return { escrowId, status: escrow.status, poolDeferral: true };
+    }
+
+    // Auto-pool: when pools are enabled and escrow isn't already in a pool,
+    // transparently route through pool lifecycle for full privacy shielding
+    if (isTransactionPoolsEnabled() && !escrow.poolId && !poolContext) {
+      try {
+        return await this.autoPoolAndRelease(clientId, escrow, notes, actorEmail, privacyPreferences, options);
+      } catch (err) {
+        // Check if the escrow was partially pooled before the failure
+        const current = await this.prisma.institutionEscrow.findUnique({
+          where: { escrowId },
+          select: { poolId: true },
+        });
+        if (current?.poolId) {
+          // Escrow is now in a pool — direct release would be inconsistent
+          console.error('[InstitutionEscrow] Auto-pool failed after escrow was added to pool, cannot fall back to direct release:', (err as Error).message);
+          throw err;
+        }
+        console.error('[InstitutionEscrow] Auto-pool failed before pooling, falling back to direct release:', (err as Error).message);
+        // Fall through to direct release — escrow was never added to a pool
+      }
     }
 
     // Update status to RELEASING
@@ -2104,6 +2335,13 @@ export class InstitutionEscrowService {
         const usdcMint = releaseProgramService.getUsdcMintAddress();
         const aiDigest = buildAiDigest(aiAnalysisForMemo);
 
+        // When stealth privacy is active, the on-chain program needs the stealth
+        // recipient passed as instruction data so it can validate the token account
+        // owner (the original recipient stored on-chain won't match).
+        const onChainStealthRecipient = actualPrivacyLevel === PrivacyLevel.STEALTH
+          ? toPublicKey(releaseRecipient, 'stealthRecipient')
+          : undefined;
+
         if (useCdpRelease) {
           // CDP multi-sign path: admin as fee payer, CDP as settlement authority
           const cdpPubkey = await getCdpSettlementService().getPublicKey();
@@ -2115,6 +2353,7 @@ export class InstitutionEscrowService {
             usdcMint,
             escrowCode: escrow.escrowCode,
             aiDigest,
+            stealthRecipient: onChainStealthRecipient,
           });
           await this.createKytAuditLog(escrow, 'CDP_POLICY_CHECK', 'CDP Settlement Authority', {
             passed: true,
@@ -2130,6 +2369,7 @@ export class InstitutionEscrowService {
             usdcMint,
             escrowCode: escrow.escrowCode,
             aiDigest,
+            stealthRecipient: onChainStealthRecipient,
           });
         }
         console.log(
@@ -2144,6 +2384,43 @@ export class InstitutionEscrowService {
           } catch (err) {
             console.warn(
               '[InstitutionEscrow] Stealth payment confirmation failed (non-critical):',
+              err
+            );
+          }
+        }
+
+        // Create encrypted receipt PDA when privacy + pools are enabled (non-pooled escrows).
+        // Pooled escrows get their receipt via releasePoolMemberOnChain in the pool settlement flow.
+        if (isPrivacyEnabled() && isTransactionPoolsEnabled() && !escrow.poolId && releaseTxSig) {
+          try {
+            const { getPoolVaultProgramService } = await import('./pool-vault-program.service');
+            const pvService = getPoolVaultProgramService();
+            const { encryptReceiptPayload, computeCommitmentHash } = await import('./pool-vault-program.service');
+            const receiptPlaintext = {
+              poolId: 'standalone',
+              poolCode: 'STANDALONE',
+              escrowId,
+              escrowCode: escrow.escrowCode || escrowId,
+              amount: Number(escrow.amount).toFixed(6),
+              corridor: escrow.corridor || '',
+              payerWallet: escrow.payerWallet,
+              recipientWallet: releaseRecipient,
+              releaseTxSignature: releaseTxSig,
+              settledAt: new Date().toISOString(),
+            };
+            const commitment = computeCommitmentHash(receiptPlaintext);
+            const encrypted = pvService.encryptReceipt(receiptPlaintext);
+            const result = await pvService.createEscrowReceiptOnChain({
+              escrowId,
+              commitmentHash: commitment,
+              encryptedReceipt: encrypted,
+            });
+            console.log(
+              `[InstitutionEscrow] Encrypted receipt PDA created for ${escrowId}: ${result.receiptPda}`
+            );
+          } catch (err) {
+            console.warn(
+              '[InstitutionEscrow] Escrow receipt PDA creation failed (non-critical):',
               err
             );
           }
@@ -2584,6 +2861,20 @@ export class InstitutionEscrowService {
   }
 
   /**
+   * Get a single escrow by code or ID (admin — no ownership check)
+   */
+  async getEscrowAdmin(idOrCode: string): Promise<Record<string, unknown>> {
+    const isCode = idOrCode.startsWith('EE-');
+    const escrow = await this.prisma.institutionEscrow.findUnique({
+      where: isCode ? { escrowCode: idOrCode } : { escrowId: idOrCode },
+    });
+    if (!escrow) {
+      throw new Error(`Escrow not found: ${idOrCode}`);
+    }
+    return this.formatEscrowEnriched(escrow, escrow.clientId);
+  }
+
+  /**
    * List escrows for a client with filters
    */
   async listEscrows(params: ListEscrowsParams): Promise<{
@@ -2781,6 +3072,70 @@ export class InstitutionEscrowService {
     };
   }
 
+  /**
+   * Transparently route an escrow through a pool for full privacy shielding.
+   * Creates pool → adds escrow + decoys → locks → settles, all in one flow.
+   */
+  private async autoPoolAndRelease(
+    clientId: string,
+    escrow: any,
+    notes?: string,
+    actorEmail?: string,
+    privacyPreferences?: PrivacyPreferences,
+    options?: { skipAiCheck?: boolean; aiMemoData?: any; forceRelease?: boolean }
+  ): Promise<Record<string, unknown>> {
+    const { getTransactionPoolService } = await import('./transaction-pool.service');
+    const poolService = getTransactionPoolService();
+    const actor = actorEmail || 'system:auto-pool';
+
+    console.log(`[InstitutionEscrow] Auto-pooling escrow ${escrow.escrowCode} for privacy shielding`);
+
+    // 1. Create pool (decoys auto-injected if POOL_DECOY_ENABLED)
+    const pool = await poolService.createPool({
+      clientId,
+      corridor: escrow.corridor || undefined,
+      settlementMode: 'SEQUENTIAL' as any,
+      expiryHours: 2,
+      actorEmail: actor,
+    }) as any;
+    const poolId = pool.id || pool.poolId;
+    console.log(`[InstitutionEscrow] Auto-pool created: ${pool.poolCode || poolId}`);
+
+    // 2. Add escrow to pool
+    await poolService.addMember({
+      clientId,
+      poolIdOrCode: poolId,
+      escrowId: escrow.escrowId,
+      actorEmail: actor,
+    });
+
+    // 3. Lock pool (runs compliance check)
+    await poolService.lockPool({
+      clientId,
+      poolIdOrCode: poolId,
+      actorEmail: actor,
+    });
+
+    // 4. Settle pool (releases escrow + creates encrypted receipt PDAs)
+    await poolService.settlePool({
+      clientId,
+      poolIdOrCode: poolId,
+      notes: notes || 'Auto-pool settlement',
+      actorEmail: actor,
+    });
+
+    console.log(`[InstitutionEscrow] Auto-pool settlement complete for ${escrow.escrowCode}`);
+
+    // 5. Return updated escrow
+    const updated = await this.prisma.institutionEscrow.findUnique({ where: { escrowId: escrow.escrowId } });
+    if (updated) {
+      await this.cacheEscrow(updated);
+      const partyNames = await this.resolvePartyNames([updated as any], clientId);
+      return this.formatEscrow(updated, partyNames[0]);
+    }
+    return { escrowId: escrow.escrowId, status: 'COMPLETE' };
+  }
+
   private async createAuditLog(
     escrowId: string,
     clientId: string,
@@ -2878,6 +3233,9 @@ export class InstitutionEscrowService {
     }
   }
 
+  /**
+   * Format escrow for API response
+   */
   private static STATUS_LABELS: Record<string, string> = {
     DRAFT: 'Draft',
     CREATED: 'Awaiting Deposit',

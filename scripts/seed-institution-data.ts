@@ -100,8 +100,10 @@ async function main() {
   const demoPassword = await bcrypt.hash('DemoPass123!', 12);
 
   // Staging test wallets (from env or .env.staging DEVNET_STAGING_SENDER/RECEIVER)
-  const STAGING_SENDER_WALLET = process.env.DEVNET_STAGING_SENDER_ADDRESS || 'AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z';
-  const STAGING_RECEIVER_WALLET = process.env.DEVNET_STAGING_RECEIVER_ADDRESS || '5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4';
+  const STAGING_SENDER_WALLET =
+    process.env.DEVNET_STAGING_SENDER_ADDRESS || 'AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z';
+  const STAGING_RECEIVER_WALLET =
+    process.env.DEVNET_STAGING_RECEIVER_ADDRESS || '5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4';
 
   const clients = [
     {
@@ -189,10 +191,7 @@ async function main() {
     let client;
     if (existing) {
       // Update existing client: ensure settledWallets includes the staging test wallets
-      const merged = Array.from(new Set([
-        ...existing.settledWallets,
-        ...c.settledWallets,
-      ]));
+      const merged = Array.from(new Set([...existing.settledWallets, ...c.settledWallets]));
       client = await prisma.institutionClient.update({
         where: { email: c.email },
         data: {
@@ -237,8 +236,14 @@ async function main() {
       await prisma.institutionClientSettings.create({
         data: {
           clientId: client.id,
-          defaultCorridor: c.jurisdiction === 'SG' ? 'SG-CH' : c.jurisdiction === 'US' ? 'US-MX' : null,
-          timezone: c.jurisdiction === 'SG' ? 'Asia/Singapore' : c.jurisdiction === 'US' ? 'America/New_York' : 'UTC',
+          defaultCorridor:
+            c.jurisdiction === 'SG' ? 'SG-CH' : c.jurisdiction === 'US' ? 'US-MX' : null,
+          timezone:
+            c.jurisdiction === 'SG'
+              ? 'Asia/Singapore'
+              : c.jurisdiction === 'US'
+              ? 'America/New_York'
+              : 'UTC',
         },
       });
     }
@@ -266,19 +271,47 @@ async function main() {
 
   // Counterparty wallets for realistic payment pairs
   const counterparties = [
-    { name: 'Axis Capital AG', country: 'CH', wallet: 'CH1aXisCptl9qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg' },
-    { name: 'Pacific Rim Holdings', country: 'SG', wallet: 'SG2pCfRmHld8qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg' },
-    { name: 'Meridian Trade Corp', country: 'MX', wallet: 'MX3mRdTrdCrp7qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3H' },
-    { name: 'Northern Bridge Ltd', country: 'UK', wallet: 'UK4nRthBrdgLt6qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3H' },
-    { name: 'Gulf Star Finance', country: 'AE', wallet: 'AE5gLfStrFnc5qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg' },
+    {
+      name: 'Axis Capital AG',
+      country: 'CH',
+      wallet: 'CH1aXisCptl9qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg',
+    },
+    {
+      name: 'Pacific Rim Holdings',
+      country: 'SG',
+      wallet: 'SG2pCfRmHld8qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg',
+    },
+    {
+      name: 'Meridian Trade Corp',
+      country: 'MX',
+      wallet: 'MX3mRdTrdCrp7qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3H',
+    },
+    {
+      name: 'Northern Bridge Ltd',
+      country: 'UK',
+      wallet: 'UK4nRthBrdgLt6qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3H',
+    },
+    {
+      name: 'Gulf Star Finance',
+      country: 'AE',
+      wallet: 'AE5gLfStrFnc5qR7FqQvH8c9pN3WxJ2KvF4uXtXg3F3Hg',
+    },
   ];
 
   // Status pool: ~80% completed, ~5% each for the other four
   // 15 payments total → 11 completed, 1 pending_approval, 1 pending_proof, 1 pending_release, 1 cancelled
   const statusPool = [
-    'completed', 'completed', 'completed', 'completed',
-    'completed', 'completed', 'completed', 'completed',
-    'completed', 'completed', 'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
     'pending_approval',
     'pending_proof',
     'pending_release',
@@ -304,7 +337,7 @@ async function main() {
       const counterparty = counterparties[paymentIndex % counterparties.length];
       const amount = amounts[paymentIndex % amounts.length];
       const feeBps = 20; // 0.20%
-      const fee = Math.max(0.20, Math.min(20, amount * feeBps / 10000));
+      const fee = Math.max(0.2, Math.min(20, (amount * feeBps) / 10000));
       const createdAt = randomDate(7);
       const corridor = `${clientDef.jurisdiction}-${counterparty.country}`;
 
@@ -338,8 +371,65 @@ async function main() {
     console.log(`  ✅ ${clientDef.companyName}: 3 payments created`);
   }
 
-  const statusCounts = shuffled.reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {} as Record<string, number>);
-  console.log(`  📊 Status distribution: ${Object.entries(statusCounts).map(([k, v]) => `${k}=${v}`).join(', ')}`);
+  const statusCounts = shuffled.reduce((acc, s) => {
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  console.log(
+    `  📊 Status distribution: ${Object.entries(statusCounts)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(', ')}`
+  );
+
+  // 4. Seed transaction pools (if enabled)
+  if (process.env.TRANSACTION_POOLS_ENABLED === 'true') {
+    console.log('\n🏊 Seeding transaction pools...');
+
+    // Clean up existing seed pools (wrapped in transaction for atomicity)
+    await prisma.$transaction([
+      prisma.transactionPoolAuditLog.deleteMany({
+        where: { pool: { poolCode: { startsWith: 'POOL-SEED' } } },
+      }),
+      prisma.transactionPoolMember.deleteMany({
+        where: { pool: { poolCode: { startsWith: 'POOL-SEED' } } },
+      }),
+      prisma.transactionPool.deleteMany({
+        where: { poolCode: { startsWith: 'POOL-SEED' } },
+      }),
+    ]);
+
+    const enterpriseClient = seededClients.find((c) => c.email === 'demo-enterprise@bank.com');
+    if (enterpriseClient) {
+      const pool = await prisma.transactionPool.create({
+        data: {
+          poolCode: 'POOL-SEED-001',
+          clientId: enterpriseClient.id,
+          status: 'OPEN',
+          settlementMode: 'SEQUENTIAL',
+          corridor: 'SG-CH',
+          totalAmount: 0,
+          totalFees: 0,
+          memberCount: 0,
+          settledCount: 0,
+          failedCount: 0,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+
+      await prisma.transactionPoolAuditLog.create({
+        data: {
+          poolId: pool.id,
+          action: 'POOL_CREATED',
+          actor: 'seed-script',
+          details: { seeded: true } as any,
+        },
+      });
+
+      console.log(`  ✅ Pool ${pool.poolCode} created for ${enterpriseClient.companyName}`);
+    }
+  } else {
+    console.log('\n⏭️  Transaction pools disabled (TRANSACTION_POOLS_ENABLED !== true)');
+  }
 
   console.log('\n✅ Institution escrow seed data complete!');
   console.log(`   ${corridors.length} corridors configured`);

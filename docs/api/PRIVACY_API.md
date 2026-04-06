@@ -192,6 +192,10 @@ Get stealth payment details.
 | 404 | Not Found | Meta-address or payment not found |
 | 503 | Service Unavailable | Privacy features disabled |
 
+## Transaction Pool Privacy
+
+Transaction pools inherit the privacy settings of their member escrows. When a pool is settled, each member's release uses the stealth address configuration from the original escrow. Pool-level operations (create, lock, settle) do not add additional stealth routing -- privacy is applied at the individual escrow release level.
+
 ## Authentication
 
 All endpoints require:

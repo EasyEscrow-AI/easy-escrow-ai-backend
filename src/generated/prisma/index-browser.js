@@ -521,10 +521,10 @@ exports.Prisma.InstitutionAccountScalarFieldEnum = {
   defaultCurrency: 'defaultCurrency',
   isDefault: 'isDefault',
   isActive: 'isActive',
-  branchId: 'branchId',
   stealthMetaAddressId: 'stealthMetaAddressId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  branchId: 'branchId'
 };
 
 exports.Prisma.InstitutionBranchScalarFieldEnum = {
@@ -611,6 +611,9 @@ exports.Prisma.InstitutionClientSettingsScalarFieldEnum = {
   minFeeUsdc: 'minFeeUsdc',
   maxFeeUsdc: 'maxFeeUsdc',
   notificationPreferences: 'notificationPreferences',
+  poolMaxMembers: 'poolMaxMembers',
+  poolDefaultSettlementMode: 'poolDefaultSettlementMode',
+  poolDefaultExpiryHours: 'poolDefaultExpiryHours',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -669,7 +672,8 @@ exports.Prisma.InstitutionEscrowScalarFieldEnum = {
   resolvedAt: 'resolvedAt',
   fundedAt: 'fundedAt',
   unlockAt: 'unlockAt',
-  timelockHours: 'timelockHours'
+  timelockHours: 'timelockHours',
+  poolId: 'poolId'
 };
 
 exports.Prisma.InstitutionDepositScalarFieldEnum = {
@@ -848,6 +852,81 @@ exports.Prisma.StealthPaymentScalarFieldEnum = {
   createdAt: 'createdAt',
   confirmedAt: 'confirmedAt',
   sweptAt: 'sweptAt'
+};
+
+exports.Prisma.TransactionPoolScalarFieldEnum = {
+  id: 'id',
+  poolCode: 'poolCode',
+  clientId: 'clientId',
+  status: 'status',
+  settlementMode: 'settlementMode',
+  corridor: 'corridor',
+  totalAmount: 'totalAmount',
+  totalFees: 'totalFees',
+  memberCount: 'memberCount',
+  settledCount: 'settledCount',
+  failedCount: 'failedCount',
+  poolVaultPda: 'poolVaultPda',
+  poolVaultTokenAccount: 'poolVaultTokenAccount',
+  poolRiskScore: 'poolRiskScore',
+  compliancePassed: 'compliancePassed',
+  settledBy: 'settledBy',
+  settledAt: 'settledAt',
+  lockedAt: 'lockedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  expiresAt: 'expiresAt'
+};
+
+exports.Prisma.TransactionPoolMemberScalarFieldEnum = {
+  id: 'id',
+  poolId: 'poolId',
+  escrowId: 'escrowId',
+  status: 'status',
+  amount: 'amount',
+  platformFee: 'platformFee',
+  corridor: 'corridor',
+  releaseTxSignature: 'releaseTxSignature',
+  releasedAt: 'releasedAt',
+  errorMessage: 'errorMessage',
+  retryCount: 'retryCount',
+  receiptPda: 'receiptPda',
+  commitmentHash: 'commitmentHash',
+  privacyLevel: 'privacyLevel',
+  stealthPaymentId: 'stealthPaymentId',
+  isDecoy: 'isDecoy',
+  sequenceNumber: 'sequenceNumber',
+  addedAt: 'addedAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TransactionPoolAuditLogScalarFieldEnum = {
+  id: 'id',
+  poolId: 'poolId',
+  escrowId: 'escrowId',
+  action: 'action',
+  actor: 'actor',
+  details: 'details',
+  ipAddress: 'ipAddress',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InstitutionTransferScalarFieldEnum = {
+  id: 'id',
+  transferCode: 'transferCode',
+  clientId: 'clientId',
+  fromAccountId: 'fromAccountId',
+  toAccountId: 'toAccountId',
+  tokenSymbol: 'tokenSymbol',
+  amount: 'amount',
+  signerPublicKey: 'signerPublicKey',
+  txSignature: 'txSignature',
+  status: 'status',
+  note: 'note',
+  failureReason: 'failureReason',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -1091,6 +1170,11 @@ exports.ApprovalMode = exports.$Enums.ApprovalMode = {
   MULTI_APPROVAL: 'MULTI_APPROVAL'
 };
 
+exports.PoolSettlementMode = exports.$Enums.PoolSettlementMode = {
+  SEQUENTIAL: 'SEQUENTIAL',
+  PARALLEL: 'PARALLEL'
+};
+
 exports.InstitutionConditionType = exports.$Enums.InstitutionConditionType = {
   ADMIN_RELEASE: 'ADMIN_RELEASE',
   TIME_LOCK: 'TIME_LOCK',
@@ -1166,7 +1250,14 @@ exports.NotificationType = exports.$Enums.NotificationType = {
   DEPOSIT_CONFIRMED: 'DEPOSIT_CONFIRMED',
   SETTLEMENT_COMPLETE: 'SETTLEMENT_COMPLETE',
   SYSTEM_MAINTENANCE: 'SYSTEM_MAINTENANCE',
-  SECURITY_ALERT: 'SECURITY_ALERT'
+  SECURITY_ALERT: 'SECURITY_ALERT',
+  POOL_CREATED: 'POOL_CREATED',
+  POOL_LOCKED: 'POOL_LOCKED',
+  POOL_SETTLED: 'POOL_SETTLED',
+  POOL_PARTIAL_FAIL: 'POOL_PARTIAL_FAIL',
+  POOL_FAILED: 'POOL_FAILED',
+  POOL_CANCELLED: 'POOL_CANCELLED',
+  POOL_EXPIRED: 'POOL_EXPIRED'
 };
 
 exports.NotificationPriority = exports.$Enums.NotificationPriority = {
@@ -1174,6 +1265,24 @@ exports.NotificationPriority = exports.$Enums.NotificationPriority = {
   MEDIUM: 'MEDIUM',
   HIGH: 'HIGH',
   CRITICAL: 'CRITICAL'
+};
+
+exports.TransactionPoolStatus = exports.$Enums.TransactionPoolStatus = {
+  OPEN: 'OPEN',
+  LOCKED: 'LOCKED',
+  SETTLING: 'SETTLING',
+  SETTLED: 'SETTLED',
+  PARTIAL_FAIL: 'PARTIAL_FAIL',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.PoolMemberStatus = exports.$Enums.PoolMemberStatus = {
+  PENDING: 'PENDING',
+  SETTLING: 'SETTLING',
+  SETTLED: 'SETTLED',
+  FAILED: 'FAILED',
+  REMOVED: 'REMOVED'
 };
 
 exports.Prisma.ModelName = {
@@ -1213,7 +1322,11 @@ exports.Prisma.ModelName = {
   InstitutionNotification: 'InstitutionNotification',
   SystemSetting: 'SystemSetting',
   StealthMetaAddress: 'StealthMetaAddress',
-  StealthPayment: 'StealthPayment'
+  StealthPayment: 'StealthPayment',
+  TransactionPool: 'TransactionPool',
+  TransactionPoolMember: 'TransactionPoolMember',
+  TransactionPoolAuditLog: 'TransactionPoolAuditLog',
+  InstitutionTransfer: 'InstitutionTransfer'
 };
 
 /**

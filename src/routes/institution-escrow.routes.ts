@@ -11,6 +11,7 @@
  * POST   /api/v1/institution-escrow/:id/notify-recipient → notifyRecipient
  * POST   /api/v1/institution-escrow/:id/release  → releaseFunds
  * POST   /api/v1/institution-escrow/:id/cancel   → cancelEscrow
+ * GET    /api/v1/institution-escrow/:id/privacy-analysis → privacyAnalysis
  * GET    /api/v1/institution-escrow/:id          → getEscrow
  * GET    /api/v1/institution-escrow              → listEscrows
  * GET    /api/v1/institution/corridors           → listCorridors
@@ -434,6 +435,7 @@ router.post(
         req.body.notes,
         req.institutionClient!.email,
         privacyPreferences,
+        undefined,
         { forceRelease: req.body.forceRelease === true }
       );
 
@@ -486,6 +488,71 @@ router.post(
   }
 );
 
+// GET /api/v1/institution-escrow/privacy-summary
+router.get(
+  '/api/v1/institution-escrow/privacy-summary',
+  standardRateLimiter,
+  requireInstitutionOrAdminAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const isAdmin = req.isAdmin === true;
+      const clientId = isAdmin ? null : (req.institutionClient?.clientId || null);
+      if (!clientId && !isAdmin) {
+        res.status(403).json({ error: 'Authentication required', timestamp: new Date().toISOString() });
+        return;
+      }
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 10);
+      const { getPrivacyAnalysisService } = await import('../services/privacy-analysis.service');
+      const service = getPrivacyAnalysisService();
+      const escrows = await service.getPrivacySummary(clientId, limit);
+
+      res.status(200).json({
+        success: true,
+        data: { escrows },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        error: 'Privacy Summary Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// GET /api/v1/institution-escrow/:escrowId/privacy-analysis
+router.get(
+  '/api/v1/institution-escrow/:escrowId/privacy-analysis',
+  standardRateLimiter,
+  requireInstitutionOrAdminAuth,
+  async (req: InstitutionAuthenticatedRequest, res: Response) => {
+    try {
+      const { getPrivacyAnalysisService } = await import('../services/privacy-analysis.service');
+      const service = getPrivacyAnalysisService();
+      const clientId = req.institutionClient?.clientId;
+      const result = req.isAdmin
+        ? await service.analyzeAdmin(req.params.escrowId)
+        : clientId
+          ? await service.analyze(clientId, req.params.escrowId)
+          : (() => { throw Object.assign(new Error('Authentication required'), { status: 403 }); })();
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const status = error.status || (error.message?.includes('not found') ? 404 : 400);
+      res.status(status).json({
+        error: 'Privacy Analysis Error',
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 // GET /api/v1/institution-escrow/:id
 router.get(
   '/api/v1/institution-escrow/:id',
@@ -494,7 +561,13 @@ router.get(
   async (req: InstitutionAuthenticatedRequest, res: Response) => {
     try {
       const service = getInstitutionEscrowService();
-      const escrow = await service.getEscrow(req.institutionClient!.clientId, req.params.id);
+      // Admin users can view any escrow regardless of ownership
+      const clientId = req.institutionClient?.clientId;
+      const escrow = req.isAdmin
+        ? await service.getEscrowAdmin(req.params.id)
+        : clientId
+          ? await service.getEscrow(clientId, req.params.id)
+          : (() => { throw new Error('Authentication required'); })();
 
       res.status(200).json({
         success: true,
@@ -504,7 +577,7 @@ router.get(
     } catch (error: any) {
       const status = error.message.includes('not found')
         ? 404
-        : error.message.includes('Access denied')
+        : error.message.includes('Access denied') || error.message.includes('Authentication required')
         ? 403
         : 400;
       res.status(status).json({

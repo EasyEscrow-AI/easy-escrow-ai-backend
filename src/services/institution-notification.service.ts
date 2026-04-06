@@ -31,6 +31,11 @@ const TYPE_TO_PREF: Partial<Record<NotificationType, string>> = {
   ESCROW_COMPLIANCE_HOLD: 'notifyOnComplianceAlert',
   COMPLIANCE_CHECK_FAILED: 'notifyOnComplianceAlert',
   COMPLIANCE_REVIEW_REQUIRED: 'notifyOnComplianceAlert',
+  POOL_CREATED: 'notifyOnEscrowCreated',
+  POOL_LOCKED: 'notifyOnEscrowFunded',
+  POOL_SETTLED: 'notifyOnEscrowReleased',
+  POOL_FAILED: 'notifyOnEscrowReleased',
+  POOL_CANCELLED: 'notifyOnEscrowReleased',
 };
 
 class InstitutionNotificationService {

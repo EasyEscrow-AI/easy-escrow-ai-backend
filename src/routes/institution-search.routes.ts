@@ -21,10 +21,11 @@ const searchRateLimiter = rateLimit({
   message: { error: 'Rate limit exceeded', message: 'Too many search requests' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req: any) => req.institutionClient?.clientId || req.ip,
+  keyGenerator: (req: any) => req.institutionClient?.clientId || req.ip?.replace(/^::ffff:/, '') || 'unknown',
+  validate: { trustProxy: false, xForwardedForHeader: false },
 });
 
-const VALID_CATEGORIES = ['escrow', 'client', 'account', 'notification', 'payment'];
+const VALID_CATEGORIES = ['escrow', 'client', 'account', 'notification', 'payment', 'pool'];
 
 const validateSearch = [
   query('q')

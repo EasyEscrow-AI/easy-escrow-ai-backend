@@ -6,6 +6,7 @@ pub mod close;
 pub mod offer_escrow;
 pub mod two_phase_swap;
 pub mod institution_escrow;
+pub mod pool_vault;
 
 pub use initialize::*;
 pub use atomic_swap::*;
@@ -15,3 +16,4 @@ pub use close::*;
 pub use offer_escrow::*;
 pub use two_phase_swap::*;
 pub use institution_escrow::*;
+pub use pool_vault::*;

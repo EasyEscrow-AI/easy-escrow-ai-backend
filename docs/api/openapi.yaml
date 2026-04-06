@@ -207,7 +207,7 @@ tags:
       - **Authenticated accounts** via email + password with JWT tokens
       - **Compliance checks** with allowlists and corridor-based limits
       - **AI-powered document analysis** for risk assessment
-      - **Multi-step escrow lifecycle** with 9 distinct states
+      - **Multi-step escrow lifecycle** with 12 distinct states
 
       ### How It Works
       1. **Register** an institution client account
@@ -224,6 +224,7 @@ tags:
 
       | State | Description |
       |-------|-------------|
+      | `DRAFT` | Saved as draft, not yet submitted |
       | `CREATED` | Escrow created, awaiting stablecoin deposit |
       | `FUNDED` | Deposit confirmed on-chain, awaiting release or cancellation |
       | `COMPLIANCE_HOLD` | Held for compliance review (medium risk score) |
@@ -239,6 +240,11 @@ tags:
       ### State Flow
 
       ```
+      ┌──────────┐
+      │  DRAFT   │ (save draft)
+      └────┬─────┘
+           │ submit
+           ▼
                       ┌──────────────────────┐
                       │    Create Escrow      │
                       │  (compliance check)   │
@@ -265,14 +271,18 @@ tags:
          ▼      ▼      ▼
       RELEASING CANCELLING EXPIRED
          │      │
-         ▼      ▼
-      RELEASED CANCELLED
+         ├──▶ INSUFFICIENT_FUNDS ──▶ (retry release)
+         │
+         ▼
+      RELEASED ──▶ COMPLETE
       ```
 
       ### State Transitions
 
       | From | Action | To | Notes |
       |------|--------|----|-------|
+      | — | Save draft | `DRAFT` | Partial info, no compliance checks |
+      | `DRAFT` | Submit | `CREATED` or `COMPLIANCE_HOLD` | Validates required fields, runs compliance |
       | — | Create (compliance passed) | `CREATED` | Ready for deposit |
       | — | Create (medium risk) | `COMPLIANCE_HOLD` | Requires review before proceeding |
       | — | Create (high risk ≥75) | Rejected | Error thrown, no escrow created |
@@ -282,6 +292,9 @@ tags:
       | `FUNDED` | Release funds | `RELEASING` → `RELEASED` | Requires settlement authority |
       | `FUNDED` | Cancel | `CANCELLING` → `CANCELLED` | On-chain refund to payer |
       | `FUNDED` | Auto-expire | `EXPIRED` | `expiresAt` exceeded |
+      | `RELEASING` | Balance too low | `INSUFFICIENT_FUNDS` | Payer can fund and retry |
+      | `INSUFFICIENT_FUNDS` | Release funds | `RELEASING` → `RELEASED` | Retry after funding |
+      | `RELEASED` | Settlement complete | `COMPLETE` | Notification sent |
       | `COMPLIANCE_HOLD` | Cancel | `CANCELLING` → `CANCELLED` | No deposit to refund |
       | `COMPLIANCE_HOLD` | Auto-expire | `EXPIRED` | `expiresAt` exceeded |
 
@@ -3843,6 +3856,135 @@ paths:
         '404':
           description: Payment not found
 
+  # ── Institution Account Transfers ──────────────────────────────────
+
+  /api/v1/institution/accounts/transfer/prepare:
+    post:
+      tags:
+        - Institution Account Transfers
+      summary: Prepare internal account transfer
+      description: |
+        Validate the transfer, build a Solana transaction with admin as fee payer,
+        and return the partially-signed transaction for the account owner to sign.
+        The frontend must sign with the account owner's wallet, submit to Solana,
+        then call /submit with the resulting txSignature.
+      security:
+        - InstitutionBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fromAccountId
+                - toAccountId
+                - tokenSymbol
+                - amount
+                - walletSignature
+                - signerPublicKey
+                - timestamp
+              properties:
+                fromAccountId:
+                  type: string
+                  description: Source account UUID
+                toAccountId:
+                  type: string
+                  description: Destination account UUID
+                tokenSymbol:
+                  type: string
+                  enum: [USDC, EURC, USDT, PYUSD]
+                  description: SPL token symbol
+                amount:
+                  type: number
+                  description: Amount in token units
+                walletSignature:
+                  type: string
+                  description: Base64-encoded wallet signature
+                signerPublicKey:
+                  type: string
+                  description: Signer's Solana public key (base58)
+                timestamp:
+                  type: string
+                  format: date-time
+                  description: ISO 8601 timestamp used in the signed message (must be within 5 minutes)
+                note:
+                  type: string
+                  description: Optional memo
+      responses:
+        '200':
+          description: Transfer prepared — partially-signed transaction returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TransferPrepareResponse'
+                  timestamp:
+                    type: string
+        '400':
+          description: Validation error, insufficient balance, or signature verification failed
+        '403':
+          description: Account does not belong to authenticated institution
+        '404':
+          description: Account not found
+        '409':
+          description: Transfer already in progress
+
+  /api/v1/institution/accounts/transfer/submit:
+    post:
+      tags:
+        - Institution Account Transfers
+      summary: Submit signed transfer transaction
+      description: |
+        After the account owner signs the prepared transaction and submits it to Solana,
+        call this endpoint with the transfer code and on-chain transaction signature
+        to finalize the transfer record.
+      security:
+        - InstitutionBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transferCode
+                - txSignature
+              properties:
+                transferCode:
+                  type: string
+                  description: Transfer code returned by /prepare
+                  example: TXF-A3K-9NZ
+                txSignature:
+                  type: string
+                  description: On-chain transaction signature (base58)
+      responses:
+        '200':
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TransferReceipt'
+                  timestamp:
+                    type: string
+        '400':
+          description: Transaction failed on-chain or transfer in wrong status
+        '404':
+          description: Transfer not found or transaction not yet confirmed
+        '410':
+          description: Transfer expired — call /prepare again
+
   # ── Institution Accounts ─────────────────────────────────────────────
 
   /api/v1/institution/accounts:
@@ -5264,6 +5406,108 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/institution-escrow/privacy-summary:
+    get:
+      tags: [Institution Escrow]
+      summary: Privacy monitoring summary
+      description: |
+        Lightweight endpoint returning the last N escrows with pre-computed privacy
+        check statuses (pass/partial/fail). Derived from database fields only — no
+        on-chain RPC queries. Powers the frontend privacy monitoring table.
+
+        Admin users see all escrows. Institution users see only their own.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 10
+          description: Number of escrows to return (max 10)
+      responses:
+        '200':
+          description: Privacy summary for recent escrows
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      escrows:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            escrowId: { type: string, example: EE-6QZ-NA9 }
+                            amount: { type: number, example: 500 }
+                            status: { type: string, example: COMPLETE }
+                            corridor: { type: string, example: CH-US }
+                            payerName: { type: string, nullable: true }
+                            recipientName: { type: string, nullable: true }
+                            createdAt: { type: string, format: date-time }
+                            privacySummary:
+                              type: object
+                              properties:
+                                stealthAddress:
+                                  type: string
+                                  enum: [pass, partial, fail]
+                                pdaReceipts:
+                                  type: string
+                                  enum: [pass, partial, fail]
+                                encryptedCustody:
+                                  type: string
+                                  enum: [pass, partial, fail]
+                                complianceAuditTrail:
+                                  type: string
+                                  enum: [pass, partial, fail]
+                                transactionPoolShielding:
+                                  type: string
+                                  enum: [pass, partial, fail]
+                  timestamp: { type: string, format: date-time }
+        '403':
+          description: Authentication required
+
+  /api/v1/institution-escrow/{escrowId}/privacy-analysis:
+    get:
+      tags: [Institution Escrow]
+      summary: Privacy analysis
+      description: |
+        Perform real-time on-chain privacy verification for an escrow transaction.
+        Returns a structured report with 5 independent checks: stealth address derivation,
+        PDA receipt verification, encrypted chain-of-custody, compliance audit trail,
+        and transaction pool shielding. Results are cached for 60 seconds.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: escrowId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Escrow ID (UUID) or escrow code (EE-XXX-XXX)
+      responses:
+        '200':
+          description: Privacy analysis report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    $ref: '#/components/schemas/PrivacyAnalysisResult'
+                  timestamp: { type: string, format: date-time }
+        '403':
+          description: Access denied
+        '404':
+          description: Escrow not found
+
   # ── Institution Bootstrap ──────────────────────────────────────────────
 
   /api/v1/institution/bootstrap:
@@ -5576,6 +5820,169 @@ components:
             description: Sort order
 
   schemas:
+    # Transfer schemas
+    TransferPrepareResponse:
+      type: object
+      properties:
+        transferCode:
+          type: string
+          description: Transfer code (TXF-XXX-XXX)
+          example: TXF-A3K-9NZ
+        transaction:
+          type: string
+          description: Base64-encoded partially-signed Solana transaction
+        fromAccountId:
+          type: string
+        fromAccountLabel:
+          type: string
+          description: Human-readable source account name
+        toAccountId:
+          type: string
+        toAccountLabel:
+          type: string
+          description: Human-readable destination account name
+        tokenSymbol:
+          type: string
+          example: USDC
+        amount:
+          type: number
+          example: 500.00
+        expiresAt:
+          type: string
+          format: date-time
+          description: Transaction expires after this time (blockhash validity ~2 min)
+
+    TransferReceipt:
+      type: object
+      properties:
+        transferCode:
+          type: string
+          description: Transfer code (TXF-XXX-XXX)
+          example: TXF-A3K-9NZ
+        fromAccountId:
+          type: string
+        fromAccountLabel:
+          type: string
+          description: Human-readable source account name
+        toAccountId:
+          type: string
+        toAccountLabel:
+          type: string
+          description: Human-readable destination account name
+        tokenSymbol:
+          type: string
+          example: USDC
+        amount:
+          type: number
+          example: 500.00
+        txSignature:
+          type: string
+          description: On-chain transaction signature (base58)
+        status:
+          type: string
+          enum: [completed]
+        createdAt:
+          type: string
+          format: date-time
+
+    PrivacyAnalysisResult:
+      type: object
+      properties:
+        escrowId:
+          type: string
+          example: EE-7UA-HGK
+        analyzedAt:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            stealthAddress:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                recipientWallet: { type: string, nullable: true }
+                derivationVerified: { type: boolean }
+                stealthStatus:
+                  type: string
+                  nullable: true
+                  enum: [PENDING, CONFIRMED, SWEPT, FAILED]
+                  description: Stealth payment lifecycle status
+                sweepTxSignature:
+                  type: string
+                  nullable: true
+                  description: Solana tx signature when funds were swept from stealth address
+                addressReused:
+                  type: boolean
+                  description: Whether this stealth address was reused across multiple payments
+                addresses:
+                  type: object
+                  nullable: true
+                  description: Address mapping showing real wallets vs on-chain addresses
+                  properties:
+                    payer:
+                      type: object
+                      properties:
+                        real: { type: string, description: Payer's real wallet address }
+                        onChain: { type: string, description: Address used on-chain }
+                        match: { type: boolean }
+                    recipient:
+                      type: object
+                      properties:
+                        real: { type: string, description: Recipient's real wallet address }
+                        stealthAddress: { type: string, nullable: true, description: One-time stealth address derived for this payment }
+                        onChain: { type: string, description: Address used on-chain (stealth or real) }
+                        match: { type: boolean, description: False when stealth is used (by design) }
+                    fundsReleasedToCorrectAddress:
+                      type: boolean
+                      nullable: true
+                      description: Verified from on-chain release tx that funds went to the stealth address
+                    releaseTxSignature:
+                      type: string
+                      nullable: true
+                      description: Release transaction signature for Solana Explorer
+                    note: { type: string }
+            pdaReceipts:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                escrowPda: { type: string, nullable: true }
+                vaultPda: { type: string, nullable: true }
+                poolReceiptPda: { type: string, nullable: true, description: Pool receipt PDA (if escrow is in a transaction pool) }
+                poolReceiptExists: { type: boolean, description: Whether the pool receipt PDA exists on-chain }
+                accountExists: { type: boolean }
+                metadataEncrypted: { type: boolean }
+            encryptedCustody:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                signatures: { type: array, items: { type: string } }
+                allVerified: { type: boolean }
+            complianceAuditTrail:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                riskScore: { type: integer, nullable: true }
+                kytReportId: { type: string, nullable: true }
+                sanctionsCleared: { type: boolean }
+            transactionPoolShielding:
+              type: object
+              properties:
+                passed: { type: boolean }
+                detail: { type: string }
+                shieldedPoolBatchId: { type: string, nullable: true }
+                batchSize: { type: integer }
+        overallScore:
+          type: integer
+          example: 5
+        maxScore:
+          type: integer
+          example: 5
+
     # Asset schemas
     SupportedAsset:
       type: object
