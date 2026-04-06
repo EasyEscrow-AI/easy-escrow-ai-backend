@@ -256,6 +256,13 @@ export class PoolExpiryMonitor {
                   );
                 }
 
+                // Mark as REMOVING before on-chain call to prevent double-refund
+                // if the DB update after the on-chain call fails
+                await this.prisma.transactionPoolMember.update({
+                  where: { id: member.id },
+                  data: { status: 'REMOVING' },
+                });
+
                 const usdcMint = programService.getUsdcMintAddress();
                 const refundAmount = (Number(member.amount) + Number(member.platformFee)) * 1_000_000;
                 await programService.cancelPoolMemberOnChain({
@@ -267,7 +274,6 @@ export class PoolExpiryMonitor {
                   escrowCode: escrow.escrowCode,
                 });
 
-                // Only mark REMOVED after successful on-chain refund
                 await this.prisma.transactionPoolMember.update({
                   where: { id: member.id },
                   data: { status: 'REMOVED' },
@@ -278,11 +284,14 @@ export class PoolExpiryMonitor {
                   `${LOG_PREFIX}   Member refund failed for ${member.id}:`,
                   (memberErr as Error).message
                 );
-                // On-chain refund failed — record error but don't mark as REMOVED
+                // Revert from REMOVING to FAILED so the member can be retried
                 try {
                   await this.prisma.transactionPoolMember.update({
                     where: { id: member.id },
-                    data: { errorMessage: `Refund failed: ${(memberErr as Error).message}` },
+                    data: {
+                      status: 'FAILED',
+                      errorMessage: `Refund failed: ${(memberErr as Error).message}`,
+                    },
                   });
                 } catch {
                   // DB update failure is non-critical here

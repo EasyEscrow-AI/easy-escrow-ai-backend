@@ -117,9 +117,11 @@ pub struct ReleaseInstitutionEscrow<'info> {
     /// Settlement authority releasing funds (must match escrow_state.settlement_authority)
     pub authority: Signer<'info>,
 
-    /// Institution escrow state PDA
+    /// Institution escrow state PDA — closed on release to remove plaintext data
+    /// from chain and reclaim rent. The encrypted receipt PDA is the permanent record.
     #[account(
         mut,
+        close = rent_receiver,
         seeds = [InstitutionEscrow::SEED_PREFIX, escrow_id.as_ref()],
         bump = escrow_state.bump,
         constraint = escrow_state.settlement_authority == authority.key() @ EscrowError::InstitutionUnauthorized,
@@ -440,23 +442,9 @@ pub fn release_institution_escrow(
     token::close_account(close_ctx)?;
     msg!("Token vault closed, rent recovered");
 
-    // Update status to Released (set before closing so the final state is recorded)
-    let escrow_state = &mut ctx.accounts.escrow_state;
-    escrow_state.status = InstitutionEscrowOnChainStatus::Released;
-    escrow_state.resolved_at = clock.unix_timestamp;
-
-    // Close escrow state PDA — remove plaintext data from chain, reclaim rent.
-    // The encrypted receipt PDA (created separately) is the permanent privacy-preserving record.
-    let escrow_info = ctx.accounts.escrow_state.to_account_info();
-    let rent_info = ctx.accounts.rent_receiver.to_account_info();
-    let escrow_lamports = escrow_info.lamports();
-    **escrow_info.try_borrow_mut_lamports()? = 0;
-    **rent_info.try_borrow_mut_lamports()? = rent_info.lamports()
-        .checked_add(escrow_lamports)
-        .ok_or(EscrowError::CalculationOverflow)?;
-    // Zero account data to prevent deserialization of stale data
-    escrow_info.data.borrow_mut().fill(0);
-
+    // Escrow state PDA is closed automatically by Anchor's `close = rent_receiver`
+    // attribute on AccountsExit — lamports transferred, data zeroed, owner reassigned
+    // to system program. The encrypted receipt PDA is the permanent record.
     msg!("Institution escrow released and PDA closed — plaintext data removed from chain");
 
     Ok(())

@@ -59,6 +59,7 @@ CREATE TABLE "transaction_pool_members" (
     "commitment_hash" TEXT,
     "privacy_level" "PrivacyLevel",
     "stealth_payment_id" TEXT,
+    "is_decoy" BOOLEAN NOT NULL DEFAULT FALSE,
     "sequence_number" INTEGER NOT NULL DEFAULT 0,
     "added_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -97,6 +98,7 @@ CREATE INDEX "transaction_pools_created_at_idx" ON "transaction_pools"("created_
 CREATE UNIQUE INDEX "transaction_pool_members_pool_id_escrow_id_key" ON "transaction_pool_members"("pool_id", "escrow_id");
 CREATE INDEX "transaction_pool_members_pool_id_idx" ON "transaction_pool_members"("pool_id");
 CREATE INDEX "transaction_pool_members_escrow_id_idx" ON "transaction_pool_members"("escrow_id");
+CREATE INDEX "transaction_pool_members_is_decoy_idx" ON "transaction_pool_members"("is_decoy");
 
 -- CreateIndex: transaction_pool_audit_logs
 CREATE INDEX "transaction_pool_audit_logs_pool_id_idx" ON "transaction_pool_audit_logs"("pool_id");
