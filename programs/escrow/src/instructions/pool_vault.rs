@@ -223,7 +223,8 @@ pub struct CancelPoolVault<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
-    /// Pool vault state PDA
+    /// Pool vault state PDA — allow Cancelled status so multi-member refunds work
+    /// (each call refunds one member; first call sets Cancelled, subsequent calls still need access)
     #[account(
         mut,
         seeds = [PoolVault::SEED_PREFIX, pool_id.as_ref()],
@@ -231,6 +232,7 @@ pub struct CancelPoolVault<'info> {
         has_one = authority @ EscrowError::Unauthorized,
         constraint = pool_vault.status == PoolVaultStatus::Created
             || pool_vault.status == PoolVaultStatus::Active
+            || pool_vault.status == PoolVaultStatus::Cancelled
             @ EscrowError::PoolVaultNotActive,
     )]
     pub pool_vault: Account<'info, PoolVault>,

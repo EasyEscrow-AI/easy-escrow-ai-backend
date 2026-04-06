@@ -1194,6 +1194,9 @@ export class TransactionPoolService {
       }
     );
 
+    let releaseSucceeded = false;
+    let releaseTxSignature: string | undefined;
+
     try {
       // Release funds via escrow service with pool context
       const poolContext: PoolContext = {
@@ -1211,6 +1214,7 @@ export class TransactionPoolService {
         undefined,
         poolContext
       );
+      releaseSucceeded = true;
 
       // Get the release tx signature from the updated escrow
       const updatedEscrow = await this.prisma.institutionEscrow.findUnique({
@@ -1218,7 +1222,7 @@ export class TransactionPoolService {
         select: { releaseTxSignature: true },
       });
 
-      const releaseTxSignature = updatedEscrow?.releaseTxSignature || undefined;
+      releaseTxSignature = updatedEscrow?.releaseTxSignature || undefined;
 
       // Create on-chain receipt
       let receiptPda: string | undefined;
@@ -1324,7 +1328,44 @@ export class TransactionPoolService {
     } catch (error) {
       const errorMessage = (error as Error).message;
 
-      // Mark member as FAILED
+      if (releaseSucceeded) {
+        // Funds were released on-chain but post-release steps failed (receipt, DB update).
+        // Mark as SETTLED to prevent retry of an already-released escrow.
+        console.error(
+          `${LOG_PREFIX} Post-release failure for member ${member.id} (funds already released): ${errorMessage}`
+        );
+        await this.prisma.transactionPoolMember.update({
+          where: { id: member.id },
+          data: {
+            status: 'SETTLED',
+            releaseTxSignature: releaseTxSignature || null,
+            releasedAt: new Date(),
+            errorMessage: `Post-release error: ${errorMessage}`,
+          },
+        });
+
+        await this.createPoolAuditLog(
+          pool.id,
+          member.escrowId,
+          PoolAuditAction.MEMBER_SETTLED,
+          'system',
+          {
+            memberId: member.id,
+            releaseTxSignature,
+            warning: `Settled with post-release error: ${errorMessage}`,
+            message: `Member ${member.id} settled (post-release steps had errors)`,
+          }
+        );
+
+        return {
+          memberId: member.id,
+          escrowId: member.escrowId,
+          status: PoolMemberStatus.SETTLED,
+          releaseTxSignature,
+        };
+      }
+
+      // Release itself failed — safe to mark as FAILED for retry
       await this.prisma.transactionPoolMember.update({
         where: { id: member.id },
         data: {
